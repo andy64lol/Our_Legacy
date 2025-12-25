@@ -1,0 +1,429 @@
+{
+  "Health Potion": {
+    "type": "consumable",
+    "description": "A basic healing potion that restores 50 HP",
+    "effect": "heal",
+    "value": 50,
+    "price": 25,
+    "rarity": "common"
+  },
+  "Mana Potion": {
+    "type": "consumable", 
+    "description": "Restores 30 MP for spellcasting",
+    "effect": "mp_restore",
+    "value": 30,
+    "price": 30,
+    "rarity": "common"
+  },
+  "Large Health Potion": {
+    "type": "consumable",
+    "description": "A powerful healing potion that restores 100 HP",
+    "effect": "heal",
+    "value": 100,
+    "price": 50,
+    "rarity": "uncommon"
+  },
+  "Frost Potion": {
+    "type": "consumable",
+    "description": "A magical potion that temporarily boosts defense by 5",
+    "effect": "defense_boost",
+    "value": 5,
+    "duration": 10,
+    "price": 75,
+    "rarity": "rare"
+  },
+  "Iron Sword": {
+    "type": "weapon",
+    "description": "A sturdy iron blade, reliable and well-balanced",
+    "attack_bonus": 8,
+    "price": 50,
+    "rarity": "common",
+    "requirements": {"level": 1}
+  },
+  "Steel Dagger": {
+    "type": "weapon",
+    "description": "A sharp steel dagger favored by rogues for its speed",
+    "attack_bonus": 6,
+    "speed_bonus": 3,
+    "price": 45,
+    "rarity": "common",
+    "requirements": {"level": 1}
+  },
+  "Magic Staff": {
+    "type": "weapon",
+    "description": "A mystical staff that enhances magical abilities",
+    "attack_bonus": 5,
+    "magic_weapon": true,
+    "mp_bonus": 20,
+    "price": 70,
+    "rarity": "uncommon",
+    "requirements": {"level": 2, "class": "Mage"}
+  },
+  "Greatsword": {
+    "type": "weapon",
+    "description": "A massive two-handed sword that deals devastating blows",
+    "attack_bonus": 15,
+    "defense_penalty": 2,
+    "price": 120,
+    "rarity": "rare",
+    "requirements": {"level": 3, "class": "Warrior"}
+  },
+  "Leather Armor": {
+    "type": "armor",
+    "description": "Flexible leather armor that provides basic protection",
+    "defense_bonus": 4,
+    "price": 40,
+    "rarity": "common",
+    "requirements": {"level": 1}
+  },
+  "Chain Mail": {
+    "type": "armor",
+    "description": "Interlocked metal rings provide good protection",
+    "defense_bonus": 8,
+    "speed_penalty": 1,
+    "price": 80,
+    "rarity": "uncommon",
+    "requirements": {"level": 2}
+  },
+  "Mystic Robes": {
+    "type": "armor",
+    "description": "Enchanted robes that enhance magical abilities",
+    "defense_bonus": 3,
+    "mp_bonus": 25,
+    "price": 90,
+    "rarity": "uncommon",
+    "requirements": {"level": 2, "class": "Mage"}
+  },
+  "Dragon Scale Armor": {
+    "type": "armor",
+    "description": "Armor crafted from dragon scales, providing exceptional protection",
+    "defense_bonus": 15,
+    "fire_resistance": 50,
+    "price": 200,
+    "rarity": "legendary",
+    "requirements": {"level": 5}
+  },
+  "Ring of Power": {
+    "type": "accessory",
+    "description": "A mysterious ring that enhances all abilities",
+    "attack_bonus": 3,
+    "defense_bonus": 3,
+    "mp_bonus": 10,
+    "price": 150,
+    "rarity": "rare",
+    "requirements": {"level": 3}
+  },
+  "Boots of Speed": {
+    "type": "accessory",
+    "description": "Magical boots that allow the wearer to move swiftly",
+    "speed_bonus": 5,
+    "price": 100,
+    "rarity": "uncommon",
+    "requirements": {"level": 2}
+  },
+  "Goblin Ear": {
+    "type": "material",
+    "description": "A goblin's ear, proof of victory over the creature",
+    "price": 5,
+    "rarity": "junk"
+  },
+  "Orc Tooth": {
+    "type": "material",
+    "description": "A large orc tooth, hard and valuable",
+    "price": 8,
+    "rarity": "common"
+  },
+  "Bone Fragment": {
+    "type": "material",
+    "description": "A fragment of ancient bone, infused with dark energy",
+    "price": 6,
+    "rarity": "common"
+  },
+  "Wolf Fang": {
+    "type": "material",
+    "description": "A sharp wolf fang, useful for crafting",
+    "price": 7,
+    "rarity": "common"
+  },
+  "Dragon Scale": {
+    "type": "material",
+    "description": "A precious dragon scale, said to possess magical properties",
+    "price": 100,
+    "rarity": "legendary"
+  },
+  "Dark Crystal": {
+    "type": "material",
+    "description": "A crystal infused with dark magic energy",
+    "price": 50,
+    "rarity": "rare"
+  },
+  "Ice Crystal": {
+    "type": "material",
+    "description": "A pristine ice crystal that never melts",
+    "price": 40,
+    "rarity": "rare"
+  },
+  "Fire Gem": {
+    "type": "material",
+    "description": "A gemstone that glows with inner fire",
+    "price": 75,
+    "rarity": "legendary"
+  },
+  "Troll Club": {
+    "type": "weapon",
+    "description": "A massive club wielded by trolls, incredibly heavy",
+    "attack_bonus": 20,
+    "speed_penalty": 3,
+    "price": 150,
+    "rarity": "rare",
+    "requirements": {"level": 4, "strength": 15}
+  },
+  "Rusty Dagger": {
+    "type": "weapon",
+    "description": "An old, rusty dagger found in ancient ruins",
+    "attack_bonus": 3,
+    "price": 15,
+    "rarity": "junk"
+  },
+  "Wooden Wand": {
+    "type": "weapon",
+    "description": "A simple wooden wand for basic spell casting",
+    "attack_bonus": 2,
+    "magic_weapon": true,
+    "mp_bonus": 15,
+    "price": 35,
+    "rarity": "common",
+    "requirements": {"level": 1, "class": "Mage"}
+  },
+  "Crystalline Wand": {
+    "type": "weapon",
+    "description": "A wand topped with a radiant crystal, amplifies magic",
+    "attack_bonus": 7,
+    "magic_weapon": true,
+    "mp_bonus": 30,
+    "price": 85,
+    "rarity": "uncommon",
+    "requirements": {"level": 2, "class": "Mage"}
+  },
+  "Spellsword": {
+    "type": "weapon",
+    "description": "A blade infused with magical energy, bridging combat and spells",
+    "attack_bonus": 10,
+    "magic_weapon": true,
+    "mp_bonus": 20,
+    "price": 110,
+    "rarity": "rare",
+    "requirements": {"level": 3}
+  },
+  "Ethereal Staff": {
+    "type": "weapon",
+    "description": "A legendary staff wreathed in arcane energy",
+    "attack_bonus": 8,
+    "magic_weapon": true,
+    "mp_bonus": 50,
+    "price": 180,
+    "rarity": "legendary",
+    "requirements": {"level": 5, "class": "Mage"}
+  },
+  "Rogue's Dagger": {
+    "type": "weapon",
+    "description": "A perfectly balanced dagger for swift, deadly strikes",
+    "attack_bonus": 7,
+    "speed_bonus": 4,
+    "price": 55,
+    "rarity": "uncommon",
+    "requirements": {"level": 1, "class": "Rogue"}
+  },
+  "Ninja Kunai": {
+    "type": "weapon",
+    "description": "A throwing weapon favored by shadows and assassins",
+    "attack_bonus": 8,
+    "speed_bonus": 5,
+    "price": 65,
+    "rarity": "uncommon",
+    "requirements": {"level": 2, "class": "Rogue"}
+  },
+  "Shadow Blade": {
+    "type": "weapon",
+    "description": "A dark blade that seems to absorb light itself",
+    "attack_bonus": 12,
+    "speed_bonus": 6,
+    "price": 140,
+    "rarity": "rare",
+    "requirements": {"level": 4, "class": "Rogue"}
+  },
+  "Obsidian Edge": {
+    "type": "weapon",
+    "description": "A legendary legendary blade of pure shadow and power",
+    "attack_bonus": 18,
+    "speed_bonus": 8,
+    "defense_bonus": 2,
+    "price": 250,
+    "rarity": "legendary",
+    "requirements": {"level": 5, "class": "Rogue"}
+  },
+  "Iron Axe": {
+    "type": "weapon",
+    "description": "A heavy axe for devastating sweeping attacks",
+    "attack_bonus": 13,
+    "defense_penalty": 1,
+    "price": 95,
+    "rarity": "uncommon",
+    "requirements": {"level": 2, "class": "Warrior"}
+  },
+  "Warhammer": {
+    "type": "weapon",
+    "description": "A massive two-handed hammer that crushes all in its path",
+    "attack_bonus": 17,
+    "defense_penalty": 2,
+    "price": 130,
+    "rarity": "rare",
+    "requirements": {"level": 4, "class": "Warrior"}
+  },
+  "Dragonsoul Blade": {
+    "type": "weapon",
+    "description": "A legendary sword forged with dragon essence itself",
+    "attack_bonus": 22,
+    "magic_weapon": true,
+    "defense_bonus": 3,
+    "mp_bonus": 20,
+    "price": 300,
+    "rarity": "legendary",
+    "requirements": {"level": 6, "class": "Warrior"}
+  },
+  "Plate Armor": {
+    "type": "armor",
+    "description": "Heavy plate armor worn by elite knights",
+    "defense_bonus": 12,
+    "speed_penalty": 2,
+    "price": 120,
+    "rarity": "rare",
+    "requirements": {"level": 3, "class": "Warrior"}
+  },
+  "Dragon Scale Robes": {
+    "type": "armor",
+    "description": "Enchanted robes infused with dragon scales for enhanced defense and magic",
+    "defense_bonus": 8,
+    "mp_bonus": 35,
+    "price": 160,
+    "rarity": "rare",
+    "requirements": {"level": 4, "class": "Mage"}
+  },
+  "Shadow Cloak": {
+    "type": "armor",
+    "description": "A dark cloak that lets you blend into the shadows",
+    "defense_bonus": 6,
+    "speed_bonus": 3,
+    "price": 100,
+    "rarity": "rare",
+    "requirements": {"level": 3, "class": "Rogue"}
+  },
+  "Cloth Tunic": {
+    "type": "armor",
+    "description": "Simple cloth clothing that provides minimal protection but allows magic flow",
+    "defense_bonus": 1,
+    "mp_bonus": 15,
+    "price": 20,
+    "rarity": "common",
+    "requirements": {"level": 1, "class": "Mage"}
+  },
+  "Leather Helm": {
+    "type": "armor",
+    "description": "A protective leather helmet",
+    "defense_bonus": 2,
+    "price": 30,
+    "rarity": "common",
+    "requirements": {"level": 1}
+  },
+  "Crown of Wisdom": {
+    "type": "accessory",
+    "description": "An ancient crown that enhances magical intelligence",
+    "mp_bonus": 20,
+    "attack_bonus": 2,
+    "price": 120,
+    "rarity": "rare",
+    "requirements": {"level": 3, "class": "Mage"}
+  },
+  "Cloak of Shadows": {
+    "type": "accessory",
+    "description": "A shadowy cloak that increases evasion and speed",
+    "speed_bonus": 6,
+    "defense_bonus": 2,
+    "price": 130,
+    "rarity": "rare",
+    "requirements": {"level": 3, "class": "Rogue"}
+  },
+  "Amulet of Valor": {
+    "type": "accessory",
+    "description": "An amulet that boosts combat prowess and endurance",
+    "attack_bonus": 4,
+    "defense_bonus": 4,
+    "price": 125,
+    "rarity": "rare",
+    "requirements": {"level": 3, "class": "Warrior"}
+  },
+  "Ring of Mana": {
+    "type": "accessory",
+    "description": "A mystical ring that restores magical reserves",
+    "mp_bonus": 30,
+    "price": 110,
+    "rarity": "rare",
+    "requirements": {"level": 2, "class": "Mage"}
+  },
+  "Ring of Precision": {
+    "type": "accessory",
+    "description": "A ring that enhances accuracy and critical strikes",
+    "attack_bonus": 5,
+    "speed_bonus": 2,
+    "price": 100,
+    "rarity": "uncommon",
+    "requirements": {"level": 2, "class": "Rogue"}
+  },
+  "Gauntlets of Strength": {
+    "type": "accessory",
+    "description": "Heavy gauntlets that enhance melee power",
+    "attack_bonus": 5,
+    "defense_bonus": 2,
+    "price": 90,
+    "rarity": "uncommon",
+    "requirements": {"level": 2, "class": "Warrior"}
+  },
+  "Crown of the Dawn": {
+    "type": "accessory",
+    "description": "A radiant crown that fills the wearer with dawn's vigor",
+    "attack_bonus": 6,
+    "defense_bonus": 6,
+    "mp_bonus": 30,
+    "hp_bonus": 50,
+    "price": 260,
+    "rarity": "legendary",
+    "requirements": {"level": 6}
+  },
+  "Solar Talisman": {
+    "type": "accessory",
+    "description": "A talisman warmed by the sun, improves healing and magical power",
+    "mp_bonus": 18,
+    "hp_bonus": 30,
+    "price": 140,
+    "rarity": "rare",
+    "requirements": {"level": 3}
+  },
+  "Pendant of Fortitude": {
+    "type": "accessory",
+    "description": "An amulet that bolsters the wearer's resilience",
+    "defense_bonus": 6,
+    "hp_bonus": 40,
+    "price": 115,
+    "rarity": "uncommon",
+    "requirements": {"level": 2}
+  },
+  "Boots of the Phoenix": {
+    "type": "accessory",
+    "description": "Boots imbued with phoenix flame, restoring vigor on victory",
+    "speed_bonus": 8,
+    "hp_bonus": 25,
+    "price": 220,
+    "rarity": "legendary",
+    "requirements": {"level": 5}
+  }
+}

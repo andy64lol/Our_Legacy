@@ -1,0 +1,30 @@
+{
+  "Fireball": {
+    "mp_cost": 20,
+    "power": 25,
+    "type": "damage",
+    "description": "A burst of flame that scorches a foe.",
+    "allowed_weapons": ["Wooden Wand", "Crystalline Wand", "Magic Staff", "Ethereal Staff", "Spellsword", "Dragonsoul Blade"]
+  },
+  "Ice Shard": {
+    "mp_cost": 15,
+    "power": 18,
+    "type": "damage",
+    "description": "A shard of ice that pierces enemies.",
+    "allowed_weapons": ["Wooden Wand", "Crystalline Wand", "Magic Staff", "Ethereal Staff"]
+  },
+  "Lightning Bolt": {
+    "mp_cost": 25,
+    "power": 30,
+    "type": "damage",
+    "description": "A quick bolt of lightning that strikes true.",
+    "allowed_weapons": ["Crystalline Wand", "Magic Staff", "Ethereal Staff", "Spellsword"]
+  },
+  "Greater Heal": {
+    "mp_cost": 20,
+    "power": 40,
+    "type": "heal",
+    "description": "Restore a moderate amount of HP to the caster.",
+    "allowed_weapons": ["Wooden Wand", "Crystalline Wand", "Magic Staff", "Ethereal Staff", "Spellsword", "Dragonsoul Blade"]
+  }
+}

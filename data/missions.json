@@ -1,0 +1,282 @@
+{
+  "tutorial_quest": {
+    "name": "First Steps",
+    "description": "Defeat 3 goblins in the Dark Forest to prove your worth as an adventurer.",
+    "type": "kill",
+    "target": "goblin",
+    "target_count": 3,
+    "reward": {
+      "experience": 50,
+      "gold": 25,
+      "items": ["Health Potion"]
+    },
+    "area": "forest_path",
+    "unlock_level": 1,
+    "prerequisites": []
+  },
+  "forest_cleaning": {
+    "name": "Wolf Problem",
+    "description": "The villagers are worried about wolves attacking travelers. Clear out 5 wolves from the forest.",
+    "type": "kill",
+    "target": "wolf",
+    "target_count": 5,
+    "reward": {
+      "experience": 75,
+      "gold": 40,
+      "items": ["Leather Armor"]
+    },
+    "area": "forest_path",
+    "unlock_level": 2,
+    "prerequisites": ["tutorial_quest"]
+  },
+  "orc_invasion": {
+    "name": "Orc Menace",
+    "description": "Orcs have been spotted in the Deep Woods. Defeat 3 orcs to protect the forest.",
+    "type": "kill",
+    "target": "orc",
+    "target_count": 3,
+    "reward": {
+      "experience": 100,
+      "gold": 60,
+      "items": ["Steel Dagger", "Large Health Potion"]
+    },
+    "area": "deep_woods",
+    "unlock_level": 3,
+    "prerequisites": ["forest_cleaning"]
+  },
+  "ancient_artifact": {
+    "name": "Lost Relic",
+    "description": "An ancient artifact was stolen by bandits. Retrieve it from the Ancient Ruins.",
+    "type": "collect",
+    "target": "ancient_relic",
+    "target_count": 1,
+    "reward": {
+      "experience": 150,
+      "gold": 100,
+      "items": ["Magic Staff", "Mystic Robes"]
+    },
+    "area": "ancient_ruins",
+    "unlock_level": 4,
+    "prerequisites": ["orc_invasion"]
+  },
+  "undead_horde": {
+    "name": "Undead Rising",
+    "description": "Undead creatures have risen in the Underground Tombs. Clear out 5 skeletons.",
+    "type": "kill",
+    "target": "skeleton",
+    "target_count": 5,
+    "reward": {
+      "experience": 125,
+      "gold": 80,
+      "items": ["Chain Mail", "Mana Potion"]
+    },
+    "area": "underground_tombs",
+    "unlock_level": 4,
+    "prerequisites": ["ancient_artifact"]
+  },
+  "crystal_guardian": {
+    "name": "Crystal Protector",
+    "description": "Ice Elementals are disrupting the natural balance. Defeat 2 Ice Elementals in the Crystal Caves.",
+    "type": "kill",
+    "target": "ice_elemental",
+    "target_count": 2,
+    "reward": {
+      "experience": 200,
+      "gold": 120,
+      "items": ["Ice Crystal", "Frost Potion"]
+    },
+    "area": "crystal_caves",
+    "unlock_level": 5,
+    "prerequisites": ["undead_horde"]
+  },
+  "dark_mage_hunt": {
+    "name": "Sorcerer Hunt",
+    "description": "A Dark Mage has been causing trouble in the Deep Woods. Defeat the Dark Mage.",
+    "type": "kill",
+    "target": "dark_mage",
+    "target_count": 1,
+    "reward": {
+      "experience": 175,
+      "gold": 100,
+      "items": ["Dark Crystal", "Ring of Power"]
+    },
+    "area": "deep_woods",
+    "unlock_level": 5,
+    "prerequisites": ["orc_invasion"]
+  },
+  "troll_slayer": {
+    "name": "Troll Bane",
+    "description": "A massive troll has been terrorizing travelers. Defeat the troll in the Underground Tombs.",
+    "type": "kill",
+    "target": "troll",
+    "target_count": 1,
+    "reward": {
+      "experience": 250,
+      "gold": 150,
+      "items": ["Troll Club", "Large Health Potion", "Boots of Speed"]
+    },
+    "area": "underground_tombs",
+    "unlock_level": 6,
+    "prerequisites": ["undead_horde"]
+  },
+  "dragon_slayer": {
+    "name": "Dragon's End",
+    "description": "The legendary Fire Dragon terrorizes the land. Only a true hero can defeat this ancient evil.",
+    "type": "kill",
+    "target": "fire_dragon",
+    "target_count": 1,
+    "reward": {
+      "experience": 500,
+      "gold": 500,
+      "items": ["Dragon Scale Armor", "Fire Gem", "Dragon Heart"]
+    },
+    "area": "dragon_lair",
+    "unlock_level": 8,
+    "prerequisites": ["crystal_guardian", "troll_slayer"]
+  },
+  "treasure_hunter": {
+    "name": "Hidden Riches",
+    "description": "Collect valuable materials: 10 Orc Teeth, 5 Wolf Fangs, and 3 Dark Crystals.",
+    "type": "collect",
+    "target": "materials",
+    "target_count": {
+      "Orc Tooth": 10,
+      "Wolf Fang": 5,
+      "Dark Crystal": 3
+    },
+    "reward": {
+      "experience": 200,
+      "gold": 200,
+      "items": ["Ring of Power", "Large Health Potion"]
+    },
+    "area": "any",
+    "unlock_level": 3,
+    "prerequisites": ["tutorial_quest"]
+  },
+  "merchant_favor": {
+    "name": "Trading Favor",
+    "description": "Help the merchant by bringing 5 Gold Coins and 3 Iron Swords to prove your worth.",
+    "type": "collect",
+    "target": "trade_goods",
+    "target_count": {
+      "Gold Coin": 5,
+      "Iron Sword": 3
+    },
+    "reward": {
+      "experience": 100,
+      "gold": 150,
+      "items": ["Health Potion", "Mana Potion"]
+    },
+    "area": "starting_village",
+    "unlock_level": 2,
+    "prerequisites": ["tutorial_quest"]
+  },
+  "shadow_plague": {
+    "name": "Shadow Corruption",
+    "description": "Dark shadows have infected the moonlit glade. Defeat 3 shadow knights to cleanse the area.",
+    "type": "kill",
+    "target": "shadow_knight",
+    "target_count": 3,
+    "reward": {
+      "experience": 150,
+      "gold": 90,
+      "items": ["Shadow Blade", "Crown of Wisdom"]
+    },
+    "area": "moonlit_glade",
+    "unlock_level": 4,
+    "prerequisites": ["orc_invasion"]
+  },
+  "arcane_scholar": {
+    "name": "Mage's Quest",
+    "description": "Gather 3 Fire Gems and 2 Ice Crystals for the arcane scholar in the Spire of Sorcery.",
+    "type": "collect",
+    "target": "arcane_materials",
+    "target_count": {
+      "Fire Gem": 3,
+      "Ice Crystal": 2
+    },
+    "reward": {
+      "experience": 180,
+      "gold": 120,
+      "items": ["Ethereal Staff", "Ring of Mana"]
+    },
+    "area": "spire_of_sorcery",
+    "unlock_level": 5,
+    "prerequisites": ["dark_mage_hunt"]
+  },
+  "void_walker": {
+    "name": "Into the Void",
+    "description": "Brave the Void Cavern and defeat all corrupted beings within (3 encounters).",
+    "type": "kill",
+    "target": "shadow_knight",
+    "target_count": 3,
+    "reward": {
+      "experience": 250,
+      "gold": 180,
+      "items": ["Obsidian Edge", "Dark Crystal", "Large Health Potion"]
+    },
+    "area": "void_cavern",
+    "unlock_level": 6,
+    "prerequisites": ["shadow_plague"]
+  },
+  "temple_protector": {
+    "name": "Obsidian Oath",
+    "description": "Cleanse the Obsidian Temple by defeating 4 undead abominations.",
+    "type": "kill",
+    "target": "skeleton",
+    "target_count": 4,
+    "reward": {
+      "experience": 160,
+      "gold": 110,
+      "items": ["Chain Mail", "Plate Armor"]
+    },
+    "area": "obsidian_temple",
+    "unlock_level": 5,
+    "prerequisites": ["undead_horde"]
+  },
+  "frost_mage": {
+    "name": "Ice Master",
+    "description": "Defeat 4 Ice Elementals and collect 2 Crystalline Wands.",
+    "type": "kill",
+    "target": "ice_elemental",
+    "target_count": 4,
+    "reward": {
+      "experience": 200,
+      "gold": 140,
+      "items": ["Crystalline Wand", "Mystic Robes", "Boots of Speed"]
+    },
+    "area": "crystal_caves",
+    "unlock_level": 5,
+    "prerequisites": ["crystal_guardian"]
+  },
+  "inferno_slayer": {
+    "name": "Flames of Wrath",
+    "description": "Defeat 3 Fire Wraiths to prevent their invasion.",
+    "type": "kill",
+    "target": "fire_wraith",
+    "target_count": 3,
+    "reward": {
+      "experience": 120,
+      "gold": 80,
+      "items": ["Spellsword", "Fire Gem"]
+    },
+    "area": "moonlit_glade",
+    "unlock_level": 4,
+    "prerequisites": ["shadow_plague"]
+  },
+  "shadow_bow": {
+    "name": "Archer's Training",
+    "description": "Face 5 Goblin Archers in the Deep Woods to master ranged combat.",
+    "type": "kill",
+    "target": "goblin_archer",
+    "target_count": 5,
+    "reward": {
+      "experience": 90,
+      "gold": 50,
+      "items": ["Ninja Kunai", "Ring of Precision"]
+    },
+    "area": "deep_woods",
+    "unlock_level": 3,
+    "prerequisites": ["forest_cleaning"]
+  }
+}
