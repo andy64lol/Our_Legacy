@@ -8,6 +8,7 @@ import json
 import os
 import random
 import sys
+import time
 from datetime import datetime
 from typing import Dict, List, Any, Optional
 
@@ -31,7 +32,6 @@ def clear_screen():
         os.system('cls')
     else:
         os.system('clear')
-
 
 def ask(prompt: str) -> str:
     """Prompt the user for input, then clear the screen after Enter is pressed.
@@ -91,7 +91,10 @@ class Character:
         self.base_speed = self.speed
 
         # Equipped items are stored by slot name
-        self.equipment = {"weapon": None, "armor": None, "accessory": None}
+        self.equipment: Dict[str, Optional[str]] = {"weapon": None, "armor": None, "accessory": None}
+        
+        # Battle state
+        self.defending = False
         
     def is_alive(self) -> bool:
         """Check if character is alive"""
@@ -130,7 +133,6 @@ class Character:
             self.mp = self.max_mp
             
         print(f"{Colors.GREEN}{Colors.BOLD}Level Up!{Colors.END} You are now level {self.level}!")
-        self.display_stats()
     
     def display_stats(self):
         """Display character statistics"""
@@ -144,9 +146,9 @@ class Character:
         print(f"Gold: {Colors.GOLD}{self.gold}{Colors.END}")
         # Equipped items
         print(f"{Colors.CYAN}Equipped:{Colors.END}")
-        print(f"  Weapon: {self.equipment.get('weapon')}")
-        print(f"  Armor: {self.equipment.get('armor')}")
-        print(f"  Accessory: {self.equipment.get('accessory')}")
+        print(f"  Weapon: {self.equipment.get('weapon', 'None')}")
+        print(f"  Armor: {self.equipment.get('armor', 'None')}")
+        print(f"  Accessory: {self.equipment.get('accessory', 'None')}")
 
     def update_stats_from_equipment(self, items_data: Dict[str, Any]):
         """Recalculate stats from base stats plus any equipped item bonuses."""
@@ -196,7 +198,7 @@ class Character:
 
         # Check requirements (simple level/class checks)
         reqs = item.get("requirements", {})
-        if reqs.get("level") and self.level < reqs.get("level"):
+        if reqs.get("level") and self.level < reqs.get("level", 0):
             return False
         if reqs.get("class") and reqs.get("class") != self.character_class:
             return False
@@ -243,15 +245,17 @@ class Game:
     """Main game class"""
     
     def __init__(self):
-        self.player = None
+        self.player: Optional[Character] = None
         self.current_area = "starting_village"
-        self.enemies_data = {}
-        self.areas_data = {}
-        self.items_data = {}
-        self.missions_data = {}
-        self.bosses_data = {}
-        self.classes_data = {}
-        self.current_missions = []
+        self.enemies_data: Dict[str, Any] = {}
+        self.areas_data: Dict[str, Any] = {}
+        self.items_data: Dict[str, Any] = {}
+        self.missions_data: Dict[str, Any] = {}
+        self.bosses_data: Dict[str, Any] = {}
+        self.classes_data: Dict[str, Any] = {}
+        self.spells_data: Dict[str, Any] = {}
+        self.mission_progress: Dict[str, Dict] = {}  # mission_id -> {current_count, target_count, completed, type}
+        self.completed_missions: List[str] = []
         
         # Load game data
         self.load_game_data()
@@ -259,26 +263,26 @@ class Game:
     def load_game_data(self):
         """Load all game data from JSON files"""
         try:
-            with open('/home/andy64lolxd/Our_Legacy/data/enemies.json', 'r') as f:
+            with open('data/enemies.json', 'r') as f:
                 self.enemies_data = json.load(f)
-            with open('/home/andy64lolxd/Our_Legacy/data/areas.json', 'r') as f:
+            with open('data/areas.json', 'r') as f:
                 self.areas_data = json.load(f)
-            with open('/home/andy64lolxd/Our_Legacy/data/items.json', 'r') as f:
+            with open('data/items.json', 'r') as f:
                 self.items_data = json.load(f)
-            with open('/home/andy64lolxd/Our_Legacy/data/missions.json', 'r') as f:
+            with open('data/missions.json', 'r') as f:
                 self.missions_data = json.load(f)
-            with open('/home/andy64lolxd/Our_Legacy/data/bosses.json', 'r') as f:
+            with open('data/bosses.json', 'r') as f:
                 self.bosses_data = json.load(f)
-            with open('/home/andy64lolxd/Our_Legacy/data/classes.json', 'r') as f:
+            with open('data/classes.json', 'r') as f:
                 self.classes_data = json.load(f)
-            with open('/home/andy64lolxd/Our_Legacy/data/spells.json', 'r') as f:
+            with open('data/spells.json', 'r') as f:
                 self.spells_data = json.load(f)
         except FileNotFoundError as e:
             print(f"Error loading game data: {e}")
             print("Please ensure all data files exist in the data/ directory.")
             sys.exit(1)
     
-    def display_welcome(self):
+    def display_welcome(self) -> str:
         """Display welcome screen"""
         print(f"{Colors.CYAN}{Colors.BOLD}")
         print("=" * 60)
@@ -289,7 +293,55 @@ class Game:
         print("Welcome, adventurer! Your legacy awaits...")
         print("Choose your path wisely, for every decision shapes your destiny.")
         print()
+        
+        print(f"{Colors.BOLD}=== MAIN MENU ==={Colors.END}")
+        print("1. New Game")
+        print("2. Load Game")
+        print("3. Quit")
+        
+        while True:
+            choice = ask("Choose an option (1-3): ")
+            if choice == "1":
+                return "new_game"
+            elif choice == "2":
+                return "load_game"
+            elif choice == "3":
+                print("Thank you for playing Our Legacy!")
+                clear_screen()
+                sys.exit(0)
+            else:
+                print("Invalid choice. Please enter 1, 2, or 3.")
     
+    def display_available_classes(self):
+        """Display all available character classes from classes.json"""
+        print("\nChoose your class:")
+        
+        color_map = [
+            Colors.RED, Colors.BLUE, Colors.GREEN, 
+            Colors.YELLOW, Colors.MAGENTA, Colors.CYAN,
+            Colors.WHITE, Colors.GOLD
+        ]
+        
+        for i, (class_name, class_data) in enumerate(self.classes_data.items(), 1):
+            color = color_map[(i-1) % len(color_map)]
+            description = class_data.get("description", "No description available")
+            print(f"{color}{i}. {class_name}{Colors.END} - {description}")
+    
+    def select_class(self) -> str:
+        """Allow user to select a class from available options"""
+        class_names = list(self.classes_data.keys())
+        
+        while True:
+            choice = ask(f"Enter class choice (1-{len(class_names)}): ")
+            if choice.isdigit():
+                choice_idx = int(choice) - 1
+                if 0 <= choice_idx < len(class_names):
+                    return class_names[choice_idx]
+                else:
+                    print(f"Invalid choice. Please enter a number between 1 and {len(class_names)}.")
+            else:
+                print("Invalid input. Please enter a number.")
+
     def create_character(self):
         """Create a new character"""
         print(f"{Colors.BOLD}Character Creation{Colors.END}")
@@ -299,24 +351,10 @@ class Game:
         if not name:
             name = "Hero"
         
-        print("\nChoose your class:")
-        print(f"{Colors.RED}1. Warrior{Colors.END} - Strong melee fighter with high HP and defense")
-        print(f"{Colors.BLUE}2. Mage{Colors.END} - Powerful spellcaster with high MP and magical abilities")
-        print(f"{Colors.GREEN}3. Rogue{Colors.END} - Agile fighter with high speed and critical strike chance")
+        # Use dynamic class selection instead of hardcoded options
+        self.display_available_classes()
         
-        while True:
-            choice = ask("Enter class choice (1-3): ")
-            if choice == "1":
-                character_class = "Warrior"
-                break
-            elif choice == "2":
-                character_class = "Mage"
-                break
-            elif choice == "3":
-                character_class = "Rogue"
-                break
-            else:
-                print("Invalid choice. Please enter 1, 2, or 3.")
+        character_class = self.select_class()
         
         self.player = Character(name, character_class, self.classes_data)
         print(f"\n{Colors.GREEN}Welcome, {name} the {character_class}!{Colors.END}")
@@ -324,11 +362,12 @@ class Game:
         # Give starting items based on class data
         self.give_starting_items(character_class)
         
-        self.player.display_stats()
+        if self.player:
+            self.player.display_stats()
     
     def give_starting_items(self, character_class: str):
         """Grant starting items based on character class from classes.json"""
-        if character_class not in self.classes_data:
+        if not self.player or character_class not in self.classes_data:
             return
         
         class_info = self.classes_data[character_class]
@@ -366,14 +405,18 @@ class Game:
         print("7. Rest")
         print("8. Save Game")
         print("9. Load Game")
-        print("10. Quit")
-        
-        choice = ask("Choose an option (1-10): ")
+        print("10. Claim Rewards")
+        print("11. Quit")
+
+        choice = ask("Choose an option (1-11): ")
         
         if choice == "1":
             self.explore()
         elif choice == "2":
-            self.player.display_stats()
+            if self.player:
+                self.player.display_stats()
+            else:
+                print("No character created yet.")
         elif choice == "3":
             self.travel()
         elif choice == "4":
@@ -389,12 +432,18 @@ class Game:
         elif choice == "9":
             self.load_game()
         elif choice == "10":
+            self.claim_rewards()  # Fixed: was calling quit_game()
+        elif choice == "11":
             self.quit_game()
         else:
             print("Invalid choice. Please try again.")
     
     def explore(self):
         """Explore the current area"""
+        if not self.player:
+            print("No character created yet. Please create a character first.")
+            return
+            
         area_data = self.areas_data.get(self.current_area, {})
         area_name = area_data.get("name", "Unknown Area")
         
@@ -414,6 +463,9 @@ class Game:
     
     def random_encounter(self):
         """Handle random encounter"""
+        if not self.player:
+            return
+            
         area_data = self.areas_data.get(self.current_area, {})
         possible_enemies = area_data.get("possible_enemies", [])
         
@@ -431,6 +483,9 @@ class Game:
     
     def battle(self, enemy: Enemy):
         """Handle turn-based battle"""
+        if not self.player:
+            return
+            
         print(f"\n{Colors.BOLD}=== BATTLE ==={Colors.END}")
         print(f"VS {enemy.name}")
         
@@ -439,13 +494,15 @@ class Game:
         
         while self.player.is_alive() and enemy.is_alive():
             if player_first:
-                self.player_turn(enemy)
+                if not self.player_turn(enemy):
+                    break
                 if enemy.is_alive():
                     self.enemy_turn(enemy)
             else:
                 self.enemy_turn(enemy)
                 if self.player.is_alive():
-                    self.player_turn(enemy)
+                    if not self.player_turn(enemy):
+                        break
             
             # Display current HP
             print(f"\n{Colors.RED}{self.player.name}: {self.player.hp}/{self.player.max_hp} HP{Colors.END}")
@@ -465,11 +522,16 @@ class Game:
             self.player.gain_experience(exp_reward)
             self.player.gold += gold_reward
             
+            # Update mission progress for kill
+            self.update_mission_progress('kill', enemy.name)
+            
             # Loot drop
             if enemy.loot_table and random.random() < 0.5:  # 50% chance for loot
                 loot = random.choice(enemy.loot_table)
                 self.player.inventory.append(loot)
                 print(f"{Colors.YELLOW}Loot acquired: {loot}!{Colors.END}")
+                # Update mission progress for collection
+                self.update_mission_progress('collect', loot)
         else:
             print(f"\n{Colors.RED}You were defeated by the {enemy.name}...{Colors.END}")
             # Respawn penalty
@@ -478,15 +540,18 @@ class Game:
             print("You respawn at the starting village.")
             self.current_area = "starting_village"
     
-    def player_turn(self, enemy: Enemy):
-        """Player's turn in battle"""
+    def player_turn(self, enemy: Enemy) -> bool:
+        """Player's turn in battle. Returns False if player fled."""
+        if not self.player:
+            return True
+            
         print(f"\n{Colors.BOLD}Your turn!{Colors.END}")
         print("1. Attack")
         print("2. Use Item")
         print("3. Defend")
         print("4. Flee")
         # Can only cast spells if weapon is magic-capable
-        weapon_name = self.player.equipment.get('weapon') if self.player else None
+        weapon_name: Optional[str] = self.player.equipment.get('weapon')
         weapon_data = self.items_data.get(weapon_name, {}) if weapon_name else {}
         can_cast = bool(weapon_data.get('magic_weapon'))
         if can_cast:
@@ -520,8 +585,11 @@ class Game:
     
     def enemy_turn(self, enemy: Enemy):
         """Enemy's turn in battle"""
+        if not self.player:
+            return
+            
         damage = enemy.attack
-        if hasattr(self.player, 'defending') and self.player.defending:
+        if self.player.defending:
             damage = damage // 2
             self.player.defending = False
         
@@ -530,6 +598,9 @@ class Game:
     
     def use_item_in_battle(self):
         """Use item during battle"""
+        if not self.player:
+            return
+            
         consumables = [item for item in self.player.inventory if item in self.items_data and 
                       self.items_data[item].get("type") == "consumable"]
         
@@ -553,11 +624,19 @@ class Game:
         except ValueError:
             print("Invalid input!")
 
-    def cast_spell(self, enemy: Enemy, weapon_name: str):
+    def cast_spell(self, enemy: Enemy, weapon_name: Optional[str] = None):
         """Cast a spell from the player's equipped magic weapon."""
+        if not self.player:
+            return
+            
+        # Handle case where no weapon is equipped
+        if not weapon_name:
+            print("You need to equip a magic weapon to cast spells.")
+            return
+            
         # Gather spells allowed by the equipped weapon
         available = []
-        for sname, sdata in getattr(self, 'spells_data', {}).items():
+        for sname, sdata in self.spells_data.items():
             allowed = sdata.get('allowed_weapons', [])
             if weapon_name in allowed:
                 available.append((sname, sdata))
@@ -568,7 +647,7 @@ class Game:
 
         print("Available spells:")
         for i, (sname, sdata) in enumerate(available, 1):
-            print(f"{i}. {sname} - MP {sdata.get('mp_cost')} - {sdata.get('description')}")
+            print(f"{i}. {sname} - MP {sdata.get('mp_cost', 0)} - {sdata.get('description', '')}")
 
         choice = ask(f"Choose spell (1-{len(available)}) or press Enter to cancel: ")
         if not choice or not choice.isdigit():
@@ -600,6 +679,9 @@ class Game:
     
     def use_item(self, item: str):
         """Use an item"""
+        if not self.player:
+            return
+            
         item_data = self.items_data.get(item, {})
         item_type = item_data.get("type")
         
@@ -617,6 +699,10 @@ class Game:
     
     def view_inventory(self):
         """View character inventory"""
+        if not self.player:
+            print("No character created yet.")
+            return
+            
         print(f"\n{Colors.BOLD}=== INVENTORY ==={Colors.END}")
         print(f"Gold: {Colors.GOLD}{self.player.gold}{Colors.END}")
         
@@ -650,9 +736,9 @@ class Game:
             if choice.lower() == 'e':
                 print("\nEquipable items:")
                 for i, item in enumerate(equipable, 1):
-                    print(f"{i}. {item} - {self.items_data[item].get('description','')}")
+                    print(f"{i}. {item} - {self.items_data.get(item, {}).get('description','')}")
                 sel = ask(f"Choose item to equip (1-{len(equipable)}) or press Enter: ")
-                if sel.isdigit():
+                if sel and sel.isdigit():
                     idx = int(sel) - 1
                     if 0 <= idx < len(equipable):
                         item_name = equipable[idx]
@@ -664,7 +750,7 @@ class Game:
             elif choice.lower() == 'u':
                 print("\nCurrently equipped:")
                 for slot in ('weapon', 'armor', 'accessory'):
-                    print(f"{slot.title()}: {self.player.equipment.get(slot)}")
+                    print(f"{slot.title()}: {self.player.equipment.get(slot, 'None')}")
                 slot_choice = ask("Enter slot to unequip (weapon/armor/accessory) or press Enter: ")
                 if slot_choice in ('weapon', 'armor', 'accessory'):
                     removed = self.player.unequip(slot_choice, self.items_data)
@@ -674,35 +760,215 @@ class Game:
                         print("Nothing to unequip from that slot.")
     
     def view_missions(self):
-        """View available and active missions"""
-        print(f"\n{Colors.BOLD}=== MISSIONS ==={Colors.END}")
+        """View available and active missions with pagination"""
+        page = 0
+        per_page = 10
         
-        if not self.current_missions:
-            print("No active missions.")
-        
-        available_missions = [mid for mid in self.missions_data.keys() 
-                            if mid not in self.current_missions]
-        
-        print(f"\n{Colors.GREEN}Available Missions:{Colors.END}")
-        for i, mission_id in enumerate(available_missions, 1):
-            mission = self.missions_data[mission_id]
-            print(f"{i}. {mission['name']} - {mission.get('description', 'No description')}")
-        
-        if available_missions:
-            choice = ask(f"\nAccept a mission? (1-{len(available_missions)}) or press Enter to continue: ")
-            if choice and choice.isdigit():
-                mission_index = int(choice) - 1
-                if 0 <= mission_index < len(available_missions):
-                    mission_id = available_missions[mission_index]
+        while True:
+            clear_screen()
+            print(f"\n{Colors.BOLD}=== MISSIONS ==={Colors.END}")
+            
+            # Active Missions
+            active_missions = [mid for mid in self.mission_progress.keys() if not self.mission_progress[mid].get('completed', False)]
+            print(f"\n{Colors.CYAN}Active Missions:{Colors.END}")
+            if not active_missions:
+                print("No active missions.")
+            else:
+                for mid in active_missions:
+                    mission = self.missions_data.get(mid, {})
+                    progress = self.mission_progress[mid]
+                    if progress['type'] == 'kill':
+                        print(f"- {mission.get('name')}: {progress['current_count']}/{progress['target_count']} killed")
+                    elif progress['type'] == 'collect':
+                        if 'current_counts' in progress:
+                            counts = [f"{item}: {c}/{progress['target_counts'][item]}" for item, c in progress['current_counts'].items()]
+                            print(f"- {mission.get('name')}: {', '.join(counts)}")
+                        else:
+                            print(f"- {mission.get('name')}: {progress['current_count']}/{progress['target_count']} collected")
+
+            # Available Missions (those not accepted and not completed)
+            available_missions = [mid for mid in self.missions_data.keys() 
+                                if mid not in self.mission_progress and mid not in self.completed_missions]
+            
+            total_pages = (len(available_missions) + per_page - 1) // per_page
+            if total_pages == 0: total_pages = 1
+            
+            start_idx = page * per_page
+            end_idx = start_idx + per_page
+            current_page_missions = available_missions[start_idx:end_idx]
+            
+            print(f"\n{Colors.GREEN}Available Missions (Page {page + 1}/{total_pages}):{Colors.END}")
+            for i, mission_id in enumerate(current_page_missions, 1):
+                mission = self.missions_data.get(mission_id, {})
+                print(f"{i}. {mission.get('name', 'Unknown')} - {mission.get('description', 'No description')}")
+            
+            print(f"\n{Colors.YELLOW}Options:{Colors.END}")
+            if total_pages > 1:
+                if page > 0: print("P. Previous Page")
+                if page < total_pages - 1: print("N. Next Page")
+            
+            if current_page_missions:
+                print(f"1-{len(current_page_missions)}. Accept Mission")
+            print("B. Back to Menu")
+            
+            choice = ask("\nChoose an option: ").upper()
+            
+            if choice == 'B' or not choice:
+                break
+            elif choice == 'N' and page < total_pages - 1:
+                page += 1
+            elif choice == 'P' and page > 0:
+                page -= 1
+            elif choice.isdigit():
+                idx = int(choice) - 1
+                if 0 <= idx < len(current_page_missions):
+                    mission_id = current_page_missions[idx]
                     self.accept_mission(mission_id)
+                else:
+                    print("Invalid mission number.")
+                    time.sleep(1)
     
     def accept_mission(self, mission_id: str):
         """Accept a mission"""
-        self.current_missions.append(mission_id)
-        print(f"Mission accepted: {self.missions_data[mission_id]['name']}")
+        if mission_id not in self.mission_progress:
+            mission = self.missions_data.get(mission_id, {})
+            
+            # Initialize progress tracking for this mission
+            if mission:
+                mission_type = mission.get('type', 'kill')
+                target_count = mission.get('target_count', 1)
+                
+                if mission_type == 'collect' and isinstance(target_count, dict):
+                    # For collect missions with multiple items
+                    self.mission_progress[mission_id] = {
+                        'current_counts': {item: 0 for item in target_count.keys()},
+                        'target_counts': target_count,
+                        'completed': False,
+                        'type': mission_type
+                    }
+                else:
+                    # For kill missions or single item collect missions
+                    self.mission_progress[mission_id] = {
+                        'current_count': 0,
+                        'target_count': target_count,
+                        'completed': False,
+                        'type': mission_type
+                    }
+                
+                print(f"Mission accepted: {mission.get('name', 'Unknown')}")
+                time.sleep(1)
+            else:
+                print("Error: Mission data not found.")
+                time.sleep(1)
+        else:
+            print("Mission already accepted!")
+            time.sleep(1)
+
+    def update_mission_progress(self, update_type: str, target: str, count: int = 1):
+        """Update mission progress for a specific target"""
+        for mid, progress in self.mission_progress.items():
+            if progress.get('completed', False):
+                continue
+                
+            mission = self.missions_data.get(mid, {})
+            
+            if progress['type'] == 'kill' and update_type == 'kill':
+                target_enemy = mission.get('target', '').lower()
+                if target_enemy == target.lower():
+                    progress['current_count'] += count
+                    print(f"{Colors.CYAN}[Mission Progress] {mission.get('name')}: {progress['current_count']}/{progress['target_count']}{Colors.END}")
+                    
+                    if progress['current_count'] >= progress['target_count']:
+                        self.complete_mission(mid)
+                        
+            elif progress['type'] == 'collect' and update_type == 'collect':
+                # Handle collection missions
+                if 'current_counts' in progress:
+                    # Multi-item collection
+                    if target in progress['current_counts']:
+                        progress['current_counts'][target] += count
+                        print(f"{Colors.CYAN}[Mission Progress] {mission.get('name')} - {target}: {progress['current_counts'][target]}/{progress['target_counts'][target]}{Colors.END}")
+                        
+                        # Check if all items are collected
+                        all_collected = all(progress['current_counts'][item] >= progress['target_counts'][item] for item in progress['target_counts'])
+                        if all_collected:
+                            self.complete_mission(mid)
+                else:
+                    # Single item collection
+                    target_item = mission.get('target', '')
+                    if target_item == target:
+                        progress['current_count'] += count
+                        print(f"{Colors.CYAN}[Mission Progress] {mission.get('name')}: {progress['current_count']}/{progress['target_count']}{Colors.END}")
+                        
+                        if progress['current_count'] >= progress['target_count']:
+                            self.complete_mission(mid)
+
+    def complete_mission(self, mission_id: str):
+        """Mark a mission as completed and notify player"""
+        if mission_id in self.mission_progress:
+            self.mission_progress[mission_id]['completed'] = True
+            mission = self.missions_data.get(mission_id, {})
+            print(f"\n{Colors.GOLD}{Colors.BOLD}!!! MISSION COMPLETE: {mission.get('name')} !!!{Colors.END}")
+            print(f"{Colors.YELLOW}You can now claim your rewards from the menu.{Colors.END}")
+            time.sleep(2)
+
+    def claim_rewards(self):
+        """Claim rewards for completed missions"""
+        if not self.player:
+            print("No character created yet.")
+            return
+
+        completed_missions = [mid for mid, progress in self.mission_progress.items() if progress.get('completed', False)]
+        if not completed_missions:
+            print("No completed missions to claim rewards for.")
+            return
+
+        print(f"\n{Colors.BOLD}=== CLAIM REWARDS ==={Colors.END}")
+        print("Completed missions:")
+        for i, mid in enumerate(completed_missions, 1):
+            mission = self.missions_data.get(mid, {})
+            reward = mission.get('reward', {})
+            exp = reward.get('experience', 0)
+            gold = reward.get('gold', 0)
+            items = reward.get('items', [])
+            print(f"{i}. {mission.get('name')} - Exp: {exp}, Gold: {gold}, Items: {', '.join(items) if items else 'None'}")
+
+        choice = ask(f"Claim rewards for mission (1-{len(completed_missions)}) or press Enter to cancel: ")
+        if choice and choice.isdigit():
+            idx = int(choice) - 1
+            if 0 <= idx < len(completed_missions):
+                mission_id = completed_missions[idx]
+                mission = self.missions_data.get(mission_id, {})
+                reward = mission.get('reward', {})
+
+                # Apply rewards
+                exp = reward.get('experience', 0)
+                gold = reward.get('gold', 0)
+                items = reward.get('items', [])
+
+                self.player.gain_experience(exp)
+                self.player.gold += gold
+                for item in items:
+                    self.player.inventory.append(item)
+
+                # Remove from progress and add to completed
+                del self.mission_progress[mission_id]
+                self.completed_missions.append(mission_id)
+
+                print(f"\n{Colors.GREEN}Rewards claimed!{Colors.END}")
+                print(f"Gained {Colors.MAGENTA}{exp} experience{Colors.END}")
+                print(f"Gained {Colors.GOLD}{gold} gold{Colors.END}")
+                if items:
+                    print(f"Received items: {', '.join(items)}")
+            else:
+                print("Invalid choice.")
     
     def visit_shop(self):
         """Visit the shop - displays all items for sale"""
+        if not self.player:
+            print("No character created yet.")
+            return
+            
         print(f"\n{Colors.BOLD}=== SHOP ==={Colors.END}")
         print("Welcome to the shop! What would you like to buy?")
         
@@ -761,6 +1027,7 @@ class Game:
                         self.player.gold -= price
                         self.player.inventory.append(item_name)
                         print(f"Purchased {item_name} for {price} gold!")
+                        self.update_mission_progress('collect', item_name)
                     else:
                         print("Not enough gold!")
                 else:
@@ -771,6 +1038,10 @@ class Game:
 
     def travel(self):
         """Travel to connected areas from the current area."""
+        if not self.player:
+            print("No character created yet.")
+            return
+            
         current = self.current_area
         area_data = self.areas_data.get(current, {})
         connections = area_data.get("connections", [])
@@ -797,45 +1068,52 @@ class Game:
                 if random.random() < 0.3:
                     self.random_encounter()
 
-        def shop_sell(self):
-            """Sell items from the player's inventory to the shop."""
-            sellable = [it for it in self.player.inventory]
-            if not sellable:
-                print("You have nothing to sell.")
-                return
+    def shop_sell(self):
+        """Sell items from the player's inventory to the shop."""
+        if not self.player:
+            return
+            
+        sellable = [it for it in self.player.inventory]
+        if not sellable:
+            print("You have nothing to sell.")
+            return
 
-            print("\nYour inventory:")
-            for i, item in enumerate(sellable, 1):
-                equip_marker = ''
-                for slot, eq in self.player.equipment.items():
-                    if eq == item:
-                        equip_marker = ' (equipped)'
-                price = self.items_data.get(item, {}).get('price', 0)
-                sell_price = price // 2 if price else 0
-                print(f"{i}. {item}{equip_marker} - Sell for {sell_price} gold")
-
-            choice = ask(f"Choose item to sell (1-{len(sellable)}) or press Enter to cancel: ")
-            if not choice or not choice.isdigit():
-                return
-            idx = int(choice) - 1
-            if not (0 <= idx < len(sellable)):
-                print("Invalid selection.")
-                return
-
-            item = sellable[idx]
-            # Prevent selling equipped items
-            if item in self.player.equipment.values():
-                print("Unequip the item before selling it.")
-                return
-
+        print("\nYour inventory:")
+        for i, item in enumerate(sellable, 1):
+            equip_marker = ''
+            for slot, eq in self.player.equipment.items():
+                if eq == item:
+                    equip_marker = ' (equipped)'
             price = self.items_data.get(item, {}).get('price', 0)
             sell_price = price // 2 if price else 0
-            self.player.inventory.remove(item)
-            self.player.gold += sell_price
-            print(f"Sold {item} for {sell_price} gold.")
+            print(f"{i}. {item}{equip_marker} - Sell for {sell_price} gold")
+
+        choice = ask(f"Choose item to sell (1-{len(sellable)}) or press Enter to cancel: ")
+        if not choice or not choice.isdigit():
+            return
+        idx = int(choice) - 1
+        if not (0 <= idx < len(sellable)):
+            print("Invalid selection.")
+            return
+
+        item = sellable[idx]
+        # Prevent selling equipped items
+        if item in self.player.equipment.values():
+            print("Unequip the item before selling it.")
+            return
+
+        price = self.items_data.get(item, {}).get('price', 0)
+        sell_price = price // 2 if price else 0
+        self.player.inventory.remove(item)
+        self.player.gold += sell_price
+        print(f"Sold {item} for {sell_price} gold.")
     
     def rest(self):
         """Rest in a safe area to recover HP and MP for gold."""
+        if not self.player:
+            print("No character created yet.")
+            return
+            
         area_data = self.areas_data.get(self.current_area, {})
         area_name = area_data.get("name", "Unknown Area")
         can_rest = area_data.get("can_rest", False)
@@ -873,6 +1151,10 @@ class Game:
     
     def save_game(self):
         """Save the game"""
+        if not self.player:
+            print("No character to save.")
+            return
+            
         save_data = {
             "player": {
                 "name": self.player.name,
@@ -891,19 +1173,24 @@ class Game:
                 "gold": self.player.gold
             },
             "current_area": self.current_area,
-            "current_missions": self.current_missions,
+            "mission_progress": self.mission_progress,
+            "completed_missions": self.completed_missions,
             "save_time": datetime.now().isoformat()
         }
         
-        filename = f"/home/andy64lolxd/Our_Legacy/data/saves/{self.player.name}_save.json"
+        saves_dir = "data/saves"
+        # Create the saves directory if it doesn't exist
+        os.makedirs(saves_dir, exist_ok=True)
+        
+        filename = f"{saves_dir}/{self.player.name}_save.json"
         with open(filename, 'w') as f:
-            json.dump(save_data, f, indent=2)
+                json.dump(save_data, f, indent=2)
         
         print(f"Game saved successfully!")
     
     def load_game(self):
         """Load a saved game"""
-        saves_dir = "/home/andy64lolxd/Our_Legacy/data/saves"
+        saves_dir = "data/saves"
         if not os.path.exists(saves_dir):
             print("No save files found.")
             return
@@ -948,10 +1235,36 @@ class Game:
                     self.player.gold = player_data["gold"]
                     
                     self.current_area = save_data["current_area"]
-                    self.current_missions = save_data["current_missions"]
+                    
+                    # Mission system load with backward compatibility
+                    self.mission_progress = save_data.get("mission_progress", {})
+                    self.completed_missions = save_data.get("completed_missions", [])
+                    
+                    # Backward compatibility for old saves using current_missions
+                    if not self.mission_progress and "current_missions" in save_data:
+                        for mid in save_data["current_missions"]:
+                            mission = self.missions_data.get(mid)
+                            if mission:
+                                mission_type = mission.get('type', 'kill')
+                                target_count = mission.get('target_count', 1)
+                                if mission_type == 'collect' and isinstance(target_count, dict):
+                                    self.mission_progress[mid] = {
+                                        'current_counts': {item: 0 for item in target_count.keys()},
+                                        'target_counts': target_count,
+                                        'completed': False,
+                                        'type': mission_type
+                                    }
+                                else:
+                                    self.mission_progress[mid] = {
+                                        'current_count': 0,
+                                        'target_count': target_count,
+                                        'completed': False,
+                                        'type': mission_type
+                                    }
                     
                     print(f"Game loaded successfully! Welcome back, {self.player.name}!")
-                    self.player.display_stats()
+                    if self.player:
+                        self.player.display_stats()
                     
                 except Exception as e:
                     print(f"Error loading save file: {e}")
@@ -967,13 +1280,19 @@ class Game:
             print("Progress saved!")
         print("Thank you for playing Our Legacy!")
         print("Your legacy will be remembered...")
-        clear_screen()
         sys.exit(0)
     
     def run(self):
         """Main game loop"""
-        self.display_welcome()
-        self.create_character()
+        choice = self.display_welcome()
+        
+        if choice == "new_game":
+            self.create_character()
+        elif choice == "load_game":
+            self.load_game()
+            if not self.player:
+                print("No game loaded. Starting new game...")
+                self.create_character()
         
         # Main game loop
         while True:
