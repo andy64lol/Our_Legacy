@@ -8,7 +8,7 @@
     "rarity": "common"
   },
   "Mana Potion": {
-    "type": "consumable", 
+    "type": "consumable",
     "description": "Restores 30 MP for spellcasting",
     "effect": "mp_restore",
     "value": 30,
@@ -254,7 +254,7 @@
   },
   "Obsidian Edge": {
     "type": "weapon",
-    "description": "A legendary legendary blade of pure shadow and power",
+    "description": "A legendary blade of pure shadow and power",
     "attack_bonus": 18,
     "speed_bonus": 8,
     "defense_bonus": 2,
@@ -425,5 +425,125 @@
     "price": 220,
     "rarity": "legendary",
     "requirements": {"level": 5}
+  },
+  "Assassin's Blade": {
+    "type": "weapon",
+    "description": "A razor-sharp dagger designed for silent kills",
+    "attack_bonus": 9,
+    "speed_bonus": 5,
+    "critical_chance": 0.1,
+    "price": 80,
+    "rarity": "rare",
+    "requirements": {"level": 3, "class": "Rogue"}
+  },
+  "Arcane Grimoire": {
+    "type": "weapon",
+    "description": "A powerful spellbook containing forbidden knowledge",
+    "magic_weapon": true,
+    "mp_bonus": 40,
+    "spell_power": 15,
+    "price": 170,
+    "rarity": "legendary",
+    "requirements": {"level": 5, "class": "Mage"}
+  },
+  "Titan's Hammer": {
+    "type": "weapon",
+    "description": "A massive hammer said to have been wielded by giants",
+    "attack_bonus": 25,
+    "defense_penalty": 3,
+    "stun_chance": 0.15,
+    "price": 280,
+    "rarity": "legendary",
+    "requirements": {"level": 6, "class": "Warrior", "strength": 18}
+  },
+  "Venomstrike Dagger": {
+    "type": "weapon",
+    "description": "A poisoned blade that causes lingering damage",
+    "attack_bonus": 11,
+    "speed_bonus": 4,
+    "poison_damage": 3,
+    "price": 120,
+    "rarity": "rare",
+    "requirements": {"level": 4, "class": "Rogue"}
+  },
+  "Celestial Scepter": {
+    "type": "weapon",
+    "description": "A divine instrument channeling cosmic energies",
+    "magic_weapon": true,
+    "mp_bonus": 45,
+    "healing_power": 20,
+    "price": 210,
+    "rarity": "legendary",
+    "requirements": {"level": 5, "class": "Mage"}
+  },
+  "Berserker's Axe": {
+    "type": "weapon",
+    "description": "A bloodthirsty weapon that grows stronger with each kill",
+    "attack_bonus": 18,
+    "defense_penalty": 4,
+    "rage_bonus": 0.05,
+    "price": 190,
+    "rarity": "legendary",
+    "requirements": {"level": 5, "class": "Warrior"}
+  },
+  "Nightshade Armor": {
+    "type": "armor",
+    "description": "Blackened leather armor that muffles sound and blends with shadows",
+    "defense_bonus": 11,
+    "speed_bonus": 2,
+    "stealth_bonus": 15,
+    "price": 150,
+    "rarity": "rare",
+    "requirements": {"level": 4, "class": "Rogue"}
+  },
+  "Archmage's Vestments": {
+    "type": "armor",
+    "description": "Radiant robes worn by master spellcasters",
+    "defense_bonus": 7,
+    "mp_bonus": 50,
+    "spell_resistance": 20,
+    "price": 230,
+    "rarity": "legendary",
+    "requirements": {"level": 6, "class": "Mage"}
+  },
+  "Colossus Plate": {
+    "type": "armor",
+    "description": "Impenetrable armor forged from meteorite metal",
+    "defense_bonus": 20,
+    "speed_penalty": 4,
+    "damage_reduction": 0.1,
+    "price": 320,
+    "rarity": "legendary",
+    "requirements": {"level": 6, "class": "Warrior", "strength": 20}
+  },
+  "Ghostwalker Cloak": {
+    "type": "armor",
+    "description": "A semi-transparent cloak that phases through attacks",
+    "defense_bonus": 8,
+    "speed_bonus": 5,
+    "dodge_chance": 0.1,
+    "price": 170,
+    "rarity": "legendary",
+    "requirements": {"level": 5, "class": "Rogue"}
+  },
+  "Elemental Aegis": {
+    "type": "armor",
+    "description": "Robes that absorb and redirect elemental damage",
+    "defense_bonus": 9,
+    "mp_bonus": 40,
+    "elemental_resistance": 30,
+    "price": 200,
+    "rarity": "legendary",
+    "requirements": {"level": 5, "class": "Mage"}
+  },
+  "Juggernaut's Bulwark": {
+    "type": "armor",
+    "description": "Massive armor that turns the wearer into an unstoppable force",
+    "defense_bonus": 18,
+    "speed_penalty": 3,
+    "knockback_resistance": 1.0,
+    "price": 270,
+    "rarity": "legendary",
+    "requirements": {"level": 6, "class": "Warrior"}
   }
 }

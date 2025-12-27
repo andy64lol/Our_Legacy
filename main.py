@@ -254,6 +254,7 @@ class Game:
         self.bosses_data: Dict[str, Any] = {}
         self.classes_data: Dict[str, Any] = {}
         self.spells_data: Dict[str, Any] = {}
+        self.effects_data: Dict[str, Any] = {}
         self.mission_progress: Dict[str, Dict] = {}  # mission_id -> {current_count, target_count, completed, type}
         self.completed_missions: List[str] = []
         
@@ -277,6 +278,8 @@ class Game:
                 self.classes_data = json.load(f)
             with open('data/spells.json', 'r') as f:
                 self.spells_data = json.load(f)
+            with open('data/effects.json', 'r') as f:
+                self.effects_data = json.load(f)
         except FileNotFoundError as e:
             print(f"Error loading game data: {e}")
             print("Please ensure all data files exist in the data/ directory.")
@@ -671,11 +674,85 @@ class Game:
             damage = power + (self.player.attack // 2)
             actual = enemy.take_damage(damage)
             print(f"You cast {sname} for {actual} damage!")
+            
+            # Apply effects if any
+            effects = sdata.get('effects', [])
+            for effect_name in effects:
+                effect_data = self.effects_data.get(effect_name, {})
+                effect_type = effect_data.get('type', '')
+                
+                if effect_type == 'damage_over_time':
+                    print(f"{Colors.RED}{enemy.name} is afflicted with {effect_name}!{Colors.END}")
+                elif effect_type == 'stun':
+                    if random.random() < effect_data.get('chance', 0.5):
+                        print(f"{Colors.YELLOW}{enemy.name} is stunned!{Colors.END}")
+                elif effect_type == 'mixed_effect':
+                    if random.random() < effect_data.get('chance', 0.5):
+                        print(f"{Colors.CYAN}{enemy.name} is frozen!{Colors.END}")
+                        
         elif sdata.get('type') == 'heal':
             heal_amount = sdata.get('power', 0)
             old_hp = self.player.hp
             self.player.heal(heal_amount)
             print(f"You cast {sname} and healed {self.player.hp - old_hp} HP!")
+            
+            # Apply healing effects if any
+            effects = sdata.get('effects', [])
+            for effect_name in effects:
+                effect_data = self.effects_data.get(effect_name, {})
+                if effect_data.get('type') == 'healing_over_time':
+                    print(f"{Colors.GREEN}You are affected by regeneration!{Colors.END}")
+                    
+        elif sdata.get('type') == 'buff':
+            power = sdata.get('power', 0)
+            effects = sdata.get('effects', [])
+            
+            for effect_name in effects:
+                effect_data = self.effects_data.get(effect_name, {})
+                effect_type = effect_data.get('type', '')
+                
+                if effect_type == 'stat_boost':
+                    if 'defense_bonus' in effect_data:
+                        self.player.defense += effect_data['defense_bonus']
+                        print(f"{Colors.GREEN}Your defense increases by {effect_data['defense_bonus']}!{Colors.END}")
+                    elif 'speed_bonus' in effect_data:
+                        self.player.speed += effect_data['speed_bonus']
+                        print(f"{Colors.GREEN}Your speed increases by {effect_data['speed_bonus']}!{Colors.END}")
+                    elif 'attack_bonus' in effect_data:
+                        self.player.attack += effect_data['attack_bonus']
+                        print(f"{Colors.GREEN}Your attack increases by {effect_data['attack_bonus']}!{Colors.END}")
+                        
+                elif effect_type == 'damage_absorb':
+                    print(f"{Colors.BLUE}You create a magical shield!{Colors.END}")
+                    
+                elif effect_type == 'reconnaissance':
+                    print(f"{Colors.CYAN}You can see enemy weaknesses!{Colors.END}")
+                    
+        elif sdata.get('type') == 'debuff':
+            power = sdata.get('power', 0)
+            effects = sdata.get('effects', [])
+            
+            for effect_name in effects:
+                effect_data = self.effects_data.get(effect_name, {})
+                effect_type = effect_data.get('type', '')
+                
+                if effect_type == 'action_block':
+                    if random.random() < effect_data.get('chance', 0.5):
+                        print(f"{Colors.YELLOW}{enemy.name} is stunned and cannot act!{Colors.END}")
+                        
+                elif effect_type == 'accuracy_reduction':
+                    print(f"{Colors.RED}{enemy.name}'s accuracy is reduced!{Colors.END}")
+                    
+                elif effect_type == 'speed_reduction':
+                    print(f"{Colors.YELLOW}{enemy.name} is slowed!{Colors.END}")
+                    
+                elif effect_type == 'stat_reduction':
+                    print(f"{Colors.RED}{enemy.name}'s stats are cursed!{Colors.END}")
+                    
+        else:
+            print(f"Unknown spell type: {sdata.get('type')}")
+            # Refund MP for unknown spell types
+            self.player.mp += cost
     
     def use_item(self, item: str):
         """Use an item"""
