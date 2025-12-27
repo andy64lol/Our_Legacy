@@ -75,7 +75,7 @@ class Character:
         self.defense = stats.get("defense", 8)
         self.speed = stats.get("speed", 10)
         
-        # Equipment slots
+        # Equipment slots (legacy compatibility)
         self.weapon = None
         self.armor = None
         self.accessory = None
@@ -95,6 +95,22 @@ class Character:
         
         # Battle state
         self.defending = False
+        
+        # Sync legacy equipment slots with new system for compatibility
+        self._sync_equipment_slots()
+    
+    def _sync_equipment_slots(self):
+        """Sync legacy equipment slots with new equipment dictionary for compatibility"""
+        # This ensures backward compatibility with any code that might use the old slots
+        self.weapon = self.equipment.get("weapon")
+        self.armor = self.equipment.get("armor")
+        self.accessory = self.equipment.get("accessory")
+    
+    def _update_equipment_slots(self):
+        """Update legacy equipment slots when equipment dictionary changes"""
+        self.weapon = self.equipment.get("weapon")
+        self.armor = self.equipment.get("armor")
+        self.accessory = self.equipment.get("accessory")
         
     def is_alive(self) -> bool:
         """Check if character is alive"""
@@ -205,6 +221,7 @@ class Character:
 
         # Equip into slot (replace existing)
         self.equipment[slot] = item_name
+        self._update_equipment_slots()  # NEW: Sync legacy slots
         self.update_stats_from_equipment(items_data)
         return True
 
@@ -214,6 +231,7 @@ class Character:
             return None
         prev = self.equipment.get(slot)
         self.equipment[slot] = None
+        self._update_equipment_slots()  # NEW: Sync legacy slots
         self.update_stats_from_equipment(items_data)
         return prev
 
@@ -1227,7 +1245,7 @@ class Game:
         print(f"Gold remaining: {Colors.GOLD}{self.player.gold}{Colors.END}")
     
     def save_game(self):
-        """Save the game"""
+        """Save the game with enhanced data including equipment"""
         if not self.player:
             print("No character to save.")
             return
@@ -1247,11 +1265,24 @@ class Game:
                 "defense": self.player.defense,
                 "speed": self.player.speed,
                 "inventory": self.player.inventory,
-                "gold": self.player.gold
+                "gold": self.player.gold,
+                # NEW: Equipment data that was missing
+                "equipment": self.player.equipment,
+                # NEW: Base stats for equipment recalculation
+                "base_stats": {
+                    "base_max_hp": self.player.base_max_hp,
+                    "base_max_mp": self.player.base_max_mp,
+                    "base_attack": self.player.base_attack,
+                    "base_defense": self.player.base_defense,
+                    "base_speed": self.player.base_speed
+                },
+                # NEW: Class data for validation
+                "class_data": self.player.class_data
             },
             "current_area": self.current_area,
             "mission_progress": self.mission_progress,
             "completed_missions": self.completed_missions,
+            "save_version": "2.0",  # NEW: Version for compatibility
             "save_time": datetime.now().isoformat()
         }
         
@@ -1266,7 +1297,7 @@ class Game:
         print(f"Game saved successfully!")
     
     def load_game(self):
-        """Load a saved game"""
+        """Load a saved game with enhanced equipment handling and backward compatibility"""
         saves_dir = "data/saves"
         if not os.path.exists(saves_dir):
             print("No save files found.")
@@ -1293,9 +1324,12 @@ class Game:
                     with open(filename, 'r') as f:
                         save_data = json.load(f)
                     
+                    # Check save version for compatibility
+                    save_version = save_data.get("save_version", "1.0")
+                    
                     # Recreate player
                     player_data = save_data["player"]
-                    self.player = Character(player_data["name"], player_data["character_class"])
+                    self.player = Character(player_data["name"], player_data["character_class"], self.classes_data)
                     
                     # Restore stats
                     self.player.level = player_data["level"]
@@ -1310,6 +1344,9 @@ class Game:
                     self.player.speed = player_data["speed"]
                     self.player.inventory = player_data["inventory"]
                     self.player.gold = player_data["gold"]
+                    
+                    # NEW: Enhanced equipment loading with validation
+                    self._load_equipment_data(player_data, save_version)
                     
                     self.current_area = save_data["current_area"]
                     
@@ -1339,12 +1376,116 @@ class Game:
                                         'type': mission_type
                                     }
                     
-                    print(f"Game loaded successfully! Welcome back, {self.player.name}!")
                     if self.player:
+                        print(f"Game loaded successfully! Welcome back, {self.player.name}!")
                         self.player.display_stats()
                     
                 except Exception as e:
                     print(f"Error loading save file: {e}")
+    
+    def _load_equipment_data(self, player_data: Dict, save_version: str):
+        """Load and validate equipment data with backward compatibility"""
+        if not self.player:
+            return
+        
+        # NEW: Handle enhanced save format (v2.0+)
+        if save_version >= "2.0":
+            # Load equipment if present
+            equipment: Dict[str, Optional[str]] = player_data.get("equipment", {"weapon": None, "armor": None, "accessory": None})
+            self.player.equipment = equipment
+            
+            # Load base stats if present for equipment recalculation
+            base_stats = player_data.get("base_stats", {})
+            if base_stats:
+                self.player.base_max_hp = base_stats.get("base_max_hp", self.player.base_max_hp)
+                self.player.base_max_mp = base_stats.get("base_max_mp", self.player.base_max_mp)
+                self.player.base_attack = base_stats.get("base_attack", self.player.base_attack)
+                self.player.base_defense = base_stats.get("base_defense", self.player.base_defense)
+                self.player.base_speed = base_stats.get("base_speed", self.player.base_speed)
+            
+            # Load class data if present
+            class_data = player_data.get("class_data", {})
+            if class_data:
+                self.player.class_data = class_data
+                self.player.level_up_bonuses = class_data.get("level_up_bonuses", {})
+            
+            # Validate equipped items exist and meet requirements
+            self._validate_and_fix_equipment()
+            
+            # Recalculate stats from equipment
+            self.player.update_stats_from_equipment(self.items_data)
+            
+        else:
+            # OLD: Backward compatibility for v1.0 saves
+            print(f"{Colors.YELLOW}Loading legacy save (v{save_version}). Equipment may not be restored.{Colors.END}")
+            
+            # Try to find equipment in inventory for old saves
+            equipment: Dict[str, Optional[str]] = {"weapon": None, "armor": None, "accessory": None}
+            
+            # Heuristic: look for likely equipped items in inventory
+            for item in player_data.get("inventory", []):
+                item_data = self.items_data.get(item, {})
+                item_type = item_data.get("type")
+                
+                if item_type == "weapon" and not equipment["weapon"]:
+                    equipment["weapon"] = item
+                elif item_type == "armor" and not equipment["armor"]:
+                    equipment["armor"] = item
+                elif item_type == "accessory" and not equipment["accessory"]:
+                    equipment["accessory"] = item
+            
+            self.player.equipment = equipment
+            self._validate_and_fix_equipment()
+            self.player.update_stats_from_equipment(self.items_data)
+    
+    def _validate_and_fix_equipment(self):
+        """Validate equipped items and auto-unequip invalid ones"""
+        if not self.player:
+            return
+            
+        invalid_items = []
+        
+        for slot in ("weapon", "armor", "accessory"):
+            item_name = self.player.equipment.get(slot)
+            if not item_name:
+                continue
+                
+            # Check if item still exists in game data
+            if item_name not in self.items_data:
+                invalid_items.append((slot, item_name, "Item no longer exists"))
+                self.player.equipment[slot] = None
+                continue
+            
+            item_data = self.items_data[item_name]
+            
+            # Check if item type matches slot
+            if item_data.get("type") != slot:
+                invalid_items.append((slot, item_name, "Item type mismatch"))
+                self.player.equipment[slot] = None
+                continue
+            
+            # Check requirements
+            requirements = item_data.get("requirements", {})
+            if requirements:
+                level_req = requirements.get("level", 0)
+                class_req = requirements.get("class")
+                
+                if self.player.level < level_req:
+                    invalid_items.append((slot, item_name, f"Level {level_req} required"))
+                    self.player.equipment[slot] = None
+                    continue
+                
+                if class_req and class_req != self.player.character_class:
+                    invalid_items.append((slot, item_name, f"{class_req} class required"))
+                    self.player.equipment[slot] = None
+                    continue
+        
+        # Report any items that were auto-unequipped
+        if invalid_items:
+            print(f"\n{Colors.YELLOW}Some equipped items were invalid and have been unequipped:{Colors.END}")
+            for slot, item_name, reason in invalid_items:
+                print(f"  - {slot.title()}: {item_name} ({reason})")
+            print(f"{Colors.YELLOW}Please check your inventory and re-equip valid items.{Colors.END}")
     
     def quit_game(self):
         """Quit the game"""
