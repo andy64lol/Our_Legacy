@@ -1,4 +1,4 @@
-home/andy64lolxd/Our_Legacy/README.md</path>
+<path>home/andy64lolxd/Our_Legacy/README.md</path>
 <parameter name="content"># Our Legacy - Text-Based CLI Fantasy RPG Game
 
 ## Overview
@@ -234,7 +234,11 @@ This is a complete, standalone RPG experience. To modify or extend:
 3. **New Features** - Extend the main.py file with additional functionality
 4. **Bug Fixes** - Test thoroughly after any modifications
 
+For modding assistance, please read the [documentation for modding](documentation.md)
+
 ## Credits
+
+- **Andy64lolxd** - Creator of the project and maintainer.
 
 **Our Legacy** - A text-based CLI fantasy RPG experience
 Created with Python and JSON for maximum accessibility and modifiability.

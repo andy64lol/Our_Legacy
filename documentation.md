@@ -1,6 +1,6 @@
 # Our Legacy - Complete Modding Documentation
 
-This guide covers how to modify every aspect of the Our Legacy RPG game. All game content is stored in JSON files located in the `data/` directory for easy customization.
+This guide covers how to modify every aspect of the Our Legacy RPG game. All game content is stored in JSON files located in the `data/` directory for easy customization. I made it this easy because as an Minecraft Bedrock Add-on developer, I personally wanted to have the same flavour of their JSON-based system, as it's so much easier than having to modify the game directly. Here is the guide!
 
 ---
 
