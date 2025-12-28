@@ -99,6 +99,15 @@ Each class defines the player's starting stats, progression, and items.
 }
 ```
 
+### Existing Classes Reference
+
+The game currently includes four playable classes:
+
+**Warrior** - High HP and defense, melee combat specialist
+**Mage** - High MP and magical power, spellcasting specialist  
+**Rogue** - High speed and agility, stealth and critical strikes
+**Hunter** - Balanced combat stats with ranged weapon expertise
+
 ### Stats Explained
 
 - **hp** - Health Points (max health)
@@ -181,6 +190,80 @@ Items include weapons, armor, accessories, and consumables.
 }
 ```
 
+#### Hunter-Specific Weapons
+
+**Bows (Ranged Weapons)**
+```json
+{
+  "Hunter's Bow": {
+    "type": "weapon",
+    "description": "A well-crafted bow favored by hunters",
+    "attack_bonus": 7,
+    "speed_bonus": 2,
+    "price": 60,
+    "rarity": "common",
+    "requirements": {"level": 1, "class": "Hunter"}
+  }
+}
+```
+
+**Crossbows (Heavy Ranged Weapons)**
+```json
+{
+  "Light Crossbow": {
+    "type": "weapon",
+    "description": "A compact crossbow that's easy to reload",
+    "attack_bonus": 9,
+    "price": 75,
+    "rarity": "common",
+    "requirements": {"level": 2, "class": "Hunter"}
+  }
+}
+```
+
+**Spears (Melee Weapons)**
+```json
+{
+  "Hunting Spear": {
+    "type": "weapon",
+    "description": "A sturdy spear perfect for hunting large game",
+    "attack_bonus": 11,
+    "price": 70,
+    "rarity": "common",
+    "requirements": {"level": 1}
+  }
+}
+```
+
+**Hunting Knives (Light Melee Weapons)**
+```json
+{
+  "Hunting Knife": {
+    "type": "weapon",
+    "description": "A sharp knife essential for any hunter's toolkit",
+    "attack_bonus": 6,
+    "speed_bonus": 3,
+    "price": 40,
+    "rarity": "common",
+    "requirements": {"level": 1}
+  }
+}
+```
+
+#### Universal Charms and Accessories
+
+**Stat Boosting Charms**
+```json
+{
+  "Luck Charm": {
+    "type": "accessory",
+    "description": "A simple charm believed to bring good fortune",
+    "price": 30,
+    "rarity": "common"
+  }
+}
+```
+
 ### How to Add a New Item
 
 1. Open `data/items.json`
@@ -208,8 +291,24 @@ Items include weapons, armor, accessories, and consumables.
 1. common
 2. uncommon
 3. rare
-4. epic
-5. legendary
+4. legendary
+
+*Note: Epic rarity is not currently used in the game*
+
+### Class Restrictions
+
+Some items are restricted to specific classes:
+
+**Hunter Exclusive Weapons:**
+- Bows: Hunter's Bow, Longbow, Composite Bow, Elven Bow
+- Crossbows: Light Crossbow, Heavy Crossbow, Repeating Crossbow
+
+**Multi-Class Weapons:**
+- Spears: Available to Hunter and Warrior classes
+- Hunting Knives: Available to Hunter and Rogue classes
+
+**Universal Items:**
+- Most consumables, basic armor, and charms are available to all classes
 
 ---
 
@@ -269,6 +368,36 @@ Regular enemies that spawn in areas and can be fought.
 - **experience_reward** - XP gained when defeated
 - **gold_reward** - Gold received when defeated
 - **loot_table** - List of possible item drops (randomly selected)
+
+### Thematic Loot Distribution
+
+Enemy loot tables have been carefully designed to match enemy types:
+
+**Goblin**: Weak creature dropping basic hunting tools
+- Loot: Health Potion, Goblin Ear, Hunting Knife
+
+**Orc**: Warrior-like creature with heavy weapons
+- Loot: Orc Tooth, Iron Axe, Warrior Spear
+
+**Skeleton**: Undead creature with dark weapons
+- Loot: Bone Fragment, Rusty Dagger, Steel Hunting Knife
+
+**Wolf**: Wild animal creature
+- Loot: Wolf Fang, Health Potion, Hunting Spear
+
+**Bandit**: Rogue-like human adversary
+- Loot: Steel Dagger, Mana Potion, Assassin Hunting Knife
+
+**Troll**: Large, powerful creature
+- Loot: Troll Club, Large Health Potion, Tri-point Spear
+
+**Fire Wraith**: Elemental creature
+- Loot: Spellsword, Fire Gem, Dragon Spear (legendary)
+
+**Goblin Archer**: Ranged goblin fighter
+- Loot: Light Crossbow, Health Potion, Hunter's Bow
+
+This distribution ensures that players can naturally acquire Hunter weapons and other equipment through gameplay while maintaining thematic consistency.
 
 ---
 
@@ -444,6 +573,28 @@ Magic spells that can be cast during combat.
   "allowed_weapons": ["Magic Staff", "Ethereal Staff", "Spellsword", "Dragonsoul Blade"]
 }
 ```
+
+### Hunter Class Weapon Specialization
+
+The Hunter class introduces new weapon types with specific mechanics:
+
+**Bows and Crossbows (Hunter Exclusive):**
+- Provide ranged attack options
+- Generally offer higher attack bonuses but may have speed penalties
+- Crossbows are more powerful but slower to reload
+- Require Hunter class to equip
+
+**Spears (Hunter & Warrior):**
+- Offer reach advantage in combat
+- Balanced between power and speed
+- Available to both Hunter and Warrior classes
+
+**Hunting Knives (Hunter & Rogue):**
+- Light, fast weapons with critical strike potential
+- Speed bonuses compensate for lower base damage
+- Available to both Hunter and Rogue classes
+
+These weapon types expand tactical options while maintaining class identity and balance.
 
 ### Spell Properties
 

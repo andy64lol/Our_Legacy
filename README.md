@@ -8,7 +8,7 @@ home/andy64lolxd/Our_Legacy/README.md</path>
 ## Features
 
 ### 🎮 Core Gameplay
-- **Character Classes**: Choose from Warrior, Mage, or Rogue
+- **Character Classes**: Choose from Warrior, Mage, Rogue, or Hunter
 - **Exploration**: 7 unique areas to discover and conquer
 - **Grinding System**: Level up your character through combat
 - **Mission System**: Complete quests for rewards and progression
@@ -105,6 +105,12 @@ python3 main.py
 - **Best For**: Experienced players, hit-and-run tactics
 - **Equipment Focus**: Light armor, daggers, speed items
 
+### 🏹 Hunter
+- **Stats**: High Speed and accuracy, balanced combat stats
+- **Strengths**: Ranged attacks, tracking abilities, versatile weapons
+- **Best For**: Strategic players, ranged combat specialists
+- **Equipment Focus**: Bows, crossbows, spears, hunting knives
+
 ## Equipment System
 
 ### Weapon Types
@@ -112,6 +118,10 @@ python3 main.py
 - **Daggers** - Fast attacks, critical strikes
 - **Staves** - Magical enhancement, MP bonus
 - **Greatswords** - Massive damage, slower attacks
+- **Bows** - Ranged attacks, high precision (Hunter exclusive)
+- **Crossbows** - Powerful ranged attacks, slower reload (Hunter exclusive)
+- **Spears** - Reach advantage, versatile melee (Hunter & Warrior)
+- **Hunting Knives** - Fast melee, critical strikes (Hunter & Rogue)
 
 ### Armor Types
 - **Leather** - Light protection, speed bonus

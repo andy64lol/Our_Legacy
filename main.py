@@ -1289,8 +1289,9 @@ class Game:
         saves_dir = "data/saves"
         # Create the saves directory if it doesn't exist
         os.makedirs(saves_dir, exist_ok=True)
-        
-        filename = f"{saves_dir}/{self.player.name}_save.json"
+
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        filename = f"{saves_dir}/{self.player.name}_save_{timestamp}.json"
         with open(filename, 'w') as f:
                 json.dump(save_data, f, indent=2)
         
