@@ -68,5 +68,29 @@
       "Health Potion"
     ],
     "starting_gold": 100
+  },
+  "Hunter":{
+    "description": "Experienced tracker and archer with an incredible aim",
+    "base_stats": {
+      "hp": 100,
+      "mp": 50,
+      "attack": 14,
+      "defense": 10,
+      "speed": 12
+    },
+    "level_up_bonuses": {
+      "hp": 15,
+      "mp": 5,
+      "attack": 2,
+      "defense": 1,
+      "speed": 2
+    },
+    "starting_items": [
+      "Hunter's Bow",
+      "Hunting Knife",
+      "Leather Armor",
+      "Health Potion"
+    ],
+    "starting_gold": 100
   }
 }

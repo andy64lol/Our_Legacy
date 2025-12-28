@@ -545,5 +545,198 @@
     "price": 270,
     "rarity": "legendary",
     "requirements": {"level": 6, "class": "Warrior"}
+  },
+  "Hunter's Bow": {
+    "type": "weapon",
+    "description": "A well-crafted bow favored by hunters for its reliability",
+    "attack_bonus": 7,
+    "speed_bonus": 2,
+    "price": 60,
+    "rarity": "common",
+    "requirements": {"level": 1, "class": "Hunter"}
+  },
+  "Longbow": {
+    "type": "weapon",
+    "description": "A tall bow that provides excellent range and precision",
+    "attack_bonus": 10,
+    "speed_bonus": 1,
+    "price": 85,
+    "rarity": "uncommon",
+    "requirements": {"level": 2, "class": "Hunter"}
+  },
+  "Composite Bow": {
+    "type": "weapon",
+    "description": "A sophisticated bow made of layered materials for maximum power",
+    "attack_bonus": 13,
+    "speed_bonus": 3,
+    "price": 120,
+    "rarity": "rare",
+    "requirements": {"level": 3, "class": "Hunter"}
+  },
+  "Elven Bow": {
+    "type": "weapon",
+    "description": "An elegant bow crafted by elven masters, imbued with natural magic",
+    "attack_bonus": 16,
+    "speed_bonus": 5,
+    "price": 200,
+    "rarity": "legendary",
+    "requirements": {"level": 5, "class": "Hunter"}
+  },
+  "Light Crossbow": {
+    "type": "weapon",
+    "description": "A compact crossbow that's easy to reload and aim",
+    "attack_bonus": 9,
+    "price": 75,
+    "rarity": "common",
+    "requirements": {"level": 2, "class": "Hunter"}
+  },
+  "Heavy Crossbow": {
+    "type": "weapon",
+    "description": "A powerful crossbow that delivers devastating bolts",
+    "attack_bonus": 14,
+    "speed_penalty": 2,
+    "price": 110,
+    "rarity": "uncommon",
+    "requirements": {"level": 3, "class": "Hunter"}
+  },
+  "Repeating Crossbow": {
+    "type": "weapon",
+    "description": "An innovative crossbow that can fire multiple bolts rapidly",
+    "attack_bonus": 12,
+    "speed_bonus": 4,
+    "price": 140,
+    "rarity": "rare",
+    "requirements": {"level": 4, "class": "Hunter"}
+  },
+  "Hunting Spear": {
+    "type": "weapon",
+    "description": "A sturdy spear perfect for hunting large game",
+    "attack_bonus": 11,
+    "price": 70,
+    "rarity": "common",
+    "requirements": {"level": 1}
+  },
+  "Warrior Spear": {
+    "type": "weapon",
+    "description": "A battle-tested spear favored by warriors and hunters alike",
+    "attack_bonus": 14,
+    "price": 95,
+    "rarity": "uncommon",
+    "requirements": {"level": 2}
+  },
+  "Tri-point Spear": {
+    "type": "weapon",
+    "description": "A specialized spear with three prongs for maximum piercing power",
+    "attack_bonus": 17,
+    "price": 130,
+    "rarity": "rare",
+    "requirements": {"level": 4}
+  },
+  "Dragon Spear": {
+    "type": "weapon",
+    "description": "A legendary spear forged with dragon bone and steel",
+    "attack_bonus": 20,
+    "fire_resistance": 25,
+    "price": 250,
+    "rarity": "legendary",
+    "requirements": {"level": 5}
+  },
+  "Hunting Knife": {
+    "type": "weapon",
+    "description": "A sharp knife essential for any hunter's toolkit",
+    "attack_bonus": 6,
+    "speed_bonus": 3,
+    "price": 40,
+    "rarity": "common",
+    "requirements": {"level": 1}
+  },
+  "Steel Hunting Knife": {
+    "type": "weapon",
+    "description": "A finely crafted steel knife with superior edge retention",
+    "attack_bonus": 8,
+    "speed_bonus": 4,
+    "price": 65,
+    "rarity": "uncommon",
+    "requirements": {"level": 2}
+  },
+  "Assassin Hunting Knife": {
+    "type": "weapon",
+    "description": "A razor-sharp knife favored by assassins and master hunters",
+    "attack_bonus": 11,
+    "speed_bonus": 6,
+    "critical_chance": 0.08,
+    "price": 95,
+    "rarity": "rare",
+    "requirements": {"level": 3}
+  },
+  "Master Hunter's Knife": {
+    "type": "weapon",
+    "description": "The ultimate hunting knife, passed down through generations of masters",
+    "attack_bonus": 14,
+    "speed_bonus": 8,
+    "critical_chance": 0.12,
+    "price": 180,
+    "rarity": "legendary",
+    "requirements": {"level": 5}
+  },
+  "Luck Charm": {
+    "type": "accessory",
+    "description": "A simple charm believed to bring good fortune to its bearer",
+    "price": 30,
+    "rarity": "common"
+  },
+  "Fortune Charm": {
+    "type": "accessory",
+    "description": "An ornate charm that seems to attract luck and prosperity",
+    "price": 75,
+    "rarity": "uncommon"
+  },
+  "Blessing of the Wild": {
+    "type": "accessory",
+    "description": "A charm infused with the power of nature itself",
+    "attack_bonus": 3,
+    "hp_bonus": 20,
+    "price": 120,
+    "rarity": "rare"
+  },
+  "Hunter's Totem": {
+    "type": "accessory",
+    "description": "A sacred totem that channels the spirit of the hunt",
+    "attack_bonus": 4,
+    "speed_bonus": 2,
+    "price": 110,
+    "rarity": "rare"
+  },
+  "Predator's Eye": {
+    "type": "accessory",
+    "description": "A mystical eye that enhances perception and accuracy",
+    "attack_bonus": 5,
+    "speed_bonus": 1,
+    "price": 100,
+    "rarity": "rare"
+  },
+  "Stalker's Badge": {
+    "type": "accessory",
+    "description": "A badge earned by mastering the art of silent hunting",
+    "speed_bonus": 4,
+    "stealth_bonus": 10,
+    "price": 85,
+    "rarity": "uncommon"
+  },
+  "Nature's Blessing": {
+    "type": "accessory",
+    "description": "A charm that connects the wearer to the natural world",
+    "hp_bonus": 30,
+    "mp_bonus": 15,
+    "price": 95,
+    "rarity": "uncommon"
+  },
+  "Sharpshooter's Ring": {
+    "type": "accessory",
+    "description": "A ring worn by master marksmen throughout the ages",
+    "attack_bonus": 6,
+    "critical_chance": 0.1,
+    "price": 130,
+    "rarity": "rare"
   }
 }

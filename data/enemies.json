@@ -7,7 +7,7 @@
     "speed": 10,
     "experience_reward": 15,
     "gold_reward": 8,
-    "loot_table": ["Health Potion", "Goblin Ear"]
+    "loot_table": ["Health Potion", "Goblin Ear", "Hunting Knife"]
   },
   "orc": {
     "name": "Orc",
@@ -17,7 +17,7 @@
     "speed": 7,
     "experience_reward": 30,
     "gold_reward": 15,
-    "loot_table": ["Orc Tooth", "Iron Axe"]
+    "loot_table": ["Orc Tooth", "Iron Axe", "Warrior Spear"]
   },
   "skeleton": {
     "name": "Skeleton",
@@ -27,7 +27,7 @@
     "speed": 8,
     "experience_reward": 25,
     "gold_reward": 12,
-    "loot_table": ["Bone Fragment", "Rusty Dagger"]
+    "loot_table": ["Bone Fragment", "Rusty Dagger", "Steel Hunting Knife"]
   },
   "wolf": {
     "name": "Wolf",
@@ -37,7 +37,7 @@
     "speed": 15,
     "experience_reward": 20,
     "gold_reward": 10,
-    "loot_table": ["Wolf Fang", "Health Potion"]
+    "loot_table": ["Wolf Fang", "Health Potion", "Hunting Spear"]
   },
   "bandit": {
     "name": "Bandit",
@@ -47,7 +47,7 @@
     "speed": 12,
     "experience_reward": 35,
     "gold_reward": 20,
-    "loot_table": ["Steel Dagger", "Mana Potion"]
+    "loot_table": ["Steel Dagger", "Mana Potion", "Assassin Hunting Knife"]
   },
   "troll": {
     "name": "Troll",
@@ -57,7 +57,7 @@
     "speed": 5,
     "experience_reward": 60,
     "gold_reward": 30,
-    "loot_table": ["Troll Club", "Large Health Potion"]
+    "loot_table": ["Troll Club", "Large Health Potion", "Tri-point Spear"]
   },
   "dark_mage": {
     "name": "Dark Mage",
@@ -97,7 +97,7 @@
     "speed": 14,
     "experience_reward": 40,
     "gold_reward": 18,
-    "loot_table": ["Spellsword", "Fire Gem"]
+    "loot_table": ["Spellsword", "Fire Gem", "Dragon Spear"]
   },
   "goblin_archer": {
     "name": "Goblin Archer",
@@ -107,6 +107,6 @@
     "speed": 13,
     "experience_reward": 18,
     "gold_reward": 9,
-    "loot_table": ["Ninja Kunai", "Health Potion"]
+    "loot_table": ["Light Crossbow", "Health Potion", "Hunter's Bow"]
   }
 }
