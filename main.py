@@ -25,6 +25,17 @@ class Colors:
     UNDERLINE = '\033[4m'
     END = '\033[0m'
     GOLD = '\033[93m'
+    ORANGE = '\033[38;5;208m'
+    PURPLE = '\033[95m'
+    DARK_GRAY = '\033[90m'
+    LIGHT_GRAY = '\033[37m'
+    
+    # Rarity colors for items
+    COMMON = '\033[37m'      # White
+    UNCOMMON = '\033[92m'    # Green  
+    RARE = '\033[94m'        # Blue
+    EPIC = '\033[95m'        # Magenta
+    LEGENDARY = '\033[93m'   # Gold
 
 def clear_screen():
     """Clear the terminal screen in a cross-platform way."""
@@ -32,6 +43,62 @@ def clear_screen():
         os.system('cls')
     else:
         os.system('clear')
+
+def create_progress_bar(current: int, maximum: int, width: int = 20, color: str = Colors.GREEN) -> str:
+    """Create a visual progress bar."""
+    if maximum <= 0:
+        return "[" + " " * width + "]"
+    
+    filled_width = int((current / maximum) * width)
+    filled = "█" * filled_width
+    empty = "░" * (width - filled_width)
+    percentage = (current / maximum) * 100
+    
+    return f"[{color}{filled}{Colors.END}{empty}] {percentage:.1f}%"
+
+def create_hp_mp_bar(current: int, maximum: int, width: int = 15, color: str = Colors.RED) -> str:
+    """Create a visual HP/MP bar."""
+    if maximum <= 0:
+        return "[" + " " * width + "]"
+    
+    filled_width = int((current / maximum) * width)
+    filled = "█" * filled_width
+    empty = "░" * (width - filled_width)
+    
+    return f"[{color}{filled}{Colors.END}{empty}] {current}/{maximum}"
+
+def create_separator(char: str = "=", length: int = 60) -> str:
+    """Create a visual separator line."""
+    return char * length
+
+def create_section_header(title: str, char: str = "=", width: int = 60) -> str:
+    """Create a decorative section header."""
+    padding = (width - len(title) - 2) // 2
+    return f"{Colors.CYAN}{Colors.BOLD}{char * padding} {title} {char * padding}{Colors.END}"
+
+def loading_indicator(message: str = "Loading"):
+    """Display a loading indicator."""
+    print(f"\n{Colors.YELLOW}{message}{Colors.END}", end="", flush=True)
+    for i in range(3):
+        time.sleep(0.5)
+        print(".", end="", flush=True)
+    print()
+
+def get_rarity_color(rarity: str) -> str:
+    """Get the color for an item rarity."""
+    rarity_colors = {
+        "common": Colors.COMMON,
+        "uncommon": Colors.UNCOMMON,
+        "rare": Colors.RARE,
+        "epic": Colors.EPIC,
+        "legendary": Colors.LEGENDARY
+    }
+    return rarity_colors.get(rarity.lower(), Colors.WHITE)
+
+def format_item_name(item_name: str, rarity: str = "common") -> str:
+    """Format item name with rarity color."""
+    color = get_rarity_color(rarity)
+    return f"{color}{item_name}{Colors.END}"
 
 def ask(prompt: str) -> str:
     """Prompt the user for input, then clear the screen after Enter is pressed.
@@ -153,18 +220,33 @@ class Character:
     def display_stats(self):
         """Display character statistics"""
         print(f"\n{Colors.CYAN}{Colors.BOLD}=== {self.name} - Level {self.level} {self.character_class} ==={Colors.END}")
-        print(f"HP: {Colors.RED}{self.hp}/{self.max_hp}{Colors.END}")
-        print(f"MP: {Colors.BLUE}{self.mp}/{self.max_mp}{Colors.END}")
-        print(f"Attack: {Colors.YELLOW}{self.attack}{Colors.END}")
-        print(f"Defense: {Colors.YELLOW}{self.defense}{Colors.END}")
-        print(f"Speed: {Colors.YELLOW}{self.speed}{Colors.END}")
-        print(f"Experience: {Colors.MAGENTA}{self.experience}/{self.experience_to_next}{Colors.END}")
-        print(f"Gold: {Colors.GOLD}{self.gold}{Colors.END}")
-        # Equipped items
-        print(f"{Colors.CYAN}Equipped:{Colors.END}")
-        print(f"  Weapon: {self.equipment.get('weapon', 'None')}")
-        print(f"  Armor: {self.equipment.get('armor', 'None')}")
-        print(f"  Accessory: {self.equipment.get('accessory', 'None')}")
+        # HP and MP with visual bars
+        hp_bar = create_hp_mp_bar(self.hp, self.max_hp, width=20, color=Colors.RED)
+        mp_bar = create_hp_mp_bar(self.mp, self.max_mp, width=20, color=Colors.BLUE)
+        exp_bar = create_progress_bar(self.experience, self.experience_to_next, width=20, color=Colors.MAGENTA)
+        
+        print(f"HP:  {hp_bar}")
+        print(f"MP:  {mp_bar}")
+        print(f"Exp: {exp_bar}")
+        
+        # Stats with visual indicators
+        print(f"\n{create_separator('-', 50)}")
+        print(f"Attack:  {Colors.YELLOW}{Colors.BOLD}{self.attack}{Colors.END}")
+        print(f"Defense: {Colors.YELLOW}{Colors.BOLD}{self.defense}{Colors.END}")
+        print(f"Speed:   {Colors.YELLOW}{Colors.BOLD}{self.speed}{Colors.END}")
+        print(f"Gold:    {Colors.GOLD}{Colors.BOLD}{self.gold}{Colors.END}")
+        
+        # Equipped items with better formatting
+        print(f"\n{create_separator('-', 50)}")
+        print(f"{Colors.CYAN}{Colors.BOLD}🎒 EQUIPPED ITEMS:{Colors.END}")
+        for slot in ['weapon', 'armor', 'accessory']:
+            item_name = self.equipment.get(slot, 'None')
+            if item_name != 'None':
+                print(f"  {slot.title():<10}: {item_name}")
+            else:
+                print(f"  {slot.title():<10}: {Colors.DARK_GRAY}None{Colors.END}")
+        
+        print(f"{create_separator('=', 50)}")
 
     def update_stats_from_equipment(self, items_data: Dict[str, Any]):
         """Recalculate stats from base stats plus any equipped item bonuses."""
