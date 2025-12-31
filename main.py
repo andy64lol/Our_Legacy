@@ -11,6 +11,16 @@ import sys
 import time
 from datetime import datetime
 from typing import Dict, List, Any, Optional
+import difflib
+import signal
+import traceback
+import io
+
+# Optional readline for tab-completion (best-effort)
+try:
+    import readline
+except Exception:
+    readline = None
 
 class Colors:
     """ANSI color codes for terminal output"""
@@ -100,17 +110,95 @@ def format_item_name(item_name: str, rarity: str = "common") -> str:
     color = get_rarity_color(rarity)
     return f"{color}{item_name}{Colors.END}"
 
-def ask(prompt: str) -> str:
-    """Prompt the user for input, then clear the screen after Enter is pressed.
+def ask(prompt: str, valid_choices: Optional[List[str]] = None, allow_empty: bool = True,
+        case_sensitive: bool = False, suggest: bool = True) -> str:
+    """Prompt the user for input with optional validation and suggestions.
 
-    Returns the stripped input string.
+    - `valid_choices`: list of allowed responses (comparison controlled by `case_sensitive`).
+    - `allow_empty`: if False, empty input will be rejected.
+    - Returns the stripped input string.
     """
-    try:
-        response = input(prompt)
-    except EOFError:
-        response = ''
-    clear_screen()
-    return response.strip()
+    while True:
+        try:
+            response = input(prompt)
+        except EOFError:
+            response = ''
+
+        resp = response.strip()
+
+        # Normalize for comparison if case-insensitive
+        cmp_resp = resp if case_sensitive else resp.lower()
+        # Ensure cmp_choices is always a list[str] for safe membership checks
+        cmp_choices: List[str] = []
+        if valid_choices:
+            cmp_choices = [c if case_sensitive else c.lower() for c in valid_choices]
+
+        # Empty handling
+        if not resp and allow_empty:
+            clear_screen()
+            return resp
+        if not resp and not allow_empty:
+            print("Input cannot be empty. Please try again.")
+            continue
+
+        # If no validation requested, accept
+        if not valid_choices:
+            clear_screen()
+            return resp
+
+        # Exact match
+        if cmp_choices and cmp_resp in cmp_choices:
+            clear_screen()
+            return resp
+
+        # If suggestions enabled, show closest matches
+        if suggest and cmp_choices:
+            close = difflib.get_close_matches(cmp_resp, cmp_choices, n=3, cutoff=0.4)
+            if close:
+                print(f"Invalid input. Did you mean: {', '.join(close)} ?")
+            else:
+                print(f"Invalid input. Allowed choices: {', '.join(cmp_choices)}")
+        else:
+            # Fallback to showing valid choices if available
+            print(f"Invalid input. Allowed choices: {', '.join(cmp_choices or [])}")
+
+        # Retry loop
+
+
+def _make_completer(options: List[str]):
+    """Return a simple readline completer for the provided options."""
+    if not readline:
+        return None
+
+    opts = sorted(options)
+
+    def completer(text, state):
+        matches = [o for o in opts if o.startswith(text)]
+        try:
+            return matches[state]
+        except IndexError:
+            return None
+
+    return completer
+
+
+def enable_tab_completion(options: List[str]):
+    """Enable tab-completion for a short period (best-effort)."""
+    if not readline:
+        return None
+    completer = _make_completer(options)
+    if completer:
+        readline.set_completer(completer)
+        readline.parse_and_bind('tab: complete')
+        return completer
+    return None
+
+
+def disable_tab_completion(prev_completer):
+    """Restore previous completer (if any)."""
+    if not readline:
+        return
+    readline.set_completer(prev_completer)
 
 class Character:
     """Player character class"""
@@ -433,17 +521,44 @@ class Game:
     def select_class(self) -> str:
         """Allow user to select a class from available options"""
         class_names = list(self.classes_data.keys())
-        
-        while True:
-            choice = ask(f"Enter class choice (1-{len(class_names)}): ")
-            if choice.isdigit():
-                choice_idx = int(choice) - 1
-                if 0 <= choice_idx < len(class_names):
-                    return class_names[choice_idx]
-                else:
-                    print(f"Invalid choice. Please enter a number between 1 and {len(class_names)}.")
-            else:
-                print("Invalid input. Please enter a number.")
+        # Try to enable tab-completion for class names (best-effort)
+        prev = None
+        try:
+            prev = enable_tab_completion(class_names)
+        except Exception:
+            prev = None
+
+        try:
+            while True:
+                prompt = f"Enter class choice (1-{len(class_names)}) or name: "
+                choice = ask(prompt, allow_empty=False)
+                if choice.isdigit():
+                    choice_idx = int(choice) - 1
+                    if 0 <= choice_idx < len(class_names):
+                        return class_names[choice_idx]
+                    else:
+                        print(f"Invalid choice. Please enter a number between 1 and {len(class_names)}.")
+                        continue
+
+                # Try to match by name (case-insensitive)
+                matches = [cn for cn in class_names if cn.lower() == choice.lower()]
+                if matches:
+                    return matches[0]
+
+                # Try close matches
+                close = difflib.get_close_matches(choice.lower(), [cn.lower() for cn in class_names], n=1)
+                if close:
+                    # return the real-cased version
+                    for cn in class_names:
+                        if cn.lower() == close[0]:
+                            return cn
+                print("Invalid class name. Try again or use the numeric choice.")
+        finally:
+            # restore completer
+            try:
+                disable_tab_completion(None)
+            except Exception:
+                pass
 
     def create_character(self):
         """Create a new character"""
@@ -510,9 +625,27 @@ class Game:
         print("9. Load Game")
         print("10. Claim Rewards")
         print("11. Quit")
+        choice = ask("Choose an option : ", allow_empty=False)
 
-        choice = ask("Choose an option (1-11): ")
-        
+        # Normalize textual shortcuts to numbers for backward compatibility
+        shortcut_map = {
+            'explore': '1', 'e': '1',
+            'view': '2', 'v': '2',
+            'travel': '3', 't': '3',
+            'inventory': '4', 'i': '4',
+            'missions': '5', 'm': '5',
+            'shop': '6', 's': '6',
+            'rest': '7', 'r': '7',
+            'save': '8',
+            'load': '9', 'l': '9',
+            'claim': '10', 'c': '10',
+            'quit': '11', 'q': '11'
+        }
+
+        normalized = choice.strip().lower()
+        if normalized in shortcut_map:
+            choice = shortcut_map[normalized]
+
         if choice == "1":
             self.explore()
         elif choice == "2":
@@ -980,6 +1113,7 @@ class Game:
                 print(f"{i}. {mission.get('name', 'Unknown')} - {mission.get('description', 'No description')}")
             
             print(f"\n{Colors.YELLOW}Options:{Colors.END}")
+            print("Shortcuts: N-next, P-prev, B-back")
             if total_pages > 1:
                 if page > 0: print("P. Previous Page")
                 if page < total_pages - 1: print("N. Next Page")
@@ -1181,6 +1315,7 @@ class Game:
                 print(f"{i}. {item_name} ({rarity}) - {Colors.GOLD}{price} gold{Colors.END}")
                 print(f"   {desc}")
             
+            print("Shortcuts: N-next, P-prev, Enter-leave")
             choice = ask(f"\nBuy item (1-{len(page_items)}), [N]ext page, [P]rev page, [S]ell, or press Enter to leave: ")
             
             if not choice:
@@ -1326,12 +1461,18 @@ class Game:
         print(f"MP restored: {old_mp} → {Colors.GREEN}{self.player.mp}{Colors.END}")
         print(f"Gold remaining: {Colors.GOLD}{self.player.gold}{Colors.END}")
     
-    def save_game(self):
-        """Save the game with enhanced data including equipment"""
+
+
+    def save_game(self, filename_prefix: str = ""):
+        """Save the game with an optional filename prefix (keeps backward compatible signature).
+
+        If `filename_prefix` is provided it will be prepended to the filename
+        (useful for error/unstable saves like 'err_save_unstable_').
+        """
         if not self.player:
             print("No character to save.")
             return
-            
+
         save_data = {
             "player": {
                 "name": self.player.name,
@@ -1348,9 +1489,7 @@ class Game:
                 "speed": self.player.speed,
                 "inventory": self.player.inventory,
                 "gold": self.player.gold,
-                # NEW: Equipment data that was missing
                 "equipment": self.player.equipment,
-                # NEW: Base stats for equipment recalculation
                 "base_stats": {
                     "base_max_hp": self.player.base_max_hp,
                     "base_max_mp": self.player.base_max_mp,
@@ -1358,26 +1497,27 @@ class Game:
                     "base_defense": self.player.base_defense,
                     "base_speed": self.player.base_speed
                 },
-                # NEW: Class data for validation
                 "class_data": self.player.class_data
             },
             "current_area": self.current_area,
             "mission_progress": self.mission_progress,
             "completed_missions": self.completed_missions,
-            "save_version": "2.0",  # NEW: Version for compatibility
+            "save_version": "2.0",
             "save_time": datetime.now().isoformat()
         }
-        
+
         saves_dir = "data/saves"
-        # Create the saves directory if it doesn't exist
         os.makedirs(saves_dir, exist_ok=True)
 
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        filename = f"{saves_dir}/{self.player.name}_save_{timestamp}.json"
+        safe_prefix = filename_prefix or ""
+        # sanitize prefix to avoid accidental path chars
+        safe_prefix = safe_prefix.replace('/', '_')
+        filename = f"{saves_dir}/{safe_prefix}{self.player.name}_save_{timestamp}_{self.player.character_class}_{self.player.level}.json"
         with open(filename, 'w') as f:
-                json.dump(save_data, f, indent=2)
-        
-        print(f"Game saved successfully!")
+            json.dump(save_data, f, indent=2)
+
+        print(f"Game saved successfully: {filename}")
     
     def load_game(self):
         """Load a saved game with enhanced equipment handling and backward compatibility"""
@@ -1569,6 +1709,48 @@ class Game:
             for slot, item_name, reason in invalid_items:
                 print(f"  - {slot.title()}: {item_name} ({reason})")
             print(f"{Colors.YELLOW}Please check your inventory and re-equip valid items.{Colors.END}")
+
+    def save_on_error(self, exc_info=None, filename_prefix: str = "err_save_unstable_"):
+        """Attempt to save the current game state and write a traceback log when an error occurs.
+
+        This is intended for use in exception and signal handlers. It will try to save the
+        current player state with a filename prefixed by `filename_prefix` and also write a
+        `.log` file containing the traceback.
+        """
+        try:
+            # Build a safe player name for filenames
+            pname = (self.player.name if self.player and getattr(self.player, 'name', None) else 'unknown')
+            # Try to save using the standard save function with prefix
+            try:
+                self.save_game(filename_prefix=filename_prefix)
+            except Exception as se:
+                print(f"Error while saving game on error: {se}")
+
+            # Write traceback log
+            try:
+                saves_dir = "data/saves"
+                os.makedirs(saves_dir, exist_ok=True)
+                ts = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                safe_prefix = (filename_prefix or '').replace('/', '_')
+                logname = f"{saves_dir}/{safe_prefix}{pname}_error_{ts}.log"
+                if exc_info is None:
+                    exc_info = sys.exc_info()
+                # exc_info may be a tuple (etype, value, tb) or an exception instance
+                # Ensure exc_info is a 3-tuple (etype, value, tb)
+                if not (isinstance(exc_info, tuple) and len(exc_info) == 3):
+                    exc_info = sys.exc_info()
+
+                et, ev, tbobj = exc_info
+                buf = io.StringIO()
+                traceback.print_exception(et, ev, tbobj, file=buf)
+                tb = buf.getvalue()
+                with open(logname, 'w') as lf:
+                    lf.write(tb)
+                print(f"Error traceback written to: {logname}")
+            except Exception as le:
+                print(f"Failed to write error log: {le}")
+        except Exception as e:
+            print(f"Unexpected failure during save_on_error: {e}")
     
     def quit_game(self):
         """Quit the game"""
@@ -1602,6 +1784,34 @@ class Game:
 def main():
     """Main entry point"""
     game = Game()
+    # Setup global handlers for Ctrl+C and uncaught exceptions so we can save before exit
+    try:
+        # SIGINT handler
+        def _handle_sigint(signum, frame):
+            print(f"\nReceived interrupt (SIGINT). Attempting to save before exit...")
+            try:
+                game.save_on_error(filename_prefix="err_save_unstable_")
+            finally:
+                sys.exit(1)
+
+        signal.signal(signal.SIGINT, _handle_sigint)
+
+        # Unhandled exception hook
+        def _handle_exception(exc_type, exc_value, exc_tb):
+            print("Unhandled exception occurred. Attempting to save game before exiting...")
+            try:
+                game.save_on_error((exc_type, exc_value, exc_tb), filename_prefix="err_save_unstable_")
+            except Exception:
+                pass
+            # Print the traceback to stderr then exit
+            traceback.print_exception(exc_type, exc_value, exc_tb)
+            sys.exit(1)
+
+        sys.excepthook = _handle_exception
+    except Exception:
+        # If handler setup fails, continue without it
+        pass
+
     game.run()
 
 if __name__ == "__main__":
