@@ -24,7 +24,8 @@ This guide covers how to modify every aspect of the Our Legacy RPG game. All gam
 All modifiable game content is stored in JSON files in `/data/`:
 
 - **classes.json** - Player character classes with stats and starting items
-- **items.json** - Weapons, armor, accessories, and consumables
+- **items.json** - Weapons, armor, offhand items, accessories, and consumables
+- **companions.json** - Companion definitions and purchasable companions (hired at the tavern)
 - **enemies.json** - Regular enemies that appear in combat
 - **bosses.json** - Boss enemies with special abilities
 - **areas.json** - Game world locations and connections
@@ -192,6 +193,32 @@ Items include weapons, armor, accessories, and consumables.
 
 #### Hunter-Specific Weapons
 
+#### Offhand Items
+
+Offhand items are a new item type stored in `data/items.json` with `"type": "offhand"`.
+They occupy a dedicated `offhand` slot (separate from `weapon`) and provide defensive, MP, or utility bonuses (shields, tomes, small focuses).
+
+Example:
+
+```json
+{
+  "Wooden Shield": {
+    "type": "offhand",
+    "description": "A basic shield that grants defense",
+    "defense_bonus": 3,
+    "price": 30,
+    "rarity": "common",
+    "requirements": {"level": 1}
+  }
+}
+```
+
+#### Accessories and Slots
+
+The game now supports up to **three** accessory slots: `accessory_1`, `accessory_2`, and `accessory_3`.
+Accessories are defined with `"type": "accessory"` in `data/items.json` and may grant multiple stat bonuses and passive effects.
+
+
 **Bows (Ranged Weapons)**
 ```json
 {
@@ -274,7 +301,7 @@ Items include weapons, armor, accessories, and consumables.
 
 ### Item Properties Reference
 
-- **type** - Type of item (consumable, weapon, armor, accessory)
+- **type** - Type of item (consumable, weapon, armor, offhand, accessory)
 - **description** - Item description shown in-game
 - **effect** - For consumables: "heal", "mp_restore", "defense_boost", etc.
 - **value** - Effect magnitude (healing amount, MP restored, etc.)
@@ -526,6 +553,40 @@ When adding a new area, remember to:
 2. Add it to the game's area network (create bidirectional connections for logical travel)
 
 ---
+
+## Companions & Tavern
+
+**File:** `data/companions.json`
+
+Companions are NPC allies that the player can hire at the tavern. The game supports up to **4 companions** in the player's party. Companions provide passive stat bonuses and/or on-use effects (healing, taunts, post-battle heals, etc.).
+
+Example companion entry:
+
+```json
+"companion_1": {
+  "name": "Borin the Brave",
+  "description": "A stalwart fighter who increases your attack and draws enemy attention.",
+  "attack_bonus": 3,
+  "defense_bonus": 2,
+  "price": 100
+}
+```
+
+Key fields:
+- `name` - Display name for the companion
+- `description` - Flavor text
+- Stat fields such as `attack_bonus`, `defense_bonus`, `speed_bonus`, `mp_bonus`, `healing_bonus` - applied while companion is hired
+- `price` - Gold cost to hire the companion in the tavern
+- Additional custom fields (e.g., `taunt_chance`, `post_battle_heal`, `spell_power_bonus`) may be added and handled by game code for specific companion effects.
+
+Tavern behavior:
+- The tavern is defined as an area (for example `tavern` / "The Rusty Tankard") in `data/areas.json` and contains a shop id (e.g., `tavern_keeper`) or is handled directly by the game to present available companions.
+- Players can hire companions at the tavern for the listed `price`.
+- The game enforces a maximum of 4 companions; attempting to hire more will be prevented.
+
+Balance tips:
+- High-tier companions should cost significantly more and grant larger bonuses (see the added high-tier companions in `data/companions.json`).
+- Companion effects can be expanded in `main.py` to implement active abilities or more complex behaviors.
 
 ## Modifying Spells
 

@@ -739,4 +739,31 @@
     "price": 130,
     "rarity": "rare"
   }
+
+  ,"Wooden Shield": {
+    "type": "offhand",
+    "description": "A simple wooden shield that provides basic protection.",
+    "defense_bonus": 3,
+    "price": 30,
+    "rarity": "common",
+    "requirements": {"level": 1}
+  },
+  "Buckler Shield": {
+    "type": "offhand",
+    "description": "A small buckler that offers balanced defense and agility.",
+    "defense_bonus": 5,
+    "speed_bonus": 1,
+    "price": 60,
+    "rarity": "uncommon",
+    "requirements": {"level": 2}
+  },
+  "Tome of Secrets": {
+    "type": "offhand",
+    "description": "A mystical tome used as an offhand focus to enhance spells.",
+    "mp_bonus": 20,
+    "magic_focus": true,
+    "price": 90,
+    "rarity": "rare",
+    "requirements": {"level": 2}
+  }
 }

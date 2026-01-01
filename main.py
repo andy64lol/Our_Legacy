@@ -233,6 +233,8 @@ class Character:
         # Equipment slots (legacy compatibility)
         self.weapon = None
         self.armor = None
+        self.offhand = None
+        # Legacy single accessory points to accessory_1 for compatibility
         self.accessory = None
         
         # Inventory and gold
@@ -246,7 +248,18 @@ class Character:
         self.base_speed = self.speed
 
         # Equipped items are stored by slot name
-        self.equipment: Dict[str, Optional[str]] = {"weapon": None, "armor": None, "accessory": None}
+        # Support 1 weapon, 1 armor, 1 offhand, 3 accessories, and companions
+        self.equipment: Dict[str, Optional[str]] = {
+            "weapon": None, 
+            "armor": None, 
+            "offhand": None,
+            "accessory_1": None, 
+            "accessory_2": None, 
+            "accessory_3": None
+        }
+        
+        # Companions (4 max)
+        self.companions: List[str] = []
         
         # Battle state
         self.defending = False
@@ -259,13 +272,16 @@ class Character:
         # This ensures backward compatibility with any code that might use the old slots
         self.weapon = self.equipment.get("weapon")
         self.armor = self.equipment.get("armor")
-        self.accessory = self.equipment.get("accessory")
+        # Map legacy single accessory to accessory_1
+        self.accessory = self.equipment.get("accessory_1")
+        self.offhand = self.equipment.get("offhand")
     
     def _update_equipment_slots(self):
         """Update legacy equipment slots when equipment dictionary changes"""
         self.weapon = self.equipment.get("weapon")
         self.armor = self.equipment.get("armor")
-        self.accessory = self.equipment.get("accessory")
+        self.accessory = self.equipment.get("accessory_1")
+        self.offhand = self.equipment.get("offhand")
         
     def is_alive(self) -> bool:
         """Check if character is alive"""
@@ -378,8 +394,8 @@ class Character:
         item = items_data.get(item_name)
         if not item:
             return False
-        slot = item.get("type")
-        if slot not in ("weapon", "armor", "accessory"):
+        item_type = item.get("type")
+        if item_type not in ("weapon", "armor", "accessory", "offhand"):
             return False
 
         # Check requirements (simple level/class checks)
@@ -389,19 +405,45 @@ class Character:
         if reqs.get("class") and reqs.get("class") != self.character_class:
             return False
 
-        # Equip into slot (replace existing)
-        self.equipment[slot] = item_name
-        self._update_equipment_slots()  # NEW: Sync legacy slots
-        self.update_stats_from_equipment(items_data)
-        return True
+        # Determine which slot to use
+        if item_type == "accessory":
+            # Find first available accessory slot
+            for i in range(1, 4):
+                slot = f"accessory_{i}"
+                if self.equipment[slot] is None:
+                    self.equipment[slot] = item_name
+                    self._update_equipment_slots()
+                    self.update_stats_from_equipment(items_data)
+                    return True
+            # If all slots full, ask which one to replace
+            print("All accessory slots are full. Replace one?")
+            for i in range(1, 4):
+                slot = f"accessory_{i}"
+                equipped = self.equipment[slot]
+                print(f"{i}. Slot {i}: {equipped}")
+            choice = input("Enter slot (1-3) or press Enter to cancel: ").strip()
+            if choice in ('1', '2', '3'):
+                slot = f"accessory_{choice}"
+                self.equipment[slot] = item_name
+                self._update_equipment_slots()
+                self.update_stats_from_equipment(items_data)
+                return True
+            return False
+        else:
+            # For weapon, armor, and offhand - single slot each
+            self.equipment[item_type] = item_name
+            self._update_equipment_slots()
+            self.update_stats_from_equipment(items_data)
+            return True
 
     def unequip(self, slot: str, items_data: Dict[str, Any]) -> Optional[str]:
         """Unequip an item from `slot`. Returns the item name if removed."""
-        if slot not in ("weapon", "armor", "accessory"):
+        valid_slots = ("weapon", "armor", "offhand", "accessory_1", "accessory_2", "accessory_3")
+        if slot not in valid_slots:
             return None
         prev = self.equipment.get(slot)
         self.equipment[slot] = None
-        self._update_equipment_slots()  # NEW: Sync legacy slots
+        self._update_equipment_slots()
         self.update_stats_from_equipment(items_data)
         return prev
 
@@ -443,6 +485,7 @@ class Game:
         self.classes_data: Dict[str, Any] = {}
         self.spells_data: Dict[str, Any] = {}
         self.effects_data: Dict[str, Any] = {}
+        self.companions_data: Dict[str, Any] = {}
         self.mission_progress: Dict[str, Dict] = {}  # mission_id -> {current_count, target_count, completed, type}
         self.completed_missions: List[str] = []
         
@@ -468,6 +511,12 @@ class Game:
                 self.spells_data = json.load(f)
             with open('data/effects.json', 'r') as f:
                 self.effects_data = json.load(f)
+            # Optional companions data
+            try:
+                with open('data/companions.json', 'r') as f:
+                    self.companions_data = json.load(f)
+            except FileNotFoundError:
+                self.companions_data = {}
         except FileNotFoundError as e:
             print(f"Error loading game data: {e}")
             print("Please ensure all data files exist in the data/ directory.")
@@ -619,12 +668,13 @@ class Game:
         print("3. Travel")
         print("4. Inventory")
         print("5. Missions")
-        print("6. Shop")
-        print("7. Rest")
-        print("8. Save Game")
-        print("9. Load Game")
-        print("10. Claim Rewards")
-        print("11. Quit")
+        print("6. Tavern")
+        print("7. Shop")
+        print("8. Rest")
+        print("9. Save Game")
+        print("10. Load Game")
+        print("11. Claim Rewards")
+        print("12. Quit")
         choice = ask("Choose an option : ", allow_empty=False)
 
         # Normalize textual shortcuts to numbers for backward compatibility
@@ -634,12 +684,13 @@ class Game:
             'travel': '3', 't': '3',
             'inventory': '4', 'i': '4',
             'missions': '5', 'm': '5',
-            'shop': '6', 's': '6',
-            'rest': '7', 'r': '7',
-            'save': '8',
-            'load': '9', 'l': '9',
-            'claim': '10', 'c': '10',
-            'quit': '11', 'q': '11'
+            'tavern': '6',
+            'shop': '7', 's': '7',
+            'rest': '8', 'r': '8',
+            'save': '9',
+            'load': '10', 'l': '10',
+            'claim': '11', 'c': '11',
+            'quit': '12', 'q': '12'
         }
 
         normalized = choice.strip().lower()
@@ -660,16 +711,18 @@ class Game:
         elif choice == "5":
             self.view_missions()
         elif choice == "6":
-            self.visit_shop()
+            self.visit_tavern()
         elif choice == "7":
-            self.rest()
+            self.visit_shop()
         elif choice == "8":
-            self.save_game()
+            self.rest()
         elif choice == "9":
-            self.load_game()
+            self.save_game()
         elif choice == "10":
-            self.claim_rewards()  # Fixed: was calling quit_game()
+            self.load_game()
         elif choice == "11":
+            self.claim_rewards()  # Fixed: was calling quit_game()
+        elif choice == "12":
             self.quit_game()
         else:
             print("Invalid choice. Please try again.")
@@ -1037,7 +1090,7 @@ class Game:
                     print(f"    {item_data['description']}")
 
         # Offer equip/unequip options for equipment items
-        equipable = [it for it in self.player.inventory if self.items_data.get(it, {}).get('type') in ('weapon', 'armor', 'accessory')]
+        equipable = [it for it in self.player.inventory if self.items_data.get(it, {}).get('type') in ('weapon', 'armor', 'accessory', 'offhand')]
         if equipable:
             print("\nEquipment options:")
             print("  E. Equip an item from inventory")
@@ -1059,10 +1112,11 @@ class Game:
                             print(f"Cannot equip {item_name} (requirements not met).")
             elif choice.lower() == 'u':
                 print("\nCurrently equipped:")
-                for slot in ('weapon', 'armor', 'accessory'):
+                for slot in ('weapon', 'armor', 'offhand', 'accessory_1', 'accessory_2', 'accessory_3'):
                     print(f"{slot.title()}: {self.player.equipment.get(slot, 'None')}")
-                slot_choice = ask("Enter slot to unequip (weapon/armor/accessory) or press Enter: ")
-                if slot_choice in ('weapon', 'armor', 'accessory'):
+                slot_choice = ask("Enter slot to unequip (weapon/armor/offhand/accessory_1/accessory_2/accessory_3) or press Enter: ")
+                valid_slots = ('weapon', 'armor', 'offhand', 'accessory_1', 'accessory_2', 'accessory_3')
+                if slot_choice in valid_slots:
                     removed = self.player.unequip(slot_choice, self.items_data)
                     if removed:
                         print(f"Unequipped {removed} from {slot_choice}.")
@@ -1347,6 +1401,68 @@ class Game:
             elif choice.lower() == 's':
                 # Sell flow
                 self.shop_sell()
+
+    def visit_tavern(self):
+        """Visit the tavern to hire companions."""
+        if not self.player:
+            print("No character created yet.")
+            return
+
+        print(f"\n{Colors.BOLD}=== TAVERN ==={Colors.END}")
+        print("Welcome to The Rusty Tankard. Here you can hire companions to join your party.")
+        print(f"Your gold: {Colors.GOLD}{self.player.gold}{Colors.END}")
+
+        companions = list(self.companions_data.items())
+        if not companions:
+            print("No companions are available at the moment.")
+            return
+
+        page_size = 6
+        current_page = 0
+
+        while True:
+            start = current_page * page_size
+            end = start + page_size
+            page_items = companions[start:end]
+
+            print(f"\n--- Page {current_page + 1} of {(len(companions) + page_size - 1) // page_size} ---")
+            for i, (cid, cdata) in enumerate(page_items, 1):
+                price = cdata.get('price', '?')
+                desc = cdata.get('description', '')
+                print(f"{i}. {cdata.get('name', cid)} - {Colors.GOLD}{price} gold{Colors.END}")
+                print(f"   {desc}")
+
+            print("Shortcuts: N-next, P-prev, Enter-leave")
+            choice = ask(f"\nHire companion (1-{len(page_items)}) or press Enter to leave: ")
+
+            if not choice:
+                break
+            elif choice.lower() == 'n':
+                if end < len(companions):
+                    current_page += 1
+                else:
+                    print("No more pages.")
+            elif choice.lower() == 'p':
+                if current_page > 0:
+                    current_page -= 1
+                else:
+                    print("Already on first page.")
+            elif choice.isdigit():
+                idx = int(choice) - 1
+                if 0 <= idx < len(page_items):
+                    cid, cdata = page_items[idx]
+                    price = cdata.get('price', 0)
+                    if self.player.gold >= price:
+                        if len(self.player.companions) >= 4:
+                            print("You already have the maximum number of companions (4).")
+                            continue
+                        self.player.gold -= price
+                        self.player.companions.append(cdata.get('name', cid))
+                        print(f"Hired {cdata.get('name', cid)} for {price} gold!")
+                    else:
+                        print("Not enough gold!")
+                else:
+                    print("Invalid choice.")
 
     def travel(self):
         """Travel to connected areas from the current area."""

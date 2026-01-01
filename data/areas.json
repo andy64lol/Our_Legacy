@@ -124,4 +124,15 @@
     "boss_area": true,
     "can_rest": false
   }
+  ,
+  "tavern": {
+    "name": "The Rusty Tankard",
+    "description": "A warm tavern in the heart of the town. Adventurers meet here to swap stories and hire companions.",
+    "possible_enemies": [],
+    "shops": ["tavern_keeper"],
+    "missions_available": false,
+    "connections": ["starting_village"],
+    "rest_cost": 10,
+    "can_rest": true
+  }
 }

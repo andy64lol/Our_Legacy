@@ -17,6 +17,7 @@
 
 ### 🗺️ Areas to Explore
 1. **Starting Village** - Your humble beginning
+2. **The Rusty Tankard (Tavern)** - Hire companions and hear rumors
 2. **Dark Forest** - Home to goblins and wolves
 3. **Deep Woods** - Orcs and dark magic lurk here
 4. **Ancient Ruins** - Bandits and skeletons await
@@ -37,6 +38,11 @@
 - Random loot drops from enemies
 - Equipment progression system
 - Valuable materials collection
+
+### 🤝 Companions & Tavern
+- **Tavern** - A new in-town location where you can hire companions to join your party.
+- **Companions** - NPC allies purchasable at the tavern; each grants passive bonuses (attack, defense, speed, healing, MP, etc.).
+- **Limits** - You can have up to 4 companions at once. Stronger companions cost more gold and grant larger bonuses.
 
 ### 📜 Mission System
 - Main story quests
@@ -72,12 +78,16 @@ python3 main.py
 ### Main Menu Options
 1. **Explore** - Enter the current area for random encounters
 2. **View Character** - Check your stats and progression
-3. **Inventory** - Manage your items and equipment
-4. **Missions** - View and accept available quests
-5. **Shop** - Buy and sell items for gold
-6. **Save Game** - Save your progress
-7. **Load Game** - Continue a saved adventure
-8. **Quit** - Exit the game
+3. **Travel** - Move between connected areas
+4. **Inventory** - Manage your items and equipment (equip offhand & accessories)
+5. **Missions** - View and accept available quests
+6. **Tavern** - Hire companions (companions are purchased here)
+7. **Shop** - Buy and sell items for gold
+8. **Rest** - Pay to recover HP/MP in safe areas
+9. **Save Game** - Save your progress
+10. **Load Game** - Continue a saved adventure
+11. **Claim Rewards** - Collect completed mission rewards
+12. **Quit** - Exit the game
 
 ### Combat Controls
 1. **Attack** - Standard melee attack
@@ -135,6 +145,10 @@ python3 main.py
 - **Rare** - Powerful equipment, expensive
 - **Legendary** - Ultimate items, very rare
 
+### Offhand & Accessories
+- **Offhand** - New item type used in the offhand slot (shields, tomes, small focuses). Offhand items grant defense, MP, or other utility bonuses and are equipped separately from weapons.
+- **Accessories** - You can equip up to **three** accessories simultaneously (previously a single accessory). Accessories grant small stat bonuses and unique passive effects (rings, charms, amulets).
+
 ## Tips for Success
 
 ### 🏆 General Strategy
@@ -184,7 +198,8 @@ Our_Legacy/
 ├── data/                  # Game data directory
 │   ├── enemies.json       # Enemy definitions and stats
 │   ├── areas.json         # World areas and connections
-│   ├── items.json         # Equipment and consumables
+│   ├── items.json         # Equipment, offhand, accessories, and consumables
+│   ├── companions.json    # Companion definitions and purchasable companions
 │   ├── missions.json      # Quest definitions
 │   ├── bosses.json        # Boss encounters and abilities
 │   └── saves/             # Saved game files

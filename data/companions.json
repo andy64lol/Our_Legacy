@@ -1,0 +1,57 @@
+{
+  "companion_1": {
+    "name": "Borin the Brave",
+    "description": "A stalwart fighter who increases your attack and draws enemy attention.",
+    "attack_bonus": 3,
+    "defense_bonus": 2,
+    "price": 100
+  },
+  "companion_2": {
+    "name": "Lyra the Swift",
+    "description": "A nimble scout who increases your speed and critical chance.",
+    "speed_bonus": 4,
+    "crit_chance": 5,
+    "price": 120
+  },
+  "companion_3": {
+    "name": "Eldon the Wise",
+    "description": "A sage who bolsters your magic and restores a small amount of MP each battle.",
+    "mp_bonus": 15,
+    "price": 150
+  },
+  "companion_4": {
+    "name": "Mira the Healer",
+    "description": "A caring companion who provides occasional healing during exploration and battles.",
+    "healing_bonus": 25,
+    "price": 140
+  }
+  ,
+  "companion_5": {
+    "name": "Tharos the Bulwark",
+    "description": "A veteran guardian whose presence greatly increases defense and enemy taunt chance.",
+    "defense_bonus": 8,
+    "taunt_chance": 20,
+    "price": 350
+  },
+  "companion_6": {
+    "name": "Seraphine the Arcane",
+    "description": "A master of the arcane who significantly boosts MP and spell power for the party.",
+    "mp_bonus": 50,
+    "spell_power_bonus": 10,
+    "price": 400
+  },
+  "companion_7": {
+    "name": "Ragnar the Warlord",
+    "description": "A fearsome warrior that drastically increases attack and critical damage.",
+    "attack_bonus": 12,
+    "crit_damage_bonus": 15,
+    "price": 420
+  },
+  "companion_8": {
+    "name": "Astra the Lifegiver",
+    "description": "A legendary healer whose aura restores HP after each battle and provides large healing boosts.",
+    "healing_bonus": 80,
+    "post_battle_heal": 30,
+    "price": 450
+  }
+}
