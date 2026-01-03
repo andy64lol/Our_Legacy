@@ -258,8 +258,9 @@ class Character:
             "accessory_3": None
         }
         
-        # Companions (4 max)
-        self.companions: List[str] = []
+        # Companions (4 max) - now storing full companion data
+        # Each companion is {id, name, equipment: {weapon, armor, accessory}, level}
+        self.companions: List[Dict[str, Any]] = []
         
         # Battle state
         self.defending = False
@@ -350,10 +351,22 @@ class Character:
             else:
                 print(f"  {slot.title():<10}: {Colors.DARK_GRAY}None{Colors.END}")
         
+        # Display companions if any
+        if self.companions:
+            print(f"\n{create_separator('-', 50)}")
+            print(f"{Colors.CYAN}{Colors.BOLD}👥 COMPANIONS ({len(self.companions)}/4):{Colors.END}")
+            for i, companion in enumerate(self.companions, 1):
+                if isinstance(companion, dict):
+                    comp_name = companion.get('name')
+                    comp_level = companion.get('level', 1)
+                    print(f"  {i}. {Colors.CYAN}{comp_name}{Colors.END} (Level {comp_level})")
+                else:
+                    print(f"  {i}. {Colors.CYAN}{companion}{Colors.END}")
+        
         print(f"{create_separator('=', 50)}")
 
-    def update_stats_from_equipment(self, items_data: Dict[str, Any]):
-        """Recalculate stats from base stats plus any equipped item bonuses."""
+    def update_stats_from_equipment(self, items_data: Dict[str, Any], companions_data: Optional[Dict[str, Any]] = None):
+        """Recalculate stats from base stats plus any equipped item and companion bonuses."""
         # Start from base
         self.max_hp = self.base_max_hp
         self.max_mp = self.base_max_mp
@@ -384,6 +397,15 @@ class Character:
                 self.attack -= item.get("attack_penalty", 0)
             if item.get("hp_bonus"):
                 self.max_hp += item.get("hp_bonus", 0)
+
+        # Apply companion bonuses if companions_data is provided
+        if companions_data:
+            bonuses = self.calculate_companion_bonuses(companions_data)
+            self.attack += bonuses["attack"]
+            self.defense += bonuses["defense"]
+            self.speed += bonuses["speed"]
+            self.max_hp += bonuses["max_hp"]
+            self.max_mp += bonuses["max_mp"]
 
         # Clamp current HP/MP to new maxima
         self.hp = min(self.hp, self.max_hp)
@@ -446,6 +468,69 @@ class Character:
         self._update_equipment_slots()
         self.update_stats_from_equipment(items_data)
         return prev
+
+    def calculate_companion_bonuses(self, companions_data: Dict[str, Any]) -> Dict[str, int]:
+        """Calculate stat bonuses from all active companions."""
+        bonuses = {
+            "attack": 0,
+            "defense": 0,
+            "speed": 0,
+            "max_hp": 0,
+            "max_mp": 0,
+            "healing": 0,
+            "spell_power": 0
+        }
+        
+        for companion in self.companions:
+            # Companion can be just name (old format) or dict with equipment
+            if isinstance(companion, str):
+                # Legacy format: just the name
+                comp_id = None
+                comp_name = companion
+            else:
+                # New format: dict with id, name, equipment, level
+                comp_id = companion.get('id')
+                comp_name = companion.get('name')
+            
+            # Find companion data by name or id
+            comp_data = None
+            for cid, cdata in companions_data.items():
+                if cdata.get('name') == comp_name or cid == comp_id:
+                    comp_data = cdata
+                    break
+            
+            if not comp_data:
+                continue
+            
+            # Apply direct stat bonuses
+            bonuses["attack"] += comp_data.get("attack_bonus", 0)
+            bonuses["defense"] += comp_data.get("defense_bonus", 0)
+            bonuses["speed"] += comp_data.get("speed_bonus", 0)
+            bonuses["max_hp"] += comp_data.get("hp_bonus", 0)
+            bonuses["max_mp"] += comp_data.get("mp_bonus", 0)
+            bonuses["healing"] += comp_data.get("healing_bonus", 0)
+            bonuses["spell_power"] += comp_data.get("spell_power_bonus", 0)
+            
+            # TODO: Apply equipment bonuses from companion's equipment dict
+            if isinstance(companion, dict) and "equipment" in companion:
+                # In future, equip items on companions and add their bonuses
+                pass
+        
+        return bonuses
+
+    def apply_companion_bonuses(self, companions_data: Dict[str, Any]):
+        """Apply companion bonuses to character stats after recalculating from equipment."""
+        bonuses = self.calculate_companion_bonuses(companions_data)
+        
+        self.attack += bonuses["attack"]
+        self.defense += bonuses["defense"]
+        self.speed += bonuses["speed"]
+        self.max_hp += bonuses["max_hp"]
+        self.max_mp += bonuses["max_mp"]
+        
+        # Cap current HP/MP to new max
+        self.hp = min(self.hp, self.max_hp)
+        self.mp = min(self.mp, self.max_mp)
 
 class Enemy:
     """Enemy class"""
@@ -671,10 +756,11 @@ class Game:
         print("6. Tavern")
         print("7. Shop")
         print("8. Rest")
-        print("9. Save Game")
-        print("10. Load Game")
-        print("11. Claim Rewards")
-        print("12. Quit")
+        print("9. Companions")
+        print("10. Save Game")
+        print("11. Load Game")
+        print("12. Claim Rewards")
+        print("13. Quit")
         choice = ask("Choose an option : ", allow_empty=False)
 
         # Normalize textual shortcuts to numbers for backward compatibility
@@ -687,10 +773,11 @@ class Game:
             'tavern': '6',
             'shop': '7', 's': '7',
             'rest': '8', 'r': '8',
-            'save': '9',
-            'load': '10', 'l': '10',
-            'claim': '11', 'c': '11',
-            'quit': '12', 'q': '12'
+            'companions': '9', 'comp': '9',
+            'save': '10',
+            'load': '11', 'l': '11',
+            'claim': '12', 'c': '12',
+            'quit': '13', 'q': '13'
         }
 
         normalized = choice.strip().lower()
@@ -717,12 +804,14 @@ class Game:
         elif choice == "8":
             self.rest()
         elif choice == "9":
-            self.save_game()
+            self.manage_companions()
         elif choice == "10":
-            self.load_game()
+            self.save_game()
         elif choice == "11":
-            self.claim_rewards()  # Fixed: was calling quit_game()
+            self.load_game()
         elif choice == "12":
+            self.claim_rewards()  # Fixed: was calling quit_game()
+        elif choice == "13":
             self.quit_game()
         else:
             print("Invalid choice. Please try again.")
@@ -785,6 +874,9 @@ class Game:
             if player_first:
                 if not self.player_turn(enemy):
                     break
+                # Companion action after player turn
+                if enemy.is_alive() and self.player.companions and random.random() < 0.4:
+                    self.companion_action(enemy)
                 if enemy.is_alive():
                     self.enemy_turn(enemy)
             else:
@@ -792,6 +884,9 @@ class Game:
                 if self.player.is_alive():
                     if not self.player_turn(enemy):
                         break
+                    # Companion action after player turn
+                    if enemy.is_alive() and self.player.companions and random.random() < 0.4:
+                        self.companion_action(enemy)
             
             # Display current HP
             print(f"\n{Colors.RED}{self.player.name}: {self.player.hp}/{self.player.max_hp} HP{Colors.END}")
@@ -872,6 +967,52 @@ class Game:
         
         return True
     
+    def companion_action(self, enemy: Enemy):
+        """Companions help during battle with their own actions"""
+        if not self.player or not self.player.companions:
+            return
+        
+        # Random companion takes an action
+        companion = random.choice(self.player.companions)
+        
+        # Get companion name (handle both old string format and new dict format)
+        if isinstance(companion, dict):
+            comp_name = companion.get('name')
+            comp_id = companion.get('id')
+        else:
+            comp_name = companion
+            comp_id = None
+        
+        # Find companion data
+        comp_data = None
+        for cid, cdata in self.companions_data.items():
+            if cdata.get('name') == comp_name or cid == comp_id:
+                comp_data = cdata
+                break
+        
+        if not comp_data:
+            return
+        
+        # Companion actions based on their abilities
+        action_type = random.choice(['attack', 'defend', 'heal'])
+        
+        if action_type == 'attack' and comp_data.get('attack_bonus', 0) > 0:
+            # Companion attacks
+            companion_damage = int(self.player.attack * 0.6 + comp_data.get('attack_bonus', 0))
+            actual_damage = enemy.take_damage(companion_damage)
+            print(f"{Colors.CYAN}{comp_name} attacks for {actual_damage} damage!{Colors.END}")
+        
+        elif action_type == 'heal' and comp_data.get('healing_bonus', 0) > 0:
+            # Companion heals
+            heal_amount = comp_data.get('healing_bonus', 0)
+            self.player.heal(heal_amount)
+            print(f"{Colors.GREEN}{comp_name} heals you for {heal_amount} HP!{Colors.END}")
+        
+        elif action_type == 'defend' and comp_data.get('defense_bonus', 0) > 0:
+            # Companion helps defend
+            print(f"{Colors.BLUE}{comp_name} helps you defend, reducing incoming damage!{Colors.END}")
+            self.player.defending = True
+    
     def enemy_turn(self, enemy: Enemy):
         """Enemy's turn in battle"""
         if not self.player:
@@ -884,6 +1025,28 @@ class Game:
         
         actual_damage = self.player.take_damage(damage)
         print(f"{enemy.name} attacks for {actual_damage} damage!")
+        
+        # Companion may help reduce damage based on defense bonus
+        if self.player.companions:
+            companion_defense_bonus = 0
+            for companion in self.player.companions:
+                if isinstance(companion, dict):
+                    comp_name = companion.get('name')
+                    comp_id = companion.get('id')
+                else:
+                    comp_name = companion
+                    comp_id = None
+                
+                for cid, cdata in self.companions_data.items():
+                    if cdata.get('name') == comp_name or cid == comp_id:
+                        companion_defense_bonus += cdata.get('defense_bonus', 0)
+                        break
+            
+            if companion_defense_bonus > 0:
+                damage_reduction = int(companion_defense_bonus * 0.5)
+                actual_damage = max(1, actual_damage - damage_reduction)
+                self.player.take_damage(damage_reduction)
+                print(f"{Colors.BLUE}Companions help reduce {damage_reduction} damage!{Colors.END}")
     
     def use_item_in_battle(self):
         """Use item during battle"""
@@ -1457,12 +1620,106 @@ class Game:
                             print("You already have the maximum number of companions (4).")
                             continue
                         self.player.gold -= price
-                        self.player.companions.append(cdata.get('name', cid))
+                        # Create companion data with equipment and level
+                        companion_data = {
+                            "id": cid,
+                            "name": cdata.get('name', cid),
+                            "level": 1,
+                            "equipment": {
+                                "weapon": None,
+                                "armor": None,
+                                "accessory": None
+                            }
+                        }
+                        self.player.companions.append(companion_data)
                         print(f"Hired {cdata.get('name', cid)} for {price} gold!")
+                        # Recalculate stats with new companion bonus
+                        self.player.update_stats_from_equipment(self.items_data, self.companions_data)
                     else:
                         print("Not enough gold!")
                 else:
                     print("Invalid choice.")
+
+    def manage_companions(self):
+        """Manage hired companions."""
+        if not self.player:
+            print("No character created yet.")
+            return
+
+        while True:
+            print(f"\n{Colors.BOLD}=== COMPANIONS ==={Colors.END}")
+            print(f"Active companions: {len(self.player.companions)}/4")
+            
+            if not self.player.companions:
+                print("You have no companions yet. Visit the tavern to hire some!")
+                return
+            
+            # Display active companions
+            for i, companion in enumerate(self.player.companions, 1):
+                if isinstance(companion, dict):
+                    comp_name = companion.get('name')
+                    comp_level = companion.get('level', 1)
+                else:
+                    comp_name = companion
+                    comp_level = 1
+                
+                # Find companion data to show bonuses
+                comp_data = None
+                for cid, cdata in self.companions_data.items():
+                    if cdata.get('name') == comp_name:
+                        comp_data = cdata
+                        break
+                
+                print(f"\n{i}. {Colors.CYAN}{comp_name}{Colors.END} (Level {comp_level})")
+                if comp_data:
+                    bonuses = []
+                    if comp_data.get('attack_bonus'):
+                        bonuses.append(f"+{comp_data.get('attack_bonus')} ATK")
+                    if comp_data.get('defense_bonus'):
+                        bonuses.append(f"+{comp_data.get('defense_bonus')} DEF")
+                    if comp_data.get('speed_bonus'):
+                        bonuses.append(f"+{comp_data.get('speed_bonus')} SPD")
+                    if comp_data.get('healing_bonus'):
+                        bonuses.append(f"+{comp_data.get('healing_bonus')} Healing")
+                    if comp_data.get('mp_bonus'):
+                        bonuses.append(f"+{comp_data.get('mp_bonus')} MP")
+                    
+                    if bonuses:
+                        print(f"   Bonuses: {', '.join(bonuses)}")
+                    print(f"   {comp_data.get('description', '')}")
+            
+            print("\nOptions:")
+            print("D - Dismiss a companion")
+            print("E - Equip item on companion")
+            print("Enter - Return to main menu")
+            
+            choice = ask("Choose action: ").strip().lower()
+            
+            if not choice:
+                break
+            elif choice == 'd':
+                # Dismiss companion
+                if self.player.companions:
+                    try:
+                        idx = int(ask(f"Dismiss which companion (1-{len(self.player.companions)})? ")) - 1
+                        if 0 <= idx < len(self.player.companions):
+                            dismissed = self.player.companions.pop(idx)
+                            if isinstance(dismissed, dict):
+                                print(f"{Colors.RED}Dismissed {dismissed.get('name')}.{Colors.END}")
+                            else:
+                                print(f"{Colors.RED}Dismissed {dismissed}.{Colors.END}")
+                            # Recalculate stats after dismissal
+                            self.player.update_stats_from_equipment(self.items_data, self.companions_data)
+                        else:
+                            print("Invalid selection.")
+                    except ValueError:
+                        print("Invalid input.")
+            elif choice == 'e':
+                # Equip item on companion
+                print("Companion equipment feature coming soon!")
+                # TODO: Implement companion equipment
+            else:
+                print("Invalid choice.")
 
     def travel(self):
         """Travel to connected areas from the current area."""
@@ -1606,6 +1863,7 @@ class Game:
                 "inventory": self.player.inventory,
                 "gold": self.player.gold,
                 "equipment": self.player.equipment,
+                "companions": self.player.companions,
                 "base_stats": {
                     "base_max_hp": self.player.base_max_hp,
                     "base_max_mp": self.player.base_max_mp,
@@ -1618,7 +1876,7 @@ class Game:
             "current_area": self.current_area,
             "mission_progress": self.mission_progress,
             "completed_missions": self.completed_missions,
-            "save_version": "2.0",
+            "save_version": "2.1",
             "save_time": datetime.now().isoformat()
         }
 
@@ -1684,6 +1942,9 @@ class Game:
                     self.player.inventory = player_data["inventory"]
                     self.player.gold = player_data["gold"]
                     
+                    # NEW: Load companions with backward compatibility
+                    self.player.companions = player_data.get("companions", [])
+                    
                     # NEW: Enhanced equipment loading with validation
                     self._load_equipment_data(player_data, save_version)
                     
@@ -1715,7 +1976,9 @@ class Game:
                                         'type': mission_type
                                     }
                     
+                    # Recalculate stats with equipment and companions
                     if self.player:
+                        self.player.update_stats_from_equipment(self.items_data, self.companions_data)
                         print(f"Game loaded successfully! Welcome back, {self.player.name}!")
                         self.player.display_stats()
                     
