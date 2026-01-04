@@ -7,7 +7,7 @@
 
 ## Features
 
-### 🎮 Core Gameplay
+### Core Gameplay
 - **Character Classes**: Choose from Warrior, Mage, Rogue, or Hunter
 - **Exploration**: 7 unique areas to discover and conquer
 - **Grinding System**: Level up your character through combat
@@ -15,7 +15,7 @@
 - **Boss Battles**: Face powerful enemies with special abilities
 - **Economy**: Gold system with shops and trading
 
-### 🗺️ Areas to Explore
+### Areas to Explore
 1. **Starting Village** - Your humble beginning
 2. **The Rusty Tankard (Tavern)** - Hire companions and hear rumors
 2. **Dark Forest** - Home to goblins and wolves
@@ -25,33 +25,52 @@
 6. **Crystal Caves** - Ice elementals dominate
 7. **Dragon's Lair** - The ultimate challenge
 
-### ⚔️ Combat System
+### Combat System
 - Turn-based battles with strategic depth
 - Experience gain and character progression
 - Loot drops from defeated enemies
 - Special abilities and magic spells
 - Dynamic difficulty scaling
 
-### 💰 Economy & Loot
+### Economy & Loot
 - Gold currency for all transactions
 - Shop system for equipment and consumables
 - Random loot drops from enemies
 - Equipment progression system
 - Valuable materials collection
 
-### 🤝 Companions & Tavern
-- **Tavern** - A new in-town location where you can hire companions to join your party.
-- **Companions** - NPC allies purchasable at the tavern; each grants passive bonuses (attack, defense, speed, healing, MP, etc.).
-- **Limits** - You can have up to 4 companions at once. Stronger companions cost more gold and grant larger bonuses.
+### Companions & Tavern
+- **Tavern** - Hire companions to join your party (up to 4 active)
+- **Companion Classes** - Fighter, Scout, Mage, Support, Guardian, Berserker, Cleric, Assassin, Strategist
+- **Companion Ranks** - Common, Uncommon, Rare, Epic, Legendary (higher rank = stronger bonuses)
+- **Active Companion Abilities** - Companions use special abilities in battle (attacks, heals, buffs, taunt, MP regen)
+- **Direct Combat Help** - Each companion has a chance to act each turn (not just once per battle)
+- **Post-Battle Healing** - Some companions restore HP after victory
+- **Passive Bonuses** - Attack, defense, speed, healing, and MP bonuses always active
 
-### 📜 Mission System
+### Mission System
 - Main story quests
 - Side missions for extra rewards
 - Kill missions to prove your strength
 - Collection quests for materials
 - Progressive difficulty unlocking
 
-### 👹 Boss Battles
+### Rank & Progression System
+- **Novice** (Level 1-4): Starting rank
+- **Adept** (Level 5-9): Improving skills
+- **Veteran** (Level 10-14): Battle-hardened
+- **Elite** (Level 15-19): Master warrior
+- **Champion** (Level 20-29): Legendary combatant
+- **Legend** (Level 30+): Ultimate power
+
+### Buff & Effect System
+- **Temporary Buffs**: Apply stat boosts, healing, MP regen, and more with durations
+- **Shield/Absorb**: Magical shields absorb incoming damage before HP
+- **Per-Turn Effects**: Buffs like MP regen and healing apply each combat round
+- **Buff Expiration**: Automatically expire and recalculate stats when duration ends
+- **Spell Buffs**: Magic spells cast from weapons apply temporary buffs instead of permanent changes
+
+### Boss Battles
 - **Ancient Fire Dragon** - The ultimate boss
 - **Troll King** - Massive underground ruler
 - **Shadow Lord** - Dark entity of ancient ruins
@@ -95,31 +114,35 @@ python3 main.py
 3. **Defend** - Reduce incoming damage
 4. **Flee** - Attempt to escape from battle
 
-## Character Classes
+## Character Classes & Ranks
 
-### ⚔️ Warrior
+### Warrior
 - **Stats**: High HP and Defense, balanced Attack
 - **Strengths**: Excellent survivability, reliable damage
 - **Best For**: New players, tank builds
 - **Equipment Focus**: Heavy armor, swords, shields
+- **Rank Progression**: Novice > Adept > Veteran > Elite > Champion > Legend
 
-### 🔮 Mage
+### Mage
 - **Stats**: High MP and magical power, low HP
-- **Strengths**: Powerful spells, area effects
+- **Strengths**: Powerful spells, area effects, buff casting
 - **Best For**: Strategic players, spell builds
 - **Equipment Focus**: Staves, robes, magical items
+- **Rank Progression**: Novice > Adept > Veteran > Elite > Champion > Legend
 
-### 🗡️ Rogue
+### Rogue
 - **Stats**: High Speed and agility, balanced stats
 - **Strengths**: Fast attacks, critical strikes, evasiveness
 - **Best For**: Experienced players, hit-and-run tactics
 - **Equipment Focus**: Light armor, daggers, speed items
+- **Rank Progression**: Novice > Adept > Veteran > Elite > Champion > Legend
 
-### 🏹 Hunter
+### Hunter
 - **Stats**: High Speed and accuracy, balanced combat stats
 - **Strengths**: Ranged attacks, tracking abilities, versatile weapons
 - **Best For**: Strategic players, ranged combat specialists
 - **Equipment Focus**: Bows, crossbows, spears, hunting knives
+- **Rank Progression**: Novice > Adept > Veteran > Elite > Champion > Legend
 
 ## Equipment System
 
@@ -147,30 +170,57 @@ python3 main.py
 
 ### Offhand & Accessories
 - **Offhand** - New item type used in the offhand slot (shields, tomes, small focuses). Offhand items grant defense, MP, or other utility bonuses and are equipped separately from weapons.
-- **Accessories** - You can equip up to **three** accessories simultaneously (previously a single accessory). Accessories grant small stat bonuses and unique passive effects (rings, charms, amulets).
+- **Accessories** - You can equip up to **three** accessories simultaneously. Accessories grant small stat bonuses and unique passive effects (rings, charms, amulets).
+
+### Buffs & Temporary Effects
+- **Stat Boosts** - Temporarily increase attack, defense, speed, HP, or MP (with duration)
+- **Shields/Absorb** - Magical shields that absorb damage before HP loss
+- **Per-Turn Healing** - Regenerate HP each combat round
+- **MP Regeneration** - Restore MP each combat round
+- **Spell Power** - Increase magic damage output
+- **Party Buffs** - Companion-granted bonuses affecting your stats
 
 ## Tips for Success
 
-### 🏆 General Strategy
+### General Strategy
 1. **Start Strong** - Choose a class that fits your playstyle
 2. **Explore Early** - Find equipment and level up
 3. **Complete Missions** - They provide excellent rewards
 4. **Manage Resources** - Don't waste potions or gold
 5. **Save Frequently** - Progress can be lost if defeated
 
-### 💡 Combat Tips
+### Combat Tips
 1. **Know Your Enemy** - Different enemies require different strategies
-2. **Use Items Wisely** - Save powerful items for tough battles
+2. **Use Items Wisely** - Save powerful potions for tough battles
 3. **Level Appropriately** - Don't fight bosses too early
 4. **Defend Strategically** - Use when facing strong attacks
-5. **Flee When Needed** - Sometimes retreat is the best option
+5. **Manage Buffs** - Check active buffs to plan spell casts
+6. **Companion Abilities** - Stronger companions use more powerful abilities
+7. **Flee When Needed** - Sometimes retreat is the best option
+8. **Equip Shields** - Shields provide damage absorption before HP loss
 
-### 💰 Economy Tips
+### Economy Tips
 1. **Sell Junk** - Keep inventory clean by selling low-value items
 2. **Buy Early** - Good equipment makes a big difference
-3. **Upgrade Gradually** - Don't waste gold on marginal improvements
-4. **Collect Materials** - Some missions require specific items
-5. **Shop Around** - Compare prices in different areas
+3. **Hire Companions** - Companion bonuses are worth the cost
+4. **Upgrade Gradually** - Don't waste gold on marginal improvements
+5. **Collect Materials** - Some missions require specific items
+6. **Shop Around** - Compare prices in different areas
+
+## Companion Directory
+
+| Name | Class | Rank | Special Ability | Cost | Notes |
+|------|-------|------|-----------------|------|-------|
+| Borin the Brave | Fighter | Common | Shield Bash (taunt) | 100g | Starting-friendly |
+| Lyra the Swift | Scout | Uncommon | Quick Strike (atk+) | 120g | Speed boost |
+| Eldon the Wise | Mage | Rare | Arcane Insight (mp/turn) | 150g | MP regeneration |
+| Mira the Healer | Support | Rare | Tend Wounds (heal) | 140g | Active healing |
+| Tharos the Bulwark | Guardian | Epic | Hold The Line (taunt) | 350g | Strong defense |
+| Seraphine the Arcane | Mage | Epic | Arcane Surge (spell+) | 400g | Magic boosting |
+| Ragnar the Warlord | Berserker | Legendary | Rage (attack++) | 420g | Highest attack |
+| Astra the Lifegiver | Cleric | Legendary | Sanctuary (post-heal) | 450g | Best healer |
+| Nyx the Shadow | Assassin | Rare | Backstab (crit++) | 220g | Critical damage |
+| Galen the Tactician | Strategist | Uncommon | Inspire (party buff) | 160g | Team support |
 
 ## Mission Guide
 

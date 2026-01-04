@@ -979,6 +979,42 @@ All modifications must maintain this structure for the game to read the data cor
 
 ---
 
-**Happy Modding!** 🎮✨
+## Advanced Mechanics
+
+### Buff System
+Buffs are temporary stat modifiers that expire after a duration:
+- Applied via spells or companion abilities
+- Tick down each combat round
+- Can provide attack/defense/speed/HP/MP bonuses
+- Per-turn effects: MP regen, healing each round
+- Consumed shields reduce damage before HP
+
+### Companion Abilities
+Companions execute abilities during combat with different chances:
+- **attack_boost** / **rage** / **crit_boost** - Enhanced attacks
+- **taunt** - Draws enemy attention, applies defense buff
+- **heal** - Restore player HP
+- **mp_regen** - Grant MP per turn buff
+- **spell_power** - Boost magical damage
+- **party_buff** - Grant team-wide stat bonuses
+- **post_battle_heal** - Restore HP after victory
+
+Each companion has an `action_chance` (0-1) to use abilities each turn.
+
+### Shield & Absorb Mechanics
+- Shields created via spells or buff abilities
+- `absorb_amount` in modifiers reduces incoming damage
+- Shields are consumed before HP damage is applied
+- When absorbed amount reaches 0, shield expires
+
+### Rank System
+Character rank updates automatically on level-up:
+- Novice (1-4) → Adept (5-9) → Veteran (10-14) → Elite (15-19) → Champion (20-29) → Legend (30+)
+- Shown in character stats display alongside level
+- Used for narrative/flavor (no stat bonuses yet)
+
+---
+
+**Happy Modding!**
 
 For questions or issues, check the console output when running `python3 main.py` for helpful error messages.

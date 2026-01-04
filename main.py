@@ -206,6 +206,8 @@ class Character:
     def __init__(self, name: str, character_class: str, classes_data: Optional[Dict] = None):
         self.name = name
         self.character_class = character_class
+        # Rank system based on level
+        self.rank = "Novice"
         self.level = 1
         self.experience = 0
         self.experience_to_next = 100
@@ -264,6 +266,10 @@ class Character:
         
         # Battle state
         self.defending = False
+
+        # Active temporary buffs/debuffs: list of {name, duration, modifiers}
+        # modifiers is a dict like {"attack_bonus": 5, "defense_bonus": 2}
+        self.active_buffs: List[Dict[str, Any]] = []
         
         # Sync legacy equipment slots with new system for compatibility
         self._sync_equipment_slots()
@@ -290,9 +296,32 @@ class Character:
     
     def take_damage(self, damage: int) -> int:
         """Apply damage to character, return actual damage taken"""
-        actual_damage = max(1, damage - self.defense)
-        self.hp = max(0, self.hp - actual_damage)
-        return actual_damage
+        # Use effective defense (includes buffs)
+        base_damage = max(1, damage - self.get_effective_defense())
+
+        remaining = base_damage
+
+        # Consume any absorb shields from active buffs first
+        for b in list(self.active_buffs):
+            mods = b.get('modifiers', {})
+            if remaining <= 0:
+                break
+            if 'absorb_amount' in mods and mods.get('absorb_amount', 0) > 0:
+                avail = mods.get('absorb_amount', 0)
+                use = min(avail, remaining)
+                remaining -= use
+                mods['absorb_amount'] = avail - use
+                # remove buff if its modifiers are depleted
+                if all((not isinstance(v, (int, float)) or v == 0) for v in mods.values()):
+                    try:
+                        self.active_buffs.remove(b)
+                    except ValueError:
+                        pass
+
+        # Any remaining damage applies to HP
+        damage_taken = max(0, remaining)
+        self.hp = max(0, self.hp - damage_taken)
+        return damage_taken
     
     def heal(self, amount: int):
         """Heal character"""
@@ -321,10 +350,27 @@ class Character:
             self.mp = self.max_mp
             
         print(f"{Colors.GREEN}{Colors.BOLD}Level Up!{Colors.END} You are now level {self.level}!")
+        # Update rank when leveling
+        self._update_rank()
+
+    def _update_rank(self):
+        """Simple rank tiers based on level"""
+        if self.level >= 30:
+            self.rank = "Legend"
+        elif self.level >= 20:
+            self.rank = "Champion"
+        elif self.level >= 15:
+            self.rank = "Elite"
+        elif self.level >= 10:
+            self.rank = "Veteran"
+        elif self.level >= 5:
+            self.rank = "Adept"
+        else:
+            self.rank = "Novice"
     
     def display_stats(self):
         """Display character statistics"""
-        print(f"\n{Colors.CYAN}{Colors.BOLD}=== {self.name} - Level {self.level} {self.character_class} ==={Colors.END}")
+        print(f"\n{Colors.CYAN}{Colors.BOLD}=== {self.name} - Level {self.level} {self.character_class} ({self.rank}) ==={Colors.END}")
         # HP and MP with visual bars
         hp_bar = create_hp_mp_bar(self.hp, self.max_hp, width=20, color=Colors.RED)
         mp_bar = create_hp_mp_bar(self.mp, self.max_mp, width=20, color=Colors.BLUE)
@@ -343,7 +389,7 @@ class Character:
         
         # Equipped items with better formatting
         print(f"\n{create_separator('-', 50)}")
-        print(f"{Colors.CYAN}{Colors.BOLD}🎒 EQUIPPED ITEMS:{Colors.END}")
+        print(f"{Colors.CYAN}{Colors.BOLD}EQUIPPED ITEMS:{Colors.END}")
         for slot in ['weapon', 'armor', 'accessory']:
             item_name = self.equipment.get(slot, 'None')
             if item_name != 'None':
@@ -354,7 +400,7 @@ class Character:
         # Display companions if any
         if self.companions:
             print(f"\n{create_separator('-', 50)}")
-            print(f"{Colors.CYAN}{Colors.BOLD}👥 COMPANIONS ({len(self.companions)}/4):{Colors.END}")
+            print(f"{Colors.CYAN}{Colors.BOLD}COMPANIONS ({len(self.companions)}/4):{Colors.END}")
             for i, companion in enumerate(self.companions, 1):
                 if isinstance(companion, dict):
                     comp_name = companion.get('name')
@@ -362,6 +408,14 @@ class Character:
                     print(f"  {i}. {Colors.CYAN}{comp_name}{Colors.END} (Level {comp_level})")
                 else:
                     print(f"  {i}. {Colors.CYAN}{companion}{Colors.END}")
+
+        # Active buffs
+        if self.active_buffs:
+            print(f"\n{create_separator('-', 50)}")
+            print(f"{Colors.CYAN}{Colors.BOLD}ACTIVE BUFFS:{Colors.END}")
+            for b in self.active_buffs:
+                mods = ', '.join(f"{k}:{v}" for k, v in b.get('modifiers', {}).items())
+                print(f"  - {b.get('name')} ({b.get('duration')} turns): {mods}")
         
         print(f"{create_separator('=', 50)}")
 
@@ -410,6 +464,71 @@ class Character:
         # Clamp current HP/MP to new maxima
         self.hp = min(self.hp, self.max_hp)
         self.mp = min(self.mp, self.max_mp)
+
+    # --- Buff helpers ---
+    def get_total_buff_modifiers(self) -> Dict[str, int]:
+        """Aggregate modifiers from active buffs"""
+        totals = {}
+        for b in self.active_buffs:
+            for k, v in b.get('modifiers', {}).items():
+                totals[k] = totals.get(k, 0) + v
+        return totals
+
+    def get_effective_attack(self) -> int:
+        mods = self.get_total_buff_modifiers()
+        return max(0, self.attack + mods.get('attack_bonus', 0))
+
+    def get_effective_defense(self) -> int:
+        mods = self.get_total_buff_modifiers()
+        return max(0, self.defense + mods.get('defense_bonus', 0))
+
+    def get_effective_speed(self) -> int:
+        mods = self.get_total_buff_modifiers()
+        return max(0, self.speed + mods.get('speed_bonus', 0))
+
+    def get_effective_max_hp(self) -> int:
+        mods = self.get_total_buff_modifiers()
+        return max(1, self.max_hp + mods.get('hp_bonus', 0))
+
+    def get_effective_max_mp(self) -> int:
+        mods = self.get_total_buff_modifiers()
+        return max(0, self.max_mp + mods.get('mp_bonus', 0))
+
+    def apply_buff(self, name: str, duration: int, modifiers: Dict[str, int]):
+        """Add a temporary buff/debuff"""
+        self.active_buffs.append({"name": name, "duration": duration, "modifiers": modifiers})
+
+    def tick_buffs(self):
+        """Reduce buff durations by 1 and expire any that reach 0."""
+        changed = False
+
+        # First, apply per-turn modifiers (healing, mp regen, etc.)
+        for b in list(self.active_buffs):
+            mods = b.get('modifiers', {})
+            # MP per turn
+            if mods.get('mp_per_turn'):
+                try:
+                    self.mp = min(self.get_effective_max_mp(), self.mp + int(mods.get('mp_per_turn', 0)))
+                except Exception:
+                    pass
+            # Heal per turn
+            if mods.get('heal_per_turn'):
+                try:
+                    self.heal(int(mods.get('heal_per_turn', 0)))
+                except Exception:
+                    pass
+
+        # Then reduce duration and remove expired buffs
+        for b in list(self.active_buffs):
+            b['duration'] -= 1
+            if b['duration'] <= 0:
+                try:
+                    self.active_buffs.remove(b)
+                except ValueError:
+                    pass
+                changed = True
+
+        return changed
 
     def equip(self, item_name: str, items_data: Dict[str, Any]) -> bool:
         """Attempt to equip `item_name`. Returns True if equipped."""
@@ -867,16 +986,16 @@ class Game:
         print(f"\n{Colors.BOLD}=== BATTLE ==={Colors.END}")
         print(f"VS {enemy.name}")
         
-        # Determine who goes first
-        player_first = self.player.speed >= enemy.speed
+        # Determine who goes first using effective speed (buffs apply)
+        player_first = self.player.get_effective_speed() >= enemy.speed
         
         while self.player.is_alive() and enemy.is_alive():
             if player_first:
                 if not self.player_turn(enemy):
                     break
-                # Companion action after player turn
-                if enemy.is_alive() and self.player.companions and random.random() < 0.4:
-                    self.companion_action(enemy)
+                # Companions may act after the player turn (each companion has a chance)
+                if enemy.is_alive() and self.player.companions:
+                    self.companions_act(enemy)
                 if enemy.is_alive():
                     self.enemy_turn(enemy)
             else:
@@ -884,13 +1003,17 @@ class Game:
                 if self.player.is_alive():
                     if not self.player_turn(enemy):
                         break
-                    # Companion action after player turn
-                    if enemy.is_alive() and self.player.companions and random.random() < 0.4:
-                        self.companion_action(enemy)
+                    # Companions may act after the player turn (each companion has a chance)
+                    if enemy.is_alive() and self.player.companions:
+                        self.companions_act(enemy)
             
             # Display current HP
             print(f"\n{Colors.RED}{self.player.name}: {self.player.hp}/{self.player.max_hp} HP{Colors.END}")
             print(f"{Colors.RED}{enemy.name}: {enemy.hp}/{enemy.max_hp} HP{Colors.END}")
+            # Tick buffs (reduce durations each round)
+            if self.player.tick_buffs():
+                # Recalculate stats if buffs expired
+                self.player.update_stats_from_equipment(self.items_data, self.companions_data)
         
         # Battle outcome
         if self.player.is_alive():
@@ -916,6 +1039,30 @@ class Game:
                 print(f"{Colors.YELLOW}Loot acquired: {loot}!{Colors.END}")
                 # Update mission progress for collection
                 self.update_mission_progress('collect', loot)
+            # Post-battle companion effects (e.g., post_battle_heal)
+            if self.player.companions:
+                for companion in self.player.companions:
+                    if isinstance(companion, dict):
+                        comp_id = companion.get('id')
+                        comp_name = companion.get('name')
+                    else:
+                        comp_id = None
+                        comp_name = companion
+
+                    comp_data = None
+                    for cid, cdata in self.companions_data.items():
+                        if cdata.get('name') == comp_name or cid == comp_id:
+                            comp_data = cdata
+                            break
+
+                    if not comp_data:
+                        continue
+
+                    if comp_data.get('post_battle_heal'):
+                        amt = int(comp_data.get('post_battle_heal', 0))
+                        if amt > 0:
+                            self.player.heal(amt)
+                            print(f"{Colors.GREEN}{comp_data.get('name')} restores {amt} HP after battle!{Colors.END}")
         else:
             print(f"\n{Colors.RED}You were defeated by the {enemy.name}...{Colors.END}")
             # Respawn penalty
@@ -944,7 +1091,7 @@ class Game:
         choice = ask("Choose action (1-5): " if can_cast else "Choose action (1-4): ")
         
         if choice == "1":
-            damage = self.player.attack
+            damage = self.player.get_effective_attack()
             actual_damage = enemy.take_damage(damage)
             print(f"You attack for {actual_damage} damage!")
         elif choice == "2":
@@ -955,7 +1102,7 @@ class Game:
             print("You defend, reducing incoming damage by half!")
             self.player.defending = True
         elif choice == "4":
-            flee_chance = 0.7 if self.player.speed > enemy.speed else 0.4
+            flee_chance = 0.7 if self.player.get_effective_speed() > enemy.speed else 0.4
             if random.random() < flee_chance:
                 print("You successfully fled from battle!")
                 return False
@@ -969,12 +1116,17 @@ class Game:
     
     def companion_action(self, enemy: Enemy):
         """Companions help during battle with their own actions"""
+        # Backwards-compatible wrapper: pick a random companion and delegate
         if not self.player or not self.player.companions:
             return
-        
-        # Random companion takes an action
         companion = random.choice(self.player.companions)
-        
+        self.companion_action_for(companion, enemy)
+
+    def companion_action_for(self, companion, enemy: Enemy):
+        """Perform an action for a specific companion dict or name."""
+        if not self.player:
+            return
+
         # Get companion name (handle both old string format and new dict format)
         if isinstance(companion, dict):
             comp_name = companion.get('name')
@@ -982,36 +1134,125 @@ class Game:
         else:
             comp_name = companion
             comp_id = None
-        
+
         # Find companion data
         comp_data = None
         for cid, cdata in self.companions_data.items():
             if cdata.get('name') == comp_name or cid == comp_id:
                 comp_data = cdata
                 break
-        
+
         if not comp_data:
             return
-        
-        # Companion actions based on their abilities
-        action_type = random.choice(['attack', 'defend', 'heal'])
-        
-        if action_type == 'attack' and comp_data.get('attack_bonus', 0) > 0:
-            # Companion attacks
-            companion_damage = int(self.player.attack * 0.6 + comp_data.get('attack_bonus', 0))
-            actual_damage = enemy.take_damage(companion_damage)
-            print(f"{Colors.CYAN}{comp_name} attacks for {actual_damage} damage!{Colors.END}")
-        
-        elif action_type == 'heal' and comp_data.get('healing_bonus', 0) > 0:
-            # Companion heals
-            heal_amount = comp_data.get('healing_bonus', 0)
-            self.player.heal(heal_amount)
-            print(f"{Colors.GREEN}{comp_name} heals you for {heal_amount} HP!{Colors.END}")
-        
-        elif action_type == 'defend' and comp_data.get('defense_bonus', 0) > 0:
-            # Companion helps defend
-            print(f"{Colors.BLUE}{comp_name} helps you defend, reducing incoming damage!{Colors.END}")
-            self.player.defending = True
+
+        # Prefer using defined abilities; otherwise fallback to simple actions
+        abilities = comp_data.get('abilities', [])
+        used_ability = False
+
+        for ability in abilities:
+            # Chance of triggering ability (ability chance may be percent 0-100 or 0-1)
+            chance = ability.get('chance')
+            triggered = False
+            if chance is None:
+                triggered = True
+            else:
+                # Accept either 0-1 float or 0-100 int
+                if isinstance(chance, float) and 0 <= chance <= 1:
+                    triggered = random.random() < chance
+                else:
+                    try:
+                        triggered = random.randint(1, 100) <= int(chance)
+                    except Exception:
+                        triggered = False
+
+            if not triggered:
+                continue
+
+            used_ability = True
+            atype = ability.get('type')
+
+            if atype in ('attack_boost', 'rage', 'crit_boost'):
+                # Immediate enhanced attack
+                bonus = int(ability.get('attack_bonus', 0) or ability.get('crit_damage_bonus', 0) or 0)
+                companion_damage = int(self.player.get_effective_attack() * 0.6 + comp_data.get('attack_bonus', 0) + bonus)
+                actual_damage = enemy.take_damage(companion_damage)
+                print(f"{Colors.CYAN}{comp_name} uses {ability.get('name')} for {actual_damage} damage!{Colors.END}")
+
+            elif atype == 'taunt':
+                dur = int(ability.get('duration', 1))
+                # Give a temporary defense buff and mark taunt (defensive)
+                dbonus = int(ability.get('defense_bonus', comp_data.get('defense_bonus', 0)))
+                self.player.apply_buff(ability.get('name'), dur, {'defense_bonus': dbonus})
+                print(f"{Colors.BLUE}{comp_name} uses {ability.get('name')} and draws enemy attention!{Colors.END}")
+
+            elif atype == 'heal':
+                # immediate heal (chance already checked)
+                heal_amt = int(ability.get('healing', ability.get('heal', comp_data.get('healing_bonus', 0)) or 0))
+                self.player.heal(heal_amt)
+                print(f"{Colors.GREEN}{comp_name} uses {ability.get('name')} and heals you for {heal_amt} HP!{Colors.END}")
+
+            elif atype == 'mp_regen':
+                dur = int(ability.get('duration', 3))
+                mp_per = int(ability.get('mp_per_turn', ability.get('mp_per_turn', 0)))
+                if mp_per > 0:
+                    self.player.apply_buff(ability.get('name'), dur, {'mp_per_turn': mp_per})
+                    print(f"{Colors.CYAN}{comp_name} grants {mp_per} MP/turn for {dur} turns!{Colors.END}")
+
+            elif atype == 'spell_power':
+                dur = int(ability.get('duration', 3))
+                sp = int(ability.get('spell_power_bonus', 0))
+                if sp:
+                    self.player.apply_buff(ability.get('name'), dur, {'spell_power_bonus': sp})
+                    print(f"{Colors.CYAN}{comp_name} increases spell power by {sp} for {dur} turns!{Colors.END}")
+
+            elif atype == 'party_buff':
+                dur = int(ability.get('duration', 3))
+                mods = {}
+                for k in ('attack_bonus', 'defense_bonus', 'speed_bonus'):
+                    if ability.get(k) is not None:
+                        mods[k] = int(ability.get(k))
+                if mods:
+                    self.player.apply_buff(ability.get('name'), dur, mods)
+                    print(f"{Colors.CYAN}{comp_name} uses {ability.get('name')}, granting party buffs: {mods}!{Colors.END}")
+
+            else:
+                # Unknown ability: fallback to simple action
+                pass
+
+            # If an ability triggered, don't try multiple abilities this turn
+            break
+
+        if not used_ability:
+            # Fallback random behavior
+            action_type = random.choice(['attack', 'defend', 'heal'])
+
+            if action_type == 'attack' and comp_data.get('attack_bonus', 0) > 0:
+                companion_damage = int(self.player.get_effective_attack() * 0.6 + comp_data.get('attack_bonus', 0))
+                actual_damage = enemy.take_damage(companion_damage)
+                print(f"{Colors.CYAN}{comp_name} attacks for {actual_damage} damage!{Colors.END}")
+
+            elif action_type == 'heal' and comp_data.get('healing_bonus', 0) > 0:
+                heal_amount = comp_data.get('healing_bonus', 0)
+                self.player.heal(heal_amount)
+                print(f"{Colors.GREEN}{comp_name} heals you for {heal_amount} HP!{Colors.END}")
+
+            elif action_type == 'defend' and comp_data.get('defense_bonus', 0) > 0:
+                print(f"{Colors.BLUE}{comp_name} helps you defend, reducing incoming damage!{Colors.END}")
+                self.player.defending = True
+
+    def companions_act(self, enemy: Enemy):
+        """Each companion has a chance to act on their own each turn."""
+        if not self.player:
+            return
+        for companion in list(self.player.companions):
+            # Default 50% chance to take an action; stronger companions could have higher chance
+            chance = 0.5
+            # read optional field from companion definition
+            if isinstance(companion, dict) and companion.get('action_chance'):
+                chance = companion.get('action_chance') or 0.5
+
+            if random.random() < chance:
+                self.companion_action_for(companion, enemy)
     
     def enemy_turn(self, enemy: Enemy):
         """Enemy's turn in battle"""
@@ -1045,8 +1286,9 @@ class Game:
             if companion_defense_bonus > 0:
                 damage_reduction = int(companion_defense_bonus * 0.5)
                 actual_damage = max(1, actual_damage - damage_reduction)
-                self.player.take_damage(damage_reduction)
-                print(f"{Colors.BLUE}Companions help reduce {damage_reduction} damage!{Colors.END}")
+                # Companions mitigated some damage; heal back the mitigated amount
+                self.player.heal(damage_reduction)
+                print(f"{Colors.BLUE}Companions mitigate {damage_reduction} damage!{Colors.END}")
     
     def use_item_in_battle(self):
         """Use item during battle"""
@@ -1120,7 +1362,7 @@ class Game:
 
         if sdata.get('type') == 'damage':
             power = sdata.get('power', 0)
-            damage = power + (self.player.attack // 2)
+            damage = power + (self.player.get_effective_attack() // 2)
             actual = enemy.take_damage(damage)
             print(f"You cast {sname} for {actual} damage!")
             
@@ -1159,23 +1401,25 @@ class Game:
             for effect_name in effects:
                 effect_data = self.effects_data.get(effect_name, {})
                 effect_type = effect_data.get('type', '')
-                
-                if effect_type == 'stat_boost':
-                    if 'defense_bonus' in effect_data:
-                        self.player.defense += effect_data['defense_bonus']
-                        print(f"{Colors.GREEN}Your defense increases by {effect_data['defense_bonus']}!{Colors.END}")
-                    elif 'speed_bonus' in effect_data:
-                        self.player.speed += effect_data['speed_bonus']
-                        print(f"{Colors.GREEN}Your speed increases by {effect_data['speed_bonus']}!{Colors.END}")
-                    elif 'attack_bonus' in effect_data:
-                        self.player.attack += effect_data['attack_bonus']
-                        print(f"{Colors.GREEN}Your attack increases by {effect_data['attack_bonus']}!{Colors.END}")
-                        
-                elif effect_type == 'damage_absorb':
-                    print(f"{Colors.BLUE}You create a magical shield!{Colors.END}")
-                    
-                elif effect_type == 'reconnaissance':
-                    print(f"{Colors.CYAN}You can see enemy weaknesses!{Colors.END}")
+
+                # Collect numeric modifiers from effect_data (keys that end with _bonus or known keys)
+                modifiers: Dict[str, int] = {}
+                for k, v in effect_data.items():
+                    if isinstance(v, (int, float)) and (k.endswith('_bonus') or k in ('hp_bonus', 'mp_bonus', 'absorb_amount', 'critical_bonus')):
+                        modifiers[k] = int(v)
+
+                duration = int(effect_data.get('duration', max(3, int(power or 3))))
+                # Apply as temporary buff
+                if modifiers:
+                    self.player.apply_buff(effect_name, duration, modifiers)
+                    print(f"{Colors.GREEN}Applied buff: {effect_name} (+{', '.join(str(v) + ' ' + k for k, v in modifiers.items())}) for {duration} turns{Colors.END}")
+                else:
+                    # Non-numeric effects (like reconnaissance) still applied as a marker buff
+                    self.player.apply_buff(effect_name, duration, {})
+                    if effect_type == 'damage_absorb':
+                        print(f"{Colors.BLUE}You create a magical shield!{Colors.END}")
+                    elif effect_type == 'reconnaissance':
+                        print(f"{Colors.CYAN}You can see enemy weaknesses!{Colors.END}")
                     
         elif sdata.get('type') == 'debuff':
             power = sdata.get('power', 0)
@@ -1872,6 +2116,9 @@ class Game:
                     "base_speed": self.player.base_speed
                 },
                 "class_data": self.player.class_data
+            ,
+            "rank": self.player.rank,
+            "active_buffs": self.player.active_buffs
             },
             "current_area": self.current_area,
             "mission_progress": self.mission_progress,
@@ -1941,6 +2188,9 @@ class Game:
                     self.player.speed = player_data["speed"]
                     self.player.inventory = player_data["inventory"]
                     self.player.gold = player_data["gold"]
+                    # Restore rank and active buffs if present
+                    self.player.rank = player_data.get("rank", self.player.rank)
+                    self.player.active_buffs = player_data.get("active_buffs", self.player.active_buffs)
                     
                     # NEW: Load companions with backward compatibility
                     self.player.companions = player_data.get("companions", [])
@@ -1978,6 +2228,11 @@ class Game:
                     
                     # Recalculate stats with equipment and companions
                     if self.player:
+                        # Ensure rank matches loaded level
+                        try:
+                            self.player._update_rank()
+                        except Exception:
+                            pass
                         self.player.update_stats_from_equipment(self.items_data, self.companions_data)
                         print(f"Game loaded successfully! Welcome back, {self.player.name}!")
                         self.player.display_stats()
