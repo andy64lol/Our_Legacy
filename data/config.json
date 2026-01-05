@@ -1,0 +1,9 @@
+{
+  "scripting_enabled": false,
+  "auto_load_scripts": true,
+  "scripts": [
+  ],
+  "difficulty": "normal",
+  "autosave_enabled": true,
+  "autosave_interval": 5
+}

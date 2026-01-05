@@ -692,9 +692,12 @@ class Game:
         self.companions_data: Dict[str, Any] = {}
         self.mission_progress: Dict[str, Dict] = {}  # mission_id -> {current_count, target_count, completed, type}
         self.completed_missions: List[str] = []
+        self.config: Dict[str, Any] = {}
+        self.scripting_enabled: bool = False
         
         # Load game data
         self.load_game_data()
+        self.load_config()
     
     def load_game_data(self):
         """Load all game data from JSON files"""
@@ -725,6 +728,29 @@ class Game:
             print(f"Error loading game data: {e}")
             print("Please ensure all data files exist in the data/ directory.")
             sys.exit(1)
+    
+    def load_config(self):
+        """Load configuration from config.json"""
+        try:
+            with open('data/config.json', 'r') as f:
+                self.config = json.load(f)
+            self.scripting_enabled = self.config.get('scripting_enabled', False)
+            if self.scripting_enabled:
+                print("Scripting API is EXPERIMENTAL and may have stability issues.")
+        except FileNotFoundError:
+            # Default config if file doesn't exist
+            self.config = {
+                'scripting_enabled': False,
+                'auto_load_scripts': True,
+                'scripts': [],
+                'difficulty': 'normal',
+                'autosave_enabled': True,
+                'autosave_interval': 5
+            }
+            self.scripting_enabled = False
+        except json.JSONDecodeError:
+            print("Warning: config.json is invalid JSON. Using defaults.")
+            self.scripting_enabled = False
     
     def display_welcome(self) -> str:
         """Display welcome screen"""
@@ -2418,6 +2444,26 @@ class Game:
 def main():
     """Main entry point"""
     game = Game()
+    
+    # Initialize scripting API if enabled
+    if game.scripting_enabled:
+        try:
+            from scripting import init_scripting_api
+            init_scripting_api(game)
+            print(f"{Colors.YELLOW}Scripting API enabled (EXPERIMENTAL){Colors.END}")
+            
+            # Auto-load scripts if configured
+            if game.config.get('auto_load_scripts', True):
+                script_list = game.config.get('scripts', [])
+                for script_name in script_list:
+                    try:
+                        __import__(f'scripts.{script_name}')
+                        print(f"Loaded script: {script_name}")
+                    except Exception as e:
+                        print(f"Error loading script {script_name}: {e}")
+        except ImportError:
+            print(f"{Colors.YELLOW}Scripting API not available.{Colors.END}")
+    
     # Setup global handlers for Ctrl+C and uncaught exceptions so we can save before exit
     try:
         # SIGINT handler

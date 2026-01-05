@@ -92,6 +92,10 @@ cd /home/andy64lolxd/Our_Legacy
 python3 main.py
 ```
 
+### Custom Scripts
+
+Create Python scripts in the `scripts/` directory to extend gameplay. See [documentation.md](documentation.md#scripting-api) for the Scripting API reference and examples.
+
 ## Game Controls
 
 ### Main Menu Options

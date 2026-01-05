@@ -14,8 +14,9 @@ This guide covers how to modify every aspect of the Our Legacy RPG game. All gam
 6. [Modifying Areas](#modifying-areas)
 7. [Modifying Spells](#modifying-spells)
 8. [Modifying Missions](#modifying-missions)
-9. [Modifying Game Code](#modifying-game-code)
-10. [Tips & Best Practices](#tips--best-practices)
+9. [Scripting API](#scripting-api)
+10. [Modifying Game Code](#modifying-game-code)
+11. [Tips & Best Practices](#tips--best-practices)
 
 ---
 
@@ -907,7 +908,265 @@ Use the difficulty setting in areas to indicate danger level:
 
 ---
 
-## Troubleshooting
+## Scripting API
+
+**EXPERIMENTAL FEATURE** - The Scripting API is still in development. Features may change or break between versions. Use at your own risk.
+
+The Scripting API allows you to extend gameplay with Python scripts. Create custom events, modify game state, and hook into game mechanics without editing the core code.
+
+### Getting Started
+
+**Important:** The scripting API is disabled by default. To enable it:
+
+1. Open `data/config.json`
+2. Set `"scripting_enabled": true`
+3. Restart the game
+
+Example config.json:
+```json
+{
+  "scripting_enabled": true,
+  "auto_load_scripts": true,
+  "scripts": [
+    "example_buff_granter",
+    "example_companion_reward"
+  ],
+  "difficulty": "normal",
+  "autosave_enabled": true,
+  "autosave_interval": 5
+}
+```
+
+If `config.json` doesn't exist, it will be created with scripting disabled by default for stability.
+
+### Basic Example
+
+```python
+from scripting import get_api
+
+def my_callback():
+    api = get_api()
+    player = api.get_player()
+    api.log(f"Player is level {player['level']}")
+
+# Register callback
+api = get_api()
+api.register_hook('on_player_levelup', my_callback)
+```
+
+### Core API Methods
+
+#### Player Management
+
+- `get_player()` - Get player data dict
+- `set_player_stat(stat, value)` - Set a player stat (hp, mp, attack, etc.)
+- `add_item(item_name, count)` - Add items to inventory
+- `remove_item(item_name, count)` - Remove items from inventory
+- `heal_player(amount)` - Heal player HP
+- `restore_mp(amount)` - Restore player MP
+- `apply_buff(name, duration, modifiers)` - Apply temporary buff
+
+#### Companions
+
+- `get_companions()` - Get list of companions
+- `hire_companion(name)` - Recruit a companion (ignores cost)
+
+#### Game Data
+
+- `get_items_data()` - Get all items
+- `get_enemies_data()` - Get all enemies
+- `get_areas_data()` - Get all areas
+- `get_companions_data()` - Get all companions
+- `get_current_area()` - Get current area ID
+- `set_current_area(area_id)` - Travel to an area
+- `get_area_info(area_id)` - Get info about an area
+
+#### Missions
+
+- `get_missions()` - Get all missions
+- `get_mission_progress()` - Get current mission progress
+- `accept_mission(mission_id)` - Accept a mission
+- `complete_mission(mission_id)` - Force complete a mission
+
+#### Events & Hooks
+
+- `register_hook(event_name, callback)` - Register event listener
+- `trigger_hook(event_name, *args)` - Trigger an event
+
+Available events:
+- `on_battle_start` - Battle begins
+- `on_battle_end` - Battle ends
+- `on_player_levelup` - Player levels up
+- `on_item_acquired` - Item added to inventory
+- `on_companion_hired` - Companion recruited
+- `on_mission_complete` - Mission completed
+- `on_buff_applied` - Buff applied to player
+- `on_area_entered` - Player enters an area
+
+#### Data Storage
+
+- `store_data(key, value)` - Store custom data
+- `retrieve_data(key, default)` - Get stored data
+- `clear_data(key)` - Delete stored data
+
+#### Utilities
+
+- `log(message)` - Print to console
+- `get_random_item(list)` - Pick random from list
+- `create_custom_enemy(name, stats)` - Create dynamic enemy
+
+### Example Scripts
+
+See `scripts/` directory for examples:
+
+**example_buff_granter.py** - Grant power buffs every 5 levels
+```python
+def on_levelup():
+    api = get_api()
+    player = api.get_player()
+    if player['level'] % 5 == 0:
+        api.apply_buff('Milestone Buff', 10, {
+            'attack_bonus': 5,
+            'defense_bonus': 3,
+        })
+```
+
+**example_companion_reward.py** - Auto-recruit companions at milestones
+```python
+COMPANION_REWARDS = {
+    5: 'Borin the Brave',
+    10: 'Lyra the Swift',
+    15: 'Mira the Healer',
+    20: 'Ragnar the Warlord',
+}
+
+def on_levelup_reward():
+    api = get_api()
+    player = api.get_player()
+    if player['level'] in COMPANION_REWARDS:
+        companion = COMPANION_REWARDS[player['level']]
+        api.hire_companion(companion)
+```
+
+**example_quest_giver.py** - Implement custom quests
+```python
+class QuestGiver:
+    def check_quests(self):
+        api = get_api()
+        player = api.get_player()
+        # Implement quest logic here
+
+api.store_data('quest_giver', QuestGiver())
+```
+
+### Loading Custom Scripts
+
+Scripts in the `scripts/` directory can be auto-loaded by adding them to `config.json`:
+
+```json
+{
+  "scripting_enabled": true,
+  "auto_load_scripts": true,
+  "scripts": [
+    "example_buff_granter",
+    "example_companion_reward",
+    "example_quest_giver"
+  ]
+}
+```
+
+Or manually load in `main.py`:
+
+```python
+# In main() after Game() init
+if game.scripting_enabled:
+    from scripts import my_custom_script
+```
+
+### Advanced Usage
+
+#### Creating a Plugin System
+
+```python
+from scripting import get_api
+
+class MyPlugin:
+    def __init__(self):
+        self.api = get_api()
+        self.api.register_hook('on_player_levelup', self.on_levelup)
+    
+    def on_levelup(self):
+        player = self.api.get_player()
+        self.api.log(f"Custom event: {player['name']} is level {player['level']}")
+
+# Auto-initialize
+MyPlugin()
+```
+
+#### Conditional Item Rewards
+
+```python
+def on_item_acquired(item_name):
+    api = get_api()
+    if item_name == 'Legendary Sword':
+        player = api.get_player()
+        api.apply_buff('Legendary Blessing', 20, {
+            'attack_bonus': 10,
+            'defense_bonus': 5,
+        })
+        api.log("You feel the legendary power surge through you!")
+
+api.register_hook('on_item_acquired', on_item_acquired)
+```
+
+#### Custom Enemy Encounters
+
+```python
+def create_boss_encounter():
+    api = get_api()
+    boss = api.create_custom_enemy('Shadow Master', {
+        'hp': 500,
+        'attack': 30,
+        'defense': 20,
+        'speed': 15,
+        'experience_reward': 1000,
+        'gold_reward': 500,
+    })
+    return boss
+```
+
+### Best Practices
+
+1. **Always check if API exists** before using it:
+   ```python
+   api = get_api()
+   if api is None:
+       return
+   ```
+
+2. **Handle exceptions** gracefully:
+   ```python
+   try:
+       api.apply_buff('Name', 10, {'bonus': 5})
+   except Exception as e:
+       print(f"Error: {e}")
+   ```
+
+3. **Store state in custom_data** instead of globals:
+   ```python
+   api.store_data('my_counter', api.retrieve_data('my_counter', 0) + 1)
+   ```
+
+4. **Use logging** for debugging:
+   ```python
+   api.log(f"Debug info: {value}")
+   ```
+
+5. **Test thoroughly** before distributing scripts
+
+---
+
+## Modifying Game Code
 
 ### "AttributeError" or "KeyError"
 
@@ -933,19 +1192,25 @@ Verify they exist in the correct JSON file and are referenced properly in other 
 
 ```
 Our_Legacy/
-├── main.py              (Game code)
+├── main.py                  (Game code)
+├── scripting.py             (Scripting API)
 ├── README.md
-├── documentation.md     (This file)
+├── documentation.md         (This file)
 ├── TODO.md
+├── scripts/                 (Custom scripts)
+│   ├── example_buff_granter.py
+│   ├── example_companion_reward.py
+│   └── example_quest_giver.py
 └── data/
-    ├── classes.json     (Player classes)
-    ├── items.json       (Equipment & consumables)
-    ├── enemies.json     (Regular enemies)
-    ├── bosses.json      (Boss enemies)
-    ├── areas.json       (Game world locations)
-    ├── spells.json      (Magic spells)
-    ├── missions.json    (Quests)
-    └── saves/           (Save files)
+    ├── classes.json         (Player classes)
+    ├── items.json           (Equipment & consumables)
+    ├── enemies.json         (Regular enemies)
+    ├── bosses.json          (Boss enemies)
+    ├── areas.json           (Game world locations)
+    ├── spells.json          (Magic spells)
+    ├── missions.json        (Quests)
+    ├── companions.json      (Companion definitions)
+    └── saves/               (Save files)
 ```
 
 ---
