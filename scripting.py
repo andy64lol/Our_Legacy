@@ -418,6 +418,580 @@ class GameAPI:
             'loot_table': stats.get('loot_table', []),
         }
 
+    # ============ Combat Hooks & Modifiers ============
+
+    def get_combat_multipliers(self) -> Dict[str, float]:
+        """Get current combat damage multipliers.
+        
+        Returns:
+            Dict with 'player_damage_mult', 'enemy_damage_mult', 'experience_mult'
+        """
+        if not self.game:
+            return {'player_damage_mult': 1.0, 'enemy_damage_mult': 1.0, 'experience_mult': 1.0}
+        return {
+            'player_damage_mult': getattr(self.game, 'player_damage_mult', 1.0),
+            'enemy_damage_mult': getattr(self.game, 'enemy_damage_mult', 1.0),
+            'experience_mult': getattr(self.game, 'experience_mult', 1.0),
+        }
+
+    def set_combat_multipliers(self, player_mult: float = 1.0, enemy_mult: float = 1.0, exp_mult: float = 1.0) -> bool:
+        """Set combat damage and reward multipliers.
+        
+        Args:
+            player_mult: Multiplier for player damage (default 1.0)
+            enemy_mult: Multiplier for enemy damage (default 1.0)
+            exp_mult: Multiplier for experience rewards (default 1.0)
+            
+        Returns:
+            True if successful
+        """
+        if not self.game:
+            return False
+        self.game.player_damage_mult = max(0.1, player_mult)
+        self.game.enemy_damage_mult = max(0.1, enemy_mult)
+        self.game.experience_mult = max(0.1, exp_mult)
+        return True
+
+    # ============ Inventory & Equipment ============
+
+    def get_inventory(self) -> List[str]:
+        """Get player's full inventory list."""
+        if not self.game or not self.game.player:
+            return []
+        return self.game.player.inventory.copy()
+
+    def get_inventory_count(self, item_name: str) -> int:
+        """Count how many of an item player has.
+        
+        Args:
+            item_name: Name of item
+            
+        Returns:
+            Count of item in inventory
+        """
+        if not self.game or not self.game.player:
+            return 0
+        return self.game.player.inventory.count(item_name)
+
+    def clear_inventory(self) -> bool:
+        """Clear entire inventory (dangerous!)."""
+        if not self.game or not self.game.player:
+            return False
+        self.game.player.inventory.clear()
+        return True
+
+    def get_equipped_items(self) -> Dict[str, Optional[str]]:
+        """Get equipped weapon, armor, offhand, and accessories.
+        
+        Returns:
+            Dict with 'weapon', 'armor', 'offhand', 'accessory_1', 'accessory_2', 'accessory_3'
+        """
+        if not self.game or not self.game.player:
+            return {}
+        return {
+            'weapon': self.game.player.equipped_weapon,
+            'armor': self.game.player.equipped_armor,
+            'offhand': getattr(self.game.player, 'equipped_offhand', None),
+            'accessory_1': getattr(self.game.player, 'equipped_accessory_1', None),
+            'accessory_2': getattr(self.game.player, 'equipped_accessory_2', None),
+            'accessory_3': getattr(self.game.player, 'equipped_accessory_3', None),
+        }
+
+    def equip_item(self, item_name: str, slot: Optional[str] = None) -> bool:
+        """Equip an item.
+        
+        Args:
+            item_name: Item to equip
+            slot: 'weapon', 'armor', 'offhand', 'accessory_1', 'accessory_2', 'accessory_3' (auto-detect if None)
+            
+        Returns:
+            True if successful
+        """
+        if not self.game or not self.game.player or item_name not in self.game.player.inventory:
+            return False
+        try:
+            if item_name in self.game.items_data:
+                item_data = self.game.items_data[item_name]
+                item_type = item_data.get('type')
+                
+                if slot is None:
+                    # Auto-detect slot
+                    if item_type == 'weapon':
+                        slot = 'weapon'
+                    elif item_type == 'armor':
+                        slot = 'armor'
+                    elif item_type == 'offhand':
+                        slot = 'offhand'
+                    elif item_type == 'accessory':
+                        # Find first free accessory slot
+                        for i in [1, 2, 3]:
+                            acc = getattr(self.game.player, f'equipped_accessory_{i}', None)
+                            if not acc:
+                                slot = f'accessory_{i}'
+                                break
+                        if not slot:
+                            slot = 'accessory_1'
+                
+                if slot == 'weapon':
+                    self.game.player.equipped_weapon = item_name
+                elif slot == 'armor':
+                    self.game.player.equipped_armor = item_name
+                elif slot == 'offhand':
+                    self.game.player.equipped_offhand = item_name
+                elif slot and slot.startswith('accessory'):
+                    setattr(self.game.player, f'equipped_{slot}', item_name)
+                else:
+                    return False
+                    
+                self.game.player.update_stats_from_equipment(self.game.items_data, self.game.companions_data)
+                return True
+        except Exception:
+            pass
+        return False
+
+    # ============ Stat Getters ============
+
+    def get_base_stats(self) -> Dict[str, int]:
+        """Get player's base stats (before equipment/buffs).
+        
+        Returns:
+            Dict with 'hp', 'mp', 'attack', 'defense', 'speed'
+        """
+        if not self.game or not self.game.player:
+            return {}
+        p = self.game.player
+        return {
+            'hp': p.base_hp,
+            'mp': p.base_mp,
+            'attack': p.attack,
+            'defense': p.defense,
+            'speed': p.speed,
+        }
+
+    def get_effective_stats(self) -> Dict[str, int]:
+        """Get player's effective stats (after equipment/buffs).
+        
+        Returns:
+            Dict with current effective stats
+        """
+        if not self.game or not self.game.player:
+            return {}
+        p = self.game.player
+        return {
+            'hp': p.hp,
+            'max_hp': p.max_hp,
+            'mp': p.mp,
+            'max_mp': p.max_mp,
+            'attack': p.get_effective_attack(),
+            'defense': p.get_effective_defense(),
+            'speed': p.get_effective_speed(),
+        }
+
+    # ============ Area & Exploration ============
+
+    def get_area_connections(self, area_id: str) -> List[str]:
+        """Get areas connected to given area.
+        
+        Args:
+            area_id: Area identifier
+            
+        Returns:
+            List of connected area IDs
+        """
+        if not self.game or area_id not in self.game.areas_data:
+            return []
+        area = self.game.areas_data[area_id]
+        return area.get('connections', [])
+
+    def get_area_enemies(self, area_id: str) -> List[str]:
+        """Get enemies that spawn in an area.
+        
+        Args:
+            area_id: Area identifier
+            
+        Returns:
+            List of enemy IDs
+        """
+        if not self.game or area_id not in self.game.areas_data:
+            return []
+        area = self.game.areas_data[area_id]
+        return area.get('possible_enemies', [])
+
+    def add_area_enemy(self, area_id: str, enemy_id: str) -> bool:
+        """Add an enemy to an area's spawn list.
+        
+        Args:
+            area_id: Area identifier
+            enemy_id: Enemy identifier
+            
+        Returns:
+            True if successful
+        """
+        if not self.game or area_id not in self.game.areas_data:
+            return False
+        area = self.game.areas_data[area_id]
+        if enemy_id not in area.get('possible_enemies', []):
+            area['possible_enemies'].append(enemy_id)
+            return True
+        return False
+
+    def remove_area_enemy(self, area_id: str, enemy_id: str) -> bool:
+        """Remove an enemy from an area's spawn list.
+        
+        Args:
+            area_id: Area identifier
+            enemy_id: Enemy identifier
+            
+        Returns:
+            True if successful
+        """
+        if not self.game or area_id not in self.game.areas_data:
+            return False
+        area = self.game.areas_data[area_id]
+        if enemy_id in area.get('possible_enemies', []):
+            area['possible_enemies'].remove(enemy_id)
+            return True
+        return False
+
+    def set_area_difficulty(self, area_id: str, difficulty: int) -> bool:
+        """Set an area's difficulty level.
+        
+        Args:
+            area_id: Area identifier
+            difficulty: 1-5 difficulty rating
+            
+        Returns:
+            True if successful
+        """
+        if not self.game or area_id not in self.game.areas_data:
+            return False
+        if not 1 <= difficulty <= 5:
+            return False
+        self.game.areas_data[area_id]['difficulty'] = difficulty
+        return True
+
+    # ============ Spells & Abilities ============
+
+    def get_spells(self) -> Dict[str, Dict[str, Any]]:
+        """Get all spell data."""
+        return self.game.spells_data.copy() if self.game else {}
+
+    def learn_spell(self, spell_name: str) -> bool:
+        """Make a spell learnable (add to items that can cast it).
+        
+        Args:
+            spell_name: Name of spell from spells.json
+            
+        Returns:
+            True if successful
+        """
+        if not self.game or spell_name not in self.game.spells_data:
+            return False
+        # Mark spell as learned in custom data
+        learned = self.retrieve_data('learned_spells', set())
+        if isinstance(learned, list):
+            learned = set(learned)
+        learned.add(spell_name)
+        self.store_data('learned_spells', list(learned))
+        return True
+
+    def get_learned_spells(self) -> List[str]:
+        """Get list of spells player has learned."""
+        return self.retrieve_data('learned_spells', [])
+
+    # ============ Experience & Leveling ============
+
+    def add_experience(self, amount: int) -> bool:
+        """Give player experience points.
+        
+        Args:
+            amount: XP to add
+            
+        Returns:
+            True if successful
+        """
+        if not self.game or not self.game.player:
+            return False
+        self.game.player.experience += amount
+        return True
+
+    def level_up(self, levels: int = 1) -> bool:
+        """Force level up the player.
+        
+        Args:
+            levels: Number of levels to gain
+            
+        Returns:
+            True if successful
+        """
+        if not self.game or not self.game.player:
+            return False
+        p = self.game.player
+        for _ in range(levels):
+            p.level_up()
+        return True
+
+    def get_level_progress(self) -> Dict[str, Any]:
+        """Get player's current level progress.
+        
+        Returns:
+            Dict with 'level', 'experience', 'experience_to_next'
+        """
+        if not self.game or not self.game.player:
+            return {}
+        p = self.game.player
+        return {
+            'level': p.level,
+            'experience': p.experience,
+            'experience_to_next': p.experience_to_next,
+            'experience_for_next_level': int(p.experience_to_next - p.experience),
+        }
+
+    # ============ Buff Management ============
+
+    def get_active_buffs(self) -> List[Dict[str, Any]]:
+        """Get list of active buffs on player.
+        
+        Returns:
+            List of buff dicts with name, duration, modifiers
+        """
+        if not self.game or not self.game.player:
+            return []
+        return self.game.player.active_buffs.copy()
+
+    def remove_buff(self, buff_name: str) -> bool:
+        """Remove a specific buff from player.
+        
+        Args:
+            buff_name: Name of buff to remove
+            
+        Returns:
+            True if buff was removed
+        """
+        if not self.game or not self.game.player:
+            return False
+        buffs = self.game.player.active_buffs
+        for i, buff in enumerate(buffs):
+            if buff.get('name') == buff_name:
+                buffs.pop(i)
+                return True
+        return False
+
+    def clear_buffs(self) -> int:
+        """Remove all buffs from player.
+        
+        Returns:
+            Number of buffs removed
+        """
+        if not self.game or not self.game.player:
+            return 0
+        count = len(self.game.player.active_buffs)
+        self.game.player.active_buffs.clear()
+        return count
+
+    def extend_buff(self, buff_name: str, extra_duration: int) -> bool:
+        """Extend the duration of a buff.
+        
+        Args:
+            buff_name: Name of buff
+            extra_duration: Additional turns to extend
+            
+        Returns:
+            True if successful
+        """
+        if not self.game or not self.game.player:
+            return False
+        for buff in self.game.player.active_buffs:
+            if buff.get('name') == buff_name:
+                buff['duration'] = buff.get('duration', 0) + extra_duration
+                return True
+        return False
+
+    # ============ Mission Management ============
+
+    def has_mission_completed(self, mission_id: str) -> bool:
+        """Check if a mission has been completed.
+        
+        Args:
+            mission_id: Mission identifier
+            
+        Returns:
+            True if completed
+        """
+        if not self.game:
+            return False
+        progress = self.game.mission_progress.get(mission_id, {})
+        return progress.get('completed', False)
+
+    def get_mission_info(self, mission_id: str) -> Optional[Dict[str, Any]]:
+        """Get detailed info about a specific mission.
+        
+        Args:
+            mission_id: Mission identifier
+            
+        Returns:
+            Mission data dict or None
+        """
+        if not self.game or mission_id not in self.game.missions_data:
+            return None
+        return self.game.missions_data[mission_id].copy()
+
+    def reset_mission(self, mission_id: str) -> bool:
+        """Reset a mission to incomplete state.
+        
+        Args:
+            mission_id: Mission identifier
+            
+        Returns:
+            True if successful
+        """
+        if not self.game or mission_id not in self.game.missions_data:
+            return False
+        if mission_id in self.game.mission_progress:
+            del self.game.mission_progress[mission_id]
+        return True
+
+    # ============ Statistics & Tracking ============
+
+    def get_game_statistics(self) -> Dict[str, Any]:
+        """Get gameplay statistics.
+        
+        Returns:
+            Dict with 'enemies_defeated', 'bosses_defeated', 'missions_completed', etc.
+        """
+        if not self.game:
+            return {}
+        return {
+            'enemies_defeated': self.retrieve_data('enemies_defeated', 0),
+            'bosses_defeated': self.retrieve_data('bosses_defeated', 0),
+            'missions_completed': len([m for m in self.game.mission_progress.values() if m.get('completed')]),
+            'gold_earned': self.retrieve_data('gold_earned', 0),
+            'items_collected': self.retrieve_data('items_collected', 0),
+            'playtime_seconds': self.retrieve_data('playtime_seconds', 0),
+        }
+
+    def increment_statistic(self, stat_name: str, amount: int = 1) -> int:
+        """Increment a game statistic.
+        
+        Args:
+            stat_name: Statistic name
+            amount: Amount to increment by
+            
+        Returns:
+            New statistic value
+        """
+        current = self.retrieve_data(stat_name, 0)
+        new_value = current + amount
+        self.store_data(stat_name, new_value)
+        return new_value
+
+    # ============ Validation & Checks ============
+
+    def is_mission_available(self, mission_id: str) -> bool:
+        """Check if player can accept a mission (meets level/prerequisites).
+        
+        Args:
+            mission_id: Mission identifier
+            
+        Returns:
+            True if player can accept
+        """
+        if not self.game or not self.game.player or mission_id not in self.game.missions_data:
+            return False
+        mission = self.game.missions_data[mission_id]
+        player_level = self.game.player.level
+        
+        # Check level requirement
+        if mission.get('unlock_level', 1) > player_level:
+            return False
+        
+        # Check prerequisites
+        for prereq in mission.get('prerequisites', []):
+            if not self.has_mission_completed(prereq):
+                return False
+        
+        return True
+
+    def can_equip_item(self, item_name: str) -> bool:
+        """Check if player meets requirements to equip an item.
+        
+        Args:
+            item_name: Item name
+            
+        Returns:
+            True if can equip
+        """
+        if not self.game or item_name not in self.game.items_data:
+            return False
+        item = self.game.items_data[item_name]
+        requirements = item.get('requirements', {})
+        
+        if not self.game.player:
+            return False
+        
+        # Check level requirement
+        if self.game.player.level < requirements.get('level', 1):
+            return False
+        
+        # Check class requirement (if any)
+        if 'class' in requirements:
+            if self.game.player.character_class != requirements['class']:
+                return False
+        
+        return True
+
+    # ============ Debugging ============
+
+    def dump_player_data(self) -> str:
+        """Get formatted string of all player data (for debugging).
+        
+        Returns:
+            Formatted player data string
+        """
+        player_data = self.get_player()
+        if not player_data:
+            return "No player data"
+        
+        lines = ["=== Player Data ==="]
+        for key, value in player_data.items():
+            if isinstance(value, list) and len(value) > 5:
+                lines.append(f"{key}: [{len(value)} items]")
+            else:
+                lines.append(f"{key}: {value}")
+        return "\n".join(lines)
+
+    def list_all_enemies(self) -> List[str]:
+        """Get list of all enemy IDs.
+        
+        Returns:
+            List of enemy identifiers
+        """
+        return list(self.game.enemies_data.keys()) if self.game else []
+
+    def list_all_items(self) -> List[str]:
+        """Get list of all item names.
+        
+        Returns:
+            List of item names
+        """
+        return list(self.game.items_data.keys()) if self.game else []
+
+    def list_all_areas(self) -> List[str]:
+        """Get list of all area IDs.
+        
+        Returns:
+            List of area identifiers
+        """
+        return list(self.game.areas_data.keys()) if self.game else []
+
+    def list_all_companions(self) -> List[str]:
+        """Get list of all companion names.
+        
+        Returns:
+            List of companion identifiers
+        """
+        return list(self.game.companions_data.keys()) if self.game else []
+
 
 # Global API instance (set by main.py when game starts)
 game_api = None

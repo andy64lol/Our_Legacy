@@ -2,6 +2,11 @@
   "scripting_enabled": false,
   "auto_load_scripts": true,
   "scripts": [
+    "example_buff_granter",
+    "example_companion_reward",
+    "example_stat_tracker",
+    "example_dynamic_difficulty",
+    "example_loot_modifier"
   ],
   "difficulty": "normal",
   "autosave_enabled": true,

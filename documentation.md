@@ -959,16 +959,40 @@ api.register_hook('on_player_levelup', my_callback)
 #### Player Management
 
 - `get_player()` - Get player data dict
-- `set_player_stat(stat, value)` - Set a player stat (hp, mp, attack, etc.)
+- `set_player_stat(stat, value)` - Set a player stat (hp, mp, attack, defense, speed, gold, level, experience)
+- `get_base_stats()` - Get base stats (before equipment/buffs)
+- `get_effective_stats()` - Get effective stats (after equipment/buffs)
 - `add_item(item_name, count)` - Add items to inventory
 - `remove_item(item_name, count)` - Remove items from inventory
 - `heal_player(amount)` - Heal player HP
 - `restore_mp(amount)` - Restore player MP
+
+#### Experience & Leveling
+
+- `add_experience(amount)` - Give player XP
+- `level_up(levels)` - Force level up player
+- `get_level_progress()` - Get current level/experience info
+
+#### Inventory & Equipment
+
+- `get_inventory()` - Get full inventory list
+- `get_inventory_count(item_name)` - Count specific item
+- `clear_inventory()` - Clear all inventory items
+- `get_equipped_items()` - Get equipped weapon, armor, accessories
+- `equip_item(item_name, slot)` - Equip an item to a slot
+- `can_equip_item(item_name)` - Check if item can be equipped
+
+#### Buff Management
+
 - `apply_buff(name, duration, modifiers)` - Apply temporary buff
+- `get_active_buffs()` - Get list of active buffs
+- `remove_buff(buff_name)` - Remove specific buff
+- `clear_buffs()` - Remove all buffs
+- `extend_buff(buff_name, extra_duration)` - Extend buff duration
 
 #### Companions
 
-- `get_companions()` - Get list of companions
+- `get_companions()` - Get list of hired companions
 - `hire_companion(name)` - Recruit a companion (ignores cost)
 
 #### Game Data
@@ -977,9 +1001,22 @@ api.register_hook('on_player_levelup', my_callback)
 - `get_enemies_data()` - Get all enemies
 - `get_areas_data()` - Get all areas
 - `get_companions_data()` - Get all companions
+- `get_spells()` - Get all spells
 - `get_current_area()` - Get current area ID
 - `set_current_area(area_id)` - Travel to an area
 - `get_area_info(area_id)` - Get info about an area
+- `list_all_enemies()` - Get all enemy IDs
+- `list_all_items()` - Get all item names
+- `list_all_areas()` - Get all area IDs
+- `list_all_companions()` - Get all companion IDs
+
+#### Area & Exploration
+
+- `get_area_connections(area_id)` - Get connected areas
+- `get_area_enemies(area_id)` - Get enemies in area
+- `add_area_enemy(area_id, enemy_id)` - Add enemy to area
+- `remove_area_enemy(area_id, enemy_id)` - Remove enemy from area
+- `set_area_difficulty(area_id, difficulty)` - Set area difficulty (1-5)
 
 #### Missions
 
@@ -987,6 +1024,26 @@ api.register_hook('on_player_levelup', my_callback)
 - `get_mission_progress()` - Get current mission progress
 - `accept_mission(mission_id)` - Accept a mission
 - `complete_mission(mission_id)` - Force complete a mission
+- `has_mission_completed(mission_id)` - Check if mission done
+- `get_mission_info(mission_id)` - Get mission details
+- `reset_mission(mission_id)` - Reset mission to incomplete
+- `is_mission_available(mission_id)` - Check if can accept mission
+
+#### Combat & Multipliers
+
+- `get_combat_multipliers()` - Get damage/exp multipliers
+- `set_combat_multipliers(player_mult, enemy_mult, exp_mult)` - Set multipliers
+
+#### Spells & Abilities
+
+- `get_spells()` - Get all spell data
+- `learn_spell(spell_name)` - Mark spell as learned
+- `get_learned_spells()` - Get learned spells list
+
+#### Statistics & Tracking
+
+- `get_game_statistics()` - Get gameplay stats (enemies/bosses defeated, missions completed, etc.)
+- `increment_statistic(stat_name, amount)` - Increment a statistic
 
 #### Events & Hooks
 
@@ -1003,17 +1060,18 @@ Available events:
 - `on_buff_applied` - Buff applied to player
 - `on_area_entered` - Player enters an area
 
-#### Data Storage
-
-- `store_data(key, value)` - Store custom data
-- `retrieve_data(key, default)` - Get stored data
-- `clear_data(key)` - Delete stored data
-
 #### Utilities
 
 - `log(message)` - Print to console
 - `get_random_item(list)` - Pick random from list
 - `create_custom_enemy(name, stats)` - Create dynamic enemy
+- `dump_player_data()` - Get formatted player data (debugging)
+
+#### Data Storage
+
+- `store_data(key, value)` - Store custom data (persists in session)
+- `retrieve_data(key, default)` - Get stored data
+- `clear_data(key)` - Delete stored data
 
 ### Example Scripts
 
@@ -1057,6 +1115,46 @@ class QuestGiver:
         # Implement quest logic here
 
 api.store_data('quest_giver', QuestGiver())
+```
+
+**example_stat_tracker.py** - Track achievements and statistics
+```python
+class StatTracker:
+    ACHIEVEMENTS = {
+        'first_blood': {'enemies_defeated': 1},
+        'monster_slayer': {'enemies_defeated': 10},
+        'boss_slayer': {'bosses_defeated': 1},
+    }
+    
+    def check_achievements(self, stats):
+        api = get_api()
+        # Check if achievements are unlocked
+```
+
+**example_dynamic_difficulty.py** - Adaptive difficulty system
+```python
+class DynamicDifficulty:
+    def adjust_difficulty(self):
+        api = get_api()
+        player = api.get_player()
+        multipliers = api.get_combat_multipliers()
+        
+        # Increase difficulty if player is doing well
+        if player['hp'] / player['max_hp'] > 0.7:
+            api.set_combat_multipliers(1.05, 1.1)
+```
+
+**example_loot_modifier.py** - Customize loot drops
+```python
+class LootModifier:
+    THEMATIC_LOOT = {
+        'goblin': ['Health Potion', 'Gold Coin', 'Goblin Ear'],
+        'dragon': ['Dragon Scale', 'Fire Gem', 'Dragon Heart'],
+    }
+    
+    def enhance_loot(self):
+        api = get_api()
+        # Add bonus items based on player level
 ```
 
 ### Loading Custom Scripts
@@ -1133,6 +1231,157 @@ def create_boss_encounter():
         'gold_reward': 500,
     })
     return boss
+```
+
+#### Equipment System Interaction
+
+```python
+def auto_equip_best_items():
+    api = get_api()
+    inventory = api.get_inventory()
+    
+    for item_name in inventory:
+        if api.can_equip_item(item_name):
+            api.equip_item(item_name)
+            api.log(f"Auto-equipped: {item_name}")
+```
+
+#### Area Customization
+
+```python
+def customize_area():
+    api = get_api()
+    
+    # Get area info
+    area = api.get_area_info('forest_path')
+    connections = api.get_area_connections('forest_path')
+    
+    # Add new enemy type to area
+    api.add_area_enemy('forest_path', 'fire_wraith')
+    
+    # Set difficulty
+    api.set_area_difficulty('forest_path', 3)
+```
+
+#### Mission Chain System
+
+```python
+class MissionChain:
+    def __init__(self, mission_ids):
+        self.api = get_api()
+        self.mission_ids = mission_ids
+        self.api.register_hook('on_mission_complete', self.on_mission_complete)
+    
+    def on_mission_complete(self, mission_id):
+        # Automatically unlock next mission in chain
+        current_index = self.mission_ids.index(mission_id)
+        if current_index < len(self.mission_ids) - 1:
+            next_mission = self.mission_ids[current_index + 1]
+            self.api.log(f"Next quest unlocked: {next_mission}")
+```
+
+#### Buff-Based Damage Amplification
+
+```python
+def apply_damage_buff_cascade():
+    api = get_api()
+    
+    # Apply escalating damage buff
+    for i in range(5):
+        duration = 10 - i
+        bonus = 5 * (i + 1)
+        api.apply_buff(f'Power Surge {i+1}', duration, {
+            'attack_bonus': bonus,
+            'speed_bonus': i + 1
+        })
+    
+    api.log("Damage buff cascade applied!")
+```
+
+#### Player Statistics Dashboard
+
+```python
+def display_player_dashboard():
+    api = get_api()
+    
+    # Get all player data
+    player = api.get_player()
+    stats = api.get_game_statistics()
+    buffs = api.get_active_buffs()
+    inventory = api.get_inventory()
+    
+    api.log("\n=== Player Dashboard ===")
+    api.log(f"Level: {player['level']} ({player['rank']})")
+    api.log(f"HP: {player['hp']}/{player['max_hp']}")
+    api.log(f"Equipment: {api.get_equipped_items()}")
+    api.log(f"Active Buffs: {len(buffs)}")
+    api.log(f"Inventory: {len(inventory)} items")
+    api.log(f"Enemies Defeated: {stats['enemies_defeated']}")
+```
+
+#### Experience Gain Multiplier
+
+```python
+class ExperienceBooster:
+    def __init__(self):
+        self.api = get_api()
+        self.boosts = {}
+    
+    def add_exp_boost(self, name, multiplier, duration):
+        """Add temporary XP multiplier."""
+        self.api.apply_buff(f"XP Boost: {name}", duration, {
+            'experience_multiplier': int(multiplier * 10)  # Store as int
+        })
+        self.api.log(f"XP boost active: {multiplier}x for {duration} battles")
+    
+    def apply_weekend_bonus(self):
+        """Apply a weekend bonus."""
+        self.add_exp_boost("Weekend Bonus", 1.5, 100)
+```
+
+#### Inventory Limitation System
+
+```python
+class InventoryManager:
+    MAX_SLOTS = 20
+    
+    def __init__(self):
+        self.api = get_api()
+    
+    def get_inventory_space(self):
+        """Check remaining inventory slots."""
+        inventory = self.api.get_inventory()
+        return max(0, self.MAX_SLOTS - len(inventory))
+    
+    def is_full(self):
+        """Check if inventory is full."""
+        return self.get_inventory_space() <= 0
+    
+    def add_item_safe(self, item_name):
+        """Add item only if space available."""
+        if self.is_full():
+            self.api.log("Inventory full!")
+            return False
+        return self.api.add_item(item_name)
+```
+
+#### Difficulty Scaling by Player Level
+
+```python
+def scale_difficulty_with_level():
+    api = get_api()
+    player = api.get_player()
+    level = player['level']
+    
+    # Calculate scaling factor
+    scale = 1.0 + (level / 50.0)  # +1% difficulty per level
+    
+    # Set combat multipliers
+    api.set_combat_multipliers(
+        player_mult=1.0,      # Player stays the same
+        enemy_mult=scale,     # Enemies get harder
+        exp_mult=0.8 + (scale * 0.2)  # XP adjusts too
+    )
 ```
 
 ### Best Practices
