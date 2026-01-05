@@ -954,131 +954,161 @@ api = get_api()
 api.register_hook('on_player_levelup', my_callback)
 ```
 
-### Core API Methods
+### Complete API Reference
+
+The Scripting API provides comprehensive access to game state, player data, and game systems. This section documents all available methods.
 
 #### Player Management
 
-- `get_player()` - Get player data dict
+- `get_player()` - Get player data dict with name, level, stats, inventory, companions, buffs
 - `set_player_stat(stat, value)` - Set a player stat (hp, mp, attack, defense, speed, gold, level, experience)
-- `get_base_stats()` - Get base stats (before equipment/buffs)
-- `get_effective_stats()` - Get effective stats (after equipment/buffs)
-- `add_item(item_name, count)` - Add items to inventory
+- `get_base_stats()` - Get base stats (before equipment/buffs): hp, mp, attack, defense, speed
+- `get_effective_stats()` - Get effective stats (after equipment/buffs): hp, max_hp, mp, max_mp, attack, defense, speed
+- `add_item(item_name, count)` - Add items to inventory (free, no gold cost)
 - `remove_item(item_name, count)` - Remove items from inventory
-- `heal_player(amount)` - Heal player HP
-- `restore_mp(amount)` - Restore player MP
+- `heal_player(amount)` - Heal player HP, returns actual amount healed
+- `restore_mp(amount)` - Restore player MP, returns actual amount restored
 
 #### Experience & Leveling
 
-- `add_experience(amount)` - Give player XP
-- `level_up(levels)` - Force level up player
-- `get_level_progress()` - Get current level/experience info
+- `add_experience(amount)` - Give player XP points
+- `level_up(levels)` - Force level up player by N levels
+- `get_level_progress()` - Get current level/experience info: level, experience, experience_to_next
 
-#### Inventory & Equipment
+#### Inventory Management (UNDOCUMENTED)
 
-- `get_inventory()` - Get full inventory list
-- `get_inventory_count(item_name)` - Count specific item
-- `clear_inventory()` - Clear all inventory items
-- `get_equipped_items()` - Get equipped weapon, armor, accessories
-- `equip_item(item_name, slot)` - Equip an item to a slot
-- `can_equip_item(item_name)` - Check if item can be equipped
+- `get_inventory()` - Get full inventory list as list of item names
+- `get_inventory_count(item_name)` - Count how many of an item player has
+- `clear_inventory()` - Clear entire inventory (use with caution!)
+- `get_inventory_summary()` - Get dict with item names as keys and counts as values
+- `sort_inventory()` - Sort inventory alphabetically, returns success bool
+- `has_item(item_name, minimum_quantity)` - Check if player has at least N of an item
+- `give_item(item_name, quantity)` - Give player item(s) without cost (alias for add_item)
+- `take_item(item_name, quantity)` - Remove item(s) from inventory without payment, returns count removed
+
+#### Equipment Management (UNDOCUMENTED)
+
+- `get_equipped_items()` - Get dict with weapon, armor, offhand, accessory_1/2/3
+- `equip_item(item_name, slot)` - Equip an item, optionally to specific slot (auto-detect if None)
+- `unequip_item(slot)` - Unequip item from slot, returns item name or None
+- `swap_equipment(slot1, slot2)` - Swap items between two equipment slots
+- `can_equip_item(item_name)` - Check if player meets requirements to equip an item
+- `get_item_info(item_name)` - Get detailed info about an item (type, price, bonuses, requirements)
+- `get_item_price(item_name)` - Get the value/price of an item in gold
+
+#### Trading & Economy (UNDOCUMENTED)
+
+- `buy_item(item_name, quantity)` - Buy an item (costs gold), returns success bool
+- `sell_item(item_name, quantity)` - Sell items for gold, returns gold received
+- `get_inventory_value()` - Calculate total value of all items in inventory
 
 #### Buff Management
 
-- `apply_buff(name, duration, modifiers)` - Apply temporary buff
-- `get_active_buffs()` - Get list of active buffs
-- `remove_buff(buff_name)` - Remove specific buff
-- `clear_buffs()` - Remove all buffs
-- `extend_buff(buff_name, extra_duration)` - Extend buff duration
+- `apply_buff(name, duration, modifiers)` - Apply temporary buff with stat modifiers
+- `get_active_buffs()` - Get list of active buff dicts with name, duration, modifiers
+- `remove_buff(buff_name)` - Remove specific buff by name, returns success bool
+- `clear_buffs()` - Remove all buffs, returns count removed
+- `extend_buff(buff_name, extra_duration)` - Extend duration of a buff, returns success bool
 
 #### Companions
 
-- `get_companions()` - Get list of hired companions
-- `hire_companion(name)` - Recruit a companion (ignores cost)
+- `get_companions()` - Get list of hired companions with name, id, level
+- `hire_companion(name)` - Recruit a companion by name (ignores cost), returns success bool
 
-#### Game Data
+#### Game Data Access
 
-- `get_items_data()` - Get all items
-- `get_enemies_data()` - Get all enemies
-- `get_areas_data()` - Get all areas
-- `get_companions_data()` - Get all companions
-- `get_spells()` - Get all spells
-- `get_current_area()` - Get current area ID
-- `set_current_area(area_id)` - Travel to an area
-- `get_area_info(area_id)` - Get info about an area
-- `list_all_enemies()` - Get all enemy IDs
-- `list_all_items()` - Get all item names
-- `list_all_areas()` - Get all area IDs
-- `list_all_companions()` - Get all companion IDs
+- `get_items_data()` - Get all items data as dict
+- `get_enemies_data()` - Get all enemies data as dict
+- `get_areas_data()` - Get all areas data as dict
+- `get_companions_data()` - Get all companions data as dict
+- `get_spells()` - Get all spell data as dict
+- `get_missions()` - Get all missions data as dict
+- `get_current_area()` - Get current area ID (str or None)
+- `set_current_area(area_id)` - Travel to an area, returns success bool
+- `get_area_info(area_id)` - Get info dict about an area (name, description, difficulty, etc.)
 
-#### Area & Exploration
+#### Area & Exploration (UNDOCUMENTED)
 
-- `get_area_connections(area_id)` - Get connected areas
-- `get_area_enemies(area_id)` - Get enemies in area
-- `add_area_enemy(area_id, enemy_id)` - Add enemy to area
-- `remove_area_enemy(area_id, enemy_id)` - Remove enemy from area
-- `set_area_difficulty(area_id, difficulty)` - Set area difficulty (1-5)
+- `get_area_connections(area_id)` - Get list of connected area IDs
+- `get_area_enemies(area_id)` - Get list of enemy IDs that spawn in area
+- `add_area_enemy(area_id, enemy_id)` - Add enemy to area's spawn list, returns success bool
+- `remove_area_enemy(area_id, enemy_id)` - Remove enemy from area's spawn list, returns success bool
+- `set_area_difficulty(area_id, difficulty)` - Set area difficulty (1-5), returns success bool
 
-#### Missions
+#### Mission Management (UNDOCUMENTED)
 
-- `get_missions()` - Get all missions
-- `get_mission_progress()` - Get current mission progress
-- `accept_mission(mission_id)` - Accept a mission
-- `complete_mission(mission_id)` - Force complete a mission
-- `has_mission_completed(mission_id)` - Check if mission done
-- `get_mission_info(mission_id)` - Get mission details
-- `reset_mission(mission_id)` - Reset mission to incomplete
-- `is_mission_available(mission_id)` - Check if can accept mission
+- `get_mission_progress()` - Get current mission progress as dict
+- `accept_mission(mission_id)` - Accept a mission, returns success bool
+- `complete_mission(mission_id)` - Force complete a mission, returns success bool
+- `has_mission_completed(mission_id)` - Check if mission is completed, returns bool
+- `get_mission_info(mission_id)` - Get detailed mission data dict (name, description, rewards, etc.)
+- `reset_mission(mission_id)` - Reset mission to incomplete state, returns success bool
+- `is_mission_available(mission_id)` - Check if player meets requirements to accept mission
 
 #### Combat & Multipliers
 
-- `get_combat_multipliers()` - Get damage/exp multipliers
-- `set_combat_multipliers(player_mult, enemy_mult, exp_mult)` - Set multipliers
+- `get_combat_multipliers()` - Get dict with player_damage_mult, enemy_damage_mult, experience_mult
+- `set_combat_multipliers(player_mult, enemy_mult, exp_mult)` - Set combat multipliers (min 0.1)
 
 #### Spells & Abilities
 
-- `get_spells()` - Get all spell data
-- `learn_spell(spell_name)` - Mark spell as learned
-- `get_learned_spells()` - Get learned spells list
+- `learn_spell(spell_name)` - Mark a spell as learned, returns success bool
+- `get_learned_spells()` - Get list of learned spell names
 
 #### Statistics & Tracking
 
-- `get_game_statistics()` - Get gameplay stats (enemies/bosses defeated, missions completed, etc.)
-- `increment_statistic(stat_name, amount)` - Increment a statistic
+- `get_game_statistics()` - Get gameplay stats dict: enemies_defeated, bosses_defeated, missions_completed, gold_earned, items_collected, playtime_seconds
+- `increment_statistic(stat_name, amount)` - Increment a statistic, returns new value
+
+#### Validation & Checks (UNDOCUMENTED)
+
+- `is_mission_available(mission_id)` - Check if player can accept a mission (meets level/prerequisites)
+- `can_equip_item(item_name)` - Check if player meets requirements to equip an item
 
 #### Events & Hooks
 
-- `register_hook(event_name, callback)` - Register event listener
-- `trigger_hook(event_name, *args)` - Trigger an event
+- `register_hook(event_name, callback)` - Register event listener callback
+- `trigger_hook(event_name, *args, **kwargs)` - Trigger all callbacks for an event, returns list of results
 
-Available events:
-- `on_battle_start` - Battle begins
-- `on_battle_end` - Battle ends
-- `on_player_levelup` - Player levels up
-- `on_item_acquired` - Item added to inventory
-- `on_companion_hired` - Companion recruited
-- `on_mission_complete` - Mission completed
-- `on_buff_applied` - Buff applied to player
-- `on_area_entered` - Player enters an area
+**Available Events:**
+- `on_battle_start` - Called when battle begins
+- `on_battle_end` - Called when battle ends
+- `on_player_levelup` - Called when player levels up
+- `on_item_acquired` - Called when item is added to inventory
+- `on_companion_hired` - Called when companion is recruited
+- `on_mission_complete` - Called when mission is completed
+- `on_buff_applied` - Called when buff is applied to player
+- `on_area_entered` - Called when player enters an area
+
+#### Debugging (UNDOCUMENTED)
+
+- `dump_player_data()` - Get formatted string of all player data for debugging
+- `list_all_enemies()` - Get list of all enemy IDs
+- `list_all_items()` - Get list of all item names
+- `list_all_areas()` - Get list of all area IDs
+- `list_all_companions()` - Get list of all companion IDs
 
 #### Utilities
 
-- `log(message)` - Print to console
-- `get_random_item(list)` - Pick random from list
-- `create_custom_enemy(name, stats)` - Create dynamic enemy
-- `dump_player_data()` - Get formatted player data (debugging)
+- `log(message)` - Print message to console with [Script] prefix
+- `get_random_item(items_list)` - Pick a random item from a list, returns item or None
+- `create_custom_enemy(name, stats)` - Create a custom enemy dict dynamically
 
 #### Data Storage
 
-- `store_data(key, value)` - Store custom data (persists in session)
-- `retrieve_data(key, default)` - Get stored data
-- `clear_data(key)` - Delete stored data
+- `store_data(key, value)` - Store custom script data (persists in memory during game session)
+- `retrieve_data(key, default)` - Retrieve stored data, returns default if key not found
+- `clear_data(key)` - Delete a stored data key, returns success bool
 
 ### Example Scripts
 
-See `scripts/` directory for examples:
+The `scripts/` directory contains comprehensive examples demonstrating various API features. Each script is self-contained with detailed comments.
+
+#### Core Examples (Original)
 
 **example_buff_granter.py** - Grant power buffs every 5 levels
 ```python
+# Demonstrates: on_player_levelup hook, apply_buff()
 def on_levelup():
     api = get_api()
     player = api.get_player()
@@ -1091,70 +1121,107 @@ def on_levelup():
 
 **example_companion_reward.py** - Auto-recruit companions at milestones
 ```python
-COMPANION_REWARDS = {
-    5: 'Borin the Brave',
-    10: 'Lyra the Swift',
-    15: 'Mira the Healer',
-    20: 'Ragnar the Warlord',
-}
+# Demonstrates: hire_companion(), get_player(), on_player_levelup hook
+COMPANION_REWARDS = {5: 'Borin the Brave', 10: 'Lyra the Swift', ...}
 
 def on_levelup_reward():
     api = get_api()
     player = api.get_player()
     if player['level'] in COMPANION_REWARDS:
-        companion = COMPANION_REWARDS[player['level']]
-        api.hire_companion(companion)
+        api.hire_companion(COMPANION_REWARDS[player['level']])
 ```
 
-**example_quest_giver.py** - Implement custom quests
+**example_quest_giver.py** - Implement custom quest system
 ```python
+# Demonstrates: store_data(), retrieve_data(), custom class patterns
 class QuestGiver:
     def check_quests(self):
         api = get_api()
-        player = api.get_player()
-        # Implement quest logic here
-
-api.store_data('quest_giver', QuestGiver())
+        # Implement quest logic using get_mission_info(), complete_mission()
 ```
 
 **example_stat_tracker.py** - Track achievements and statistics
 ```python
+# Demonstrates: increment_statistic(), get_game_statistics(), achievement checking
 class StatTracker:
-    ACHIEVEMENTS = {
-        'first_blood': {'enemies_defeated': 1},
-        'monster_slayer': {'enemies_defeated': 10},
-        'boss_slayer': {'bosses_defeated': 1},
-    }
+    ACHIEVEMENTS = {'first_blood': {'enemies_defeated': 1}, ...}
     
-    def check_achievements(self, stats):
-        api = get_api()
-        # Check if achievements are unlocked
+    def check_achievements(self):
+        # Uses on_battle_end, on_mission_complete, on_item_acquired hooks
 ```
 
 **example_dynamic_difficulty.py** - Adaptive difficulty system
 ```python
+# Demonstrates: get_combat_multipliers(), set_combat_multipliers()
 class DynamicDifficulty:
     def adjust_difficulty(self):
-        api = get_api()
-        player = api.get_player()
-        multipliers = api.get_combat_multipliers()
-        
-        # Increase difficulty if player is doing well
-        if player['hp'] / player['max_hp'] > 0.7:
-            api.set_combat_multipliers(1.05, 1.1)
+        # Scales enemy/player damage based on player performance
 ```
 
-**example_loot_modifier.py** - Customize loot drops
+**example_loot_modifier.py** - Customize and enhance loot drops
 ```python
+# Demonstrates: get_inventory(), theming, rarity-based drops
 class LootModifier:
-    THEMATIC_LOOT = {
-        'goblin': ['Health Potion', 'Gold Coin', 'Goblin Ear'],
-        'dragon': ['Dragon Scale', 'Fire Gem', 'Dragon Heart'],
+    THEMATIC_LOOT = {'goblin': [...], 'dragon': [...]}
+```
+
+#### New Comprehensive Examples (UNDOCUMENTED)
+
+**example_random_events.py** - Random event system with hooks
+```python
+# Demonstrates: on_battle_start/end hooks, custom data storage, conditional events
+class RandomEventManager:
+    EVENT_TYPES = {'bonus_xp': {'weight': 30}, 'treasure': {...}, ...}
+    
+    def on_battle_end(self):
+        # Check for random events after battles
+        # Uses store_data(), retrieve_data() for state management
+```
+
+**example_equipment_manager.py** - Equipment management and auto-equip
+```python
+# Demonstrates: get_equipped_items(), equip_item(), unequip_item(), swap_equipment()
+#             can_equip_item(), get_item_info(), get_item_score()
+class EquipmentManager:
+    def auto_equip_best(self):
+        # Finds best item for each slot based on stat priority
+        # Shows equipment recommendations and stat comparisons
+```
+
+**example_shop_system.py** - Trading and economy management
+```python
+# Demonstrates: buy_item(), sell_item(), get_item_price(), get_inventory_value()
+#             get_inventory_summary(), transaction history tracking
+class ShopSystem:
+    def buy_item(self, item_name, quantity):
+        # Handle purchases with markup calculation
+    def sell_item(self, item_name, quantity):
+        # Handle sales with sell price calculation
+```
+
+**example_exploration_manager.py** - Area exploration and world modification
+```python
+# Demonstrates: get_area_connections(), get_area_enemies(), add_area_enemy()
+#             remove_area_enemy(), set_area_difficulty(), get_world_map()
+class ExplorationManager:
+    def discover_current_area(self):
+        # Mark areas as discovered and log connections
+    def get_shortest_path(self, start, end):
+        # BFS algorithm to find shortest path between areas
+```
+
+**example_achievement_system.py** - Complete achievement and validation system
+```python
+# Demonstrates: get_game_statistics(), is_mission_available(), can_equip_item()
+#             achievement checking, mission validation, equipment requirements
+class AchievementSystem:
+    ACHIEVEMENTS = {
+        'first_blood': {'name': 'First Blood', 'requirements': {...}},
+        ...
     }
     
-    def enhance_loot(self):
-        api = get_api()
-        # Add bonus items based on player level
+    def check_all_achievements(self):
+        # Comprehensive achievement checking system
 ```
 
 ### Loading Custom Scripts
@@ -1445,11 +1512,19 @@ Our_Legacy/
 ├── scripting.py             (Scripting API)
 ├── README.md
 ├── documentation.md         (This file)
-├── TODO.md
-├── scripts/                 (Custom scripts)
-│   ├── example_buff_granter.py
-│   ├── example_companion_reward.py
-│   └── example_quest_giver.py
+├── TODO_Scripting_API.md    (Scripting task tracking)
+├── scripts/                 (Custom scripts - 11 examples)
+│   ├── example_buff_granter.py         (Buffs every 5 levels)
+│   ├── example_companion_reward.py     (Auto-recruit companions)
+│   ├── example_quest_giver.py          (Custom quest system)
+│   ├── example_stat_tracker.py         (Achievement tracking)
+│   ├── example_dynamic_difficulty.py   (Adaptive difficulty)
+│   ├── example_loot_modifier.py        (Loot customization)
+│   ├── example_random_events.py        (Random events system)
+│   ├── example_equipment_manager.py    (Equipment management)
+│   ├── example_shop_system.py          (Trading/economy)
+│   ├── example_exploration_manager.py  (Area exploration)
+│   └── example_achievement_system.py   (Achievements/validation)
 └── data/
     ├── classes.json         (Player classes)
     ├── items.json           (Equipment & consumables)
@@ -1459,8 +1534,33 @@ Our_Legacy/
     ├── spells.json          (Magic spells)
     ├── missions.json        (Quests)
     ├── companions.json      (Companion definitions)
+    ├── effects.json         (Status effects)
+    ├── config.json          (Game configuration)
     └── saves/               (Save files)
 ```
+
+## Scripting API Summary (70+ Methods)
+
+| Category | Methods | Description |
+|----------|---------|-------------|
+| **Player** | 8 | get_player, set_player_stat, get_base_stats, get_effective_stats, add_item, remove_item, heal_player, restore_mp |
+| **Experience** | 3 | add_experience, level_up, get_level_progress |
+| **Inventory** | 8 | get_inventory, get_inventory_count, clear_inventory, get_inventory_summary, sort_inventory, has_item, give_item, take_item |
+| **Equipment** | 7 | get_equipped_items, equip_item, unequip_item, swap_equipment, can_equip_item, get_item_info, get_item_price |
+| **Trading** | 3 | buy_item, sell_item, get_inventory_value |
+| **Buffs** | 5 | apply_buff, get_active_buffs, remove_buff, clear_buffs, extend_buff |
+| **Companions** | 2 | get_companions, hire_companion |
+| **Game Data** | 9 | get_items_data, get_enemies_data, get_areas_data, get_companions_data, get_spells, get_missions, get_current_area, set_current_area, get_area_info |
+| **Area/Exploration** | 5 | get_area_connections, get_area_enemies, add_area_enemy, remove_area_enemy, set_area_difficulty |
+| **Missions** | 7 | get_mission_progress, accept_mission, complete_mission, has_mission_completed, get_mission_info, reset_mission, is_mission_available |
+| **Combat** | 2 | get_combat_multipliers, set_combat_multipliers |
+| **Spells** | 2 | learn_spell, get_learned_spells |
+| **Statistics** | 2 | get_game_statistics, increment_statistic |
+| **Validation** | 2 | is_mission_available, can_equip_item |
+| **Events** | 2 | register_hook, trigger_hook |
+| **Debugging** | 5 | dump_player_data, list_all_enemies, list_all_items, list_all_areas, list_all_companions |
+| **Utilities** | 3 | log, get_random_item, create_custom_enemy |
+| **Data Storage** | 3 | store_data, retrieve_data, clear_data |
 
 ---
 

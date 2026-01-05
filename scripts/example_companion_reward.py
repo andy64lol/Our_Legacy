@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Example Script 2: Companion Reward
+Example Script: Companion Reward
 Automatically recruit a companion when reaching certain levels.
 """
 

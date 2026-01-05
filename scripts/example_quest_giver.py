@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Example Script 3: Quest Giver
+Example Script: Quest Giver
 Provides custom quests via the scripting API.
 """
 

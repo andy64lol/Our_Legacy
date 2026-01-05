@@ -549,6 +549,246 @@ class GameAPI:
             pass
         return False
 
+    def unequip_item(self, slot: str) -> Optional[str]:
+        """Unequip an item from a slot.
+        
+        Args:
+            slot: 'weapon', 'armor', 'offhand', 'accessory_1', 'accessory_2', 'accessory_3'
+            
+        Returns:
+            Name of unequipped item, or None if slot was empty
+        """
+        if not self.game or not self.game.player:
+            return None
+        try:
+            item = None
+            if slot == 'weapon':
+                item = self.game.player.equipped_weapon
+                self.game.player.equipped_weapon = None
+            elif slot == 'armor':
+                item = self.game.player.equipped_armor
+                self.game.player.equipped_armor = None
+            elif slot == 'offhand':
+                item = getattr(self.game.player, 'equipped_offhand', None)
+                self.game.player.equipped_offhand = None
+            elif slot and slot.startswith('accessory'):
+                item = getattr(self.game.player, f'equipped_{slot}', None)
+                setattr(self.game.player, f'equipped_{slot}', None)
+            
+            if item:
+                self.game.player.update_stats_from_equipment(self.game.items_data, self.game.companions_data)
+                return item
+            return None
+        except Exception:
+            return None
+
+    def swap_equipment(self, slot1: str, slot2: str) -> bool:
+        """Swap items between two equipment slots.
+        
+        Args:
+            slot1: First slot
+            slot2: Second slot
+            
+        Returns:
+            True if successful
+        """
+        if not self.game or not self.game.player:
+            return False
+        try:
+            equipped = self.get_equipped_items()
+            item1 = equipped.get(slot1)
+            item2 = equipped.get(slot2)
+            
+            if item1:
+                self.unequip_item(slot1)
+            if item2:
+                self.unequip_item(slot2)
+            
+            if item1:
+                self.equip_item(item1, slot2)
+            if item2:
+                self.equip_item(item2, slot1)
+            
+            return True
+        except Exception:
+            return False
+
+    def get_item_price(self, item_name: str) -> int:
+        """Get the value/price of an item.
+        
+        Args:
+            item_name: Name of item
+            
+        Returns:
+            Price in gold (0 if not found)
+        """
+        if not self.game or item_name not in self.game.items_data:
+            return 0
+        item_data = self.game.items_data[item_name]
+        return item_data.get('price', 0)
+
+    def get_inventory_value(self) -> int:
+        """Calculate total value of all items in inventory.
+        
+        Returns:
+            Total gold value
+        """
+        if not self.game or not self.game.player:
+            return 0
+        total = 0
+        for item_name in self.game.player.inventory:
+            total += self.get_item_price(item_name)
+        return total
+
+    def buy_item(self, item_name: str, quantity: int = 1) -> bool:
+        """Buy an item (costs gold).
+        
+        Args:
+            item_name: Item to buy
+            quantity: How many to buy
+            
+        Returns:
+            True if successful (has enough gold)
+        """
+        if not self.game or not self.game.player or item_name not in self.game.items_data:
+            return False
+        
+        price = self.get_item_price(item_name)
+        total_cost = price * quantity
+        
+        if self.game.player.gold < total_cost:
+            return False
+        
+        # Deduct gold and add items
+        self.game.player.gold -= total_cost
+        for _ in range(quantity):
+            self.game.player.inventory.append(item_name)
+        
+        return True
+
+    def sell_item(self, item_name: str, quantity: int = 1) -> int:
+        """Sell items from inventory for gold.
+        
+        Args:
+            item_name: Item to sell
+            quantity: How many to sell
+            
+        Returns:
+            Gold received (0 if failed)
+        """
+        if not self.game or not self.game.player:
+            return 0
+        
+        # Check if player has enough items
+        if self.game.player.inventory.count(item_name) < quantity:
+            return 0
+        
+        price = self.get_item_price(item_name)
+        total_gold = price * quantity
+        
+        # Remove items and add gold
+        for _ in range(quantity):
+            self.game.player.inventory.remove(item_name)
+        self.game.player.gold += total_gold
+        
+        return total_gold
+
+    def give_item(self, item_name: str, quantity: int = 1) -> bool:
+        """Give player item(s) without cost.
+        
+        Args:
+            item_name: Item to give
+            quantity: How many to give
+            
+        Returns:
+            True if successful
+        """
+        if not self.game or not self.game.player:
+            return False
+        try:
+            for _ in range(quantity):
+                self.game.player.inventory.append(item_name)
+            return True
+        except Exception:
+            return False
+
+    def take_item(self, item_name: str, quantity: int = 1) -> int:
+        """Remove item(s) from player inventory without payment.
+        
+        Args:
+            item_name: Item to remove
+            quantity: How many to remove
+            
+        Returns:
+            Number of items actually removed
+        """
+        if not self.game or not self.game.player:
+            return 0
+        
+        removed = 0
+        for _ in range(quantity):
+            if item_name in self.game.player.inventory:
+                self.game.player.inventory.remove(item_name)
+                removed += 1
+            else:
+                break
+        
+        return removed
+
+    def has_item(self, item_name: str, minimum_quantity: int = 1) -> bool:
+        """Check if player has item(s).
+        
+        Args:
+            item_name: Item to check for
+            minimum_quantity: Minimum quantity needed
+            
+        Returns:
+            True if player has enough
+        """
+        if not self.game or not self.game.player:
+            return False
+        return self.game.player.inventory.count(item_name) >= minimum_quantity
+
+    def sort_inventory(self) -> bool:
+        """Sort player's inventory alphabetically.
+        
+        Returns:
+            True if successful
+        """
+        if not self.game or not self.game.player:
+            return False
+        try:
+            self.game.player.inventory.sort()
+            return True
+        except Exception:
+            return False
+
+    def get_inventory_summary(self) -> Dict[str, int]:
+        """Get count of each unique item in inventory.
+        
+        Returns:
+            Dict with item names as keys and counts as values
+        """
+        if not self.game or not self.game.player:
+            return {}
+        summary = {}
+        for item in self.game.player.inventory:
+            summary[item] = summary.get(item, 0) + 1
+        return summary
+
+    def get_item_info(self, item_name: str) -> Optional[Dict[str, Any]]:
+        """Get detailed info about an item.
+        
+        Args:
+            item_name: Item name
+            
+        Returns:
+            Item data or None
+        """
+        if not self.game or item_name not in self.game.items_data:
+            return None
+        return self.game.items_data[item_name].copy()
+
     # ============ Stat Getters ============
 
     def get_base_stats(self) -> Dict[str, int]:

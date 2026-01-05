@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Example Script 1: Buff Granter
+Example Script: Buff Granter
 Grants the player a powerful buff every 5 levels.
 """
 
