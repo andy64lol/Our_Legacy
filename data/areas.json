@@ -5,7 +5,7 @@
     "possible_enemies": [],
     "shops": ["general_store"],
     "missions_available": true,
-    "connections": ["forest_path", "ancient_ruins"],
+    "connections": ["forest_path", "ancient_ruins", "tavern"],
     "rest_cost": 5,
     "can_rest": true
   },
