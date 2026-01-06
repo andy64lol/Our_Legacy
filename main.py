@@ -754,23 +754,25 @@ class Game:
     
     def display_welcome(self) -> str:
         """Display welcome screen"""
-        print(f"{Colors.CYAN}{Colors.BOLD}")
-        print("=" * 60)
-        print("             OUR LEGACY")
-        print("       Text-Based CLI Fantasy RPG")
-        print("=" * 60)
-        print(f"{Colors.END}")
-        print("Welcome, adventurer! Your legacy awaits...")
-        print("Choose your path wisely, for every decision shapes your destiny.")
-        print()
-        
-        print(f"{Colors.BOLD}=== MAIN MENU ==={Colors.END}")
-        print("1. New Game")
-        print("2. Load Game")
-        print("3. Configurations")
-        print("4. Quit")
-
         while True:
+            clear_screen()
+            print(f"{Colors.CYAN}{Colors.BOLD}")
+            print("=" * 60)
+            print("             OUR LEGACY")
+            print("       Text-Based CLI Fantasy RPG")
+            print("=" * 60)
+            print(f"{Colors.END}")
+            print("Welcome, adventurer! Your legacy awaits...")
+            print("Choose your path wisely, for every decision shapes your destiny.")
+            print()
+
+            print(f"{Colors.BOLD}=== MAIN MENU ==={Colors.END}")
+            print("1. New Game")
+            print("2. Load Game")
+            print("3. Configurations")
+            print("4. Quit")
+            print()
+
             choice = ask("Choose an option (1-4): ")
             if choice == "1":
                 return "new_game"
@@ -790,37 +792,59 @@ class Game:
         while True:
             clear_screen()
             print(f"{Colors.BOLD}=== CONFIGURATIONS ==={Colors.END}")
-            print(f"1. Scripting Enabled: {Colors.GREEN if self.config.get('scripting_enabled', False) else Colors.RED}{self.config.get('scripting_enabled', False)}{Colors.END}")
-            print(f"2. Difficulty: {Colors.YELLOW}{self.config.get('difficulty', 'normal')}{Colors.END}")
-            print(f"3. Autosave Enabled: {Colors.GREEN if self.config.get('autosave_enabled', True) else Colors.RED}{self.config.get('autosave_enabled', True)}{Colors.END}")
-            print("4. Back to Main Menu")
 
-            choice = ask("Choose an option (1-4): ")
+            # Scripting Enabled
+            scripting_enabled = self.config.get('scripting_enabled', False)
+            scripting_color = Colors.GREEN if scripting_enabled else Colors.RED
+            scripting_status = "Enabled" if scripting_enabled else "Disabled"
+            print(f"1. Scripting Enabled: {scripting_color}{scripting_status}{Colors.END}")
+
+            # Difficulty
+            difficulty = self.config.get('difficulty', 'normal')
+            print(f"2. Difficulty: {Colors.YELLOW}{difficulty.title()}{Colors.END}")
+
+            # Autosave Enabled
+            autosave_enabled = self.config.get('autosave_enabled', True)
+            autosave_color = Colors.GREEN if autosave_enabled else Colors.RED
+            autosave_status = "Enabled" if autosave_enabled else "Disabled"
+            print(f"3. Autosave Enabled: {autosave_color}{autosave_status}{Colors.END}")
+
+            # Auto Load Scripts
+            auto_load = self.config.get('auto_load_scripts', True)
+            auto_load_color = Colors.GREEN if auto_load else Colors.RED
+            auto_load_status = "Enabled" if auto_load else "Disabled"
+            print(f"4. Auto Load Scripts: {auto_load_color}{auto_load_status}{Colors.END}")
+
+            print("5. Back to Main Menu")
+
+            choice = ask("Choose an option (1-5): ")
             if choice == "1":
                 # Toggle scripting_enabled
-                current = self.config.get('scripting_enabled', False)
-                self.config['scripting_enabled'] = not current
-                print(f"Scripting Enabled set to: {self.config['scripting_enabled']}")
+                self.config['scripting_enabled'] = not scripting_enabled
+                print(f"Scripting Enabled set to: {'Enabled' if self.config['scripting_enabled'] else 'Disabled'}")
                 self.save_config()
             elif choice == "2":
                 # Change difficulty
                 difficulties = ['easy', 'normal', 'hard']
-                current = self.config.get('difficulty', 'normal')
-                current_index = difficulties.index(current) if current in difficulties else 0
+                current_index = difficulties.index(difficulty) if difficulty in difficulties else 0
                 new_index = (current_index + 1) % len(difficulties)
                 self.config['difficulty'] = difficulties[new_index]
-                print(f"Difficulty set to: {self.config['difficulty']}")
+                print(f"Difficulty set to: {self.config['difficulty'].title()}")
                 self.save_config()
             elif choice == "3":
                 # Toggle autosave_enabled
-                current = self.config.get('autosave_enabled', True)
-                self.config['autosave_enabled'] = not current
-                print(f"Autosave Enabled set to: {self.config['autosave_enabled']}")
+                self.config['autosave_enabled'] = not autosave_enabled
+                print(f"Autosave Enabled set to: {'Enabled' if self.config['autosave_enabled'] else 'Disabled'}")
                 self.save_config()
             elif choice == "4":
+                # Toggle auto_load_scripts
+                self.config['auto_load_scripts'] = not auto_load
+                print(f"Auto Load Scripts set to: {'Enabled' if self.config['auto_load_scripts'] else 'Disabled'}")
+                self.save_config()
+            elif choice == "5":
                 break
             else:
-                print("Invalid choice. Please enter 1, 2, 3, or 4.")
+                print("Invalid choice. Please enter 1, 2, 3, 4, or 5.")
             time.sleep(1)  # Brief pause
 
     def save_config(self):
@@ -956,7 +980,7 @@ class Game:
         print("11. Load Game")
         print("12. Claim Rewards")
         print("13. Quit")
-        choice = ask("Choose an option : ", allow_empty=False)
+        choice = ask("Choose an option (1-13): ", allow_empty=False)
 
         # Normalize textual shortcuts to numbers for backward compatibility
         shortcut_map = {
