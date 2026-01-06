@@ -767,21 +767,71 @@ class Game:
         print(f"{Colors.BOLD}=== MAIN MENU ==={Colors.END}")
         print("1. New Game")
         print("2. Load Game")
-        print("3. Quit")
-        
+        print("3. Configurations")
+        print("4. Quit")
+
         while True:
-            choice = ask("Choose an option (1-3): ")
+            choice = ask("Choose an option (1-4): ")
             if choice == "1":
                 return "new_game"
             elif choice == "2":
                 return "load_game"
             elif choice == "3":
+                self.configurations_menu()
+            elif choice == "4":
                 print("Thank you for playing Our Legacy!")
                 clear_screen()
                 sys.exit(0)
             else:
-                print("Invalid choice. Please enter 1, 2, or 3.")
-    
+                print("Invalid choice. Please enter 1, 2, 3, or 4.")
+
+    def configurations_menu(self):
+        """Display and allow toggling of configuration settings"""
+        while True:
+            clear_screen()
+            print(f"{Colors.BOLD}=== CONFIGURATIONS ==={Colors.END}")
+            print(f"1. Scripting Enabled: {Colors.GREEN if self.config.get('scripting_enabled', False) else Colors.RED}{self.config.get('scripting_enabled', False)}{Colors.END}")
+            print(f"2. Difficulty: {Colors.YELLOW}{self.config.get('difficulty', 'normal')}{Colors.END}")
+            print(f"3. Autosave Enabled: {Colors.GREEN if self.config.get('autosave_enabled', True) else Colors.RED}{self.config.get('autosave_enabled', True)}{Colors.END}")
+            print("4. Back to Main Menu")
+
+            choice = ask("Choose an option (1-4): ")
+            if choice == "1":
+                # Toggle scripting_enabled
+                current = self.config.get('scripting_enabled', False)
+                self.config['scripting_enabled'] = not current
+                print(f"Scripting Enabled set to: {self.config['scripting_enabled']}")
+                self.save_config()
+            elif choice == "2":
+                # Change difficulty
+                difficulties = ['easy', 'normal', 'hard']
+                current = self.config.get('difficulty', 'normal')
+                current_index = difficulties.index(current) if current in difficulties else 0
+                new_index = (current_index + 1) % len(difficulties)
+                self.config['difficulty'] = difficulties[new_index]
+                print(f"Difficulty set to: {self.config['difficulty']}")
+                self.save_config()
+            elif choice == "3":
+                # Toggle autosave_enabled
+                current = self.config.get('autosave_enabled', True)
+                self.config['autosave_enabled'] = not current
+                print(f"Autosave Enabled set to: {self.config['autosave_enabled']}")
+                self.save_config()
+            elif choice == "4":
+                break
+            else:
+                print("Invalid choice. Please enter 1, 2, 3, or 4.")
+            time.sleep(1)  # Brief pause
+
+    def save_config(self):
+        """Save the current config to config.json"""
+        try:
+            with open('data/config.json', 'w') as f:
+                json.dump(self.config, f, indent=2)
+            print("Configuration saved.")
+        except Exception as e:
+            print(f"Error saving config: {e}")
+
     def display_available_classes(self):
         """Display all available character classes from classes.json"""
         print("\nChoose your class:")
