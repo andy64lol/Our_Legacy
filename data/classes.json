@@ -1,0 +1,96 @@
+{
+  "Warrior": {
+    "description": "Strong melee fighter with high HP and defense",
+    "base_stats": {
+      "hp": 120,
+      "mp": 30,
+      "attack": 15,
+      "defense": 12,
+      "speed": 8
+    },
+    "level_up_bonuses": {
+      "hp": 20,
+      "mp": 2,
+      "attack": 3,
+      "defense": 2,
+      "speed": 1
+    },
+    "starting_items": [
+      "Iron Sword",
+      "Leather Armor",
+      "Health Potion"
+    ],
+    "starting_gold": 100
+  },
+  "Mage": {
+    "description": "Powerful spellcaster with high MP and magical abilities",
+    "base_stats": {
+      "hp": 80,
+      "mp": 80,
+      "attack": 10,
+      "defense": 6,
+      "speed": 10
+    },
+    "level_up_bonuses": {
+      "hp": 15,
+      "mp": 15,
+      "attack": 2,
+      "defense": 1,
+      "speed": 1
+    },
+    "starting_items": [
+      "Wooden Wand",
+      "Cloth Tunic",
+      "Mana Potion",
+      "Large Health Potion"
+    ],
+    "starting_gold": 100
+  },
+  "Rogue": {
+    "description": "Agile fighter with high speed and critical strike chance",
+    "base_stats": {
+      "hp": 100,
+      "mp": 40,
+      "attack": 12,
+      "defense": 8,
+      "speed": 15
+    },
+    "level_up_bonuses": {
+      "hp": 15,
+      "mp": 3,
+      "attack": 2,
+      "defense": 1,
+      "speed": 2
+    },
+    "starting_items": [
+      "Steel Dagger",
+      "Leather Armor",
+      "Health Potion"
+    ],
+    "starting_gold": 100
+  },
+  "Hunter":{
+    "description": "Experienced tracker and archer with an incredible aim",
+    "base_stats": {
+      "hp": 100,
+      "mp": 50,
+      "attack": 14,
+      "defense": 10,
+      "speed": 12
+    },
+    "level_up_bonuses": {
+      "hp": 15,
+      "mp": 5,
+      "attack": 2,
+      "defense": 1,
+      "speed": 2
+    },
+    "starting_items": [
+      "Hunter's Bow",
+      "Hunting Knife",
+      "Leather Armor",
+      "Health Potion"
+    ],
+    "starting_gold": 100
+  }
+}

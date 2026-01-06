@@ -1,0 +1,112 @@
+{
+  "goblin": {
+    "name": "Goblin",
+    "hp": 25,
+    "attack": 8,
+    "defense": 3,
+    "speed": 10,
+    "experience_reward": 15,
+    "gold_reward": 8,
+    "loot_table": ["Health Potion", "Goblin Ear", "Hunting Knife"]
+  },
+  "orc": {
+    "name": "Orc",
+    "hp": 45,
+    "attack": 12,
+    "defense": 6,
+    "speed": 7,
+    "experience_reward": 30,
+    "gold_reward": 15,
+    "loot_table": ["Orc Tooth", "Iron Axe", "Warrior Spear"]
+  },
+  "skeleton": {
+    "name": "Skeleton",
+    "hp": 35,
+    "attack": 10,
+    "defense": 4,
+    "speed": 8,
+    "experience_reward": 25,
+    "gold_reward": 12,
+    "loot_table": ["Bone Fragment", "Rusty Dagger", "Steel Hunting Knife"]
+  },
+  "wolf": {
+    "name": "Wolf",
+    "hp": 30,
+    "attack": 11,
+    "defense": 2,
+    "speed": 15,
+    "experience_reward": 20,
+    "gold_reward": 10,
+    "loot_table": ["Wolf Fang", "Health Potion", "Hunting Spear"]
+  },
+  "bandit": {
+    "name": "Bandit",
+    "hp": 40,
+    "attack": 14,
+    "defense": 5,
+    "speed": 12,
+    "experience_reward": 35,
+    "gold_reward": 20,
+    "loot_table": ["Steel Dagger", "Mana Potion", "Assassin Hunting Knife"]
+  },
+  "troll": {
+    "name": "Troll",
+    "hp": 80,
+    "attack": 18,
+    "defense": 10,
+    "speed": 5,
+    "experience_reward": 60,
+    "gold_reward": 30,
+    "loot_table": ["Troll Club", "Large Health Potion", "Tri-point Spear"]
+  },
+  "dark_mage": {
+    "name": "Dark Mage",
+    "hp": 50,
+    "attack": 14,
+    "defense": 4,
+    "speed": 11,
+    "experience_reward": 45,
+    "gold_reward": 25,
+    "loot_table": ["Magic Staff", "Dark Crystal", "Mana Potion"]
+  },
+  "ice_elemental": {
+    "name": "Ice Elemental",
+    "hp": 55,
+    "attack": 13,
+    "defense": 7,
+    "speed": 12,
+    "experience_reward": 50,
+    "gold_reward": 22,
+    "loot_table": ["Crystalline Wand", "Ice Crystal", "Frost Potion"]
+  },
+  "shadow_knight": {
+    "name": "Shadow Knight",
+    "hp": 70,
+    "attack": 16,
+    "defense": 9,
+    "speed": 10,
+    "experience_reward": 65,
+    "gold_reward": 35,
+    "loot_table": ["Shadow Blade", "Dark Crystal"]
+  },
+  "fire_wraith": {
+    "name": "Fire Wraith",
+    "hp": 45,
+    "attack": 15,
+    "defense": 3,
+    "speed": 14,
+    "experience_reward": 40,
+    "gold_reward": 18,
+    "loot_table": ["Spellsword", "Fire Gem", "Dragon Spear"]
+  },
+  "goblin_archer": {
+    "name": "Goblin Archer",
+    "hp": 28,
+    "attack": 10,
+    "defense": 2,
+    "speed": 13,
+    "experience_reward": 18,
+    "gold_reward": 9,
+    "loot_table": ["Light Crossbow", "Health Potion", "Hunter's Bow"]
+  }
+}

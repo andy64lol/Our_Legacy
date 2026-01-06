@@ -1,0 +1,138 @@
+{
+  "starting_village": {
+    "name": "Starting Village",
+    "description": "A peaceful village where new adventurers begin their journey. The innkeeper serves warm meals and merchants offer basic equipment.",
+    "possible_enemies": [],
+    "shops": ["general_store"],
+    "missions_available": true,
+    "connections": ["forest_path", "ancient_ruins", "tavern"],
+    "rest_cost": 5,
+    "can_rest": true
+  },
+  "forest_path": {
+    "name": "Dark Forest",
+    "description": "A dense forest filled with twisted trees and mysterious shadows. Strange sounds echo through the undergrowth.",
+    "possible_enemies": ["goblin", "goblin_archer", "wolf"],
+    "shops": [],
+    "missions_available": false,
+    "connections": ["starting_village", "deep_woods"],
+    "difficulty": 1,
+    "rest_cost": 7,
+    "can_rest": true
+  },
+  "deep_woods": {
+    "name": "Deep Woods",
+    "description": "The heart of the forest where ancient magic still lingers. Dangerous creatures prowl these shadows.",
+    "possible_enemies": ["goblin", "orc", "dark_mage", "wolf"],
+    "shops": [],
+    "missions_available": false,
+    "connections": ["forest_path", "crystal_caves", "moonlit_glade"],
+    "difficulty": 2,
+    "can_rest": false
+  },
+  "ancient_ruins": {
+    "name": "Ancient Ruins",
+    "description": "Remnants of a forgotten civilization. These crumbling structures hold both treasure and peril.",
+    "possible_enemies": ["skeleton", "bandit", "shadow_knight"],
+    "shops": [],
+    "missions_available": false,
+    "connections": ["starting_village", "underground_tombs", "obsidian_temple"],
+    "difficulty": 2,
+    "rest_cost": 8,
+    "can_rest": true
+  },
+  "underground_tombs": {
+    "name": "Underground Tombs",
+    "description": "Hidden beneath the ruins, ancient burial chambers guarded by undead warriors.",
+    "possible_enemies": ["skeleton", "troll", "shadow_knight"],
+    "shops": [],
+    "missions_available": false,
+    "connections": ["ancient_ruins", "void_cavern"],
+    "difficulty": 3,
+    "can_rest": false
+  },
+  "crystal_caves": {
+    "name": "Crystal Caves",
+    "description": "Glowing crystals illuminate these caverns, but dangerous elementals guard their secrets.",
+    "possible_enemies": ["ice_elemental", "orc", "fire_wraith"],
+    "shops": [],
+    "missions_available": false,
+    "connections": ["deep_woods", "dragon_lair"],
+    "difficulty": 3,
+    "can_rest": false
+  },
+  "dragon_lair": {
+    "name": "Dragon's Lair",
+    "description": "The ultimate challenge awaits. A mighty Fire Dragon has made these mountains its home.",
+    "possible_enemies": ["fire_wraith"],
+    "shops": [],
+    "missions_available": false,
+    "connections": ["crystal_caves"],
+    "difficulty": 5,
+    "boss_area": true,
+    "can_rest": false
+  },
+  "moonlit_glade": {
+    "name": "Moonlit Glade",
+    "description": "A serene clearing bathed in silvery moonlight. Strange magic permeates the air here.",
+    "possible_enemies": ["bandit", "fire_wraith", "shadow_knight"],
+    "shops": [],
+    "missions_available": false,
+    "connections": ["deep_woods", "spire_of_sorcery"],
+    "difficulty": 2,
+    "rest_cost": 6,
+    "can_rest": true
+  },
+  "spire_of_sorcery": {
+    "name": "Spire of Sorcery",
+    "description": "An arcane tower crackling with magical energy. Only the most skilled mages can survive here.",
+    "possible_enemies": ["dark_mage", "ice_elemental", "fire_wraith"],
+    "shops": [],
+    "missions_available": false,
+    "connections": ["moonlit_glade"],
+    "difficulty": 4,
+    "can_rest": false
+  },
+  "obsidian_temple": {
+    "name": "Obsidian Temple",
+    "description": "A dark temple of unknown purpose, hewn from black obsidian stone.",
+    "possible_enemies": ["skeleton", "shadow_knight", "troll"],
+    "shops": [],
+    "missions_available": false,
+    "connections": ["ancient_ruins", "void_cavern"],
+    "difficulty": 3,
+    "can_rest": false
+  },
+  "void_cavern": {
+    "name": "Void Cavern",
+    "description": "A cavernous expanse where light itself seems to bend. Ancient power dwells here.",
+    "possible_enemies": ["shadow_knight", "dark_mage", "fire_wraith"],
+    "shops": [],
+    "missions_available": false,
+    "connections": ["underground_tombs", "obsidian_temple", "abyss_gate"],
+    "difficulty": 4,
+    "can_rest": false
+  },
+  "abyss_gate": {
+    "name": "Abyss Gate",
+    "description": "A gateway to the void itself. The very fabric of reality feels unstable.",
+    "possible_enemies": ["shadow_knight"],
+    "shops": [],
+    "missions_available": false,
+    "connections": ["void_cavern"],
+    "difficulty": 5,
+    "boss_area": true,
+    "can_rest": false
+  }
+  ,
+  "tavern": {
+    "name": "The Rusty Tankard",
+    "description": "A warm tavern in the heart of the town. Adventurers meet here to swap stories and hire companions.",
+    "possible_enemies": [],
+    "shops": ["tavern_keeper"],
+    "missions_available": false,
+    "connections": ["starting_village"],
+    "rest_cost": 10,
+    "can_rest": true
+  }
+}
