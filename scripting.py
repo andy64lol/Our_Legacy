@@ -29,6 +29,12 @@ class GameAPI:
             'on_mission_complete': [],
             'on_buff_applied': [],
             'on_area_entered': [],
+            'on_explore': [],
+            'on_player_turn': [],
+            'on_enemy_turn': [],
+            'on_loot_drop': [],
+            'on_shop_open': [],
+            'on_tavern_open': [],
         }
         self.custom_data: Dict[str, Any] = {}
 
@@ -346,6 +352,22 @@ class GameAPI:
             except Exception as e:
                 print(f"Error in hook {event_name}: {e}")
         return results
+
+    def trigger_event(self, event_name: str, *args, **kwargs) -> bool:
+        """Trigger all callbacks for an event and return True if any returned True.
+        
+        This is used for events that can be 'handled' by a script to override
+        default game behavior.
+        
+        Args:
+            event_name: Name of event
+            *args, **kwargs: Arguments to pass to callbacks
+            
+        Returns:
+            True if any callback returned True, False otherwise
+        """
+        results = self.trigger_hook(event_name, *args, **kwargs)
+        return any(results)
 
     # ============ Custom Data Storage ============
 
