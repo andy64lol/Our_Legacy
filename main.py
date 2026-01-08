@@ -10,7 +10,7 @@ import random
 import sys
 import time
 from datetime import datetime
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Callable
 import difflib
 import signal
 import traceback
@@ -694,6 +694,7 @@ class Game:
         self.completed_missions: List[str] = []
         self.config: Dict[str, Any] = {}
         self.scripting_enabled: bool = False
+        self.script_api: Optional[Any] = None
         
         # Load game data
         self.load_game_data()
@@ -1040,6 +1041,10 @@ class Game:
         if not self.player:
             print("No character created yet. Please create a character first.")
             return
+
+        # Script override for exploration
+        if self.script_api and self.script_api.trigger_event('on_explore', self.current_area):
+            return
             
         area_data = self.areas_data.get(self.current_area, {})
         area_name = area_data.get("name", "Unknown Area")
@@ -1081,6 +1086,10 @@ class Game:
     def battle(self, enemy: Enemy):
         """Handle turn-based battle"""
         if not self.player:
+            return
+
+        # Script override for battle start
+        if self.script_api and self.script_api.trigger_event('on_battle_start', enemy.name):
             return
             
         print(f"\n{Colors.BOLD}=== BATTLE ==={Colors.END}")
@@ -1174,6 +1183,10 @@ class Game:
     def player_turn(self, enemy: Enemy) -> bool:
         """Player's turn in battle. Returns False if player fled."""
         if not self.player:
+            return True
+
+        # Script override for player turn
+        if self.script_api and self.script_api.trigger_event('on_player_turn', enemy.name):
             return True
             
         print(f"\n{Colors.BOLD}Your turn!{Colors.END}")
@@ -2523,7 +2536,7 @@ def main():
     if game.scripting_enabled:
         try:
             from scripting import init_scripting_api
-            init_scripting_api(game)
+            game.script_api = init_scripting_api(game)
             print(f"{Colors.YELLOW}Scripting API enabled (EXPERIMENTAL){Colors.END}")
             
             # Auto-load scripts if configured
