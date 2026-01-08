@@ -1,5 +1,4 @@
-<path>home/andy64lolxd/Our_Legacy/README.md</path>
-<parameter name="content"># Our Legacy - Text-Based CLI Fantasy RPG Game</parameter>
+# Our Legacy - Text-Based CLI Fantasy RPG Game
 
 ## Overview
 
