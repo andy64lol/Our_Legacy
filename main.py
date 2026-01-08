@@ -1095,12 +1095,16 @@ class Game:
         print(f"\n{Colors.BOLD}=== BATTLE ==={Colors.END}")
         print(f"VS {enemy.name}")
         
+        # Track if player fled
+        player_fled = False
+
         # Determine who goes first using effective speed (buffs apply)
         player_first = self.player.get_effective_speed() >= enemy.speed
         
         while self.player.is_alive() and enemy.is_alive():
             if player_first:
                 if not self.player_turn(enemy):
+                    player_fled = True
                     break
                 # Companions may act after the player turn (each companion has a chance)
                 if enemy.is_alive() and self.player.companions:
@@ -1111,6 +1115,7 @@ class Game:
                 self.enemy_turn(enemy)
                 if self.player.is_alive():
                     if not self.player_turn(enemy):
+                        player_fled = True
                         break
                     # Companions may act after the player turn (each companion has a chance)
                     if enemy.is_alive() and self.player.companions:
