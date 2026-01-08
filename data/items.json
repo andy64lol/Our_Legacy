@@ -151,6 +151,34 @@
     "price": 100,
     "rarity": "legendary"
   },
+  "Dragon Bone": {
+    "type": "material",
+    "description": "A sturdy bone from a dragon, ideal for forging powerful weapons",
+    "price": 120,
+    "rarity": "legendary"
+  },
+  "Serpent Tail": {
+    "type": "material",
+    "description": "A tail from a serpent, used as a potent poison source",
+    "price": 12,
+    "rarity": "common"
+  },
+  "Phoenix Feather": {
+    "description": "A feather from a phoenix, symbolizing rebirth and renewal",
+    "price": 15,
+    "rarity": "uncommon"
+  },
+  "Crystal Shard": {
+    "description": "A shard of crystal, often used in magical crafting",
+    "price": 10,
+    "rarity": "common"
+  },
+  "Ancient Dragon Scale": {
+    "type": "material",
+    "description": "A scale from an ancient dragon, radiating immense power",
+    "price": 150,
+    "rarity": "legendary"
+  },
   "Dark Crystal": {
     "type": "material",
     "description": "A crystal infused with dark magic energy",
@@ -765,5 +793,36 @@
     "price": 90,
     "rarity": "rare",
     "requirements": {"level": 2}
+  },
+  "Ancient Relic": {
+    "type": "material",
+    "description": "An artifact from a bygone era, radiating mysterious energy.",
+    "price": 150,
+    "rarity": "rare"
+  },
+  "Golem Core": {
+    "type": "material",
+    "description": "The pulsating core of an ancient golem, filled with arcane power.",
+    "price": 200,
+    "rarity": "legendary"
+  },
+  "Sorcerous Tome": {
+    "type": "offhand",
+    "description": "A powerful tome that amplifies magical abilities when held.",
+    "mp_bonus": 35,
+    "magic_focus": true,
+    "price": 160,
+    "rarity": "legendary",
+    "requirements": {"level": 5}
+  },
+  "Staff of Power": {
+    "type": "weapon",
+    "description": "A legendary staff that channels immense magical energy.",
+    "attack_bonus": 12,
+    "magic_weapon": true,
+    "mp_bonus": 60,
+    "price": 300,
+    "rarity": "legendary",
+    "requirements": {"level": 6, "class": "Mage" }
   }
 }

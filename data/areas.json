@@ -33,7 +33,7 @@
   "ancient_ruins": {
     "name": "Ancient Ruins",
     "description": "Remnants of a forgotten civilization. These crumbling structures hold both treasure and peril.",
-    "possible_enemies": ["skeleton", "bandit", "shadow_knight"],
+    "possible_enemies": ["skeleton", "bandit", "shadow_knight", "ancient_golem"],
     "shops": [],
     "missions_available": false,
     "connections": ["starting_village", "underground_tombs", "obsidian_temple"],
@@ -44,7 +44,7 @@
   "underground_tombs": {
     "name": "Underground Tombs",
     "description": "Hidden beneath the ruins, ancient burial chambers guarded by undead warriors.",
-    "possible_enemies": ["skeleton", "troll", "shadow_knight"],
+    "possible_enemies": ["skeleton", "troll", "shadow_knight", "evil_sorcerer"],
     "shops": [],
     "missions_available": false,
     "connections": ["ancient_ruins", "void_cavern"],
@@ -54,7 +54,7 @@
   "crystal_caves": {
     "name": "Crystal Caves",
     "description": "Glowing crystals illuminate these caverns, but dangerous elementals guard their secrets.",
-    "possible_enemies": ["ice_elemental", "orc", "fire_wraith"],
+    "possible_enemies": ["ice_elemental", "orc", "fire_wraith", "dragon"],
     "shops": [],
     "missions_available": false,
     "connections": ["deep_woods", "dragon_lair"],
