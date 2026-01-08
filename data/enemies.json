@@ -108,5 +108,35 @@
     "experience_reward": 18,
     "gold_reward": 9,
     "loot_table": ["Light Crossbow", "Health Potion", "Hunter's Bow"]
+  },
+  "ancient_golem":{
+    "name": "Ancient Golem",
+    "hp": 120,
+    "attack": 40,
+    "defense": 30,
+    "speed": 3,
+    "experience_reward": 150,
+    "gold_reward": 75,
+    "loot_table": ["Golem Core","Ancient Relic"]
+  },
+  "dragon":{
+    "name":"Dragon",
+    "hp":150,
+    "attack":45,
+    "defense":35,
+    "speed":5,
+    "experience_reward":200,
+    "gold_reward":100,
+    "loot_table":["Dragon Scale", "Dragon Bone"]
+  },
+  "evil_sorcerer":{
+    "name":"Evil Sorcerer",
+    "hp":100,
+    "attack":35,
+    "defense":25,
+    "speed":8,
+    "experience_reward":175,
+    "gold_reward":80,
+    "loot_table":["Sorcerous Tome","Staff of Power"]
   }
 }
