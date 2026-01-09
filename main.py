@@ -675,6 +675,45 @@ class Enemy:
         self.hp = max(0, self.hp - actual_damage)
         return actual_damage
 
+class Boss(Enemy):
+    """Boss enemy class - extends Enemy with additional boss-specific features"""
+    
+    def __init__(self, boss_data: Dict):
+        super().__init__(boss_data)
+        self.name = boss_data["name"]
+        self.description = boss_data.get("description", "")
+        self.special_abilities = boss_data.get("special_abilities", [])
+        self.phases = boss_data.get("phases", [])
+        self.current_phase = 0
+        self.experience_reward = boss_data.get("experience_reward", 100)
+        self.gold_reward = boss_data.get("gold_reward", 50)
+        self.loot_table = boss_data.get("unique_loot", [])
+        
+    def get_current_phase(self) -> Dict:
+        hp_percentage = self.hp / self.max_hp if self.max_hp > 0 else 1.0
+        for i, phase in enumerate(self.phases):
+            hp_threshold = phase.get("hp_threshold", 0)
+            if hp_percentage <= hp_threshold:
+                self.current_phase = i
+                return phase
+        return self.phases[0] if self.phases else {}
+    
+    def get_attack_multiplier(self) -> float:
+        return self.get_current_phase().get("attack_multiplier", 1.0)
+    
+    def get_defense_multiplier(self) -> float:
+        return self.get_current_phase().get("defense_multiplier", 1.0)
+    
+    def take_damage(self, damage: int) -> int:
+        defense_mult = self.get_defense_multiplier()
+        effective_defense = int(self.defense * defense_mult)
+        actual_damage = max(1, damage - effective_defense)
+        self.hp = max(0, self.hp - actual_damage)
+        return actual_damage
+    
+    def get_effective_attack(self) -> int:
+        return int(self.attack * self.get_attack_multiplier())
+
 class Game:
     """Main game class"""
     
@@ -1067,17 +1106,35 @@ class Game:
         """Handle random encounter"""
         if not self.player:
             return
-            
+
         area_data = self.areas_data.get(self.current_area, {})
         possible_enemies = area_data.get("possible_enemies", [])
-        
-        if not possible_enemies:
+        possible_bosses = area_data.get("possible_bosses", [])
+
+        if not possible_enemies and not possible_bosses:
             print("No enemies found in this area.")
             return
-        
+        # 20% chance for boss encounter if bosses are available
+        if possible_bosses and random.random() < 0.2:
+            boss_name = random.choice(possible_bosses)
+            boss_data = self.bosses_data.get(boss_name)
+
+            if boss_data:
+                boss = Boss(boss_data)
+                print(f"\n{Colors.RED}{Colors.BOLD}!!! BOSS ENCOUNTER !!!{Colors.END}")
+                print(f"{Colors.RED}A legendary {boss.name} blocks your path!{Colors.END}")
+                print(f"{Colors.DARK_GRAY}{boss.description}{Colors.END}")
+                self.battle(boss)
+                return
+
+        # Regular enemy encounter
+        if not possible_enemies:
+            print("No regular enemies found in this area.")
+            return
+
         enemy_name = random.choice(possible_enemies)
         enemy_data = self.enemies_data.get(enemy_name)
-        
+
         if enemy_data:
             enemy = Enemy(enemy_data)
             print(f"\n{Colors.RED}A wild {enemy.name} appears!{Colors.END}")

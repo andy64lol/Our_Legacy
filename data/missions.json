@@ -48,7 +48,7 @@
     "name": "Lost Relic",
     "description": "An ancient artifact was stolen by bandits. Retrieve it from the Ancient Ruins.",
     "type": "collect",
-    "target": "ancient_relic",
+    "target": "Ancient Relic",
     "target_count": 1,
     "reward": {
       "experience": 150,
@@ -278,5 +278,212 @@
     "area": "deep_woods",
     "unlock_level": 3,
     "prerequisites": ["forest_cleaning"]
+  },
+  "swamp_hunt": {
+    "name": "Swamp Stalker",
+    "description": "The Swamp of Shadows harbors dangerous creatures. Defeat 4 Giant Spiders and 3 Poison Elementals.",
+    "type": "kill",
+    "target": "multi",
+    "target_count": {
+      "giant_spider": 4,
+      "poison_elemental": 3
+    },
+    "reward": {
+      "experience": 200,
+      "gold": 150,
+      "items": ["Venomstrike Dagger", "Poison Crystal"]
+    },
+    "area": "swamp_of_shadows",
+    "unlock_level": 4,
+    "prerequisites": ["orc_invasion", "forest_cleaning"]
+  },
+  "hydra_slayer": {
+    "name": "Hydra Hunter",
+    "description": "The legendary Swamp Hydra terrorizes the marshlands. Gather a party and defeat this multi-headed beast.",
+    "type": "kill",
+    "target": "hydra",
+    "target_count": 1,
+    "reward": {
+      "experience": 400,
+      "gold": 300,
+      "items": ["Hydra Fang", "Swamp Scale Armor", "Venom Sac"]
+    },
+    "area": "swamp_of_shadows",
+    "unlock_level": 5,
+    "prerequisites": ["swamp_hunt"]
+  },
+  "cemetery_cleansing": {
+    "name": "Grave Duty",
+    "description": "The Haunted Cemetery is overrun with spirits. Defeat 5 Ghosts and 3 Wraiths to bring peace to the dead.",
+    "type": "kill",
+    "target": "multi",
+    "target_count": {
+      "ghost": 5,
+      "wraith": 3
+    },
+    "reward": {
+      "experience": 220,
+      "gold": 160,
+      "items": ["Ghostwalker Cloak", "Soul Gem"]
+    },
+    "area": "haunted_cemetery",
+    "unlock_level": 5,
+    "prerequisites": ["undead_horde", "temple_protector"]
+  },
+  "necromancer_defeat": {
+    "name": "Necromancer's End",
+    "description": "The Necromancer Lord Vorthak commands the undead army. Defeat this dark mage to end the curse.",
+    "type": "kill",
+    "target": "necromancer_lord",
+    "target_count": 1,
+    "reward": {
+      "experience": 500,
+      "gold": 350,
+      "items": ["Necromancer's Robes", "Skull Staff", "Bone Crown"]
+    },
+    "area": "haunted_cemetery",
+    "unlock_level": 6,
+    "prerequisites": ["cemetery_cleansing"]
+  },
+  "mountain_climb": {
+    "name": "Mountain Trek",
+    "description": "Ascend to the Mountain Base and defeat 3 Rock Golems to prove your worth.",
+    "type": "kill",
+    "target": "rock_golem",
+    "target_count": 3,
+    "reward": {
+      "experience": 180,
+      "gold": 120,
+      "items": ["Gauntlets of Strength", "Stone Shield"]
+    },
+    "area": "mountain_base",
+    "unlock_level": 4,
+    "prerequisites": ["ancient_artifact"]
+  },
+  "thunder_conquest": {
+    "name": "Storm Challenger",
+    "description": "Ascend Thunder Peak and defeat 4 Storm Elementals and 2 Lightning Golems.",
+    "type": "kill",
+    "target": "multi",
+    "target_count": {
+      "storm_elemental": 4,
+      "lightning_golem": 2
+    },
+    "reward": {
+      "experience": 280,
+      "gold": 200,
+      "items": ["Lightning Crystal", "Thundercloud Cloak"]
+    },
+    "area": "thunder_peak",
+    "unlock_level": 6,
+    "prerequisites": ["mountain_climb", "inferno_slayer"]
+  },
+  "giant_slayer": {
+    "name": "Thunder Lord's Fall",
+    "description": "Face the mighty Storm Giant Thunder Lord Thorigar atop the mountain.",
+    "type": "kill",
+    "target": "storm_giant",
+    "target_count": 1,
+    "reward": {
+      "experience": 550,
+      "gold": 400,
+      "items": ["Thunder Hammer", "Storm Giant's Belt", "Giant's Gauntlets"]
+    },
+    "area": "thunder_peak",
+    "unlock_level": 7,
+    "prerequisites": ["thunder_conquest"]
+  },
+  "crypt_explorer": {
+    "name": "Into the Depths",
+    "description": "Descend into the Crypt of Eternity and defeat 3 Death Knights.",
+    "type": "kill",
+    "target": "death_knight",
+    "target_count": 3,
+    "reward": {
+      "experience": 350,
+      "gold": 250,
+      "items": ["Death Knight's Shield", "Cursed Amulet"]
+    },
+    "area": "crypt_of_eternity",
+    "unlock_level": 7,
+    "prerequisites": ["necromancer_defeat", "temple_protector"]
+  },
+  "lich_king_defeat": {
+    "name": "Eternal Nightmare",
+    "description": "The Lich King Malachar rules the Crypt of Eternity. Assemble the strongest party to end his undying reign.",
+    "type": "kill",
+    "target": "lich_king",
+    "target_count": 1,
+    "reward": {
+      "experience": 700,
+      "gold": 600,
+      "items": ["Crown of Malachar", "Phylactery", "Lich King's Robes", "Soul Reaver"]
+    },
+    "area": "crypt_of_eternity",
+    "unlock_level": 8,
+    "prerequisites": ["crypt_explorer"]
+  },
+  "demon_gate": {
+    "name": "Infernal Gate",
+    "description": "The Hellfire Citadel's gates stand open. Defeat 4 Infernal Imps and 2 Hell Knights.",
+    "type": "kill",
+    "target": "multi",
+    "target_count": {
+      "infernal_imp": 4,
+      "hell_knight": 2
+    },
+    "reward": {
+      "experience": 400,
+      "gold": 300,
+      "items": ["Infernal Blade", "Demon Heart"]
+    },
+    "area": "hellfire_citadel",
+    "unlock_level": 8,
+    "prerequisites": ["lich_king_defeat"]
+  },
+  "demon_prince_defeat": {
+    "name": "Prince of Darkness",
+    "description": "The Demon Prince Azgorath awaits in Hellfire Citadel. Face this ultimate evil.",
+    "type": "kill",
+    "target": "demon_prince",
+    "target_count": 1,
+    "reward": {
+      "experience": 800,
+      "gold": 800,
+      "items": ["Demon Prince's Crown", "Chaos Orb", "Azgorath's Cloak", "Hellfire Shield"]
+    },
+    "area": "hellfire_citadel",
+    "unlock_level": 9,
+    "prerequisites": ["demon_gate"]
+  },
+  "sky_ascent": {
+    "name": "Ascension",
+    "description": "Climb to the Sky Sanctuary and prove your might against 3 Wind Elementals.",
+    "type": "kill",
+    "target": "wind_elemental",
+    "target_count": 3,
+    "reward": {
+      "experience": 450,
+      "gold": 350,
+      "items": ["Wind Walkers", "Eternal Feather"]
+    },
+    "area": "sky_sanctuary",
+    "unlock_level": 8,
+    "prerequisites": ["giant_slayer", "demon_prince_defeat"]
+  },
+  "elder_dragon_defeat": {
+    "name": "Wind's End",
+    "description": "The Elder Dragon Zephyr guards the Sky Sanctuary. Face this ancient being for ultimate glory.",
+    "type": "kill",
+    "target": "elder_dragon",
+    "target_count": 1,
+    "reward": {
+      "experience": 1000,
+      "gold": 1000,
+      "items": ["Zephyr's Scale", "Stormbreaker", "Sky Crown", "Dragon Soul Gem", "Cloudstrider Boots"]
+    },
+    "area": "sky_sanctuary",
+    "unlock_level": 9,
+    "prerequisites": ["sky_ascent"]
   }
 }
