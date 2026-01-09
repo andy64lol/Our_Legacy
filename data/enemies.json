@@ -111,9 +111,9 @@
   },
   "ancient_golem":{
     "name": "Ancient Golem",
-    "hp": 120,
-    "attack": 40,
-    "defense": 30,
+    "hp": 150,
+    "attack": 20,
+    "defense": 19,
     "speed": 3,
     "experience_reward": 150,
     "gold_reward": 75,
@@ -138,5 +138,185 @@
     "experience_reward":175,
     "gold_reward":80,
     "loot_table":["Sorcerous Tome","Staff of Power"]
+  },
+  "giant_spider": {
+    "name": "Giant Spider",
+    "hp": 45,
+    "attack": 15,
+    "defense": 5,
+    "speed": 14,
+    "experience_reward": 35,
+    "gold_reward": 18,
+    "loot_table": ["Venom Sac", "Spider Silk", "Steel Dagger"]
+  },
+  "swamp_rat": {
+    "name": "Swamp Rat",
+    "hp": 25,
+    "attack": 8,
+    "defense": 2,
+    "speed": 16,
+    "experience_reward": 12,
+    "gold_reward": 5,
+    "loot_table": ["Rat Tail", "Health Potion"]
+  },
+  "poison_elemental": {
+    "name": "Poison Elemental",
+    "hp": 60,
+    "attack": 18,
+    "defense": 6,
+    "speed": 11,
+    "experience_reward": 55,
+    "gold_reward": 28,
+    "loot_table": ["Poison Crystal", "Frost Potion", "Venom Sac"]
+  },
+  "ghost": {
+    "name": "Ghost",
+    "hp": 40,
+    "attack": 14,
+    "defense": 3,
+    "speed": 15,
+    "experience_reward": 40,
+    "gold_reward": 20,
+    "loot_table": ["Soul Fragment", "Bone Fragment", "Spirit Dust"]
+  },
+  "wraith": {
+    "name": "Wraith",
+    "hp": 55,
+    "attack": 18,
+    "defense": 5,
+    "speed": 13,
+    "experience_reward": 55,
+    "gold_reward": 30,
+    "loot_table": ["Soul Fragment", "Dark Crystal", "Shadow Cloak"]
+  },
+  "death_knight": {
+    "name": "Death Knight",
+    "hp": 120,
+    "attack": 28,
+    "defense": 20,
+    "speed": 9,
+    "experience_reward": 150,
+    "gold_reward": 85,
+    "loot_table": ["Death Knight's Shield", "Bone Crown", "Mourning Blade"]
+  },
+  "lich": {
+    "name": "Lich",
+    "hp": 100,
+    "attack": 32,
+    "defense": 18,
+    "speed": 10,
+    "experience_reward": 180,
+    "gold_reward": 100,
+    "loot_table": ["Skull Staff", "Bone Crown", "Soul Orb"]
+  },
+  "spectral_wyrm": {
+    "name": "Spectral Wyrm",
+    "hp": 150,
+    "attack": 38,
+    "defense": 22,
+    "speed": 8,
+    "experience_reward": 250,
+    "gold_reward": 150,
+    "loot_table": ["Dragon Bone", "Ancient Dragon Bone", "Spectral Dragon Scale"]
+  },
+  "infernal_imp": {
+    "name": "Infernal Imp",
+    "hp": 35,
+    "attack": 12,
+    "defense": 4,
+    "speed": 18,
+    "experience_reward": 30,
+    "gold_reward": 15,
+    "loot_table": ["Demon Blood", "Fire Gem", "Hellfire Essence"]
+  },
+  "hell_knight": {
+    "name": "Hell Knight",
+    "hp": 95,
+    "attack": 25,
+    "defense": 18,
+    "speed": 10,
+    "experience_reward": 120,
+    "gold_reward": 70,
+    "loot_table": ["Infernal Blade", "Demon Blood", "Cursed Amulet"]
+  },
+  "fire_demon": {
+    "name": "Fire Demon",
+    "hp": 110,
+    "attack": 30,
+    "defense": 15,
+    "speed": 12,
+    "experience_reward": 140,
+    "gold_reward": 85,
+    "loot_table": ["Demon Heart", "Fire Gem", "Azgorath's Cloak"]
+  },
+  "wind_elemental": {
+    "name": "Wind Elemental",
+    "hp": 50,
+    "attack": 16,
+    "defense": 5,
+    "speed": 20,
+    "experience_reward": 60,
+    "gold_reward": 35,
+    "loot_table": ["Wind Elemental Essence", "Eternal Feather", "Zephyr's Scale"]
+  },
+  "storm_dragon": {
+    "name": "Storm Dragon",
+    "hp": 200,
+    "attack": 45,
+    "defense": 30,
+    "speed": 14,
+    "experience_reward": 400,
+    "gold_reward": 300,
+    "loot_table": ["Stormbreaker", "Lightning Crystal", "Dragon Scale", "Wind Dragon's Heart"]
+  },
+  "mountain_goat": {
+    "name": "Mountain Goat",
+    "hp": 50,
+    "attack": 14,
+    "defense": 8,
+    "speed": 15,
+    "experience_reward": 25,
+    "gold_reward": 12,
+    "loot_table": ["Goat Horn", "Mountain Herbs", "Hunting Spear"]
+  },
+  "rock_golem": {
+    "name": "Rock Golem",
+    "hp": 120,
+    "attack": 22,
+    "defense": 25,
+    "speed": 4,
+    "experience_reward": 80,
+    "gold_reward": 45,
+    "loot_table": ["Golem Core", "Stone Shield", "Ancient Relic"]
+  },
+  "cave_bear": {
+    "name": "Cave Bear",
+    "hp": 90,
+    "attack": 20,
+    "defense": 12,
+    "speed": 8,
+    "experience_reward": 50,
+    "gold_reward": 28,
+    "loot_table": ["Bear Claw", "Bear Pelt", "Large Health Potion"]
+  },
+  "thunder_bird": {
+    "name": "Thunder Bird",
+    "hp": 70,
+    "attack": 24,
+    "defense": 10,
+    "speed": 18,
+    "experience_reward": 75,
+    "gold_reward": 45,
+    "loot_table": ["Lightning Crystal", "Eternal Feather", "Stormcloud Cloak"]
+  },
+  "lightning_golem": {
+    "name": "Lightning Golem",
+    "hp": 100,
+    "attack": 28,
+    "defense": 18,
+    "speed": 6,
+    "experience_reward": 110,
+    "gold_reward": 65,
+    "loot_table": ["Lightning Crystal", "Storm Elemental Core", "Thundercloud Cloak"]
   }
 }
