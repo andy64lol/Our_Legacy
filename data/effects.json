@@ -97,5 +97,39 @@
     "type": "action_block",
     "duration": 5,
     "chance": 0.8
+  },
+  "heal": {
+    "description": "Restores health points",
+    "type": "instant_heal",
+    "heal_amount": 50
+  },
+  "mp_restore": {
+    "description": "Restores mana points",
+    "type": "instant_mp_restore",
+    "mp_amount": 30
+  },
+  "giant_strength": {
+    "description": "Temporarily grants giant strength and increased attack power",
+    "type": "stat_boost",
+    "attack_bonus": 15,
+    "duration": 5
+  },
+  "shadow_step": {
+    "description": "Allows instantaneous movement through shadows",
+    "type": "utility",
+    "charges": 3,
+    "evasion_bonus": 20
+  },
+  "full_heal": {
+    "description": "Fully restores health",
+    "type": "instant_heal",
+    "heal_percent": 100
+  },
+  "dragon_breath": {
+    "description": "Grants fire breath attack ability",
+    "type": "temporary_ability",
+    "damage": 50,
+    "duration": 3,
+    "ability_name": "Dragon Breath"
   }
 }

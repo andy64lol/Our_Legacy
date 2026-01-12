@@ -192,8 +192,6 @@ Items include weapons, armor, accessories, and consumables.
 }
 ```
 
-#### Hunter-Specific Weapons
-
 #### Offhand Items
 
 Offhand items are a new item type stored in `data/items.json` with `"type": "offhand"`.
@@ -710,7 +708,7 @@ Quests that players can undertake for rewards.
 ### Mission Types
 
 - **kill** - Kill X number of enemies
-- **collect** - Collect X items (not yet fully implemented)
+- **collect** - Collect X items
 - **explore** - Explore an area (not yet fully implemented)
 
 ### Example: Adding a "Dragon Slayer" Mission
@@ -749,76 +747,6 @@ Quests that players can undertake for rewards.
 
 ---
 
-## Modifying Game Code
-
-**File:** `main.py`
-
-For more advanced customization, you can modify the Python code.
-
-### Key Code Sections
-
-#### Character Class (Lines 47-138)
-Defines player character statistics and methods.
-
-#### Game Class (Lines 145+)
-Main game engine with combat, exploration, and inventory systems.
-
-#### Important Methods
-
-- `create_character()` - Character creation flow
-- `explore()` - Area exploration menu
-- `combat()` - Battle system
-- `save_game()` - Save game data
-- `load_game()` - Load saved game
-- `display_stats()` - Show character stats
-
-### Modifying Combat
-
-Find the `combat()` method to adjust:
-- Damage calculations
-- Turn order logic
-- Enemy AI behavior
-- Combat balance
-
-### Modifying Colors
-
-The `Colors` class (lines 13-27) defines terminal colors:
-
-```python
-class Colors:
-    RED = '\033[91m'
-    GREEN = '\033[92m'
-    YELLOW = '\033[93m'
-    BLUE = '\033[94m'
-    MAGENTA = '\033[95m'
-    CYAN = '\033[96m'
-    WHITE = '\033[97m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
-    END = '\033[0m'
-```
-
-### Common Code Modifications
-
-#### Change Starting Gold
-
-Find: `self.gold = 100`
-Change the number to desired starting gold.
-
-#### Modify Experience Multiplier
-
-Find: `self.experience_to_next = int(self.experience_to_next * 1.5)`
-Change 1.5 to adjust leveling speed (higher = slower leveling).
-
-#### Adjust Damage Formula
-
-Find in `combat()` method:
-```python
-actual_damage = max(1, damage - self.defense)
-```
-Modify the formula to change damage calculations.
-
----
 
 ## Tips & Best Practices
 
