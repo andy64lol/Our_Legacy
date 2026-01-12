@@ -59,8 +59,7 @@
       "Dragon Scale Armor",
       "Fire Gem",
       "Dragon Heart",
-      "Ancient Dragon Scale",
-      "Phoenix Feather"
+      "Ancient Dragon Scale"
     ],
     "unlock_conditions": {
       "level": 8,
@@ -103,8 +102,7 @@
     "gold_reward": 200,
     "unique_loot": [
       "Troll Club",
-      "King's Crown",
-      "Troll Hide",
+      "Troll King's Crown",
       "Earth Crystal"
     ],
     "unlock_conditions": {
@@ -224,9 +222,8 @@
     "gold_reward": 150,
     "unique_loot": [
       "Ice Queen's Crown",
-      "Frostblade",
-      "Crystal of Eternal Winter",
-      "Snow Queen's Blessing"
+      "Boreas",
+      "Crystal of Eternal Winter"
     ],
     "unlock_conditions": {
       "level": 5,
@@ -272,32 +269,11 @@
     "unique_loot": [
       "Chieftain's Axe",
       "Orc War Banner",
-      "Bone Necklace",
-      "War Trophy"
+      "Bone Necklace"
     ],
     "unlock_conditions": {
       "level": 3,
       "missions_required": ["orc_invasion"]
-    }
-  },
-  "empress_of_ice": {
-    "name": "The empress of ice Elara",
-    "hp": 200,
-    "attack": 24,
-    "defense": 16,
-    "speed": 18,
-    "description": "A beautiful but deadly mage who rules the Crystal Caves with eternal winter.",
-    "experience_reward": 280,
-    "gold_reward": 180,
-    "unique_loot": [
-      "Ethereal Staff",
-      "Ice Shard Crown",
-      "Frozen Heart",
-      "Snowbind Cloak"
-    ],
-    "unlock_conditions": {
-      "level": 5,
-      "missions_required": ["crystal_guardian"]
     }
   },
   "void_tyrant": {

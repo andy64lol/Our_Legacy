@@ -60,7 +60,7 @@
     "name": "Crystal Caves",
     "description": "Glowing crystals illuminate these caverns, but dangerous elementals guard their secrets.",
     "possible_enemies": ["ice_elemental", "orc", "fire_wraith"],
-    "possible_bosses": ["ice_queen", "empress_of_ice"],
+    "possible_bosses": ["ice_queen"],
     "shops": [],
     "missions_available": false,
     "connections": ["deep_woods", "dragon_lair"],

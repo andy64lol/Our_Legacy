@@ -111,17 +111,6 @@
          "class":"Mage"
       }
    },
-   "Dragon Scale Armor":{
-      "type":"armor",
-      "description":"Armor crafted from dragon scales, providing exceptional protection",
-      "defense_bonus":15,
-      "fire_resistance":50,
-      "price":200,
-      "rarity":"legendary",
-      "requirements":{
-         "level":5
-      }
-   },
    "Ring of Power":{
       "type":"accessory",
       "description":"A mysterious ring that enhances all abilities",
@@ -174,10 +163,32 @@
       "price":100,
       "rarity":"legendary"
    },
+   "Dragon Scale Armor":{
+      "type":"armor",
+      "description":"Armor crafted from dragon scales, providing exceptional protection",
+      "defense_bonus":18,
+      "price":300,
+      "rarity":"legendary",
+      "requirements":{
+         "level":6
+      }
+   },
    "Dragon Bone":{
       "type":"material",
       "description":"A sturdy bone from a dragon, ideal for forging powerful weapons",
       "price":120,
+      "rarity":"legendary"
+   },
+   "Spectral Dragon Scale":{
+      "type":"material",
+      "description":"A translucent scale from a spectral wyrm, humming with ghostly energy",
+      "price":350,
+      "rarity":"legendary"
+   },
+   "Ancient Dragon Bone":{
+      "type":"material",
+      "description":"Bone from an elder dragon, radiating ancient power",
+      "price":400,
       "rarity":"legendary"
    },
    "Serpent Tail":{
@@ -187,6 +198,7 @@
       "rarity":"common"
    },
    "Phoenix Feather":{
+      "type":"material",
       "description":"A feather from a phoenix, symbolizing rebirth and renewal",
       "price":15,
       "rarity":"uncommon"
@@ -351,6 +363,19 @@
          "class":"Warrior"
       }
    },
+   "Chieftain's Axe":{
+      "type":"weapon",
+      "description":"The massive war axe wielded by the Orc Chieftain, dripping with ancient power",
+      "attack_bonus":25,
+      "defense_penalty":2,
+      "fear_factor":0.15,
+      "price":280,
+      "rarity":"legendary",
+      "requirements":{
+         "level":5,
+         "class":"Warrior"
+      }
+   },
    "Warhammer":{
       "type":"weapon",
       "description":"A massive two-handed hammer that crushes all in its path",
@@ -374,6 +399,18 @@
       "rarity":"legendary",
       "requirements":{
          "level":6,
+         "class":"Warrior"
+      }
+   },
+   "Mourning Blade":{
+      "type":"weapon",
+      "description":"A blade forged in sorrow, dealing extra damage to undead",
+      "attack_bonus":14,
+      "undead_damage_bonus":15,
+      "price":160,
+      "rarity":"rare",
+      "requirements":{
+         "level":4,
          "class":"Warrior"
       }
    },
@@ -649,7 +686,6 @@
       "description":"Radiant robes worn by master spellcasters",
       "defense_bonus":7,
       "mp_bonus":50,
-      "spell_resistance":20,
       "price":230,
       "rarity":"legendary",
       "requirements":{
@@ -689,7 +725,6 @@
       "description":"Robes that absorb and redirect elemental damage",
       "defense_bonus":9,
       "mp_bonus":40,
-      "elemental_resistance":30,
       "price":200,
       "rarity":"legendary",
       "requirements":{
@@ -702,7 +737,6 @@
       "description":"Massive armor that turns the wearer into an unstoppable force",
       "defense_bonus":18,
       "speed_penalty":3,
-      "knockback_resistance":1.0,
       "price":270,
       "rarity":"legendary",
       "requirements":{
@@ -827,7 +861,6 @@
       "type":"weapon",
       "description":"A legendary spear forged with dragon bone and steel",
       "attack_bonus":20,
-      "fire_resistance":25,
       "price":250,
       "rarity":"legendary",
       "requirements":{
@@ -968,8 +1001,6 @@
       "type":"armor",
       "description":"Armor crafted from hydra scales, providing poison resistance",
       "defense_bonus":14,
-      "poison_resistance":50,
-      "speed_penalty":2,
       "price":220,
       "rarity":"rare",
       "requirements":{
@@ -1088,8 +1119,7 @@
    "Thundercloud Cloak":{
       "type":"armor",
       "description":"A cloak woven from storm clouds, crackling with electricity",
-      "defense_bonus":8,
-      "lightning_resistance":40,
+      "defense_bonus":90,
       "speed_bonus":3,
       "price":200,
       "rarity":"rare",
@@ -1112,8 +1142,7 @@
    "Death Knight's Shield":{
       "type":"offhand",
       "description":"A shield forged in the depths of the Crypt of Eternity",
-      "defense_bonus":14,
-      "undead_resistance":25,
+      "defense_bonus":50,
       "price":250,
       "rarity":"rare",
       "requirements":{
@@ -1174,7 +1203,6 @@
       "description":"The immortal robes of the Lich King, untouched by time",
       "defense_bonus":12,
       "mp_bonus":60,
-      "undead_resistance":50,
       "price":350,
       "rarity":"legendary",
       "requirements":{
@@ -1208,8 +1236,7 @@
    "Hellfire Shield":{
       "type":"offhand",
       "description":"A shield wreathed in unquenchable flames",
-      "defense_bonus":16,
-      "fire_damage_reflection":15,
+      "defense_bonus":66,
       "price":380,
       "rarity":"legendary",
       "requirements":{
@@ -1219,15 +1246,14 @@
    },
    "Demon Heart":{
       "type":"material",
-      "description":"The still-beating heart of a demon prince",
-      "price":300,
+      "description":"The still-beating heart of a demon",
+      "price":200,
       "rarity":"legendary"
    },
    "Chaos Orb":{
       "type":"offhand",
       "description":"An orb of pure chaotic energy that destabilizes magic",
       "mp_bonus":50,
-      "spell_amplification":20,
       "price":350,
       "rarity":"legendary",
       "requirements":{
@@ -1239,7 +1265,6 @@
       "type":"armor",
       "description":"A cloak woven from shadow and flame",
       "defense_bonus":10,
-      "fire_resistance":35,
       "speed_bonus":5,
       "price":320,
       "rarity":"legendary",
@@ -1322,25 +1347,11 @@
    "Cloudstrider Boots":{
       "type":"accessory",
       "description":"Boots that let you walk among the clouds",
-      "speed_bonus":15,
-      "gravity_resistance":100,
+      "speed_bonus":150,
       "price":400,
       "rarity":"legendary",
       "requirements":{
          "level":8
-      }
-   },
-   "Warrior New Weapons lvl 4-7":"WARRIOR_WEAPONS_PLACEHOLDER",
-   "Mourning Blade":{
-      "type":"weapon",
-      "description":"A blade forged in sorrow, dealing extra damage to undead",
-      "attack_bonus":14,
-      "undead_damage_bonus":15,
-      "price":160,
-      "rarity":"rare",
-      "requirements":{
-         "level":4,
-         "class":"Warrior"
       }
    },
    "Obsidian Waraxe":{
@@ -1410,10 +1421,9 @@
    "Crystal Prism Staff":{
       "type":"weapon",
       "description":"A staff topped with a prism that splits magical energy",
-      "attack_bonus":10,
+      "attack_bonus":40,
       "magic_weapon":true,
       "mp_bonus":40,
-      "spell_multiplicity":10,
       "price":180,
       "rarity":"rare",
       "requirements":{
@@ -1589,12 +1599,10 @@
          "class":"Hunter"
       }
    },
-   "New Warrior Armor":"WARRIOR_ARMOR_PLACEHOLDER",
    "Demonforged Plate":{
       "type":"armor",
       "description":"Armor tempered in demon blood, radiating dark power",
       "defense_bonus":16,
-      "fire_resistance":30,
       "attack_bonus":4,
       "price":280,
       "rarity":"rare",
@@ -1616,13 +1624,11 @@
          "class":"Warrior"
       }
    },
-   "New Mage Armor":"MAGE_ARMOR_PLACEHOLDER",
    "Starweave Robes":{
       "type":"armor",
       "description":"Robes woven from starlight itself",
-      "defense_bonus":6,
+      "defense_bonus":60,
       "mp_bonus":55,
-      "spell_crit_chance":0.1,
       "price":260,
       "rarity":"rare",
       "requirements":{
@@ -1635,7 +1641,6 @@
       "description":"A mantle that allows passage through void space",
       "defense_bonus":8,
       "mp_bonus":65,
-      "void_resistance":40,
       "price":320,
       "rarity":"legendary",
       "requirements":{
@@ -1670,13 +1675,11 @@
          "class":"Rogue"
       }
    },
-   "New Hunter Armor":"HUNTER_ARMOR_PLACEHOLDER",
    "Thornweave Tunic":{
       "type":"armor",
       "description":"Leather armor reinforced with magical thorns",
-      "defense_bonus":9,
-      "nature_resistance":30,
-      "attack_bonus":3,
+      "defense_bonus":24,
+      "attack_bonus":13,
       "price":180,
       "rarity":"rare",
       "requirements":{
@@ -1704,15 +1707,6 @@
       "attack_bonus":15,
       "duration":5,
       "price":200,
-      "rarity":"rare"
-   },
-   "Potion of Arcane Mastery":{
-      "type":"consumable",
-      "description":"Temporarily boosts spell power significantly",
-      "effect":"spell_boost",
-      "spell_power":40,
-      "duration":5,
-      "price":180,
       "rarity":"rare"
    },
    "Shadowstep Elixir":{
@@ -1747,6 +1741,18 @@
       "price":100,
       "rarity":"rare"
    },
+   "Golem Core":{
+      "type":"material",
+      "description":"The pulsating core of an ancient golem, filled with arcane power",
+      "price":200,
+      "rarity":"legendary"
+   },
+   "Ancient Relic":{
+      "type":"material",
+      "description":"An artifact from a bygone era, radiating mysterious energy",
+      "price":150,
+      "rarity":"rare"
+   },
    "Wind Elemental Essence":{
       "type":"material",
       "description":"Condensed wind energy in physical form",
@@ -1758,12 +1764,6 @@
       "description":"Blood from an infernal creature",
       "price":150,
       "rarity":"rare"
-   },
-   "Ancient Dragon Bone":{
-      "type":"material",
-      "description":"Bone from an elder dragon",
-      "price":400,
-      "rarity":"legendary"
    },
    "Starlight Shard":{
       "type":"material",
@@ -1809,7 +1809,6 @@
       "type":"accessory",
       "description":"A charm infused with nature's power",
       "hp_bonus":40,
-      "nature_resistance":30,
       "price":180,
       "rarity":"rare",
       "requirements":{
@@ -1838,6 +1837,126 @@
          "level":1
       }
    },
+   "Troll King's Crown":{
+      "type":"accessory",
+      "description":"The crown of the Troll King, enhancing strength and resilience.",
+      "attack_bonus":7,
+      "defense_bonus":5,
+      "hp_bonus":50,
+      "price":250,
+      "rarity":"legendary",
+      "requirements":{
+         "level":6
+      }
+   },
+   "Soul Gem":{
+      "type":"offhand",
+      "description":"A gem that captures and amplifies the soul's energy.",
+      "mp_bonus":30,
+      "price":200,
+      "rarity":"rare",
+      "requirements":{
+         "level":5,
+         "class":"Mage"
+      }
+   },
+   "Ice Queen's Crown":{
+      "type":"accessory",
+      "description":"A crown imbued with the chilling power of the Ice Queen.",
+      "mp_bonus":40,
+      "price":220,
+      "rarity":"rare",
+      "requirements":{
+         "level":5
+      }
+   },
+   "Crystal of Eternal Winter":{
+      "type": "offhand",
+      "description":"A crystal that radiates the cold of eternal winter.",
+      "mp_bonus":40,
+      "price": 250,
+      "rarity": "rare",
+      "requirements": {
+         "level": 6
+      }
+   },
+   "Orc War Banner":{
+      "type":"accessory",
+      "description":"A banner that inspires allies and intimidates foes.",
+      "attack_bonus":5,
+      "defense_bonus":5,
+      "price":150,
+      "rarity":"uncommon",
+      "requirements":{
+         "level":3
+      }
+   },
+   "Bone Necklace":{
+      "type":"accessory",
+      "description":"A necklace made from the bones of fallen enemies, enhancing dark magic.",
+      "mp_bonus":30,
+      "undead_damage_bonus":15,
+      "price":180,
+      "rarity":"rare",
+      "requirements":{
+         "level":5
+      }
+   },
+   "Eternal Essence":{
+      "type":"material",
+      "description":"A rare essence that never fades, used in high-level enchantments.",
+      "price":200,
+      "rarity":"legendary"
+   },
+   "Void Heart":{
+      "type":"material",
+      "description":"A heart pulsating with void energy, used in powerful enchantments.",
+      "price":250,
+      "rarity":"legendary"
+   },
+   "Boreas":{
+      "type":"weapon",
+      "description":"A legendary sword that commands the power of the north wind.",
+      "attack_bonus":40,
+      "wind_damage":10,
+      "speed_bonus":5,
+      "price":350,
+      "rarity":"legendary",
+      "requirements":{
+         "level":7,
+         "class":"Warrior"
+      }
+   },
+   "Dark Lord's Cloak":{
+      "type":"armor",
+      "description":"A cloak once worn by the Dark Lord, imbued with dark magic.",
+      "defense_bonus":10,
+      "mp_bonus":50,
+      "price":300,
+      "rarity":"legendary",
+      "requirements":{
+         "level":6,
+         "class":"Mage"
+      }
+   },
+   "Void Crystal":{
+      "type":"material",
+      "description":"A crystal pulsating with void energy",
+      "price":120,
+      "rarity":"rare"
+   },
+   "Earth Crystal":{
+      "type":"material",
+      "description":"A crystal formed from the heart of the earth",
+      "price":100,
+      "rarity":"rare"
+   },
+   "Dragon Heart":{
+      "type":"material",
+      "description":"The still-beating heart of a dragon, pulsating with power.",
+      "price":300,
+      "rarity":"legendary"
+   },
    "Buckler Shield":{
       "type":"offhand",
       "description":"A small buckler that offers balanced defense and agility.",
@@ -1859,18 +1978,6 @@
       "requirements":{
          "level":2
       }
-   },
-   "Ancient Relic":{
-      "type":"material",
-      "description":"An artifact from a bygone era, radiating mysterious energy.",
-      "price":150,
-      "rarity":"rare"
-   },
-   "Golem Core":{
-      "type":"material",
-      "description":"The pulsating core of an ancient golem, filled with arcane power.",
-      "price":200,
-      "rarity":"legendary"
    },
    "Sorcerous Tome":{
       "type":"offhand",
