@@ -9,6 +9,7 @@ import os
 import random
 import sys
 import time
+import uuid
 from datetime import datetime
 from typing import Dict, List, Any, Optional
 import difflib
@@ -233,9 +234,11 @@ class Character:
     def __init__(self,
                  name: str,
                  character_class: str,
-                 classes_data: Optional[Dict] = None):
+                 classes_data: Optional[Dict] = None,
+                 player_uuid: Optional[str] = None):
         self.name = name
         self.character_class = character_class
+        self.uuid = player_uuid or str(uuid.uuid4())
         # Rank system based on level
         self.rank = "Novice"
         self.level = 1
@@ -2677,6 +2680,7 @@ class Game:
         save_data = {
             "player": {
                 "name": self.player.name,
+                "uuid": self.player.uuid,
                 "character_class": self.player.character_class,
                 "level": self.player.level,
                 "experience": self.player.experience,
@@ -2706,7 +2710,7 @@ class Game:
             "current_area": self.current_area,
             "mission_progress": self.mission_progress,
             "completed_missions": self.completed_missions,
-            "save_version": "2.2",
+            "save_version": "3.0",
             "save_time": datetime.now().isoformat(),
             "bosses_killed": self.player.bosses_killed if self.player else {}
         }
@@ -2718,7 +2722,7 @@ class Game:
         safe_prefix = filename_prefix or ""
         # sanitize prefix to avoid accidental path chars
         safe_prefix = safe_prefix.replace('/', '_')
-        filename = f"{saves_dir}/{safe_prefix}{self.player.name}_save_{timestamp}_{self.player.character_class}_{self.player.level}.json"
+        filename = f"{saves_dir}/{safe_prefix}{self.player.name}_{self.player.uuid[:8]}_save_{timestamp}_{self.player.character_class}_{self.player.level}.json"
         with open(filename, 'w') as f:
             json.dump(save_data, f, indent=2)
 
@@ -2758,9 +2762,11 @@ class Game:
 
                     # Recreate player
                     player_data = save_data["player"]
+                    player_uuid = player_data.get("uuid")
                     self.player = Character(player_data["name"],
                                             player_data["character_class"],
-                                            self.classes_data)
+                                            self.classes_data,
+                                            player_uuid=player_uuid)
 
                     # Restore stats
                     self.player.level = player_data["level"]
