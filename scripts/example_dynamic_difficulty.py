@@ -5,7 +5,7 @@ This script demonstrates using combat multipliers and area difficulty to create
 adaptive difficulty that scales with player performance.
 """
 
-from scripting import get_api
+from main import get_api
 
 class DynamicDifficulty:
     """Dynamically adjust game difficulty based on player stats."""

@@ -4,7 +4,7 @@ Example Script: Quest Giver
 Provides custom quests via the scripting API.
 """
 
-from scripting import get_api
+from main import get_api
 
 
 class QuestGiver:

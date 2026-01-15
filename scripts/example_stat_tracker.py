@@ -5,7 +5,7 @@ This script demonstrates using the statistics API to track player achievements
 and display them during gameplay.
 """
 
-from scripting import get_api
+from main import get_api
 
 class StatTracker:
     """Track gameplay statistics and achievements."""

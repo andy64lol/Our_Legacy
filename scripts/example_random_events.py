@@ -11,7 +11,7 @@ This script adds random events that can occur during gameplay, such as:
 """
 
 from typing import Optional, Dict, Any
-from scripting import get_api
+from main import get_api
 import random
 
 

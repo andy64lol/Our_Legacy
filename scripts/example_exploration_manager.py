@@ -12,7 +12,7 @@ This script provides exploration enhancements including:
 """
 
 from typing import Optional, Dict, Any, List, Set
-from scripting import get_api
+from main import get_api
 
 
 class ExplorationManager:

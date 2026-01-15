@@ -12,7 +12,7 @@ This script creates a merchant/shop system that allows:
 """
 
 from typing import Optional, Dict, Any, List, Tuple
-from scripting import get_api
+from main import get_api
 import random
 
 

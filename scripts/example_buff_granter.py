@@ -4,7 +4,7 @@ Example Script: Buff Granter
 Grants the player a powerful buff every 5 levels.
 """
 
-from scripting import get_api
+from main import get_api
 
 
 def on_levelup():
