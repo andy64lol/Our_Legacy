@@ -234,7 +234,7 @@ class GameAPI:
 
     def __init__(self, game_instance=None):
         """Initialize the scripting API with a game instance.
-        
+
         Args:
             game_instance: Reference to the main Game instance
         """
@@ -285,11 +285,11 @@ class GameAPI:
 
     def set_player_stat(self, stat: str, value: int) -> bool:
         """Modify a player stat.
-        
+
         Args:
             stat: 'hp', 'mp', 'attack', 'defense', 'speed', 'gold', 'level', 'experience'
             value: New value
-            
+
         Returns:
             True if successful, False otherwise
         """
@@ -323,11 +323,11 @@ class GameAPI:
 
     def add_item(self, item_name: str, count: int = 1) -> bool:
         """Add items to player inventory.
-        
+
         Args:
             item_name: Name of item to add
             count: How many to add
-            
+
         Returns:
             True if successful
         """
@@ -342,11 +342,11 @@ class GameAPI:
 
     def remove_item(self, item_name: str, count: int = 1) -> bool:
         """Remove items from player inventory.
-        
+
         Args:
             item_name: Name of item to remove
             count: How many to remove
-            
+
         Returns:
             True if successful
         """
@@ -364,12 +364,12 @@ class GameAPI:
 
     def apply_buff(self, buff_name: str, duration: int, modifiers: Dict[str, int]) -> bool:
         """Apply a temporary buff to the player.
-        
+
         Args:
             buff_name: Name of the buff
             duration: How many turns it lasts
             modifiers: Dict like {'attack_bonus': 5, 'defense_bonus': 3}
-            
+
         Returns:
             True if successful
         """
@@ -383,10 +383,10 @@ class GameAPI:
 
     def heal_player(self, amount: int) -> int:
         """Heal player HP.
-        
+
         Args:
             amount: How much to heal
-            
+
         Returns:
             Actual amount healed
         """
@@ -398,10 +398,10 @@ class GameAPI:
 
     def restore_mp(self, amount: int) -> int:
         """Restore player MP.
-        
+
         Args:
             amount: How much to restore
-            
+
         Returns:
             Actual amount restored
         """
@@ -431,10 +431,10 @@ class GameAPI:
 
     def hire_companion(self, companion_name: str) -> bool:
         """Hire a companion by name.
-        
+
         Args:
             companion_name: Name of companion from companions.json
-            
+
         Returns:
             True if successful
         """
@@ -486,10 +486,10 @@ class GameAPI:
 
     def set_current_area(self, area_id: str) -> bool:
         """Travel to an area.
-        
+
         Args:
             area_id: Area identifier
-            
+
         Returns:
             True if successful
         """
@@ -538,11 +538,11 @@ class GameAPI:
 
     def register_hook(self, event_name: str, callback: Callable) -> bool:
         """Register a callback for a game event.
-        
+
         Args:
             event_name: Name of event ('on_battle_start', 'on_player_levelup', etc.)
             callback: Function to call when event fires
-            
+
         Returns:
             True if successful
         """
@@ -553,11 +553,11 @@ class GameAPI:
 
     def trigger_hook(self, event_name: str, *args, **kwargs) -> List[Any]:
         """Trigger all callbacks for an event.
-        
+
         Args:
             event_name: Name of event
             *args, **kwargs: Arguments to pass to callbacks
-            
+
         Returns:
             List of callback results
         """
@@ -574,14 +574,14 @@ class GameAPI:
 
     def trigger_event(self, event_name: str, *args, **kwargs) -> bool:
         """Trigger all callbacks for an event and return True if any returned True.
-        
+
         This is used for events that can be 'handled' by a script to override
         default game behavior.
-        
+
         Args:
             event_name: Name of event
             *args, **kwargs: Arguments to pass to callbacks
-            
+
         Returns:
             True if any callback returned True, False otherwise
         """
@@ -592,7 +592,7 @@ class GameAPI:
 
     def store_data(self, key: str, value: Any) -> None:
         """Store custom script data (persists in memory during game session).
-        
+
         Args:
             key: Data key
             value: Any JSON-serializable value
@@ -601,11 +601,11 @@ class GameAPI:
 
     def retrieve_data(self, key: str, default=None) -> Any:
         """Retrieve custom script data.
-        
+
         Args:
             key: Data key
             default: Default value if key not found
-            
+
         Returns:
             Stored value or default
         """
@@ -613,10 +613,10 @@ class GameAPI:
 
     def clear_data(self, key: str) -> bool:
         """Clear a stored data key.
-        
+
         Args:
             key: Data key to remove
-            
+
         Returns:
             True if key existed and was removed
         """
@@ -639,11 +639,11 @@ class GameAPI:
 
     def create_custom_enemy(self, name: str, stats: Dict[str, int]) -> Dict[str, Any]:
         """Create a custom enemy dynamically.
-        
+
         Args:
             name: Enemy name
             stats: Dict with 'hp', 'attack', 'defense', 'speed', 'experience_reward', 'gold_reward'
-            
+
         Returns:
             Enemy data dict
         """
@@ -662,7 +662,7 @@ class GameAPI:
 
     def get_combat_multipliers(self) -> Dict[str, float]:
         """Get current combat damage multipliers.
-        
+
         Returns:
             Dict with 'player_damage_mult', 'enemy_damage_mult', 'experience_mult'
         """
@@ -676,12 +676,12 @@ class GameAPI:
 
     def set_combat_multipliers(self, player_mult: float = 1.0, enemy_mult: float = 1.0, exp_mult: float = 1.0) -> bool:
         """Set combat damage and reward multipliers.
-        
+
         Args:
             player_mult: Multiplier for player damage (default 1.0)
             enemy_mult: Multiplier for enemy damage (default 1.0)
             exp_mult: Multiplier for experience rewards (default 1.0)
-            
+
         Returns:
             True if successful
         """
@@ -702,10 +702,10 @@ class GameAPI:
 
     def get_inventory_count(self, item_name: str) -> int:
         """Count how many of an item player has.
-        
+
         Args:
             item_name: Name of item
-            
+
         Returns:
             Count of item in inventory
         """
@@ -722,7 +722,7 @@ class GameAPI:
 
     def get_equipped_items(self) -> Dict[str, Optional[str]]:
         """Get equipped weapon, armor, offhand, and accessories.
-        
+
         Returns:
             Dict with 'weapon', 'armor', 'offhand', 'accessory_1', 'accessory_2', 'accessory_3'
         """
@@ -732,11 +732,11 @@ class GameAPI:
 
     def equip_item(self, item_name: str, slot: Optional[str] = None) -> bool:
         """Equip an item.
-        
+
         Args:
             item_name: Item to equip
             slot: 'weapon', 'armor', 'offhand', 'accessory_1', 'accessory_2', 'accessory_3' (auto-detect if None)
-            
+
         Returns:
             True if successful
         """
@@ -746,7 +746,7 @@ class GameAPI:
             if item_name in self.game.items_data:
                 item_data = self.game.items_data[item_name]
                 item_type = item_data.get('type')
-                
+
                 if slot is None:
                     # Auto-detect slot
                     if item_type == 'weapon':
@@ -764,7 +764,7 @@ class GameAPI:
                                 break
                         if not slot:
                             slot = 'accessory_1'
-                
+
                 if slot in self.game.player.equipment:
                     self.game.player.equipment[slot] = item_name
                     self.game.player._update_equipment_slots()
@@ -776,10 +776,10 @@ class GameAPI:
 
     def unequip_item(self, slot: str) -> Optional[str]:
         """Unequip an item from a slot.
-        
+
         Args:
             slot: 'weapon', 'armor', 'offhand', 'accessory_1', 'accessory_2', 'accessory_3'
-            
+
         Returns:
             Name of unequipped item, or None if slot was empty
         """
@@ -798,11 +798,11 @@ class GameAPI:
 
     def swap_equipment(self, slot1: str, slot2: str) -> bool:
         """Swap items between two equipment slots.
-        
+
         Args:
             slot1: First slot
             slot2: Second slot
-            
+
         Returns:
             True if successful
         """
@@ -821,10 +821,10 @@ class GameAPI:
 
     def get_item_price(self, item_name: str) -> int:
         """Get the value/price of an item.
-        
+
         Args:
             item_name: Name of item
-            
+
         Returns:
             Price in gold (0 if not found)
         """
@@ -835,7 +835,7 @@ class GameAPI:
 
     def get_inventory_value(self) -> int:
         """Calculate total value of all items in inventory.
-        
+
         Returns:
             Total gold value
         """
@@ -848,64 +848,64 @@ class GameAPI:
 
     def buy_item(self, item_name: str, quantity: int = 1) -> bool:
         """Buy an item (costs gold).
-        
+
         Args:
             item_name: Item to buy
             quantity: How many to buy
-            
+
         Returns:
             True if successful (has enough gold)
         """
         if not self.game or not self.game.player or item_name not in self.game.items_data:
             return False
-        
+
         price = self.get_item_price(item_name)
         total_cost = price * quantity
-        
+
         if self.game.player.gold < total_cost:
             return False
-        
+
         # Deduct gold and add items
         self.game.player.gold -= total_cost
         for _ in range(quantity):
             self.game.player.inventory.append(item_name)
-        
+
         return True
 
     def sell_item(self, item_name: str, quantity: int = 1) -> int:
         """Sell items from inventory for gold.
-        
+
         Args:
             item_name: Item to sell
             quantity: How many to sell
-            
+
         Returns:
             Gold received (0 if failed)
         """
         if not self.game or not self.game.player:
             return 0
-        
+
         # Check if player has enough items
         if self.game.player.inventory.count(item_name) < quantity:
             return 0
-        
+
         price = self.get_item_price(item_name)
         total_gold = price * quantity
-        
+
         # Remove items and add gold
         for _ in range(quantity):
             self.game.player.inventory.remove(item_name)
         self.game.player.gold += total_gold
-        
+
         return total_gold
 
     def give_item(self, item_name: str, quantity: int = 1) -> bool:
         """Give player item(s) without cost.
-        
+
         Args:
             item_name: Item to give
             quantity: How many to give
-            
+
         Returns:
             True if successful
         """
@@ -920,17 +920,17 @@ class GameAPI:
 
     def take_item(self, item_name: str, quantity: int = 1) -> int:
         """Remove item(s) from player inventory without payment.
-        
+
         Args:
             item_name: Item to remove
             quantity: How many to remove
-            
+
         Returns:
             Number of items actually removed
         """
         if not self.game or not self.game.player:
             return 0
-        
+
         removed = 0
         for _ in range(quantity):
             if item_name in self.game.player.inventory:
@@ -938,16 +938,16 @@ class GameAPI:
                 removed += 1
             else:
                 break
-        
+
         return removed
 
     def has_item(self, item_name: str, minimum_quantity: int = 1) -> bool:
         """Check if player has item(s).
-        
+
         Args:
             item_name: Item to check for
             minimum_quantity: Minimum quantity needed
-            
+
         Returns:
             True if player has enough
         """
@@ -957,7 +957,7 @@ class GameAPI:
 
     def sort_inventory(self) -> bool:
         """Sort player's inventory alphabetically.
-        
+
         Returns:
             True if successful
         """
@@ -971,7 +971,7 @@ class GameAPI:
 
     def get_inventory_summary(self) -> Dict[str, int]:
         """Get count of each unique item in inventory.
-        
+
         Returns:
             Dict with item names as keys and counts as values
         """
@@ -984,10 +984,10 @@ class GameAPI:
 
     def get_item_info(self, item_name: str) -> Optional[Dict[str, Any]]:
         """Get detailed info about an item.
-        
+
         Args:
             item_name: Item name
-            
+
         Returns:
             Item data or None
         """
@@ -999,7 +999,7 @@ class GameAPI:
 
     def get_base_stats(self) -> Dict[str, int]:
         """Get player's base stats (before equipment/buffs).
-        
+
         Returns:
             Dict with 'hp', 'mp', 'attack', 'defense', 'speed'
         """
@@ -1016,7 +1016,7 @@ class GameAPI:
 
     def get_effective_stats(self) -> Dict[str, int]:
         """Get player's effective stats (after equipment/buffs).
-        
+
         Returns:
             Dict with current effective stats
         """
@@ -1037,10 +1037,10 @@ class GameAPI:
 
     def get_area_connections(self, area_id: str) -> List[str]:
         """Get areas connected to given area.
-        
+
         Args:
             area_id: Area identifier
-            
+
         Returns:
             List of connected area IDs
         """
@@ -1051,10 +1051,10 @@ class GameAPI:
 
     def get_area_enemies(self, area_id: str) -> List[str]:
         """Get enemies that spawn in an area.
-        
+
         Args:
             area_id: Area identifier
-            
+
         Returns:
             List of enemy IDs
         """
@@ -1065,11 +1065,11 @@ class GameAPI:
 
     def add_area_enemy(self, area_id: str, enemy_id: str) -> bool:
         """Add an enemy to an area's spawn list.
-        
+
         Args:
             area_id: Area identifier
             enemy_id: Enemy identifier
-            
+
         Returns:
             True if successful
         """
@@ -1083,11 +1083,11 @@ class GameAPI:
 
     def remove_area_enemy(self, area_id: str, enemy_id: str) -> bool:
         """Remove an enemy from an area's spawn list.
-        
+
         Args:
             area_id: Area identifier
             enemy_id: Enemy identifier
-            
+
         Returns:
             True if successful
         """
@@ -1101,11 +1101,11 @@ class GameAPI:
 
     def set_area_difficulty(self, area_id: str, difficulty: int) -> bool:
         """Set an area's difficulty level.
-        
+
         Args:
             area_id: Area identifier
             difficulty: 1-5 difficulty rating
-            
+
         Returns:
             True if successful
         """
@@ -1124,10 +1124,10 @@ class GameAPI:
 
     def learn_spell(self, spell_name: str) -> bool:
         """Make a spell learnable (add to items that can cast it).
-        
+
         Args:
             spell_name: Name of spell from spells.json
-            
+
         Returns:
             True if successful
         """
@@ -1149,10 +1149,10 @@ class GameAPI:
 
     def add_experience(self, amount: int) -> bool:
         """Give player experience points.
-        
+
         Args:
             amount: XP to add
-            
+
         Returns:
             True if successful
         """
@@ -1163,10 +1163,10 @@ class GameAPI:
 
     def level_up(self, levels: int = 1) -> bool:
         """Force level up the player.
-        
+
         Args:
             levels: Number of levels to gain
-            
+
         Returns:
             True if successful
         """
@@ -1179,7 +1179,7 @@ class GameAPI:
 
     def get_level_progress(self) -> Dict[str, Any]:
         """Get player's current level progress.
-        
+
         Returns:
             Dict with 'level', 'experience', 'experience_to_next'
         """
@@ -1197,7 +1197,7 @@ class GameAPI:
 
     def get_active_buffs(self) -> List[Dict[str, Any]]:
         """Get list of active buffs on player.
-        
+
         Returns:
             List of buff dicts with name, duration, modifiers
         """
@@ -1207,10 +1207,10 @@ class GameAPI:
 
     def remove_buff(self, buff_name: str) -> bool:
         """Remove a specific buff from player.
-        
+
         Args:
             buff_name: Name of buff to remove
-            
+
         Returns:
             True if buff was removed
         """
@@ -1225,7 +1225,7 @@ class GameAPI:
 
     def clear_buffs(self) -> int:
         """Remove all buffs from player.
-        
+
         Returns:
             Number of buffs removed
         """
@@ -1237,11 +1237,11 @@ class GameAPI:
 
     def extend_buff(self, buff_name: str, extra_duration: int) -> bool:
         """Extend the duration of a buff.
-        
+
         Args:
             buff_name: Name of buff
             extra_duration: Additional turns to extend
-            
+
         Returns:
             True if successful
         """
@@ -1257,10 +1257,10 @@ class GameAPI:
 
     def has_mission_completed(self, mission_id: str) -> bool:
         """Check if a mission has been completed.
-        
+
         Args:
             mission_id: Mission identifier
-            
+
         Returns:
             True if completed
         """
@@ -1271,10 +1271,10 @@ class GameAPI:
 
     def get_mission_info(self, mission_id: str) -> Optional[Dict[str, Any]]:
         """Get detailed info about a specific mission.
-        
+
         Args:
             mission_id: Mission identifier
-            
+
         Returns:
             Mission data dict or None
         """
@@ -1284,10 +1284,10 @@ class GameAPI:
 
     def reset_mission(self, mission_id: str) -> bool:
         """Reset a mission to incomplete state.
-        
+
         Args:
             mission_id: Mission identifier
-            
+
         Returns:
             True if successful
         """
@@ -1301,7 +1301,7 @@ class GameAPI:
 
     def get_game_statistics(self) -> Dict[str, Any]:
         """Get gameplay statistics.
-        
+
         Returns:
             Dict with 'enemies_defeated', 'bosses_defeated', 'missions_completed', etc.
         """
@@ -1318,11 +1318,11 @@ class GameAPI:
 
     def increment_statistic(self, stat_name: str, amount: int = 1) -> int:
         """Increment a game statistic.
-        
+
         Args:
             stat_name: Statistic name
             amount: Amount to increment by
-            
+
         Returns:
             New statistic value
         """
@@ -1335,10 +1335,10 @@ class GameAPI:
 
     def is_mission_available(self, mission_id: str) -> bool:
         """Check if player can accept a mission (meets level/prerequisites).
-        
+
         Args:
             mission_id: Mission identifier
-            
+
         Returns:
             True if player can accept
         """
@@ -1346,24 +1346,24 @@ class GameAPI:
             return False
         mission = self.game.missions_data[mission_id]
         player_level = self.game.player.level
-        
+
         # Check level requirement
         if mission.get('unlock_level', 1) > player_level:
             return False
-        
+
         # Check prerequisites
         for prereq in mission.get('prerequisites', []):
             if not self.has_mission_completed(prereq):
                 return False
-        
+
         return True
 
     def can_equip_item(self, item_name: str) -> bool:
         """Check if player meets requirements to equip an item.
-        
+
         Args:
             item_name: Item name
-            
+
         Returns:
             True if can equip
         """
@@ -1371,33 +1371,33 @@ class GameAPI:
             return False
         item = self.game.items_data[item_name]
         requirements = item.get('requirements', {})
-        
+
         if not self.game.player:
             return False
-        
+
         # Check level requirement
         if self.game.player.level < requirements.get('level', 1):
             return False
-        
+
         # Check class requirement (if any)
         if 'class' in requirements:
             if self.game.player.character_class != requirements['class']:
                 return False
-        
+
         return True
 
     # ============ Debugging ============
 
     def dump_player_data(self) -> str:
         """Get formatted string of all player data (for debugging).
-        
+
         Returns:
             Formatted player data string
         """
         player_data = self.get_player()
         if not player_data:
             return "No player data"
-        
+
         lines = ["=== Player Data ==="]
         for key, value in player_data.items():
             if isinstance(value, list) and len(value) > 5:
@@ -1408,7 +1408,7 @@ class GameAPI:
 
     def list_all_enemies(self) -> List[str]:
         """Get list of all enemy IDs.
-        
+
         Returns:
             List of enemy identifiers
         """
@@ -1416,7 +1416,7 @@ class GameAPI:
 
     def list_all_items(self) -> List[str]:
         """Get list of all item names.
-        
+
         Returns:
             List of item names
         """
@@ -1424,7 +1424,7 @@ class GameAPI:
 
     def list_all_areas(self) -> List[str]:
         """Get list of all area IDs.
-        
+
         Returns:
             List of area identifiers
         """
@@ -1432,7 +1432,7 @@ class GameAPI:
 
     def list_all_companions(self) -> List[str]:
         """Get list of all companion names.
-        
+
         Returns:
             List of companion identifiers
         """
@@ -1445,7 +1445,7 @@ game_api = None
 
 def init_scripting_api(game_instance) -> GameAPI:
     """Initialize the scripting API with a game instance.
-    
+
     Called by Game class during game startup.
     """
     global game_api
@@ -2347,15 +2347,16 @@ class Game:
         print("3. Travel")
         print("4. Inventory")
         print("5. Missions")
-        print("6. Tavern")
-        print("7. Shop")
-        print("8. Rest")
-        print("9. Companions")
-        print("10. Save Game")
-        print("11. Load Game")
-        print("12. Claim Rewards")
-        print("13. Quit")
-        choice = ask("Choose an option (1-13): ", allow_empty=False)
+        print("6. Fight Boss")
+        print("7. Tavern")
+        print("8. Shop")
+        print("9. Rest")
+        print("10. Companions")
+        print("11. Save Game")
+        print("12. Load Game")
+        print("13. Claim Rewards")
+        print("14. Quit")
+        choice = ask("Choose an option (1-14): ", allow_empty=False)
 
         # Normalize textual shortcuts to numbers for backward compatibility
         shortcut_map = {
@@ -2369,20 +2370,24 @@ class Game:
             'i': '4',
             'missions': '5',
             'm': '5',
-            'tavern': '6',
-            'shop': '7',
-            's': '7',
-            'rest': '8',
-            'r': '8',
-            'companions': '9',
-            'comp': '9',
-            'save': '10',
-            'load': '11',
-            'l': '11',
-            'claim': '12',
-            'c': '12',
-            'quit': '13',
-            'q': '13'
+            'boss': '6',
+            'fight_boss': '6',
+            'tavern': '7',
+            'shop': '8',
+            's': '8',
+            'rest': '9',
+            'r': '9',
+            'companions': '10',
+            'comp': '10',
+            'save': '11',
+            'load': '12',
+            'l': '12',
+            'claim': '13',
+            'c': '13',
+            'rewards':'13',
+            'claim_rewards': '13',
+            'quit': '14',
+            'q': '14'
         }
 
         normalized = choice.strip().lower()
@@ -2403,23 +2408,76 @@ class Game:
         elif choice == "5":
             self.view_missions()
         elif choice == "6":
-            self.visit_tavern()
+            self.fight_boss_menu()
         elif choice == "7":
-            self.visit_shop()
+            self.visit_tavern()
         elif choice == "8":
-            self.rest()
+            self.visit_shop()
         elif choice == "9":
-            self.manage_companions()
+            self.rest()
         elif choice == "10":
-            self.save_game()
+            self.manage_companions()
         elif choice == "11":
-            self.load_game()
+            self.save_game()
         elif choice == "12":
-            self.claim_rewards()  # Fixed: was calling quit_game()
+            self.load_game()
         elif choice == "13":
+            self.claim_rewards()
+        elif choice == "14":
             self.quit_game()
         else:
             print("Invalid choice. Please try again.")
+
+    def fight_boss_menu(self):
+        """Menu to select and fight a boss in the current area"""
+        if not self.player:
+            print("No character created yet.")
+            return
+
+        area_data = self.areas_data.get(self.current_area, {})
+        possible_bosses = area_data.get("possible_bosses", [])
+
+        if not possible_bosses:
+            print(f"There are no bosses in {area_data.get('name', self.current_area)}.")
+            return
+
+        print(f"\n{Colors.RED}{Colors.BOLD}=== BOSSES IN {area_data.get('name', self.current_area).upper()} ==={Colors.END}")
+        for i, boss_name in enumerate(possible_bosses, 1):
+            boss_data = self.bosses_data.get(boss_name, {})
+            status = ""
+            if boss_name in self.player.bosses_killed:
+                last_killed_str = self.player.bosses_killed[boss_name]
+                try:
+                    last_killed_dt = datetime.fromisoformat(last_killed_str)
+                    diff = datetime.now() - last_killed_dt
+                    if diff.total_seconds() < 28800:
+                        status = f" {Colors.YELLOW}(Cooldown: {int((28800 - diff.total_seconds()) // 60)}m left){Colors.END}"
+                except: pass
+            print(f"{i}. {boss_data.get('name', boss_name)}{status}")
+
+        choice = ask(f"Choose a boss (1-{len(possible_bosses)}) or Enter to cancel: ")
+        if choice and choice.isdigit():
+            idx = int(choice) - 1
+            if 0 <= idx < len(possible_bosses):
+                boss_name = possible_bosses[idx]
+                
+                # Cooldown check
+                if boss_name in self.player.bosses_killed:
+                    last_killed_str = self.player.bosses_killed[boss_name]
+                    try:
+                        last_killed_dt = datetime.fromisoformat(last_killed_str)
+                        if (datetime.now() - last_killed_dt).total_seconds() < 28800:
+                            print(f"{boss_name} is still recovering. Try again later.")
+                            return
+                    except: pass
+
+                boss_data = self.bosses_data.get(boss_name)
+                if boss_data:
+                    boss = Boss(boss_data)
+                    print(f"\n{Colors.RED}{Colors.BOLD}Challenge accepted!{Colors.END}")
+                    self.battle(boss)
+            else:
+                print("Invalid choice.")
 
     def explore(self):
         """Explore the current area"""
@@ -2450,58 +2508,27 @@ class Game:
                 print(f"{Colors.GOLD}You found {found_gold} gold!{Colors.END}")
 
     def random_encounter(self):
-        """Handle random encounter with boss prioritization and cooldown check"""
+        """Handle random encounter with regular enemies"""
         if not self.player:
             return
 
         area_data = self.areas_data.get(self.current_area, {})
         possible_enemies = area_data.get("possible_enemies", [])
-        possible_bosses = area_data.get("possible_bosses", [])
 
-        if not possible_enemies and not possible_bosses:
+        if not possible_enemies:
             print("No enemies found in this area.")
             return
 
-        # Prioritize boss encounter if bosses are available (80% chance)
-        if possible_bosses and random.random() < 0.8:
-            boss_name = random.choice(possible_bosses)
-            
-            # Check 8-hour cooldown window
-            can_spawn = True
-            if boss_name in self.player.bosses_killed:
-                last_killed_str = self.player.bosses_killed[boss_name]
-                try:
-                    last_killed_dt = datetime.fromisoformat(last_killed_str)
-                    now = datetime.now()
-                    diff = now - last_killed_dt
-                    # 8 hours = 28800 seconds
-                    if diff.total_seconds() < 28800:
-                        can_spawn = False
-                except (ValueError, TypeError):
-                    pass
-            
-            if can_spawn:
-                boss_data = self.bosses_data.get(boss_name)
+        # Regular enemy encounter
+        enemy_name = random.choice(possible_enemies)
+        enemy_data = self.enemies_data.get(enemy_name)
 
-                if boss_data:
-                    boss = Boss(boss_data)
-                    print(f"\n{Colors.RED}{Colors.BOLD}!!! BOSS ENCOUNTER !!!{Colors.END}")
-                    print(f"{Colors.RED}A legendary {boss.name} blocks your path!{Colors.END}")
-                    print(f"{Colors.DARK_GRAY}{boss.description}{Colors.END}")
-                    self.battle(boss)
-                    return
-
-        # Regular enemy encounter if no boss spawned
-        if possible_enemies:
-            enemy_name = random.choice(possible_enemies)
-            enemy_data = self.enemies_data.get(enemy_name)
-
-            if enemy_data:
-                enemy = Enemy(enemy_data)
-                print(f"\n{Colors.RED}A wild {enemy.name} appears!{Colors.END}")
-                self.battle(enemy)
+        if enemy_data:
+            enemy = Enemy(enemy_data)
+            print(f"\n{Colors.RED}A wild {enemy.name} appears!{Colors.END}")
+            self.battle(enemy)
         else:
-            print("You explore the area but find no regular enemies.")
+            print("You explore the area but find no enemies.")
 
     def battle(self, enemy: Enemy):
         """Handle turn-based battle"""
@@ -2542,13 +2569,18 @@ class Game:
                     if enemy.is_alive() and self.player.companions:
                         self.companions_act(enemy)
 
-            # Display current HP
-            print(
-                f"\n{Colors.RED}{self.player.name}: {self.player.hp}/{self.player.max_hp} HP{Colors.END}"
-            )
-            print(
-                f"{Colors.RED}{enemy.name}: {enemy.hp}/{enemy.max_hp} HP{Colors.END}"
-            )
+            # Display current HP/MP
+            player_hp_bar = create_hp_mp_bar(self.player.hp, self.player.max_hp, 20, Colors.RED)
+            player_mp_bar = create_hp_mp_bar(self.player.mp, self.player.max_mp, 20, Colors.BLUE)
+            enemy_hp_bar = create_hp_mp_bar(enemy.hp, enemy.max_hp, 20, Colors.RED)
+
+            print(f"\n{Colors.BOLD}{self.player.name}{Colors.END}")
+            print(f"HP: {player_hp_bar} {self.player.hp}/{self.player.max_hp}")
+            print(f"MP: {player_mp_bar} {self.player.mp}/{self.player.max_mp}")
+            
+            print(f"\n{Colors.BOLD}{enemy.name}{Colors.END}")
+            print(f"HP: {enemy_hp_bar} {enemy.hp}/{enemy.max_hp}")
+            
             # Tick buffs (reduce durations each round)
             if self.player.tick_buffs():
                 # Recalculate stats if buffs expired
@@ -2564,7 +2596,7 @@ class Game:
         if self.player.is_alive():
             print(
                 f"\n{Colors.GREEN}You defeated the {enemy.name}!{Colors.END}")
-            
+
             # Record boss kill for cooldown
             if isinstance(enemy, Boss):
                 self.player.bosses_killed[enemy.name] = datetime.now().isoformat()
@@ -3006,22 +3038,55 @@ class Game:
             print("No spells available for your weapon.")
             return
 
-        print("Available spells:")
-        for i, (sname, sdata) in enumerate(available, 1):
-            print(
-                f"{i}. {sname} - MP {sdata.get('mp_cost', 0)} - {sdata.get('description', '')}"
-            )
+        # Pagination for spells
+        page = 0
+        per_page = 10
+        
+        while True:
+            clear_screen()
+            total_pages = (len(available) + per_page - 1) // per_page
+            if total_pages == 0: total_pages = 1
+            start_idx = page * per_page
+            end_idx = start_idx + per_page
+            current_spells = available[start_idx:end_idx]
 
-        choice = ask(
-            f"Choose spell (1-{len(available)}) or press Enter to cancel: ")
-        if not choice or not choice.isdigit():
-            return
-        idx = int(choice) - 1
-        if not (0 <= idx < len(available)):
-            print("Invalid selection.")
-            return
+            print(f"\n{Colors.BOLD}=== SPELLS (Page {page + 1}/{total_pages}) ==={Colors.END}")
+            print(f"MP: {Colors.BLUE}{self.player.mp}/{self.player.max_mp}{Colors.END}\n")
 
-        sname, sdata = available[idx]
+            for i, (sname, sdata) in enumerate(current_spells, 1):
+                cost = sdata.get('mp_cost', 0)
+                mp_color = Colors.BLUE if self.player.mp >= cost else Colors.RED
+                print(f"{i}. {Colors.CYAN}{sname}{Colors.END} - Cost: {mp_color}{cost} MP{Colors.END}")
+                print(f"   {sdata.get('description', '')}")
+
+            print(f"\n{Colors.YELLOW}Options:{Colors.END}")
+            if total_pages > 1:
+                if page > 0: print("P. Previous Page")
+                if page < total_pages - 1: print("N. Next Page")
+            
+            print(f"1-{len(current_spells)}. Cast Spell")
+            print("B. Back")
+
+            choice = ask("\nChoose an option: ").upper()
+
+            if choice == 'B' or not choice:
+                return
+            elif choice == 'N' and page < total_pages - 1:
+                page += 1
+            elif choice == 'P' and page > 0:
+                page -= 1
+            elif choice.isdigit():
+                idx = int(choice) - 1
+                if 0 <= idx < len(current_spells):
+                    sname, sdata = current_spells[idx]
+                    break
+                else:
+                    print("Invalid selection.")
+                    time.sleep(1)
+            else:
+                print("Invalid choice.")
+                time.sleep(1)
+
         cost = sdata.get('mp_cost', 0)
         if self.player.mp < cost:
             print("Not enough MP to cast that spell.")
@@ -3572,29 +3637,46 @@ class Game:
                 print("Invalid choice.")
 
     def visit_shop(self):
-        """Visit the shop - displays all items for sale"""
+        """Visit the shop - displays items for sale in the current area"""
         if not self.player:
             print("No character created yet.")
             return
 
-        print(f"\n{Colors.BOLD}=== SHOP ==={Colors.END}")
-        print("Welcome to the shop! What would you like to buy?")
+        area_data = self.areas_data.get(self.current_area, {})
+        area_shops = area_data.get("shops", [])
 
+        if not area_shops:
+            print(f"\n{Colors.RED}There are no shops in {area_data.get('name', self.current_area)}.{Colors.END}")
+            return
+
+        # Simple logic: combine all items from all shops in this area
+        # In this game, shops are mostly identifiers, but we can filter items by their 'shop_type' or similar
+        # For now, let's filter items_data to only show relevant items for the current area
+        # Most areas have specific shop IDs like "general_store", "equipment_shop"
+
+        print(f"\n{Colors.BOLD}=== SHOP ({', '.join(area_shops)}) ==={Colors.END}")
+        print("Welcome to the shop! What would you like to buy?")
         print(f"\nYour gold: {Colors.GOLD}{self.player.gold}{Colors.END}")
 
-        # Show all items from items_data (excluding materials which are not for sale)
-        sellable_items = {
-            k: v
-            for k, v in self.items_data.items()
-            if v.get("type") != "material" and k not in self.player.inventory
-        }
+        # Filter items based on the shop types available in the area
+        shop_items = {}
+        for item_name, item_data in self.items_data.items():
+            # Skip materials and items already in inventory
+            if item_data.get("type") == "material" or item_name in self.player.inventory:
+                continue
 
-        if not sellable_items:
-            print("No items available for purchase.")
+            # Check if item belongs to any shop in the current area
+            # If item has no shop_tags, it might be a general item
+            item_shops = item_data.get("shops", ["general_store"])
+            if any(s in area_shops for s in item_shops):
+                shop_items[item_name] = item_data
+
+        if not shop_items:
+            print("No items available for purchase here.")
             return
 
         # Paginate items (10 per page)
-        items_list = list(sellable_items.items())
+        items_list = list(shop_items.items())
         page_size = 10
         current_page = 0
 
@@ -4103,7 +4185,7 @@ class Game:
                         "mission_progress", {})
                     self.completed_missions = save_data.get(
                         "completed_missions", [])
-                    
+
                     # Load boss kill cooldowns
                     if self.player:
                         self.player.bosses_killed = save_data.get("bosses_killed", {})
