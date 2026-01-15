@@ -2034,24 +2034,51 @@ class Game:
                 for mid in active_missions:
                     mission = self.missions_data.get(mid, {})
                     progress = self.mission_progress[mid]
+                    print(f"- {Colors.BOLD}{mission.get('name')}{Colors.END}")
+                    print(f"  {Colors.LIGHT_GRAY}{mission.get('description', '')}{Colors.END}")
+
                     if progress['type'] == 'kill':
-                        print(
-                            f"- {mission.get('name')}: {progress['current_count']}/{progress['target_count']} killed"
-                        )
+                        if 'current_counts' in progress:
+                            # Multi-target kill mission
+                            lines = []
+                            for target_name, target_count in progress['target_counts'].items():
+                                current = progress['current_counts'].get(target_name, 0)
+                                color = Colors.GREEN if current >= target_count else Colors.YELLOW
+                                lines.append(f"{target_name}: {color}{current}/{target_count}{Colors.END}")
+                            print(f"  Progress: {', '.join(lines)}")
+                        else:
+                            # Single target kill mission
+                            current = progress['current_count']
+                            target_count = progress['target_count']
+                            color = Colors.GREEN if current >= target_count else Colors.YELLOW
+                            print(f"  Progress: {mission.get('target', 'Target')}: {color}{current}/{target_count}{Colors.END} killed")
+
                     elif progress['type'] == 'collect':
                         if 'current_counts' in progress:
-                            counts = [
-                                f"{item}: {c}/{progress['target_counts'][item]}"
-                                for item, c in
-                                progress['current_counts'].items()
-                            ]
-                            print(
-                                f"- {mission.get('name')}: {', '.join(counts)}"
-                            )
+                            # Multi-item collection
+                            counts = []
+                            for item, target_count in progress['target_counts'].items():
+                                current = progress['current_counts'].get(item, 0)
+                                color = Colors.GREEN if current >= target_count else Colors.YELLOW
+                                counts.append(f"{item}: {color}{current}/{target_count}{Colors.END}")
+                            print(f"  Progress: {', '.join(counts)}")
                         else:
-                            print(
-                                f"- {mission.get('name')}: {progress['current_count']}/{progress['target_count']} collected"
-                            )
+                            # Single item collection
+                            current = progress['current_count']
+                            target_count = progress['target_count']
+                            color = Colors.GREEN if current >= target_count else Colors.YELLOW
+                            print(f"  Progress: {mission.get('target', 'Item')}: {color}{current}/{target_count}{Colors.END} collected")
+
+                    # Rewards preview for active missions
+                    reward = mission.get('reward', {})
+                    rewards_str = []
+                    if reward.get('experience'):
+                        rewards_str.append(f"{Colors.MAGENTA}{reward['experience']} XP{Colors.END}")
+                    if reward.get('gold'):
+                        rewards_str.append(f"{Colors.GOLD}{reward['gold']} Gold{Colors.END}")
+                    if rewards_str:
+                        print(f"  Rewards: {' | '.join(rewards_str)}")
+                    print()
 
             # Available Missions (those not accepted and not completed)
             available_missions = [
@@ -2074,8 +2101,53 @@ class Game:
             for i, mission_id in enumerate(current_page_missions, 1):
                 mission = self.missions_data.get(mission_id, {})
                 print(
-                    f"{i}. {mission.get('name', 'Unknown')} - {mission.get('description', 'No description')}"
+                    f"{i}. {Colors.BOLD}{mission.get('name', 'Unknown')}{Colors.END}"
                 )
+                print(f"   {Colors.LIGHT_GRAY}{mission.get('description', 'No description')}{Colors.END}")
+
+                # Requirements
+                reqs = []
+                if mission.get('unlock_level'):
+                    level_req = mission.get('unlock_level')
+                    has_level = self.player.level >= level_req if self.player else False
+                    color = Colors.GREEN if has_level else Colors.RED
+                    reqs.append(f"Level {color}{level_req}{Colors.END}")
+                if mission.get('prerequisites'):
+                    for prereq_id in mission.get('prerequisites'):
+                        prereq_name = self.missions_data.get(prereq_id, {}).get('name', prereq_id)
+                        color = Colors.GREEN if prereq_id in self.completed_missions else Colors.RED
+                        reqs.append(f"Requires: {color}{prereq_name}{Colors.END}")
+                if reqs:
+                    print(f"   Requirements: {', '.join(reqs)}")
+
+                # Objective
+                target = mission.get('target')
+                count = mission.get('target_count')
+                if mission.get('type') == 'kill':
+                    if isinstance(count, dict):
+                        targets = [f"{c} {t}" for t, c in count.items()]
+                        print(f"   Objective: Kill {', '.join(targets)}")
+                    else:
+                        print(f"   Objective: Kill {count} {target}")
+                elif mission.get('type') == 'collect':
+                    if isinstance(count, dict):
+                        targets = [f"{c} {t}" for t, c in count.items()]
+                        print(f"   Objective: Collect {', '.join(targets)}")
+                    else:
+                        print(f"   Objective: Collect {count} {target}")
+
+                # Rewards
+                reward = mission.get('reward', {})
+                rewards_str = []
+                if reward.get('experience'):
+                    rewards_str.append(f"{Colors.MAGENTA}{reward['experience']} XP{Colors.END}")
+                if reward.get('gold'):
+                    rewards_str.append(f"{Colors.GOLD}{reward['gold']} Gold{Colors.END}")
+                if reward.get('items'):
+                    rewards_str.append(f"Items: {', '.join(reward['items'])}")
+                if rewards_str:
+                    print(f"   Rewards: {' | '.join(rewards_str)}")
+                print()
 
             print(f"\n{Colors.YELLOW}Options:{Colors.END}")
             print("Shortcuts: N-next, P-prev, B-back")
