@@ -92,5 +92,28 @@
       "Health Potion"
     ],
     "starting_gold": 100
+  },
+  "Bard":{
+    "base_stats": {
+      "hp": 70,
+      "mp": 60,
+      "attack": 11,
+      "defense": 7,
+      "speed": 13
+    },
+    "level_up_bonuses": {
+      "hp": 12,
+      "mp": 8,
+      "attack": 2,
+      "defense": 1,
+      "speed": 2
+    },
+    "starting_items": [
+      "Enchanting Lute",
+      "Steel Dagger",
+      "Colourful Cloth Robe",
+      "Mana Potion"
+    ],
+    "starting_gold": 300
   }
 }
