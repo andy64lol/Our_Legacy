@@ -12,7 +12,7 @@ This script provides a comprehensive equipment management system including:
 """
 
 from typing import Optional, Dict, Any, List
-from scripting import get_api
+from main import get_api
 
 
 class EquipmentManager:

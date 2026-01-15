@@ -4,7 +4,7 @@ Example Script: Companion Reward
 Automatically recruit a companion when reaching certain levels.
 """
 
-from scripting import get_api
+from main import get_api
 
 
 COMPANION_REWARDS = {

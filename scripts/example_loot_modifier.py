@@ -5,7 +5,7 @@ This script demonstrates modifying enemy drops, creating themed loot tables,
 and implementing rarity-based drop chances.
 """
 
-from scripting import get_api
+from main import get_api
 import random
 
 class LootModifier:
