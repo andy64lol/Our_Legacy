@@ -2,7 +2,7 @@
   "starting_village": {
     "name": "Starting Village",
     "description": "A peaceful village where new adventurers begin their journey. The innkeeper serves warm meals and merchants offer basic equipment.",
-    "possible_enemies": [],
+    "possible_enemies": ["thief"],
     "possible_bosses": [],
     "shops": ["general_store"],
     "missions_available": true,
