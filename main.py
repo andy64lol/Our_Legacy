@@ -73,6 +73,22 @@ def create_progress_bar(current: int,
     return f"[{color}{filled}{Colors.END}{empty}] {percentage:.1f}%"
 
 
+def create_boss_hp_bar(current: int,
+                       maximum: int,
+                       width: int = 40,
+                       color: str = Colors.RED) -> str:
+    """Create a wide, epic visual HP bar for bosses."""
+    if maximum <= 0:
+        return "[" + " " * width + "]"
+
+    filled_width = int((current / maximum) * width)
+    filled = "█" * filled_width
+    empty = "░" * (width - filled_width)
+    percentage = (current / maximum) * 100
+
+    return f"{Colors.BOLD}{Colors.RED}BOSS HP{Colors.END} [{color}{filled}{Colors.END}{empty}] {Colors.BOLD}{percentage:.1f}%{Colors.END} ({current}/{maximum})"
+
+
 def create_hp_mp_bar(current: int,
                      maximum: int,
                      width: int = 15,
@@ -265,22 +281,40 @@ class GameAPI:
             return None
         p = self.game.player
         return {
-            'name': p.name,
-            'class': p.character_class,
-            'rank': p.rank,
-            'level': p.level,
-            'experience': p.experience,
-            'hp': p.hp,
-            'max_hp': p.max_hp,
-            'mp': p.mp,
-            'max_mp': p.max_mp,
-            'attack': p.get_effective_attack(),
-            'defense': p.get_effective_defense(),
-            'speed': p.get_effective_speed(),
-            'gold': p.gold,
-            'inventory': p.inventory.copy(),
-            'companions': [c.get('name') if isinstance(c, dict) else c for c in p.companions],
-            'active_buffs': p.active_buffs.copy(),
+            'name':
+            p.name,
+            'class':
+            p.character_class,
+            'rank':
+            p.rank,
+            'level':
+            p.level,
+            'experience':
+            p.experience,
+            'hp':
+            p.hp,
+            'max_hp':
+            p.max_hp,
+            'mp':
+            p.mp,
+            'max_mp':
+            p.max_mp,
+            'attack':
+            p.get_effective_attack(),
+            'defense':
+            p.get_effective_defense(),
+            'speed':
+            p.get_effective_speed(),
+            'gold':
+            p.gold,
+            'inventory':
+            p.inventory.copy(),
+            'companions': [
+                c.get('name') if isinstance(c, dict) else c
+                for c in p.companions
+            ],
+            'active_buffs':
+            p.active_buffs.copy(),
         }
 
     def set_player_stat(self, stat: str, value: int) -> bool:
@@ -362,7 +396,8 @@ class GameAPI:
         except Exception:
             return False
 
-    def apply_buff(self, buff_name: str, duration: int, modifiers: Dict[str, int]) -> bool:
+    def apply_buff(self, buff_name: str, duration: int,
+                   modifiers: Dict[str, int]) -> bool:
         """Apply a temporary buff to the player.
 
         Args:
@@ -408,7 +443,8 @@ class GameAPI:
         if not self.game or not self.game.player:
             return 0
         old_mp = self.game.player.mp
-        self.game.player.mp = min(self.game.player.max_mp, self.game.player.mp + amount)
+        self.game.player.mp = min(self.game.player.max_mp,
+                                  self.game.player.mp + amount)
         return self.game.player.mp - old_mp
 
     # ============ Companions ============
@@ -451,12 +487,15 @@ class GameAPI:
                         'id': cid,
                         'name': cdata.get('name'),
                         'level': 1,
-                        'equipment': {'weapon': None, 'armor': None, 'accessory': None}
+                        'equipment': {
+                            'weapon': None,
+                            'armor': None,
+                            'accessory': None
+                        }
                     }
                     self.game.player.companions.append(companion_data)
                     self.game.player.update_stats_from_equipment(
-                        self.game.items_data, self.game.companions_data
-                    )
+                        self.game.items_data, self.game.companions_data)
                     return True
             return False
         except Exception:
@@ -637,7 +676,8 @@ class GameAPI:
             return None
         return random.choice(items_list)
 
-    def create_custom_enemy(self, name: str, stats: Dict[str, int]) -> Dict[str, Any]:
+    def create_custom_enemy(self, name: str,
+                            stats: Dict[str, int]) -> Dict[str, Any]:
         """Create a custom enemy dynamically.
 
         Args:
@@ -667,14 +707,22 @@ class GameAPI:
             Dict with 'player_damage_mult', 'enemy_damage_mult', 'experience_mult'
         """
         if not self.game:
-            return {'player_damage_mult': 1.0, 'enemy_damage_mult': 1.0, 'experience_mult': 1.0}
+            return {
+                'player_damage_mult': 1.0,
+                'enemy_damage_mult': 1.0,
+                'experience_mult': 1.0
+            }
         return {
-            'player_damage_mult': getattr(self.game, 'player_damage_mult', 1.0),
+            'player_damage_mult': getattr(self.game, 'player_damage_mult',
+                                          1.0),
             'enemy_damage_mult': getattr(self.game, 'enemy_damage_mult', 1.0),
             'experience_mult': getattr(self.game, 'experience_mult', 1.0),
         }
 
-    def set_combat_multipliers(self, player_mult: float = 1.0, enemy_mult: float = 1.0, exp_mult: float = 1.0) -> bool:
+    def set_combat_multipliers(self,
+                               player_mult: float = 1.0,
+                               enemy_mult: float = 1.0,
+                               exp_mult: float = 1.0) -> bool:
         """Set combat damage and reward multipliers.
 
         Args:
@@ -758,7 +806,8 @@ class GameAPI:
                     elif item_type == 'accessory':
                         # Find first free accessory slot
                         for i in [1, 2, 3]:
-                            acc = self.game.player.equipment.get(f'accessory_{i}')
+                            acc = self.game.player.equipment.get(
+                                f'accessory_{i}')
                             if not acc:
                                 slot = f'accessory_{i}'
                                 break
@@ -768,7 +817,8 @@ class GameAPI:
                 if slot in self.game.player.equipment:
                     self.game.player.equipment[slot] = item_name
                     self.game.player._update_equipment_slots()
-                    self.game.player.update_stats_from_equipment(self.game.items_data, self.game.companions_data)
+                    self.game.player.update_stats_from_equipment(
+                        self.game.items_data, self.game.companions_data)
                     return True
         except Exception:
             pass
@@ -790,7 +840,8 @@ class GameAPI:
                 item = self.game.player.equipment[slot]
                 self.game.player.equipment[slot] = None
                 self.game.player._update_equipment_slots()
-                self.game.player.update_stats_from_equipment(self.game.items_data, self.game.companions_data)
+                self.game.player.update_stats_from_equipment(
+                    self.game.items_data, self.game.companions_data)
                 return item
             return None
         except Exception:
@@ -811,9 +862,11 @@ class GameAPI:
         try:
             equipped = self.game.player.equipment
             if slot1 in equipped and slot2 in equipped:
-                equipped[slot1], equipped[slot2] = equipped[slot2], equipped[slot1]
+                equipped[slot1], equipped[slot2] = equipped[slot2], equipped[
+                    slot1]
                 self.game.player._update_equipment_slots()
-                self.game.player.update_stats_from_equipment(self.game.items_data, self.game.companions_data)
+                self.game.player.update_stats_from_equipment(
+                    self.game.items_data, self.game.companions_data)
                 return True
             return False
         except Exception:
@@ -1190,7 +1243,8 @@ class GameAPI:
             'level': p.level,
             'experience': p.experience,
             'experience_to_next': p.experience_to_next,
-            'experience_for_next_level': int(p.experience_to_next - p.experience),
+            'experience_for_next_level':
+            int(p.experience_to_next - p.experience),
         }
 
     # ============ Buff Management ============
@@ -1308,12 +1362,21 @@ class GameAPI:
         if not self.game:
             return {}
         return {
-            'enemies_defeated': self.retrieve_data('enemies_defeated', 0),
-            'bosses_defeated': self.retrieve_data('bosses_defeated', 0),
-            'missions_completed': len([m for m in self.game.mission_progress.values() if m.get('completed')]),
-            'gold_earned': self.retrieve_data('gold_earned', 0),
-            'items_collected': self.retrieve_data('items_collected', 0),
-            'playtime_seconds': self.retrieve_data('playtime_seconds', 0),
+            'enemies_defeated':
+            self.retrieve_data('enemies_defeated', 0),
+            'bosses_defeated':
+            self.retrieve_data('bosses_defeated', 0),
+            'missions_completed':
+            len([
+                m for m in self.game.mission_progress.values()
+                if m.get('completed')
+            ]),
+            'gold_earned':
+            self.retrieve_data('gold_earned', 0),
+            'items_collected':
+            self.retrieve_data('items_collected', 0),
+            'playtime_seconds':
+            self.retrieve_data('playtime_seconds', 0),
         }
 
     def increment_statistic(self, stat_name: str, amount: int = 1) -> int:
@@ -2341,6 +2404,9 @@ class Game:
 
     def main_menu(self):
         """Display main menu"""
+        # Continuous mission check on every main menu return
+        self.update_mission_progress('check', '')
+
         print(f"\n{Colors.BOLD}=== MAIN MENU ==={Colors.END}")
         print("1. Explore")
         print("2. View Character")
@@ -2371,7 +2437,6 @@ class Game:
             'missions': '5',
             'm': '5',
             'boss': '6',
-            'fight_boss': '6',
             'tavern': '7',
             'shop': '8',
             's': '8',
@@ -2384,8 +2449,6 @@ class Game:
             'l': '12',
             'claim': '13',
             'c': '13',
-            'rewards':'13',
-            'claim_rewards': '13',
             'quit': '14',
             'q': '14'
         }
@@ -2438,10 +2501,14 @@ class Game:
         possible_bosses = area_data.get("possible_bosses", [])
 
         if not possible_bosses:
-            print(f"There are no bosses in {area_data.get('name', self.current_area)}.")
+            print(
+                f"There are no bosses in {area_data.get('name', self.current_area)}."
+            )
             return
 
-        print(f"\n{Colors.RED}{Colors.BOLD}=== BOSSES IN {area_data.get('name', self.current_area).upper()} ==={Colors.END}")
+        print(
+            f"\n{Colors.RED}{Colors.BOLD}=== BOSSES IN {area_data.get('name', self.current_area).upper()} ==={Colors.END}"
+        )
         for i, boss_name in enumerate(possible_bosses, 1):
             boss_data = self.bosses_data.get(boss_name, {})
             status = ""
@@ -2452,29 +2519,38 @@ class Game:
                     diff = datetime.now() - last_killed_dt
                     if diff.total_seconds() < 28800:
                         status = f" {Colors.YELLOW}(Cooldown: {int((28800 - diff.total_seconds()) // 60)}m left){Colors.END}"
-                except: pass
+                except Exception:
+                    pass
             print(f"{i}. {boss_data.get('name', boss_name)}{status}")
 
-        choice = ask(f"Choose a boss (1-{len(possible_bosses)}) or Enter to cancel: ")
+        choice = ask(
+            f"Choose a boss (1-{len(possible_bosses)}) or Enter to cancel: ")
         if choice and choice.isdigit():
             idx = int(choice) - 1
             if 0 <= idx < len(possible_bosses):
                 boss_name = possible_bosses[idx]
-                
+
                 # Cooldown check
                 if boss_name in self.player.bosses_killed:
                     last_killed_str = self.player.bosses_killed[boss_name]
                     try:
-                        last_killed_dt = datetime.fromisoformat(last_killed_str)
-                        if (datetime.now() - last_killed_dt).total_seconds() < 28800:
-                            print(f"{boss_name} is still recovering. Try again later.")
+                        last_killed_dt = datetime.fromisoformat(
+                            last_killed_str)
+                        if (datetime.now() -
+                                last_killed_dt).total_seconds() < 28800:
+                            print(
+                                f"{boss_name} is still recovering. Try again later."
+                            )
                             return
-                    except: pass
+                    except Exception:
+                        pass
 
                 boss_data = self.bosses_data.get(boss_name)
                 if boss_data:
                     boss = Boss(boss_data)
-                    print(f"\n{Colors.RED}{Colors.BOLD}Challenge accepted!{Colors.END}")
+                    print(
+                        f"\n{Colors.RED}{Colors.BOLD}Challenge accepted!{Colors.END}"
+                    )
                     self.battle(boss)
             else:
                 print("Invalid choice.")
@@ -2484,6 +2560,9 @@ class Game:
         if not self.player:
             print("No character created yet. Please create a character first.")
             return
+
+        # Continuous mission check on every action
+        self.update_mission_progress('check', '')
 
         # Script override for exploration
         if self.script_api and self.script_api.trigger_event(
@@ -2570,17 +2649,30 @@ class Game:
                         self.companions_act(enemy)
 
             # Display current HP/MP
-            player_hp_bar = create_hp_mp_bar(self.player.hp, self.player.max_hp, 20, Colors.RED)
-            player_mp_bar = create_hp_mp_bar(self.player.mp, self.player.max_mp, 20, Colors.BLUE)
-            enemy_hp_bar = create_hp_mp_bar(enemy.hp, enemy.max_hp, 20, Colors.RED)
+            player_hp_bar = create_hp_mp_bar(self.player.hp,
+                                             self.player.max_hp, 20,
+                                             Colors.RED)
+            player_mp_bar = create_hp_mp_bar(self.player.mp,
+                                             self.player.max_mp, 20,
+                                             Colors.BLUE)
+            
+            # Check for boss for special health bar
+            if isinstance(enemy, Boss):
+                enemy_hp_bar = create_boss_hp_bar(enemy.hp, enemy.max_hp)
+            else:
+                enemy_hp_bar = create_hp_mp_bar(enemy.hp, enemy.max_hp, 20,
+                                                Colors.RED)
 
             print(f"\n{Colors.BOLD}{self.player.name}{Colors.END}")
             print(f"HP: {player_hp_bar} {self.player.hp}/{self.player.max_hp}")
             print(f"MP: {player_mp_bar} {self.player.mp}/{self.player.max_mp}")
-            
+
             print(f"\n{Colors.BOLD}{enemy.name}{Colors.END}")
-            print(f"HP: {enemy_hp_bar} {enemy.hp}/{enemy.max_hp}")
-            
+            if isinstance(enemy, Boss):
+                print(enemy_hp_bar)
+            else:
+                print(f"HP: {enemy_hp_bar} {enemy.hp}/{enemy.max_hp}")
+
             # Tick buffs (reduce durations each round)
             if self.player.tick_buffs():
                 # Recalculate stats if buffs expired
@@ -2590,7 +2682,7 @@ class Game:
         # Battle outcome
         if player_fled:
             print(f"\n{Colors.YELLOW}You fled from the battle!{Colors.END}")
-            # Optional: Add penalty for fleeing? 
+            # Optional: Add penalty for fleeing?
             return
 
         if self.player.is_alive():
@@ -2599,7 +2691,8 @@ class Game:
 
             # Record boss kill for cooldown
             if isinstance(enemy, Boss):
-                self.player.bosses_killed[enemy.name] = datetime.now().isoformat()
+                self.player.bosses_killed[
+                    enemy.name] = datetime.now().isoformat()
 
             # Rewards
             exp_reward = enemy.experience_reward
@@ -3041,29 +3134,38 @@ class Game:
         # Pagination for spells
         page = 0
         per_page = 10
-        
+
         while True:
             clear_screen()
             total_pages = (len(available) + per_page - 1) // per_page
-            if total_pages == 0: total_pages = 1
+            if total_pages == 0:
+                total_pages = 1
             start_idx = page * per_page
             end_idx = start_idx + per_page
             current_spells = available[start_idx:end_idx]
 
-            print(f"\n{Colors.BOLD}=== SPELLS (Page {page + 1}/{total_pages}) ==={Colors.END}")
-            print(f"MP: {Colors.BLUE}{self.player.mp}/{self.player.max_mp}{Colors.END}\n")
+            print(
+                f"\n{Colors.BOLD}=== SPELLS (Page {page + 1}/{total_pages}) ==={Colors.END}"
+            )
+            print(
+                f"MP: {Colors.BLUE}{self.player.mp}/{self.player.max_mp}{Colors.END}\n"
+            )
 
             for i, (sname, sdata) in enumerate(current_spells, 1):
                 cost = sdata.get('mp_cost', 0)
                 mp_color = Colors.BLUE if self.player.mp >= cost else Colors.RED
-                print(f"{i}. {Colors.CYAN}{sname}{Colors.END} - Cost: {mp_color}{cost} MP{Colors.END}")
+                print(
+                    f"{i}. {Colors.CYAN}{sname}{Colors.END} - Cost: {mp_color}{cost} MP{Colors.END}"
+                )
                 print(f"   {sdata.get('description', '')}")
 
             print(f"\n{Colors.YELLOW}Options:{Colors.END}")
             if total_pages > 1:
-                if page > 0: print("P. Previous Page")
-                if page < total_pages - 1: print("N. Next Page")
-            
+                if page > 0:
+                    print("P. Previous Page")
+                if page < total_pages - 1:
+                    print("N. Next Page")
+
             print(f"1-{len(current_spells)}. Cast Spell")
             print("B. Back")
 
@@ -3309,96 +3411,105 @@ class Game:
                         print("Nothing to unequip from that slot.")
 
     def view_missions(self):
-        """View available and active missions with pagination"""
-        page = 0
-        per_page = 10
-
+        """View and manage missions"""
         while True:
             clear_screen()
-            print(f"\n{Colors.BOLD}=== MISSIONS ==={Colors.END}")
+            print(create_section_header("MISSIONS"))
 
             # Active Missions
             active_missions = [
                 mid for mid in self.mission_progress.keys()
                 if not self.mission_progress[mid].get('completed', False)
             ]
-            print(f"\n{Colors.CYAN}Active Missions:{Colors.END}")
-            if not active_missions:
-                print("No active missions.")
-            else:
-                for mid in active_missions:
+
+            if active_missions:
+                print(f"\n{Colors.CYAN}--- Active Missions ---{Colors.END}")
+                for i, mid in enumerate(active_missions, 1):
                     mission = self.missions_data.get(mid, {})
                     progress = self.mission_progress[mid]
-                    print(f"- {Colors.BOLD}{mission.get('name')}{Colors.END}")
-                    print(f"  {Colors.LIGHT_GRAY}{mission.get('description', '')}{Colors.END}")
 
                     if progress['type'] == 'kill':
                         if 'current_counts' in progress:
-                            # Multi-target kill mission
-                            lines = []
-                            for target_name, target_count in progress['target_counts'].items():
-                                current = progress['current_counts'].get(target_name, 0)
-                                color = Colors.GREEN if current >= target_count else Colors.YELLOW
-                                lines.append(f"{target_name}: {color}{current}/{target_count}{Colors.END}")
-                            print(f"  Progress: {', '.join(lines)}")
+                            lines = [
+                                f"{t}: {progress['current_counts'].get(t,0)}/{c}"
+                                for t, c in progress['target_counts'].items()
+                            ]
+                            status = ", ".join(lines)
                         else:
-                            # Single target kill mission
-                            current = progress['current_count']
-                            target_count = progress['target_count']
-                            color = Colors.GREEN if current >= target_count else Colors.YELLOW
-                            print(f"  Progress: {mission.get('target', 'Target')}: {color}{current}/{target_count}{Colors.END} killed")
-
-                    elif progress['type'] == 'collect':
+                            status = f"{progress['current_count']}/{progress['target_count']}"
+                    else:
                         if 'current_counts' in progress:
-                            # Multi-item collection
-                            counts = []
-                            for item, target_count in progress['target_counts'].items():
-                                current = progress['current_counts'].get(item, 0)
-                                color = Colors.GREEN if current >= target_count else Colors.YELLOW
-                                counts.append(f"{item}: {color}{current}/{target_count}{Colors.END}")
-                            print(f"  Progress: {', '.join(counts)}")
+                            lines = [
+                                f"{t}: {progress['current_counts'].get(t,0)}/{c}"
+                                for t, c in progress['target_counts'].items()
+                            ]
+                            status = ", ".join(lines)
                         else:
-                            # Single item collection
-                            current = progress['current_count']
-                            target_count = progress['target_count']
-                            color = Colors.GREEN if current >= target_count else Colors.YELLOW
-                            print(f"  Progress: {mission.get('target', 'Item')}: {color}{current}/{target_count}{Colors.END} collected")
+                            status = f"{progress['current_count']}/{progress['target_count']}"
 
-                    # Rewards preview for active missions
-                    reward = mission.get('reward', {})
-                    rewards_str = []
-                    if reward.get('experience'):
-                        rewards_str.append(f"{Colors.MAGENTA}{reward['experience']} XP{Colors.END}")
-                    if reward.get('gold'):
-                        rewards_str.append(f"{Colors.GOLD}{reward['gold']} Gold{Colors.END}")
-                    if rewards_str:
-                        print(f"  Rewards: {' | '.join(rewards_str)}")
-                    print()
+                    print(f"{i}. {mission.get('name')} - {status}")
+                    print(
+                        f"   {Colors.DARK_GRAY}{mission.get('description')}{Colors.END}"
+                    )
 
-            # Available Missions (those not accepted and not completed)
+                print("\nOptions: [A] Available, [C] Cancel Mission, [B] Back")
+            else:
+                print("\nNo active missions.")
+                print("\nOptions: [A] Available Missions, [B] Back")
+
+            choice = ask("\nChoose an option: ").upper()
+
+            if choice == 'B':
+                break
+            elif choice == 'A':
+                self.available_missions_menu()
+            elif choice == 'C' and active_missions:
+                idx_str = ask("Enter mission number to cancel: ")
+                if idx_str.isdigit():
+                    idx = int(idx_str) - 1
+                    if 0 <= idx < len(active_missions):
+                        m_id = active_missions[idx]
+                        m_name = self.missions_data[m_id]['name']
+                        confirm = ask(
+                            f"Are you sure you want to cancel '{m_name}'? (y/n): "
+                        ).lower()
+                        if confirm == 'y':
+                            del self.mission_progress[m_id]
+                            print(f"Mission '{m_name}' cancelled.")
+                            time.sleep(1)
+                    else:
+                        print("Invalid mission number.")
+                        time.sleep(1)
+
+    def available_missions_menu(self):
+        """Menu for viewing and accepting available missions"""
+        page = 0
+        per_page = 10
+
+        while True:
+            clear_screen()
+            print(create_section_header("AVAILABLE MISSIONS"))
+
             available_missions = [
                 mid for mid in self.missions_data.keys()
                 if mid not in self.mission_progress
                 and mid not in self.completed_missions
             ]
 
-            total_pages = (len(available_missions) + per_page - 1) // per_page
-            if total_pages == 0:
-                total_pages = 1
+            if not available_missions:
+                print("\nNo new missions available at this time.")
+                ask("\nPress Enter to go back...")
+                break
 
+            total_pages = (len(available_missions) + per_page - 1) // per_page
             start_idx = page * per_page
-            end_idx = start_idx + per_page
+            end_idx = min(start_idx + per_page, len(available_missions))
             current_page_missions = available_missions[start_idx:end_idx]
 
-            print(
-                f"\n{Colors.GREEN}Available Missions (Page {page + 1}/{total_pages}):{Colors.END}"
-            )
             for i, mission_id in enumerate(current_page_missions, 1):
                 mission = self.missions_data.get(mission_id, {})
-                print(
-                    f"{i}. {Colors.BOLD}{mission.get('name', 'Unknown')}{Colors.END}"
-                )
-                print(f"   {Colors.LIGHT_GRAY}{mission.get('description', 'No description')}{Colors.END}")
+                print(f"{i}. {Colors.BOLD}{mission.get('name')}{Colors.END}")
+                print(f"   {mission.get('description')}")
 
                 # Requirements
                 reqs = []
@@ -3409,43 +3520,15 @@ class Game:
                     reqs.append(f"Level {color}{level_req}{Colors.END}")
                 if mission.get('prerequisites'):
                     for prereq_id in mission.get('prerequisites'):
-                        prereq_name = self.missions_data.get(prereq_id, {}).get('name', prereq_id)
+                        prereq_name = self.missions_data.get(
+                            prereq_id, {}).get('name', prereq_id)
                         color = Colors.GREEN if prereq_id in self.completed_missions else Colors.RED
-                        reqs.append(f"Requires: {color}{prereq_name}{Colors.END}")
+                        reqs.append(
+                            f"Requires: {color}{prereq_name}{Colors.END}")
                 if reqs:
                     print(f"   Requirements: {', '.join(reqs)}")
 
-                # Objective
-                target = mission.get('target')
-                count = mission.get('target_count')
-                if mission.get('type') == 'kill':
-                    if isinstance(count, dict):
-                        targets = [f"{c} {t}" for t, c in count.items()]
-                        print(f"   Objective: Kill {', '.join(targets)}")
-                    else:
-                        print(f"   Objective: Kill {count} {target}")
-                elif mission.get('type') == 'collect':
-                    if isinstance(count, dict):
-                        targets = [f"{c} {t}" for t, c in count.items()]
-                        print(f"   Objective: Collect {', '.join(targets)}")
-                    else:
-                        print(f"   Objective: Collect {count} {target}")
-
-                # Rewards
-                reward = mission.get('reward', {})
-                rewards_str = []
-                if reward.get('experience'):
-                    rewards_str.append(f"{Colors.MAGENTA}{reward['experience']} XP{Colors.END}")
-                if reward.get('gold'):
-                    rewards_str.append(f"{Colors.GOLD}{reward['gold']} Gold{Colors.END}")
-                if reward.get('items'):
-                    rewards_str.append(f"Items: {', '.join(reward['items'])}")
-                if rewards_str:
-                    print(f"   Rewards: {' | '.join(rewards_str)}")
-                print()
-
-            print(f"\n{Colors.YELLOW}Options:{Colors.END}")
-            print("Shortcuts: N-next, P-prev, B-back")
+            print(f"\nPage {page + 1}/{total_pages}")
             if total_pages > 1:
                 if page > 0:
                     print("P. Previous Page")
@@ -3454,11 +3537,11 @@ class Game:
 
             if current_page_missions:
                 print(f"1-{len(current_page_missions)}. Accept Mission")
-            print("B. Back to Menu")
+            print("B. Back")
 
             choice = ask("\nChoose an option: ").upper()
 
-            if choice == 'B' or not choice:
+            if choice == 'B':
                 break
             elif choice == 'N' and page < total_pages - 1:
                 page += 1
@@ -3518,6 +3601,33 @@ class Game:
                                 target: str,
                                 count: int = 1):
         """Update mission progress for a specific target"""
+        # Always check inventory-based collect missions
+        if self.player:
+            for mid, progress in self.mission_progress.items():
+                if progress.get('completed', False):
+                    continue
+                mission = self.missions_data.get(mid, {})
+                if progress['type'] == 'collect':
+                    if 'current_counts' in progress:
+                        for item in progress['target_counts'].keys():
+                            inv_count = self.player.inventory.count(item)
+                            progress['current_counts'][item] = inv_count
+
+                        all_collected = all(
+                            progress['current_counts'][item] >=
+                            progress['target_counts'][item]
+                            for item in progress['target_counts'])
+                        if all_collected:
+                            self.complete_mission(mid)
+                    else:
+                        target_item = mission.get('target', '')
+                        inv_count = self.player.inventory.count(target_item)
+                        progress['current_count'] = inv_count
+                        if progress['current_count'] >= progress[
+                                'target_count']:
+                            self.complete_mission(mid)
+
+        # Standard update logic for kills or specific increments
         for mid, progress in self.mission_progress.items():
             if progress.get('completed', False):
                 continue
@@ -3646,7 +3756,9 @@ class Game:
         area_shops = area_data.get("shops", [])
 
         if not area_shops:
-            print(f"\n{Colors.RED}There are no shops in {area_data.get('name', self.current_area)}.{Colors.END}")
+            print(
+                f"\n{Colors.RED}There are no shops in {area_data.get('name', self.current_area)}.{Colors.END}"
+            )
             return
 
         # Simple logic: combine all items from all shops in this area
@@ -3654,7 +3766,9 @@ class Game:
         # For now, let's filter items_data to only show relevant items for the current area
         # Most areas have specific shop IDs like "general_store", "equipment_shop"
 
-        print(f"\n{Colors.BOLD}=== SHOP ({', '.join(area_shops)}) ==={Colors.END}")
+        print(
+            f"\n{Colors.BOLD}=== SHOP ({', '.join(area_shops)}) ==={Colors.END}"
+        )
         print("Welcome to the shop! What would you like to buy?")
         print(f"\nYour gold: {Colors.GOLD}{self.player.gold}{Colors.END}")
 
@@ -3662,7 +3776,9 @@ class Game:
         shop_items = {}
         for item_name, item_data in self.items_data.items():
             # Skip materials and items already in inventory
-            if item_data.get("type") == "material" or item_name in self.player.inventory:
+            if item_data.get(
+                    "type"
+            ) == "material" or item_name in self.player.inventory:
                 continue
 
             # Check if item belongs to any shop in the current area
@@ -4188,7 +4304,8 @@ class Game:
 
                     # Load boss kill cooldowns
                     if self.player:
-                        self.player.bosses_killed = save_data.get("bosses_killed", {})
+                        self.player.bosses_killed = save_data.get(
+                            "bosses_killed", {})
 
                     # Backward compatibility for old saves using current_missions
                     if not self.mission_progress and "current_missions" in save_data:
