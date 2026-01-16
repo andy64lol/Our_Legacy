@@ -328,5 +328,15 @@
     "experience_reward": 50,
     "gold_reward": 30,
     "loot_table": ["Dagger"]
+  },
+  "storm_elemental": {
+    "name": "Storm Elemental",
+    "hp": 85,
+    "attack": 22,
+    "defense": 12,
+    "speed": 16,
+    "experience_reward": 90,
+    "gold_reward": 50,
+    "loot_table": ["Storm Elemental Core", "Lightning Crystal", "Spirit Dust"]
   }
 }

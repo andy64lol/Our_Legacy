@@ -107,5 +107,19 @@
     "action_chance": 0.5,
     "abilities": [{"name": "Inspire", "type": "party_buff", "attack_bonus": 2, "defense_bonus": 2, "duration": 3}],
     "price": 160
+  },
+  "companion_11": {
+    "name": "Skiff von Stratoscrate",
+    "class": "Warlock",
+    "rank": "legendary",
+    "description": "A master of forbidden magics who greatly enhances spell power and MP regeneration, born from the darkness of the abyss, she's known as the lord of the abyss.",
+    "mp_bonus": 700,
+    "attack_bonus": 190,
+    "crit_damage_bonus": 150,
+    "speed_bonus": 100,
+    "spell_power_bonus": 150,
+    "action_chance": 0.7,
+    "abilities": [{"name": "Forbidden Knowledge", "type": "mp_regen", "mp_per_turn": 7, "duration": 5}],
+    "price": 900
   }
 }

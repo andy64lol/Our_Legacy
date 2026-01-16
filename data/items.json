@@ -2279,5 +2279,28 @@
          "level":6,
          "class":"Mage"
       }
+   },
+   "Dälokurg's Warhammer":{
+      "type":"weapon",
+      "description": "A huge warhammer that once belonged to the infamous bandit leader of Brïgadrak Oblast.",
+      "attack_bonus":192,
+      "price":320,
+      "rarity":"legendary",
+      "requirements":{
+         "level":7,
+         "class":"Warrior"
+      }
+   },
+   "Bandit Leader's Cloak":{
+      "type":"armor",
+      "description":"A cloak worn by Dälokurg, providing stealth and agility.",
+      "defense_bonus":120,
+      "speed_bonus":140,
+      "price":280,
+      "rarity":"legendary",
+      "requirements":{
+         "level":7,
+         "class":"Rogue"
+      }
    }
 }

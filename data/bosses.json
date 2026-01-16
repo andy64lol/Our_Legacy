@@ -779,5 +779,44 @@
       "level": 9,
       "missions_required": ["storm_giant_defeat", "demon_prince_defeat"]
     }
+  },
+  "Dalokurg":{
+    "name": "The infamous bandit leader, Dälokurg",
+    "hp": 170,
+    "attack": 40,
+    "defense": 32,
+    "speed": 28,
+    "description": "Dälokurg, the notorious bandit leader known for his cunning and ruthlessness. He commands a large group of bandits and has a reputation for ambushing travelers on the roads.",
+    "special_abilities": [
+      {
+        "name": "Ambush Strike",
+        "description": "A surprise attack that deals extra damage when Dälokurg is at full health",
+        "damage": 50,
+        "mp_cost": 15,
+        "cooldown": 3
+      },
+      {
+        "name": "Warhammer Smash",
+        "description": "A powerful attack with his warhammer",
+        "damage": 45,
+        "mp_cost": 0,
+        "cooldown": 2
+      },
+      {
+        "name": "Strength of million bears",
+        "description": "Boosts his attack power temporarily",
+        "attack_bonus": 15,
+        "duration": 4,
+        "mp_cost": 20,
+        "cooldown": 5
+      }
+    ],
+    "phases": [],
+    "experience_reward": 100,
+    "gold_reward": 50,
+    "unique_loot": [
+      "Dälokurg's Warhammer",
+      "Bandit Leader's Cloak"
+    ]
   }
 }
