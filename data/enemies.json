@@ -318,5 +318,15 @@
     "experience_reward": 110,
     "gold_reward": 65,
     "loot_table": ["Lightning Crystal", "Storm Elemental Core", "Thundercloud Cloak"]
+  },
+  "thief": {
+    "name": "Thief",
+    "hp": 35,
+    "attack": 18,
+    "defense": 6,
+    "speed": 20,
+    "experience_reward": 50,
+    "gold_reward": 30,
+    "loot_table": ["Dagger"]
   }
 }
