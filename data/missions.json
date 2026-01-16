@@ -485,5 +485,19 @@
     "area": "sky_sanctuary",
     "unlock_level": 9,
     "prerequisites": ["sky_ascent"]
+  },
+  "restore_peace_in_bridagrak_oblast": {
+    "name": "Restore Peace in Brïdagrak Oblast",
+    "description": "Clear out the lawless Outlaw Lands of Brïdagrak Oblast and restore order.",
+    "type": "kill",
+    "target": "Dalokurg",
+    "target_count": 1,
+    "reward": {
+      "experience": 400,
+      "gold": 800
+    },
+    "area": "outlaw_lands_of_bridagrak_oblast",
+    "unlock_level": 8,
+    "prerequisites": ["giant_slayer"]
   }
 }
