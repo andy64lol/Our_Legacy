@@ -2392,5 +2392,23 @@
       "description":"Frozen essence of arctic winds",
       "price":70,
       "rarity":"rare"
+   },
+   "Sandworm Scale":{
+      "type":"material",
+      "description":"A thick scale from a desert sandworm, hardened by the shifting sands",
+      "price":85,
+      "rarity":"uncommon"
+   },
+   "Desert Crystal":{
+      "type":"material",
+      "description":"A crystal formed in the depths of the desert, pulsating with ancient heat",
+      "price":90,
+      "rarity":"rare"
+   },
+   "Burrower's Fang":{
+      "type":"material",
+      "description":"A sharp fang from a subterranean burrower, coated in earthen residue",
+      "price":45,
+      "rarity":"common"
    }
 }
