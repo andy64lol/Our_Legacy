@@ -26,6 +26,14 @@ class ShopSystem:
     BUY_MARKUP = 1.2
     
     def __init__(self):
+        self.api = None
+        self._initialized = False
+    
+    def initialize(self):
+        """Initialize the shop system. Safe to call multiple times."""
+        if self._initialized:
+            return
+        
         self.api = get_api()
         if self.api:
             # Initialize transaction history
@@ -34,6 +42,7 @@ class ShopSystem:
             self.api.store_data('transactions', [])
             
             self.api.log("Shop System loaded!")
+            self._initialized = True
     
     # ==================== Buying Items ====================
     
@@ -43,12 +52,12 @@ class ShopSystem:
             return False
         
         # Check if item exists
-        if not hasattr(self.api, 'has_item') or not self.api.has_item(item_name, 0):
+        if not self.api.has_item(item_name, 0):
             self.api.log(f"Item not found in game data: {item_name}")
             return False
         
         # Get price with markup
-        base_price = self.api.get_item_price(item_name) if hasattr(self.api, 'get_item_price') else 0
+        base_price = self.api.get_item_price(item_name)
         total_cost = int(base_price * self.BUY_MARKUP * quantity)
         
         # Check player's gold
@@ -61,7 +70,7 @@ class ShopSystem:
             return False
         
         # Complete transaction
-        if hasattr(self.api, 'buy_item') and self.api.buy_item(item_name, quantity):
+        if self.api.buy_item(item_name, quantity):
             # Track spending
             spent = self.api.retrieve_data('total_gold_spent', 0) + total_cost
             self.api.store_data('total_gold_spent', spent)
@@ -87,7 +96,7 @@ class ShopSystem:
         for item_name, quantity in items:
             if not item_name:
                 continue
-            base_price = self.api.get_item_price(item_name) if hasattr(self.api, 'get_item_price') else 0
+            base_price = self.api.get_item_price(item_name)
             total_cost += int(base_price * self.BUY_MARKUP * quantity)
         
         if player.get('gold', 0) < total_cost:
@@ -98,7 +107,7 @@ class ShopSystem:
         for item_name, quantity in items:
             if not item_name:
                 continue
-            if hasattr(self.api, 'buy_item') and self.api.buy_item(item_name, quantity):
+            if self.api.buy_item(item_name, quantity):
                 bought += 1
         
         if bought > 0:
@@ -116,19 +125,17 @@ class ShopSystem:
             return 0
         
         # Check if player has the item
-        if not hasattr(self.api, 'has_item') or not self.api.has_item(item_name, quantity):
+        if not self.api.has_item(item_name, quantity):
             self.api.log(f"You don't have {quantity}x {item_name}")
             return 0
         
         # Calculate sell price
-        base_price = self.api.get_item_price(item_name) if hasattr(self.api, 'get_item_price') else 0
+        base_price = self.api.get_item_price(item_name)
         sell_price = int(base_price * self.SELL_MULTIPLIER)
         total_gold = sell_price * quantity
         
         # Complete transaction
-        earned = 0
-        if hasattr(self.api, 'sell_item'):
-            earned = self.api.sell_item(item_name, quantity)
+        earned = self.api.sell_item(item_name, quantity)
         
         if earned > 0:
             # Track earnings
@@ -147,7 +154,7 @@ class ShopSystem:
         if not self.api:
             return {'items_sold': 0, 'gold_earned': 0}
         
-        inventory = self.api.get_inventory_summary() if hasattr(self.api, 'get_inventory_summary') else {}
+        inventory = self.api.get_inventory_summary()
         if not inventory:
             return {'items_sold': 0, 'gold_earned': 0}
         
@@ -168,7 +175,7 @@ class ShopSystem:
                     continue
                 
                 # Skip if it's a quest item or special item
-                item_info = self.api.get_item_info(name) if hasattr(self.api, 'get_item_info') else {}
+                item_info = self.api.get_item_info(name) or {}
                 if item_info and item_info.get('type') in ['consumable', 'key']:
                     continue
                 
@@ -186,7 +193,7 @@ class ShopSystem:
         if not self.api or not item_name:
             return {}
         
-        base_price = self.api.get_item_price(item_name) if hasattr(self.api, 'get_item_price') else 0
+        base_price = self.api.get_item_price(item_name)
         return {
             'name': item_name,
             'base_price': base_price,
@@ -199,14 +206,14 @@ class ShopSystem:
         if not self.api:
             return {}
         
-        inventory = self.api.get_inventory_summary() if hasattr(self.api, 'get_inventory_summary') else {}
-        total_value = self.api.get_inventory_value() if hasattr(self.api, 'get_inventory_value') else 0
+        inventory = self.api.get_inventory_summary()
+        total_value = self.api.get_inventory_value()
         
         breakdown = {}
         for item_name, count in inventory.items():
             if not item_name:
                 continue
-            base_price = self.api.get_item_price(item_name) if hasattr(self.api, 'get_item_price') else 0
+            base_price = self.api.get_item_price(item_name)
             breakdown[item_name] = {
                 'count': count,
                 'unit_price': base_price,
@@ -225,14 +232,14 @@ class ShopSystem:
         if not self.api:
             return []
         
-        inventory = self.api.get_inventory_summary() if hasattr(self.api, 'get_inventory_summary') else {}
+        inventory = self.api.get_inventory_summary()
         items = []
         
         for item_name, count in inventory.items():
             if not item_name:
                 continue
             
-            item_info = self.api.get_item_info(item_name) if hasattr(self.api, 'get_item_info') else {}
+            item_info = self.api.get_item_info(item_name) or {}
             if not item_info:
                 continue
             
@@ -240,7 +247,7 @@ class ShopSystem:
             if item_info.get('type') in ['consumable', 'key']:
                 continue
             
-            base_price = self.api.get_item_price(item_name) if hasattr(self.api, 'get_item_price') else 0
+            base_price = self.api.get_item_price(item_name)
             sell_price = int(base_price * self.SELL_MULTIPLIER)
             
             items.append({
@@ -330,15 +337,25 @@ class ShopSystem:
         self.api.log(f"  Net Profit: {stats.get('net_profit', 0)}")
 
 
-# Initialize shop system
-shop_system = ShopSystem()
+# Global instance - lazily created
+_shop_system = None
+
+
+def _get_shop_system() -> 'ShopSystem':
+    """Get or create the shop system instance."""
+    global _shop_system
+    if _shop_system is None:
+        _shop_system = ShopSystem()
+        _shop_system.initialize()
+    return _shop_system
 
 
 def register_hooks():
     """Register hooks for shop-related events."""
-    api = get_api()
-    if api:
-        api.log("Shop System example loaded!")
+    shop = _get_shop_system()
+    print("Shop System example loaded!")
 
 
+# Auto-register when imported
 register_hooks()
+

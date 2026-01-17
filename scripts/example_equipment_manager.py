@@ -27,9 +27,18 @@ class EquipmentManager:
     }
     
     def __init__(self):
+        self.api = None
+        self._initialized = False
+    
+    def initialize(self):
+        """Initialize the equipment manager. Safe to call multiple times."""
+        if self._initialized:
+            return
+        
         self.api = get_api()
         if self.api:
             self.api.log("Equipment Manager System loaded!")
+            self._initialized = True
     
     # ==================== Basic Equipment Operations ====================
     
@@ -40,13 +49,13 @@ class EquipmentManager:
         
         equipped = self.api.get_equipped_items() or {}
         inventory = self.api.get_inventory() or []
-        inventory_summary = self.api.get_inventory_summary() if hasattr(self.api, 'get_inventory_summary') else {}
+        inventory_summary = self.api.get_inventory_summary() or {}
         
         return {
             'equipped': equipped,
             'inventory_count': len(inventory),
             'inventory_summary': inventory_summary,
-            'total_inventory_value': self.api.get_inventory_value() if hasattr(self.api, 'get_inventory_value') else 0,
+            'total_inventory_value': self.api.get_inventory_value(),
         }
     
     def equip_item_by_name(self, item_name: str) -> bool:
@@ -84,18 +93,16 @@ class EquipmentManager:
         
         self.api.log(f"Swapping {slot1}: {item1} <-> {slot2}: {item2}")
         
-        if hasattr(self.api, 'swap_equipment'):
-            return self.api.swap_equipment(slot1, slot2)
-        return False
+        return self.api.swap_equipment(slot1, slot2)
     
     # ==================== Auto-Equip System ====================
     
     def get_item_stats(self, item_name: str) -> Dict[str, Any]:
         """Get the stat bonuses of an item."""
-        if not self.api:
+        if not self.api or not item_name:
             return {}
         
-        item_info = self.api.get_item_info(item_name) if item_name else {}
+        item_info = self.api.get_item_info(item_name) or {}
         if not item_info:
             return {}
         
@@ -265,7 +272,7 @@ class EquipmentManager:
         equipped = self.api.get_equipped_items() or {}
         for slot, item in equipped.items():
             if item:
-                item_info = self.api.get_item_info(item) if item else {}
+                item_info = self.api.get_item_info(item) or {}
                 self.api.log(f"  {slot}: {item}")
                 if item_info:
                     stats = self.get_item_stats(item)
@@ -274,8 +281,8 @@ class EquipmentManager:
                             self.api.log(f"    +{value} {stat}")
         
         # Show comparison
-        base = self.api.get_base_stats() if hasattr(self.api, 'get_base_stats') else {}
-        effective = self.api.get_effective_stats() if hasattr(self.api, 'get_effective_stats') else {}
+        base = self.api.get_base_stats() or {}
+        effective = self.api.get_effective_stats() or {}
         
         self.api.log("\n=== Stat Comparison ===")
         self.api.log(f"{'Stat':<10} {'Base':>8} {'Effective':>10} {'Bonus':>8}")
@@ -286,16 +293,25 @@ class EquipmentManager:
             self.api.log(f"{stat:<10} {base_stat:>8} {eff_stat:>10} {'+' + str(bonus) if bonus > 0 else bonus:>8}")
 
 
-# Initialize equipment manager
-equipment_manager = EquipmentManager()
+# Global instance - lazily created
+_equipment_manager = None
+
+
+def _get_equipment_manager() -> 'EquipmentManager':
+    """Get or create the equipment manager instance."""
+    global _equipment_manager
+    if _equipment_manager is None:
+        _equipment_manager = EquipmentManager()
+        _equipment_manager.initialize()
+    return _equipment_manager
 
 
 def register_hooks():
     """Register hooks for equipment-related events."""
-    api = get_api()
-    if api:
-        # Could register on_item_acquired to auto-equip new items
-        api.log("Equipment Manager example loaded!")
+    manager = _get_equipment_manager()
+    print("Equipment Manager example loaded!")
 
 
+# Auto-register when imported
 register_hooks()
+

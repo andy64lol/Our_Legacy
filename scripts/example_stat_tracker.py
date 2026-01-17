@@ -20,11 +20,21 @@ class StatTracker:
     }
     
     def __init__(self):
+        self.api = None
+        self._initialized = False
+    
+    def initialize(self):
+        """Initialize the stat tracker. Safe to call multiple times."""
+        if self._initialized:
+            return
+        
         self.api = get_api()
         if self.api:
+            # Register hooks
             self.api.register_hook('on_battle_end', self.on_battle_end)
             self.api.register_hook('on_mission_complete', self.on_mission_complete)
             self.api.register_hook('on_item_acquired', self.on_item_acquired)
+            self._initialized = True
     
     def on_battle_end(self):
         """Called when battle ends."""
@@ -45,7 +55,7 @@ class StatTracker:
         missions_completed = self.api.increment_statistic('missions_completed', 1)
         self.check_achievements({'missions_completed': missions_completed})
     
-    def on_item_acquired(self):
+    def on_item_acquired(self, item_name: str | None = None):
         """Called when item is acquired."""
         if not self.api:
             return
@@ -94,5 +104,25 @@ class StatTracker:
             self.api.log(f"{key.replace('_', ' ').title()}: {value}")
 
 
-# Initialize tracker
-StatTracker()
+# Global instance - lazily created
+_stat_tracker = None
+
+
+def _get_stat_tracker() -> 'StatTracker':
+    """Get or create the stat tracker instance."""
+    global _stat_tracker
+    if _stat_tracker is None:
+        _stat_tracker = StatTracker()
+        _stat_tracker.initialize()
+    return _stat_tracker
+
+
+def register_hooks():
+    """Register hooks for stat tracking events."""
+    tracker = _get_stat_tracker()
+    print("Stat Tracker script loaded!")
+
+
+# Auto-register when imported
+register_hooks()
+
