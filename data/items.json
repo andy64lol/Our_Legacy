@@ -244,6 +244,12 @@
          "strength":15
       }
    },
+   "Troll Hide":{
+      "type":"material",
+      "description":"Thick hide from a powerful troll, useful for crafting",
+      "price":45,
+      "rarity":"uncommon"
+   },
    "Rusty Dagger":{
       "type":"weapon",
       "description":"An old, rusty dagger found in ancient ruins",
@@ -2302,5 +2308,89 @@
          "level":7,
          "class":"Rogue"
       }
+   },
+   "Iron Ore":{
+      "type":"material",
+      "description":"Raw iron ore mined from the earth, used for forging",
+      "price":5,
+      "rarity":"common"
+   },
+   "Coal":{
+      "type":"material",
+      "description":"A lump of coal, essential for smelting ores",
+      "price":3,
+      "rarity":"common"
+   },
+   "Steel Ingot":{
+      "type":"material",
+      "description":"A refined steel ingot, perfect for crafting weapons and armor",
+      "price":25,
+      "rarity":"uncommon"
+   },
+   "Gold Nugget":{
+      "type":"material",
+      "description":"A small nugget of gold, valuable and malleable",
+      "price":15,
+      "rarity":"uncommon"
+   },
+   "Herb":{
+      "type":"material",
+      "description":"A common healing herb found in meadows",
+      "price":3,
+      "rarity":"common"
+   },
+   "Mana Herb":{
+      "type":"material",
+      "description":"A rare herb that glows with magical energy",
+      "price":10,
+      "rarity":"uncommon"
+   },
+   "Spring Water":{
+      "type":"material",
+      "description":"Pure water from a sacred spring",
+      "price":2,
+      "rarity":"common"
+   },
+   "Leather":{
+      "type":"material",
+      "description":"Cured leather, essential for armor crafting",
+      "price":8,
+      "rarity":"common"
+   },
+   "Leather Strip":{
+      "type":"material",
+      "description":"Strips of leather used for bindings and straps",
+      "price":4,
+      "rarity":"common"
+   },
+   "Hardwood":{
+      "type":"material",
+      "description":"Dense hardwood from ancient trees",
+      "price":6,
+      "rarity":"common"
+   },
+   "Stone Block":{
+      "type":"material",
+      "description":"A carved stone block, useful for shields and fortifications",
+      "price":12,
+      "rarity":"common"
+   },
+   "Shadow Essence":{
+      "type":"material",
+      "description":"Condensed shadow energy in physical form",
+      "price":80,
+      "rarity":"rare"
+   },
+   "Fire Essence":{
+      "type":"material",
+      "description":"Bottled flame energy, extremely hot to the touch",
+      "price":75,
+      "rarity":"rare"
+   },
+   "Ice Essence":{
+      "type":"material",
+      "description":"Frozen essence of arctic winds",
+      "price":70,
+      "rarity":"rare"
    }
 }

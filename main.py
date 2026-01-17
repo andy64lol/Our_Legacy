@@ -2237,6 +2237,7 @@ class Game:
         self.scripting_enabled: bool = False
         self.script_api: Optional[Any] = None
         self.market_api: Optional[MarketAPI] = None
+        self.crafting_data: Dict[str, Any] = {}
 
         # Load game data
         self.load_game_data()
@@ -2267,6 +2268,13 @@ class Game:
                     self.companions_data = json.load(f)
             except FileNotFoundError:
                 self.companions_data = {}
+            
+            # Optional crafting data
+            try:
+                with open('data/crafting.json', 'r') as f:
+                    self.crafting_data = json.load(f)
+            except FileNotFoundError:
+                self.crafting_data = {}
         except FileNotFoundError as e:
             print(f"Error loading game data: {e}")
             print("Please ensure all data files exist in the data/ directory.")
@@ -2554,14 +2562,15 @@ class Game:
         print("6. Fight Boss")
         print("7. Tavern")
         print("8. Shop")
-        print("9. Elite Market")
-        print("10. Rest")
-        print("11. Companions")
-        print("12. Save Game")
-        print("13. Load Game")
-        print("14. Claim Rewards")
-        print("15. Quit")
-        choice = ask("Choose an option (1-15): ", allow_empty=False)
+        print("9. Alchemy")
+        print("10. Elite Market")
+        print("11. Rest")
+        print("12. Companions")
+        print("13. Save Game")
+        print("14. Load Game")
+        print("15. Claim Rewards")
+        print("16. Quit")
+        choice = ask("Choose an option (1-16): ", allow_empty=False)
 
         # Normalize textual shortcuts to numbers for backward compatibility
         shortcut_map = {
@@ -2579,20 +2588,24 @@ class Game:
             'tavern': '7',
             'shop': '8',
             's': '8',
-            'market': '9',
-            'mkt': '9',
-            'elite': '9',
-            'rest': '10',
-            'r': '10',
-            'companions': '11',
-            'comp': '11',
-            'save': '12',
-            'load': '13',
-            'l': '13',
-            'claim': '14',
-            'c': '14',
-            'quit': '15',
-            'q': '15'
+            'alchemy': '9',
+            'alc': '9',
+            'craft': '9',
+            'crafting': '9',
+            'market': '10',
+            'mkt': '10',
+            'elite': '10',
+            'rest': '11',
+            'r': '11',
+            'companions': '12',
+            'comp': '12',
+            'save': '13',
+            'load': '14',
+            'l': '14',
+            'claim': '15',
+            'c': '15',
+            'quit': '16',
+            'q': '16'
         }
 
         normalized = choice.strip().lower()
@@ -2619,18 +2632,20 @@ class Game:
         elif choice == "8":
             self.visit_shop()
         elif choice == "9":
-            self.visit_market()
+            self.visit_alchemy()
         elif choice == "10":
-            self.rest()
+            self.visit_market()
         elif choice == "11":
-            self.manage_companions()
+            self.rest()
         elif choice == "12":
-            self.save_game()
+            self.manage_companions()
         elif choice == "13":
-            self.load_game()
+            self.save_game()
         elif choice == "14":
-            self.claim_rewards()
+            self.load_game()
         elif choice == "15":
+            self.claim_rewards()
+        elif choice == "16":
             self.quit_game()
         else:
             print("Invalid choice. Please try again.")
@@ -2723,6 +2738,10 @@ class Game:
             self.random_encounter()
         else:
             print("You explore the area but find nothing of interest.")
+
+            # Small chance to find materials
+            if random.random() < 0.4:  # 40% chance to find materials
+                self._gather_materials()
 
             # Small chance to find gold
             if random.random() < 0.3:  # 30% chance to find gold
@@ -4857,6 +4876,343 @@ class Game:
         print("Thank you for playing Our Legacy!")
         print("Your legacy will be remembered...")
         sys.exit(0)
+
+    def _gather_materials(self):
+        """Gather materials based on current area's difficulty and theme."""
+        if not self.player:
+            return
+
+        area_data = self.areas_data.get(self.current_area, {})
+        difficulty = area_data.get('difficulty', 1)
+        
+        # Define material pools by difficulty tier
+        # Tier 1: Basic materials (difficulty 1-2)
+        tier1_materials = [
+            "Herb", "Spring Water", "Leather", "Leather Strip", 
+            "Hardwood", "Stone Block", "Coal", "Iron Ore",
+            "Goblin Ear", "Wolf Fang", "Bone Fragment"
+        ]
+        
+        # Tier 2: Uncommon materials (difficulty 3)
+        tier2_materials = [
+            "Mana Herb", "Gold Nugget", "Steel Ingot",
+            "Orc Tooth", "Serpent Tail", "Crystal Shard",
+            "Venom Sac", "Swamp Scale", "Ancient Relic",
+            "Wind Elemental Essence", "Demon Blood"
+        ]
+        
+        # Tier 3: Rare materials (difficulty 4)
+        tier3_materials = [
+            "Dark Crystal", "Ice Crystal", "Void Crystal",
+            "Shadow Essence", "Fire Essence", "Ice Essence",
+            "Starlight Shard", "Eternal Essence",
+            "Poison Crystal", "Lightning Crystal"
+        ]
+        
+        # Tier 4: Legendary materials (difficulty 5-6)
+        tier4_materials = [
+            "Dragon Scale", "Dragon Bone", "Phoenix Feather",
+            "Fire Gem", "Soul Fragment", "Demon Heart",
+            "Golem Core", "Storm Elemental Core",
+            "Zephyr's Scale", "Wind Dragon's Heart",
+            "Eternal Feather", "Dragon Heart", "Void Heart"
+        ]
+        
+        # Select materials based on difficulty
+        available_materials = []
+        if difficulty <= 2:
+            available_materials = tier1_materials.copy()
+            if random.random() < 0.3:  # 30% chance for tier 2
+                available_materials.extend(tier2_materials)
+        elif difficulty == 3:
+            available_materials = tier1_materials + tier2_materials
+            if random.random() < 0.4:  # 40% chance for tier 3
+                available_materials.extend(tier3_materials)
+        elif difficulty == 4:
+            available_materials = tier2_materials + tier3_materials
+            if random.random() < 0.3:  # 30% chance for tier 4
+                available_materials.extend(tier4_materials)
+        else:  # difficulty 5-6
+            available_materials = tier3_materials + tier4_materials
+            if random.random() < 0.2:  # 20% chance for tier 2
+                available_materials.extend(tier2_materials)
+        
+        # Filter to only materials that actually exist in items_data
+        valid_materials = [m for m in available_materials if m in self.items_data]
+        
+        if not valid_materials:
+            return
+        
+        # Gather 1-3 random materials
+        num_materials = random.randint(1, 3)
+        gathered = {}
+        
+        for _ in range(num_materials):
+            material = random.choice(valid_materials)
+            quantity = random.randint(1, 3)
+            gathered[material] = gathered.get(material, 0) + quantity
+        
+        # Add gathered materials to inventory
+        found_text = []
+        for material, qty in gathered.items():
+            for _ in range(qty):
+                self.player.inventory.append(material)
+            
+            # Get material info for display
+            item_data = self.items_data.get(material, {})
+            rarity = item_data.get('rarity', 'common')
+            color = get_rarity_color(rarity)
+            found_text.append(f"{color}{qty}x {material}{Colors.END}")
+        
+        # Display gathered materials
+        print(f"\n{Colors.YELLOW}You found materials:{Colors.END}")
+        for text in found_text:
+            print(f"  - {text}")
+        
+        # Update mission progress for collected materials
+        for material in gathered.keys():
+            self.update_mission_progress('collect', material)
+
+    def visit_alchemy(self):
+        """Visit the Alchemy workshop to craft items"""
+        if not self.player:
+            print("No character created yet.")
+            return
+
+        if not self.crafting_data or not self.crafting_data.get('recipes'):
+            print("No crafting recipes available.")
+            return
+
+        print(f"\n{Colors.MAGENTA}{Colors.BOLD}=== ALCHEMY WORKSHOP ==={Colors.END}")
+        print("Welcome to the Alchemy Workshop! Here you can craft potions, elixirs, and items.")
+        print(f"\nYour gold: {Colors.GOLD}{self.player.gold}{Colors.END}")
+
+        # Display available materials from inventory
+        self._display_crafting_materials()
+
+        while True:
+            clear_screen()
+            print(f"\n{Colors.BOLD}=== ALCHEMY WORKSHOP ==={Colors.END}")
+            print("Categories: [P]otions, [E]lixirs, [E]ntchantments, [U]tility, [A]ll")
+            print("[C]raft Item, [M]aterials, [B]ack to Menu")
+
+            choice = ask("\nChoose an option: ").strip().upper()
+
+            if choice == 'B' or not choice:
+                break
+            elif choice == 'P':
+                self._display_recipes_by_category('Potions')
+            elif choice == 'E':
+                # Ask which type of E (Elixirs or Enchantments)
+                print("E - Elixirs, N - Enchantments")
+                sub = ask("Choose (E/N): ").strip().upper()
+                if sub == 'E':
+                    self._display_recipes_by_category('Elixirs')
+                elif sub == 'N':
+                    self._display_recipes_by_category('Enchantments')
+            elif choice == 'U':
+                self._display_recipes_by_category('Utility')
+            elif choice == 'A':
+                self._display_all_recipes()
+            elif choice == 'C':
+                self._craft_item()
+            elif choice == 'M':
+                self._display_crafting_materials()
+            else:
+                print("Invalid choice.")
+
+    def _display_crafting_materials(self):
+        """Display materials available in player's inventory"""
+        if not self.player:
+            return
+
+        print(f"\n{Colors.CYAN}=== YOUR MATERIALS ==={Colors.END}")
+
+        # Get all material categories
+        material_categories = self.crafting_data.get('material_categories', {})
+
+        # Collect all possible materials
+        all_materials = set()
+        for materials in material_categories.values():
+            all_materials.update(materials)
+
+        # Count materials in inventory
+        material_counts = {}
+        for item in self.player.inventory:
+            if item in all_materials:
+                material_counts[item] = material_counts.get(item, 0) + 1
+
+        if not material_counts:
+            print("No crafting materials in your inventory.")
+            print("Materials can be found as drops from enemies or purchased from shops.")
+            return
+
+        print(f"{'Material':<25} {'Quantity':<10}")
+        print("-" * 35)
+        for material, count in sorted(material_counts.items()):
+            print(f"{material:<25} {count:<10}")
+
+    def _display_recipes_by_category(self, category: str):
+        """Display recipes filtered by category"""
+        if not self.crafting_data:
+            return
+
+        recipes = self.crafting_data.get('recipes', {})
+        category_recipes = [
+            (rid, rdata) for rid, rdata in recipes.items()
+            if rdata.get('category') == category
+        ]
+
+        if not category_recipes:
+            print(f"\nNo recipes found in category: {category}")
+            return
+
+        print(f"\n{Colors.BOLD}=== {category.upper()} ==={Colors.END}")
+        for i, (rid, rdata) in enumerate(category_recipes, 1):
+            name = rdata.get('name', rid)
+            rarity = rdata.get('rarity', 'common')
+            rarity_color = get_rarity_color(rarity)
+            print(f"{i}. {rarity_color}{name}{Colors.END}")
+
+    def _display_all_recipes(self):
+        """Display all available recipes"""
+        if not self.crafting_data:
+            return
+
+        recipes = self.crafting_data.get('recipes', {})
+        if not recipes:
+            print("\nNo recipes available.")
+            return
+
+        page_size = 10
+        recipe_list = list(recipes.items())
+        current_page = 0
+
+        while True:
+            start = current_page * page_size
+            end = start + page_size
+            page_items = recipe_list[start:end]
+
+            print(f"\n{Colors.BOLD}=== ALL RECIPES ==={Colors.END}")
+            for i, (rid, rdata) in enumerate(page_items, 1):
+                name = rdata.get('name', rid)
+                category = rdata.get('category', 'Unknown')
+                rarity = rdata.get('rarity', 'common')
+                rarity_color = get_rarity_color(rarity)
+                print(
+                    f"{start + i}. {rarity_color}{name}{Colors.END} ({category})")
+
+            total_pages = (len(recipe_list) + page_size - 1) // page_size
+            print(f"\nPage {current_page + 1}/{total_pages}")
+
+            if total_pages > 1:
+                if current_page > 0:
+                    print("P. Previous Page")
+                if current_page < total_pages - 1:
+                    print("N. Next Page")
+            print("C. Craft Item")
+            print("B. Back")
+
+            choice = ask("\nChoose an option: ").strip().upper()
+
+            if choice == 'B':
+                break
+            elif choice == 'N' and current_page < total_pages - 1:
+                current_page += 1
+            elif choice == 'P' and current_page > 0:
+                current_page -= 1
+            elif choice == 'C':
+                self._craft_item()
+            else:
+                print("Invalid choice.")
+
+    def _craft_item(self):
+        """Craft an item using materials from inventory"""
+        if not self.player or not self.crafting_data:
+            print("Cannot craft items.")
+            return
+
+        recipes = self.crafting_data.get('recipes', {})
+
+        # Show all recipes for selection
+        print(f"\n{Colors.BOLD}=== CRAFT ITEM ==={Colors.END}")
+        recipe_names = list(recipes.keys())
+
+        for i, rid in enumerate(recipe_names, 1):
+            rdata = recipes[rid]
+            name = rdata.get('name', rid)
+            rarity = rdata.get('rarity', 'common')
+            rarity_color = get_rarity_color(rarity)
+            print(f"{i}. {rarity_color}{name}{Colors.END}")
+
+        choice = ask(f"\nChoose recipe (1-{len(recipe_names)}) or press Enter to cancel: ").strip()
+
+        if not choice:
+            return
+
+        if not choice.isdigit():
+            print("Invalid choice.")
+            return
+
+        idx = int(choice) - 1
+        if not (0 <= idx < len(recipe_names)):
+            print("Invalid recipe number.")
+            return
+
+        recipe_id = recipe_names[idx]
+        recipe = recipes[recipe_id]
+
+        # Check skill requirement
+        skill_req = recipe.get('skill_requirement', 1)
+        if self.player.level < skill_req:
+            print(f"\n{Colors.RED}You need at least level {skill_req} to craft this item.{Colors.END}")
+            return
+
+        # Get materials required
+        materials_needed = recipe.get('materials', {})
+
+        # Check if player has materials
+        missing_materials = []
+        for material, quantity in materials_needed.items():
+            in_inventory = self.player.inventory.count(material)
+            if in_inventory < quantity:
+                missing_materials.append(f"{material} (need {quantity}, have {in_inventory})")
+
+        if missing_materials:
+            print(f"\n{Colors.RED}Missing materials:{Colors.END}")
+            for m in missing_materials:
+                print(f"  - {m}")
+            print("\nGather more materials before crafting.")
+            return
+
+        # Show craft confirmation
+        output_items = recipe.get('output', {})
+        print(f"\n{Colors.BOLD}=== CRAFT CONFIRMATION ==={Colors.END}")
+        print(f"Recipe: {recipe.get('name')}")
+        print(f"Output: {', '.join(f'{qty}x {item}' for item, qty in output_items.items())}")
+        print("\nMaterials to consume:")
+        for material, quantity in materials_needed.items():
+            print(f"  - {quantity}x {material}")
+
+        confirm = ask("\nCraft this item? (y/n): ").strip().lower()
+        if confirm != 'y':
+            print("Crafting cancelled.")
+            return
+
+        # Consume materials
+        for material, quantity in materials_needed.items():
+            for _ in range(quantity):
+                self.player.inventory.remove(material)
+
+        # Add crafted items to inventory
+        for item, quantity in output_items.items():
+            for _ in range(quantity):
+                self.player.inventory.append(item)
+                self.update_mission_progress('collect', item)
+
+        print(f"\n{Colors.GREEN}Successfully crafted {recipe.get('name')}!{Colors.END}")
+        for item, quantity in output_items.items():
+            print(f"  Received: {quantity}x {item}")
 
     def run(self):
         """Main game loop"""
