@@ -28,6 +28,14 @@ class RandomEventManager:
     }
     
     def __init__(self):
+        self.api = None
+        self._initialized = False
+    
+    def initialize(self):
+        """Initialize the random event manager. Safe to call multiple times."""
+        if self._initialized:
+            return
+        
         self.api = get_api()
         if self.api:
             # Register hooks
@@ -40,6 +48,7 @@ class RandomEventManager:
             self.api.store_data('active_event', None)
             
             self.api.log("Random Event System loaded!")
+            self._initialized = True
     
     def on_battle_start(self):
         """Called when a battle starts - check for special enemy spawns."""
@@ -53,14 +62,13 @@ class RandomEventManager:
             if player:
                 self.api.log("A special enemy appears! Battle difficulty increased!")
                 # Increase enemy damage multiplier temporarily
-                if hasattr(self.api, 'get_combat_multipliers'):
-                    multipliers = self.api.get_combat_multipliers() or {}
-                    if hasattr(self.api, 'set_combat_multipliers'):
-                        self.api.set_combat_multipliers(
-                            multipliers.get('player_damage_mult', 1.0),
-                            multipliers.get('enemy_damage_mult', 1.0) * 1.5,
-                            multipliers.get('experience_mult', 1.0)
-                        )
+                multipliers = self.api.get_combat_multipliers()
+                if multipliers:
+                    self.api.set_combat_multipliers(
+                        multipliers.get('player_damage_mult', 1.0),
+                        multipliers.get('enemy_damage_mult', 1.0) * 1.5,
+                        multipliers.get('experience_mult', 1.0)
+                    )
     
     def on_battle_end(self):
         """Called when a battle ends - potentially trigger random events."""
@@ -125,8 +133,7 @@ class RandomEventManager:
         player = self.api.get_player()
         if player:
             bonus_xp = random.randint(20, 50)
-            if hasattr(self.api, 'add_experience'):
-                self.api.add_experience(bonus_xp)
+            self.api.add_experience(bonus_xp)
             self.api.log(f"BONUS! You gained {bonus_xp} bonus experience!")
             self.api.store_data('active_event', None)
     
@@ -140,8 +147,7 @@ class RandomEventManager:
             treasure_items = ['Gold Coin', 'Silver Ring', 'Health Potion', 'Mana Potion']
             item = random.choice(treasure_items)
             quantity = random.randint(1, 3)
-            if hasattr(self.api, 'give_item'):
-                self.api.give_item(item, quantity)
+            self.api.give_item(item, quantity)
             self.api.log(f"Treasure found! You received: {item} x{quantity}")
             self.api.store_data('active_event', None)
     
@@ -160,7 +166,7 @@ class RandomEventManager:
         
         self.api.log("A dark curse falls upon you! Stats reduced for 3 battles.")
         player = self.api.get_player()
-        if player and hasattr(self.api, 'apply_buff'):
+        if player:
             self.api.apply_buff('Curse of Weakness', 3, {
                 'attack_bonus': -3,
                 'defense_bonus': -2,
@@ -174,7 +180,7 @@ class RandomEventManager:
         
         self.api.log("A divine blessing! Stats increased for 5 battles!")
         player = self.api.get_player()
-        if player and hasattr(self.api, 'apply_buff'):
+        if player:
             self.api.apply_buff('Divine Blessing', 5, {
                 'attack_bonus': 5,
                 'defense_bonus': 5,
@@ -194,15 +200,25 @@ class RandomEventManager:
         }
 
 
-# Initialize the random event manager
-random_events = RandomEventManager()
+# Global instance - lazily created
+_random_events = None
+
+
+def _get_random_events() -> 'RandomEventManager':
+    """Get or create the random events instance."""
+    global _random_events
+    if _random_events is None:
+        _random_events = RandomEventManager()
+        _random_events.initialize()
+    return _random_events
 
 
 def register_hooks():
     """Register any additional hooks if needed."""
-    api = get_api()
-    if api:
-        api.log("Random Events example loaded!")
+    events = _get_random_events()
+    print("Random Events script loaded!")
 
 
+# Auto-register when imported
 register_hooks()
+

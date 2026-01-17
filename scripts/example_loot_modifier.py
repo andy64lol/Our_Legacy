@@ -7,6 +7,7 @@ and implementing rarity-based drop chances.
 
 from main import get_api
 import random
+from typing import Optional, Dict, Any, List
 
 class LootModifier:
     """Customize and enhance loot drops from enemies."""
@@ -31,10 +32,19 @@ class LootModifier:
     }
     
     def __init__(self):
+        self.api = None
+        self._initialized = False
+    
+    def initialize(self):
+        """Initialize the loot modifier. Safe to call multiple times."""
+        if self._initialized:
+            return
+        
         self.api = get_api()
         if self.api:
             self.api.register_hook('on_battle_end', self.enhance_loot)
             self.api.log("Loot Modifier System enabled")
+            self._initialized = True
     
     def enhance_loot(self):
         """Enhance loot drops based on rarity and player level."""
@@ -46,7 +56,7 @@ class LootModifier:
             return
         
         # Generate bonus loot items
-        level = player['level']
+        level = player.get('level', 1)
         
         # Higher level = more loot drops (every 5 levels, +1 item)
         bonus_items = max(0, (level - 1) // 5)
@@ -64,9 +74,9 @@ class LootModifier:
                     break
             
             if rarity:
-                self.api.log(f"✨ Bonus {rarity} item dropped!")
+                self.api.log(f"Bonus {rarity} item dropped!")
     
-    def get_thematic_loot(self, enemy_name):
+    def get_thematic_loot(self, enemy_name: str) -> List[str]:
         """Get thematic loot for an enemy."""
         if not self.api:
             return []
@@ -78,8 +88,28 @@ class LootModifier:
         
         # Fallback to generic loot
         items = self.api.list_all_items()
-        return random.sample(items, min(3, len(items)))
+        return random.sample(items, min(3, len(items))) if items else []
 
 
-# Initialize system
-LootModifier()
+# Global instance - lazily created
+_loot_modifier = None
+
+
+def _get_loot_modifier() -> 'LootModifier':
+    """Get or create the loot modifier instance."""
+    global _loot_modifier
+    if _loot_modifier is None:
+        _loot_modifier = LootModifier()
+        _loot_modifier.initialize()
+    return _loot_modifier
+
+
+def register_hooks():
+    """Register hooks for loot-related events."""
+    modifier = _get_loot_modifier()
+    print("Loot Modifier script loaded!")
+
+
+# Auto-register when imported
+register_hooks()
+

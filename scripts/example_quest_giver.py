@@ -9,8 +9,10 @@ from main import get_api
 
 class QuestGiver:
     """Manages custom quests."""
-
+    
     def __init__(self):
+        self.api = None
+        self._initialized = False
         self.quests = {
             'custom_1': {
                 'name': 'Gathering Task',
@@ -29,32 +31,59 @@ class QuestGiver:
                 'target_value': 50,
             },
         }
-
+    
+    def initialize(self):
+        """Initialize the quest giver. Safe to call multiple times."""
+        if self._initialized:
+            return
+        
+        self.api = get_api()
+        if self.api:
+            self.api.log("Quest Giver script loaded!")
+            self.api.store_data('quest_giver', self)
+            self._initialized = True
+    
     def check_quest_progress(self):
         """Check and complete quests."""
-        api = get_api()
-        if api is None:
+        if not self.api:
             return
 
-        player = api.get_player()
+        player = self.api.get_player()
         if player is None:
             return
 
         # Check collection quest
-        quest = self.quests['custom_1']
-        potions = player['inventory'].count('Health Potion')
-        if potions >= quest['target_count']:
-            api.log(f"Quest Complete: {quest['name']}!")
-            api.set_player_stat('gold', player['gold'] + quest['reward_gold'])
+        quest = self.quests.get('custom_1', {})
+        target_item = quest.get('target_item', '')
+        target_count = quest.get('target_count', 5)
+        inventory = player.get('inventory', [])
+        potions = inventory.count(target_item) if isinstance(inventory, list) else 0
+        if potions >= target_count:
+            self.api.log(f"Quest Complete: {quest.get('name', 'Unknown')}!")
+            reward_gold = quest.get('reward_gold', 0)
+            current_gold = player.get('gold', 0)
+            self.api.set_player_stat('gold', current_gold + reward_gold)
+
+
+# Global instance - lazily created
+_quest_giver = None
+
+
+def _get_quest_giver() -> 'QuestGiver':
+    """Get or create the quest giver instance."""
+    global _quest_giver
+    if _quest_giver is None:
+        _quest_giver = QuestGiver()
+        _quest_giver.initialize()
+    return _quest_giver
 
 
 def register_hooks():
     """Register this script's event hooks."""
-    api = get_api()
-    if api:
-        api.log("Quest Giver script loaded!")
-        api.store_data('quest_giver', QuestGiver())
+    quest_giver = _get_quest_giver()
+    print("Quest Giver script loaded!")
 
 
 # Auto-register when imported
 register_hooks()
+

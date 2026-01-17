@@ -19,6 +19,14 @@ class ExplorationManager:
     """Manages area exploration and dynamic world modification."""
     
     def __init__(self):
+        self.api = None
+        self._initialized = False
+    
+    def initialize(self):
+        """Initialize the exploration manager. Safe to call multiple times."""
+        if self._initialized:
+            return
+        
         self.api = get_api()
         if self.api:
             # Track exploration progress
@@ -26,6 +34,7 @@ class ExplorationManager:
             self.api.store_data('exploration_notes', {})
             
             self.api.log("Exploration Manager loaded!")
+            self._initialized = True
     
     # ==================== Area Discovery ====================
     
@@ -130,11 +139,11 @@ class ExplorationManager:
         
         # Get enemy details
         enemy_details = []
+        enemies_data = self.api.get_enemies_data() or {}
         for enemy_id in enemies:
             if not enemy_id:
                 continue
-            enemies_data = self.api.get_enemies_data() or {}
-            enemy_info = enemies_data.get(enemy_id, {}) if enemies_data else {}
+            enemy_info = enemies_data.get(enemy_id, {}) or {}
             if enemy_info:
                 enemy_details.append({
                     'id': enemy_id,
@@ -195,9 +204,9 @@ class ExplorationManager:
         if not self.api or not area_id or not enemy_id:
             return False
         
-        if hasattr(self.api, 'add_area_enemy') and self.api.add_area_enemy(area_id, enemy_id):
+        if self.api.add_area_enemy(area_id, enemy_id):
             enemies_data = self.api.get_enemies_data() or {}
-            enemy_info = enemies_data.get(enemy_id, {}) if enemies_data else {}
+            enemy_info = enemies_data.get(enemy_id, {}) or {}
             enemy_name = enemy_info.get('name', enemy_id)
             self.api.log(f"Added {enemy_name} to {area_id}")
             return True
@@ -209,7 +218,7 @@ class ExplorationManager:
         if not self.api or not area_id or not enemy_id:
             return False
         
-        if hasattr(self.api, 'remove_area_enemy') and self.api.remove_area_enemy(area_id, enemy_id):
+        if self.api.remove_area_enemy(area_id, enemy_id):
             self.api.log(f"Removed {enemy_id} from {area_id}")
             return True
         
@@ -221,7 +230,7 @@ class ExplorationManager:
             return False
         
         if 1 <= difficulty <= 5:
-            if hasattr(self.api, 'set_area_difficulty') and self.api.set_area_difficulty(area_id, difficulty):
+            if self.api.set_area_difficulty(area_id, difficulty):
                 self.api.log(f"Set {area_id} difficulty to {difficulty}")
                 return True
         
@@ -246,7 +255,7 @@ class ExplorationManager:
             if not enemy_id:
                 continue
             enemies_data = self.api.get_enemies_data() or {}
-            enemy_info = enemies_data.get(enemy_id, {}) if enemies_data else {}
+            enemy_info = enemies_data.get(enemy_id, {}) or {}
             if enemy_info:
                 # Create scaled enemy ID
                 elite_id = f"{enemy_id}_elite"
@@ -254,7 +263,7 @@ class ExplorationManager:
                 # Check if already added
                 current_enemies = self.api.get_area_enemies(area_id) or []
                 if elite_id not in current_enemies:
-                    if hasattr(self.api, 'add_area_enemy') and self.api.add_area_enemy(area_id, elite_id):
+                    if self.api.add_area_enemy(area_id, elite_id):
                         added += 1
         
         if added > 0:
@@ -273,7 +282,7 @@ class ExplorationManager:
         for enemy_id in enemies[:]:  # Copy list to iterate safely
             if not enemy_id:
                 continue
-            if hasattr(self.api, 'remove_area_enemy') and self.api.remove_area_enemy(area_id, enemy_id):
+            if self.api.remove_area_enemy(area_id, enemy_id):
                 removed += 1
         
         self.api.log(f"Cleared {removed} enemies from {area_id}")
@@ -378,16 +387,28 @@ class ExplorationManager:
         return notes.get(area_id, "")
 
 
-# Initialize exploration manager
-exploration_manager = ExplorationManager()
+# Global instance - lazily created
+_exploration_manager = None
+
+
+def _get_exploration_manager() -> 'ExplorationManager':
+    """Get or create the exploration manager instance."""
+    global _exploration_manager
+    if _exploration_manager is None:
+        _exploration_manager = ExplorationManager()
+        _exploration_manager.initialize()
+    return _exploration_manager
 
 
 def register_hooks():
     """Register hooks for exploration events."""
+    manager = _get_exploration_manager()
     api = get_api()
     if api:
-        api.register_hook('on_area_entered', exploration_manager.discover_current_area)
-        api.log("Exploration Manager example loaded!")
+        api.register_hook('on_area_entered', manager.discover_current_area)
+        print("Exploration Manager example loaded!")
 
 
+# Auto-register when imported
 register_hooks()
+

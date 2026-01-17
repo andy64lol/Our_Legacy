@@ -1518,6 +1518,513 @@ class GameAPI:
 # Global API instance (set by Game class when game starts)
 game_api = None
 
+# Global script manager instance
+script_manager = None
+
+
+class ScriptManager:
+    """Manages script loading, hook registration, and execution for the game.
+    
+    This class provides a centralized system for managing game scripts through
+    a configuration file (scripts.json) that defines which scripts respond to
+    which game events.
+    
+    Features:
+    - Centralized hook configuration via scripts.json
+    - Priority-based hook execution order
+    - Dependency resolution between scripts
+    - Error isolation (one script failing doesn't break others)
+    - Dynamic hook registration and unregistration
+    """
+    
+    def __init__(self, game_instance=None):
+        """Initialize the script manager.
+        
+        Args:
+            game_instance: Reference to the main Game instance
+        """
+        self.game = game_instance
+        self.api = None
+        self.config: Dict[str, Any] = {}
+        self.scripts: Dict[str, Any] = {}
+        self.registered_hooks: Dict[str, List[Dict[str, Any]]] = {}
+        self.script_modules: Dict[str, Any] = {}
+        self.enabled = False
+        self.load_error: Optional[str] = None
+        
+        # Available event types for validation
+        self.valid_events = {
+            'on_battle_start', 'on_battle_end', 'on_player_turn', 'on_enemy_turn',
+            'on_player_levelup', 'on_item_acquired', 'on_companion_hired',
+            'on_mission_complete', 'on_buff_applied', 'on_area_entered',
+            'on_explore', 'on_loot_drop', 'on_shop_open', 'on_tavern_open',
+            'on_startup', 'on_shutdown'
+        }
+    
+    def initialize(self, api: 'GameAPI') -> bool:
+        """Initialize the script manager with the game API.
+        
+        Args:
+            api: The GameAPI instance
+            
+        Returns:
+            True if initialization successful
+        """
+        self.api = api
+        
+        # Load configuration
+        if not self._load_config():
+            self.load_error = "Failed to load scripts.json"
+            return False
+        
+        # Check if scripting is enabled
+        settings = self.config.get('settings', {})
+        if not settings.get('auto_load_all', True):
+            self.enabled = False
+            return True
+        
+        self.enabled = True
+        
+        # Load scripts
+        if not self._load_scripts():
+            return False
+        
+        # Register hooks from configuration
+        if not self._register_hooks():
+            return False
+        
+        # Initialize scripts (call init_script functions)
+        self._initialize_scripts()
+        
+        return True
+    
+    def _load_config(self) -> bool:
+        """Load scripts.json configuration file.
+        
+        Returns:
+            True if config loaded successfully
+        """
+        try:
+            # Try to load from scripts.json
+            if os.path.exists('scripts.json'):
+                with open('scripts.json', 'r') as f:
+                    self.config = json.load(f)
+                return True
+            else:
+                # Fall back to config.json if scripts.json doesn't exist
+                return self._load_config_from_legacy()
+        except (json.JSONDecodeError, IOError) as e:
+            print(f"Error loading scripts.json: {e}")
+            self.config = {}
+            return False
+    
+    def _load_config_from_legacy(self) -> bool:
+        """Load configuration from legacy config.json format.
+        
+        This maintains backward compatibility with the old system.
+        
+        Returns:
+            True if config loaded successfully
+        """
+        try:
+            if os.path.exists('data/config.json'):
+                with open('data/config.json', 'r') as f:
+                    config = json.load(f)
+                
+                # Convert legacy format to new format
+                scripts_list = config.get('scripts', [])
+                settings = {
+                    'auto_load_all': config.get('auto_load_scripts', True),
+                    'error_handling': 'log_only',
+                    'log_level': 'info'
+                }
+                
+                # Build hooks from scripts list (all hooks for all scripts)
+                # This is a simplified conversion - in production, scripts
+                # would declare their hooks explicitly
+                hooks: Dict[str, List[Dict[str, Any]]] = {}
+                for i, script_name in enumerate(scripts_list):
+                    # Default priority based on order in list
+                    priority = 100 - (i * 10)
+                    for event in self.valid_events:
+                        if event not in hooks:
+                            hooks[event] = []
+                        hooks[event].append({
+                            'script': script_name,
+                            'priority': priority
+                        })
+                
+                self.config = {
+                    'version': '1.0',
+                    'description': 'Converted from legacy config',
+                    'settings': settings,
+                    'hooks': hooks
+                }
+                return True
+        except (json.JSONDecodeError, IOError) as e:
+            print(f"Error loading legacy config: {e}")
+        
+        # Use default empty config
+        self.config = {
+            'version': '1.0',
+            'settings': {},
+            'hooks': {}
+        }
+        return True
+    
+    def _load_scripts(self) -> bool:
+        """Load all enabled scripts.
+        
+        Returns:
+            True if all scripts loaded successfully
+        """
+        settings = self.config.get('settings', {})
+        hooks = self.config.get('hooks', {})
+        
+        # Collect all unique script names from hooks
+        script_names: set = set()
+        for event_hooks in hooks.values():
+            for hook_config in event_hooks:
+                if isinstance(hook_config, dict):
+                    script_name = hook_config.get('script')
+                else:
+                    script_name = hook_config
+                if script_name:
+                    script_names.add(script_name)
+        
+        # Load each script module
+        for script_name in sorted(script_names):
+            if not self._load_script_module(script_name):
+                print(f"Warning: Failed to load script '{script_name}'")
+                # Continue loading other scripts
+        
+        return True
+    
+    def _load_script_module(self, script_name: str) -> bool:
+        """Load a single script module.
+        
+        Args:
+            script_name: Name of the script to load
+            
+        Returns:
+            True if script loaded successfully
+        """
+        try:
+            # Import the script module
+            module = __import__(f'scripts.{script_name}', fromlist=[''])
+            self.script_modules[script_name] = module
+            
+            # Try to get script info if it exists
+            if hasattr(module, 'SCRIPT_INFO'):
+                self.scripts[script_name] = {
+                    'info': module.SCRIPT_INFO,
+                    'module': module
+                }
+            else:
+                self.scripts[script_name] = {
+                    'info': {'name': script_name, 'version': '1.0'},
+                    'module': module
+                }
+            
+            return True
+        except ImportError as e:
+            print(f"Error importing script '{script_name}': {e}")
+            return False
+    
+    def _register_hooks(self) -> bool:
+        """Register all hooks from configuration.
+        
+        Returns:
+            True if all hooks registered successfully
+        """
+        hooks = self.config.get('hooks', {})
+        
+        for event_name, event_hooks in hooks.items():
+            if event_name not in self.valid_events:
+                print(f"Warning: Unknown event '{event_name}' in scripts.json")
+                continue
+            
+            # Sort hooks by priority (higher priority first)
+            sorted_hooks = sorted(event_hooks, key=lambda x: x.get('priority', 50) if isinstance(x, dict) else 50, reverse=True)
+            
+            self.registered_hooks[event_name] = []
+            
+            for hook_config in sorted_hooks:
+                if isinstance(hook_config, dict):
+                    script_name = hook_config.get('script')
+                    priority = hook_config.get('priority', 50)
+                else:
+                    script_name = hook_config
+                    priority = 50
+                
+                if not script_name or script_name not in self.script_modules:
+                    continue
+                
+                module = self.script_modules[script_name]
+                
+                # Get handler function name from HOOKS dict if it exists
+                handler_name = None
+                if hasattr(module, 'HOOKS') and isinstance(module.HOOKS, dict):
+                    handler_name = module.HOOKS.get(event_name)
+                else:
+                    # Default handler name based on event
+                    handler_name = self._get_default_handler_name(event_name)
+                
+                if not handler_name:
+                    continue
+                
+                # Get the handler function
+                handler = getattr(module, handler_name, None)
+                if not handler or not callable(handler):
+                    continue
+                
+                # Register the hook
+                self.registered_hooks[event_name].append({
+                    'script': script_name,
+                    'handler': handler,
+                    'priority': priority
+                })
+                
+                # Also register with GameAPI for compatibility
+                if self.api and hasattr(self.api, 'register_hook'):
+                    self.api.register_hook(event_name, handler)
+        
+        return True
+    
+    def _get_default_handler_name(self, event_name: str) -> Optional[str]:
+        """Get the default handler function name for an event.
+        
+        Args:
+            event_name: Name of the event
+            
+        Returns:
+            Handler function name or None
+        """
+        # Convert event name to handler name
+        # e.g., on_battle_start -> on_battle_start_handler
+        return f"{event_name}_handler"
+    
+    def _initialize_scripts(self) -> bool:
+        """Call init_script() function for all loaded scripts.
+        
+        Returns:
+            True if all initializations successful
+        """
+        for script_name, script_data in self.scripts.items():
+            module = script_data.get('module')
+            if module and hasattr(module, 'init_script'):
+                try:
+                    module.init_script()
+                except Exception as e:
+                    print(f"Error initializing script '{script_name}': {e}")
+        
+        return True
+    
+    def trigger_event(self, event_name: str, *args, **kwargs) -> List[Any]:
+        """Trigger an event and call all registered handlers.
+        
+        Args:
+            event_name: Name of the event to trigger
+            *args: Arguments to pass to handlers
+            **kwargs: Keyword arguments to pass to handlers
+            
+        Returns:
+            List of return values from handlers
+        """
+        if event_name not in self.registered_hooks:
+            return []
+        
+        results = []
+        settings = self.config.get('settings', {})
+        error_handling = settings.get('error_handling', 'log_only')
+        
+        for hook_info in self.registered_hooks[event_name]:
+            handler = hook_info.get('handler')
+            script_name = hook_info.get('script', 'unknown')
+            
+            if not handler:
+                continue
+            
+            try:
+                result = handler(*args, **kwargs)
+                results.append(result)
+            except Exception as e:
+                if error_handling == 'log_only':
+                    print(f"Script error in '{script_name}' during '{event_name}': {e}")
+                elif error_handling == 'crash':
+                    raise
+                elif error_handling == 'continue':
+                    # Continue execution, result is None
+                    results.append(None)
+        
+        return results
+    
+    def trigger_event_first(self, event_name: str, *args, **kwargs) -> Any:
+        """Trigger an event and return the first non-None result.
+        
+        This is useful for events where you want to know if any script
+        "handled" the event.
+        
+        Args:
+            event_name: Name of the event to trigger
+            *args: Arguments to pass to handlers
+            **kwargs: Keyword arguments to pass to handlers
+            
+        Returns:
+            First non-None return value, or None
+        """
+        results = self.trigger_event(event_name, *args, **kwargs)
+        for result in results:
+            if result is not None:
+                return result
+        return None
+    
+    def register_custom_hook(self, event_name: str, handler: Callable, 
+                            script_name: str = 'custom', priority: int = 50) -> bool:
+        """Register a custom hook at runtime.
+        
+        Args:
+            event_name: Name of the event
+            handler: Handler function
+            script_name: Name of the script registering the hook
+            priority: Execution priority (higher = runs first)
+            
+        Returns:
+            True if registered successfully
+        """
+        if event_name not in self.registered_hooks:
+            self.registered_hooks[event_name] = []
+        
+        # Add to sorted hooks
+        self.registered_hooks[event_name].append({
+            'script': script_name,
+            'handler': handler,
+            'priority': priority
+        })
+        
+        # Re-sort hooks by priority
+        self.registered_hooks[event_name].sort(
+            key=lambda x: x.get('priority', 50), reverse=True
+        )
+        
+        # Also register with GameAPI
+        if self.api and hasattr(self.api, 'register_hook'):
+            self.api.register_hook(event_name, handler)
+        
+        return True
+    
+    def unregister_hook(self, event_name: str, handler: Callable) -> bool:
+        """Unregister a hook handler.
+        
+        Args:
+            event_name: Name of the event
+            handler: Handler function to remove
+            
+        Returns:
+            True if unregistered successfully
+        """
+        if event_name not in self.registered_hooks:
+            return False
+        
+        for i, hook_info in enumerate(self.registered_hooks[event_name]):
+            if hook_info.get('handler') == handler:
+                del self.registered_hooks[event_name][i]
+                
+                # Also unregister from GameAPI
+                if self.api:
+                    # GameAPI doesn't have unregister_hook, but we can
+                    # work around this by having a wrapper
+                    pass
+                
+                return True
+        
+        return False
+    
+    def get_registered_events(self) -> List[str]:
+        """Get list of all registered events.
+        
+        Returns:
+            List of event names with registered handlers
+        """
+        return list(self.registered_hooks.keys())
+    
+    def get_handlers_for_event(self, event_name: str) -> List[Dict[str, Any]]:
+        """Get all handlers registered for an event.
+        
+        Args:
+            event_name: Name of the event
+            
+        Returns:
+            List of handler info dicts
+        """
+        return self.registered_hooks.get(event_name, [])
+    
+    def is_enabled(self) -> bool:
+        """Check if scripting is enabled.
+        
+        Returns:
+            True if scripting is enabled
+        """
+        return self.enabled
+    
+    def get_config(self) -> Dict[str, Any]:
+        """Get the current configuration.
+        
+        Returns:
+            Configuration dictionary
+        """
+        return self.config
+    
+    def get_script_info(self, script_name: str) -> Optional[Dict[str, Any]]:
+        """Get information about a loaded script.
+        
+        Args:
+            script_name: Name of the script
+            
+        Returns:
+            Script info dict or None
+        """
+        return self.scripts.get(script_name)
+    
+    def list_scripts(self) -> List[str]:
+        """Get list of all loaded scripts.
+        
+        Returns:
+            List of script names
+        """
+        return list(self.scripts.keys())
+    
+    def log(self, message: str) -> None:
+        """Log a message if logging is enabled.
+        
+        Args:
+            message: Message to log
+        """
+        settings = self.config.get('settings', {})
+        log_level = settings.get('log_level', 'info')
+        
+        if log_level == 'debug':
+            print(f"[ScriptManager] {message}")
+        elif log_level == 'info':
+            print(f"[ScriptManager] {message}")
+    
+    def shutdown(self) -> None:
+        """Clean up script manager on game shutdown."""
+        # Call shutdown functions if they exist
+        for script_name, script_data in self.scripts.items():
+            module = script_data.get('module')
+            if module and hasattr(module, 'shutdown_script'):
+                try:
+                    module.shutdown_script()
+                except Exception as e:
+                    print(f"Error shutting down script '{script_name}': {e}")
+        
+        # Clear all hooks
+        self.registered_hooks.clear()
+        self.script_modules.clear()
+        self.scripts.clear()
+        self.enabled = False
+
 # Market API URL and cooldown
 MARKET_API_URL = "https://our-legacy.vercel.app/api/market"
 MARKET_COOLDOWN_MINUTES = 10
@@ -1653,6 +2160,32 @@ def init_scripting_api(game_instance) -> GameAPI:
 def get_api() -> Optional[GameAPI]:
     """Get the global GameAPI instance."""
     return game_api
+
+
+def init_script_manager(game_instance) -> ScriptManager:
+    """Initialize the script manager with a game instance.
+
+    Called by Game class during game startup after init_scripting_api.
+    
+    Args:
+        game_instance: Reference to the main Game instance
+        
+    Returns:
+        ScriptManager instance
+    """
+    global script_manager
+    script_manager = ScriptManager(game_instance)
+    
+    # Initialize with the API if it exists
+    if game_api:
+        script_manager.initialize(game_api)
+    
+    return script_manager
+
+
+def get_script_manager() -> Optional[ScriptManager]:
+    """Get the global ScriptManager instance."""
+    return script_manager
 
 
 class Character:

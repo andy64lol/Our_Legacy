@@ -2,11 +2,38 @@
 """
 Example Script: Companion Reward
 Automatically recruit a companion when reaching certain levels.
+
+## New Script Format
+This script uses the standardized format with SCRIPT_INFO and HOOKS.
 """
 
 from main import get_api
 
 
+# ============================================================================
+# SCRIPT INFO - Metadata about this script
+# ============================================================================
+SCRIPT_INFO = {
+    "name": "Companion Reward",
+    "version": "1.0",
+    "author": "Our Legacy Team",
+    "description": "Automatically recruits companions at certain levels",
+    "priority": 90,
+    "dependencies": []
+}
+
+
+# ============================================================================
+# HOOKS - Event handler mappings
+# ============================================================================
+HOOKS = {
+    "on_player_levelup": "on_player_levelup_handler"
+}
+
+
+# ============================================================================
+# COMPANION REWARDS - Level -> Companion Name mapping
+# ============================================================================
 COMPANION_REWARDS = {
     5: 'Borin the Brave',
     10: 'Lyra the Swift',
@@ -15,8 +42,12 @@ COMPANION_REWARDS = {
 }
 
 
-def on_levelup_companion_reward():
-    """Called when player levels up."""
+# ============================================================================
+# EVENT HANDLERS - Functions called by the ScriptManager
+# ============================================================================
+
+def on_player_levelup_handler():
+    """Called when player levels up - check for companion reward."""
     api = get_api()
     if api is None:
         return
@@ -25,23 +56,45 @@ def on_levelup_companion_reward():
     if player is None:
         return
 
-    # Check if player reached a milestone level
-    if player['level'] in COMPANION_REWARDS:
-        companion_name = COMPANION_REWARDS[player['level']]
-        if companion_name not in player['companions']:
-            api.log(f"You've earned a companion! {companion_name} joins your party!")
-            api.hire_companion(companion_name)
+    level = player['level']
+    
+    # Check if player reached a milestone level with companion reward
+    if level in COMPANION_REWARDS:
+        companion_name = COMPANION_REWARDS[level]
+        
+        # Check if companion is already hired
+        companions = player.get('companions', [])
+        companion_names = [
+            c.get('name') if isinstance(c, dict) else c
+            for c in companions
+        ]
+        
+        if companion_name not in companion_names:
+            # Try to hire the companion
+            if api.hire_companion(companion_name):
+                api.log(f"You've earned a companion! {companion_name} joins your party!")
+            else:
+                api.log(f"Could not hire {companion_name} - party may be full")
         else:
             api.log(f"{companion_name} is already with you!")
 
 
-def register_hooks():
-    """Register this script's event hooks."""
+# ============================================================================
+# INITIALIZATION - Optional init function called by ScriptManager
+# ============================================================================
+
+def init_script():
+    """Initialize the companion reward script when loaded."""
     api = get_api()
     if api:
-        api.register_hook('on_player_levelup', on_levelup_companion_reward)
-        api.log("Companion Reward script loaded!")
+        api.log("Companion Reward script initialized!")
+    else:
+        print("Companion Reward script loaded (API not available yet)")
 
 
-# Auto-register when imported
-register_hooks()
+def shutdown_script():
+    """Clean up when script is unloaded or game shuts down."""
+    api = get_api()
+    if api:
+        api.log("Companion Reward shutdown complete")
+
