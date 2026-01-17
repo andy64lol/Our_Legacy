@@ -11,12 +11,25 @@ import random
 import sys
 import time
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional, Callable
 import difflib
 import signal
 import traceback
 import io
+
+# Optional HTTP library for market API
+try:
+    import requests
+    REQUESTS_AVAILABLE = True
+except ImportError:
+    requests = None
+    REQUESTS_AVAILABLE = False
+    try:
+        import urllib.request
+        import urllib.parse
+    except ImportError:
+        pass
 
 # Optional readline for tab-completion (best-effort)
 try:
@@ -1505,6 +1518,127 @@ class GameAPI:
 # Global API instance (set by Game class when game starts)
 game_api = None
 
+# Market API URL and cooldown
+MARKET_API_URL = "https://our-legacy.vercel.app/api/market"
+MARKET_COOLDOWN_MINUTES = 10
+
+
+class MarketAPI:
+    """API for accessing the Elite Market with 10-minute cooldown"""
+
+    def __init__(self):
+        self.cache = None
+        self.last_fetch = None
+        self.cooldown_minutes = MARKET_COOLDOWN_MINUTES
+
+    def _is_cache_valid(self) -> bool:
+        """Check if cache is still valid (within cooldown period)"""
+        if not self.last_fetch or not self.cache:
+            return False
+        elapsed = datetime.now() - self.last_fetch
+        return elapsed < timedelta(minutes=self.cooldown_minutes)
+
+    def fetch_market_data(self, force_refresh: bool = False) -> Optional[Dict[str, Any]]:
+        """Fetch market data from the API with caching and cooldown"""
+        # Check cache validity
+        if not force_refresh and self._is_cache_valid():
+            print(f"{Colors.CYAN}Visiting the market...{Colors.END}")
+            return self.cache
+
+        # Check cooldown
+        if self.last_fetch and not self._is_cache_valid():
+            remaining = timedelta(minutes=self.cooldown_minutes) - (datetime.now() - self.last_fetch)
+            mins = int(remaining.total_seconds() // 60)
+            secs = int(remaining.total_seconds() % 60)
+            print(
+                f"{Colors.YELLOW}Merchants have left and the market is closed! Please come back in {mins}m {secs}s{Colors.END}"
+            )
+            return None
+
+        print(f"{Colors.CYAN}Checking if merchants are in the market...{Colors.END}")
+
+        # Try to fetch from API using requests
+        if REQUESTS_AVAILABLE and requests is not None:
+            try:
+                response = requests.get(MARKET_API_URL, timeout=10)
+                if response.status_code == 200:
+                    data = response.json()
+                    self.cache = data
+                    self.last_fetch = datetime.now()
+                    print(f"{Colors.GREEN}Market is open!{Colors.END}")
+                    return data
+                else:
+                    print(f"{Colors.RED}Failed to reach to the market: HTTP {response.status_code}{Colors.END}")
+            except requests.exceptions.RequestException as e:
+                print(f"{Colors.RED}Network error: {e}{Colors.END}")
+        else:
+            # Fallback using urllib
+            try:
+                import urllib.request
+                req = urllib.request.Request(MARKET_API_URL)
+                with urllib.request.urlopen(req, timeout=10) as response:
+                    data = json.loads(response.read().decode())
+                    self.cache = data
+                    self.last_fetch = datetime.now()
+                    print(f"{Colors.GREEN}Market is open! {Colors.END}")
+                    return data
+            except Exception as e:
+                print(f"{Colors.RED}Network error: {e}{Colors.END}")
+
+        return None
+
+    def get_cooldown_remaining(self) -> Optional[timedelta]:
+        """Get remaining cooldown time"""
+        if not self.last_fetch:
+            return None
+        elapsed = datetime.now() - self.last_fetch
+        remaining = timedelta(minutes=self.cooldown_minutes) - elapsed
+        if remaining.total_seconds() > 0:
+            return remaining
+        return None
+
+    def get_all_items(self) -> List[Dict[str, Any]]:
+        """Get all market items"""
+        data = self.fetch_market_data()
+        if data and data.get('ok'):
+            return data.get('items', [])
+        return []
+
+    def filter_items(self,
+                     item_type: Optional[str] = None,
+                     rarity: Optional[str] = None,
+                     class_req: Optional[str] = None,
+                     max_price: Optional[int] = None) -> List[Dict[str, Any]]:
+        """Get filtered market items"""
+        data = self.fetch_market_data()
+        if not data or not data.get('ok'):
+            return []
+
+        items = data.get('items', [])
+
+        filtered = []
+        for item in items:
+            if item_type and item.get('type', '').lower() != item_type.lower():
+                continue
+            if rarity and item.get('rarity', '').lower() != rarity.lower():
+                continue
+            if class_req:
+                req = item.get('requirements') or {}
+                if req.get('class', '').lower() != class_req.lower():
+                    continue
+            if max_price and item.get('marketPrice', 0) > max_price:
+                continue
+            filtered.append(item)
+
+        return filtered
+
+    def get_items_by_type(self) -> Dict[str, List[Dict[str, Any]]]:
+        """Get items grouped by type"""
+        data = self.fetch_market_data()
+        if data and data.get('ok'):
+            return data.get('itemsByType', {})
+        return {}
+
 
 def init_scripting_api(game_instance) -> GameAPI:
     """Initialize the scripting API with a game instance.
@@ -2102,6 +2236,7 @@ class Game:
         self.config: Dict[str, Any] = {}
         self.scripting_enabled: bool = False
         self.script_api: Optional[Any] = None
+        self.market_api: Optional[MarketAPI] = None
 
         # Load game data
         self.load_game_data()
@@ -2162,6 +2297,9 @@ class Game:
         except json.JSONDecodeError:
             print("Warning: config.json is invalid JSON. Using defaults.")
             self.scripting_enabled = False
+
+        # Initialize Market API
+        self.market_api = MarketAPI()
 
     def display_welcome(self) -> str:
         """Display welcome screen"""
@@ -2416,13 +2554,14 @@ class Game:
         print("6. Fight Boss")
         print("7. Tavern")
         print("8. Shop")
-        print("9. Rest")
-        print("10. Companions")
-        print("11. Save Game")
-        print("12. Load Game")
-        print("13. Claim Rewards")
-        print("14. Quit")
-        choice = ask("Choose an option (1-14): ", allow_empty=False)
+        print("9. Elite Market")
+        print("10. Rest")
+        print("11. Companions")
+        print("12. Save Game")
+        print("13. Load Game")
+        print("14. Claim Rewards")
+        print("15. Quit")
+        choice = ask("Choose an option (1-15): ", allow_empty=False)
 
         # Normalize textual shortcuts to numbers for backward compatibility
         shortcut_map = {
@@ -2440,17 +2579,20 @@ class Game:
             'tavern': '7',
             'shop': '8',
             's': '8',
-            'rest': '9',
-            'r': '9',
-            'companions': '10',
-            'comp': '10',
-            'save': '11',
-            'load': '12',
-            'l': '12',
-            'claim': '13',
-            'c': '13',
-            'quit': '14',
-            'q': '14'
+            'market': '9',
+            'mkt': '9',
+            'elite': '9',
+            'rest': '10',
+            'r': '10',
+            'companions': '11',
+            'comp': '11',
+            'save': '12',
+            'load': '13',
+            'l': '13',
+            'claim': '14',
+            'c': '14',
+            'quit': '15',
+            'q': '15'
         }
 
         normalized = choice.strip().lower()
@@ -2477,16 +2619,18 @@ class Game:
         elif choice == "8":
             self.visit_shop()
         elif choice == "9":
-            self.rest()
+            self.visit_market()
         elif choice == "10":
-            self.manage_companions()
+            self.rest()
         elif choice == "11":
-            self.save_game()
+            self.manage_companions()
         elif choice == "12":
-            self.load_game()
+            self.save_game()
         elif choice == "13":
-            self.claim_rewards()
+            self.load_game()
         elif choice == "14":
+            self.claim_rewards()
+        elif choice == "15":
             self.quit_game()
         else:
             print("Invalid choice. Please try again.")
@@ -3939,6 +4083,184 @@ class Game:
                         print("Not enough gold!")
                 else:
                     print("Invalid choice.")
+
+    def visit_market(self):
+        """Visit the Elite Market - browse and buy items from the API at 50% off"""
+        if not self.player:
+            print("No character created yet.")
+            return
+
+        if not self.market_api:
+            print("Market API not available.")
+            return
+
+        print(f"\n{Colors.MAGENTA}{Colors.BOLD}=== ELITE MARKET ==={Colors.END}")
+        print("Welcome to the Elite Market! All items sold at 50% OFF!")
+        print(f"\nYour gold: {Colors.GOLD}{self.player.gold}{Colors.END}")
+
+        # Check cooldown
+        remaining = self.market_api.get_cooldown_remaining()
+        if remaining and remaining.total_seconds() > 0:
+            mins = int(remaining.total_seconds() // 60)
+            secs = int(remaining.total_seconds() % 60)
+            print(f"\n{Colors.YELLOW}Market cooldown: {mins}m {secs}s remaining{Colors.END}")
+
+        # Fetch market data
+        market_data = self.market_api.fetch_market_data()
+        if not market_data or not market_data.get('ok'):
+            print(f"\n{Colors.RED}{Colors.BOLD}Market is currently closed!{Colors.END}")
+            print(f"{Colors.YELLOW}Merchants have travelled to another distant far place!{Colors.END}")
+            print(f"{Colors.YELLOW}Please wait until the merchants arrive!{Colors.END}")
+            return
+
+        items = self.market_api.get_all_items()
+        if not items:
+            print("No items available in the market.")
+            return
+
+        # Get filter options from player
+        print(f"\n{Colors.CYAN}=== BROWSE ITEMS ==={Colors.END}")
+        print("Filters available:")
+        print("  1. All Items")
+        print("  2. By Type (weapon, armor, consumable, etc.)")
+        print("  3. By Rarity (common, uncommon, rare, legendary)")
+        print("  4. By Class (Mage, Warrior, Rogue, etc.)")
+        print("  5. By Max Price")
+        print("  R. Refresh market (forces new fetch)")
+
+        choice = ask("\nChoose filter (1-5, R) or press Enter to browse all: ").strip().upper()
+
+        filtered_items = items
+
+        if choice == '1' or not choice:
+            pass  # All items
+        elif choice == '2':
+            print("\nItem types: weapon, armor, consumable, accessory, material, offhand")
+            item_type = ask("Enter type: ").strip().lower()
+            filtered_items = self.market_api.filter_items(item_type=item_type)
+        elif choice == '3':
+            print("\nRarities: common, uncommon, rare, legendary")
+            rarity = ask("Enter rarity: ").strip().lower()
+            filtered_items = self.market_api.filter_items(rarity=rarity)
+        elif choice == '4':
+            print("\nClasses: Warrior, Mage, Rogue, Hunter, Bard, etc.")
+            class_req = ask("Enter class: ").strip()
+            filtered_items = self.market_api.filter_items(class_req=class_req)
+        elif choice == '5':
+            try:
+                max_price = int(ask("Enter max price: ").strip())
+                filtered_items = self.market_api.filter_items(max_price=max_price)
+            except ValueError:
+                print("Invalid price, showing all items.")
+        elif choice == 'R':
+            filtered_items = self.market_api.get_all_items()
+            # Force refresh
+            self.market_api.fetch_market_data(force_refresh=True)
+            filtered_items = self.market_api.get_all_items()
+
+        if not filtered_items:
+            print("No items match your filters.")
+            return
+
+        # Sort by market price by default
+        filtered_items = sorted(filtered_items, key=lambda x: x.get('marketPrice', 0))
+
+        # Paginate and display items
+        page_size = 8
+        current_page = 0
+
+        while True:
+            start = current_page * page_size
+            end = start + page_size
+            page_items = filtered_items[start:end]
+
+            if not page_items:
+                print("No more items.")
+                break
+
+            print(
+                f"\n--- Page {current_page + 1} of {(len(filtered_items) + page_size - 1) // page_size} ---"
+            )
+
+            for i, item in enumerate(page_items, 1):
+                name = item.get('name', 'Unknown')
+                item_type = item.get('type', 'unknown')
+                rarity = item.get('rarity', 'common')
+                original_price = item.get('originalPrice', 0)
+                market_price = item.get('marketPrice', 0)
+                desc = item.get('description', '')[:60]  # Truncate long descriptions
+                reqs = item.get('requirements')
+                class_req = reqs.get('class') if reqs else None
+                level_req = reqs.get('level', 1) if reqs else 1
+
+                # Color by rarity
+                rarity_color = get_rarity_color(rarity)
+                price_color = Colors.GREEN if market_price <= self.player.gold else Colors.RED
+
+                print(f"\n{i}. {rarity_color}{name}{Colors.END} ({item_type})")
+                print(f"   {Colors.DARK_GRAY}{desc}{Colors.END}")
+                print(f"   {rarity_color}{rarity.title()}{Colors.END} | Level {level_req}" +
+                      (f" | {Colors.CYAN}{class_req}{Colors.END}" if class_req else ""))
+                print(f"   {Colors.GOLD}{market_price}{Colors.END} gold (was {original_price})")
+
+            print(f"\n{Colors.YELLOW}Options:{Colors.END}")
+            print(f"1-{len(page_items)}. Buy Item")
+            if len(filtered_items) > page_size:
+                print("N. Next Page")
+                print("P. Previous Page")
+            print("F. Filter Items")
+            print("Enter. Return to Main Menu")
+
+            choice = ask("\nChoose action: ").strip().upper()
+
+            if not choice:
+                break
+            elif choice == 'N' and len(filtered_items) > page_size:
+                if end < len(filtered_items):
+                    current_page += 1
+            elif choice == 'P' and len(filtered_items) > page_size:
+                if current_page > 0:
+                    current_page -= 1
+            elif choice == 'F':
+                # Apply filter
+                print("\nRefine search:")
+                print("  1. By Type")
+                print("  2. By Rarity")
+                print("  3. By Class")
+                print("  4. By Max Price")
+                sub_choice = ask("Choose filter: ").strip()
+                if sub_choice == '1':
+                    item_type = ask("Enter type: ").strip().lower()
+                    filtered_items = [it for it in filtered_items if it.get('type', '').lower() == item_type]
+                elif sub_choice == '2':
+                    rarity = ask("Enter rarity: ").strip().lower()
+                    filtered_items = [it for it in filtered_items if it.get('rarity', '').lower() == rarity]
+                elif sub_choice == '3':
+                    class_req = ask("Enter class: ").strip()
+                    filtered_items = [it for it in filtered_items if (it.get('requirements') or {}).get('class', '').lower() == class_req.lower()]
+                elif sub_choice == '4':
+                    try:
+                        max_price = int(ask("Enter max price: ").strip())
+                        filtered_items = [it for it in filtered_items if it.get('marketPrice', 0) <= max_price]
+                    except ValueError:
+                        pass
+                current_page = 0
+            elif choice.isdigit():
+                item_idx = int(choice) - 1
+                if 0 <= item_idx < len(page_items):
+                    item = page_items[item_idx]
+                    name = item.get('name', '')
+                    market_price = item.get('marketPrice', 0)
+
+                    if self.player.gold >= market_price:
+                        self.player.gold -= market_price
+                        self.player.inventory.append(name)
+                        print(f"\n{Colors.GREEN}Purchased {name} for {market_price} gold!{Colors.END}")
+                        self.update_mission_progress('collect', name)
+                    else:
+                        print(f"\n{Colors.RED}Not enough gold! Need {market_price}, have {self.player.gold}.{Colors.END}")
+                else:
+                    print("Invalid selection.")
 
     def manage_companions(self):
         """Manage hired companions."""
