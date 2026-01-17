@@ -337,6 +337,18 @@
     "rest_cost": 5,
     "can_rest": true
   },
+  "desert_of_aukrahama": {
+    "name": "Desert of Aukrahama",
+    "description": "A vast, arid desert where scorching winds and shifting sands make travel perilous.",
+    "possible_enemies": ["sand_viper", "bandit", "thief"],
+    "possible_bosses": ["purple_sandworm"],
+    "shops": [],
+    "missions_available": true,
+    "connections": ["forgotten_oasis"],
+    "difficulty": 4,
+    "rest_cost": 15,
+    "can_rest": true
+  },
   "outlaw_lands_of_bridagrak_oblast":{
     "name": "Outlaw Lands of Brïdagrak Oblast",
     "description": "A lawless region where bandits and mercenaries vie for control. Danger lurks around every corner.",

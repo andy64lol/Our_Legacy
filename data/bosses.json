@@ -818,5 +818,53 @@
       "Dälokurg's Warhammer",
       "Bandit Leader's Cloak"
     ]
+  },
+  "purple_sandworm":{
+    "name": "Purple Sandworm",
+    "hp": 650,
+    "attack": 90,
+    "defense": 90,
+    "speed": 12,
+    "description": "A massive sandworm that dwells beneath the desert sands. Its purple scales shimmer in the sunlight, and it can burrow quickly to ambush prey.",
+    "special_abilities": [
+      {
+        "name": "Sand Burrow",
+        "description": "Dives underground to avoid attacks and reemerge elsewhere",
+        "effect": "evasion",
+        "duration": 2,
+        "mp_cost": 15,
+        "cooldown": 4
+      },
+      {
+        "name": "Tail Swipe",
+        "description": "A powerful tail attack that hits all nearby enemies",
+        "damage": 35,
+        "mp_cost": 10,
+        "cooldown": 3
+      },
+      {
+        "name": "Sandstorm",
+        "description": "Creates a sandstorm that reduces enemy accuracy",
+        "accuracy_reduction": 10,
+        "duration": 4,
+        "mp_cost": 25,
+        "cooldown": 5
+      }
+    ],
+    "phases": [
+      {
+        "hp_threshold": 0.5,
+        "description": "The sandworm becomes more aggressive as it takes damage",
+        "attack_multiplier": 1.2,
+        "special_abilities_unlocked": ["Sandstorm"]
+      }
+    ],
+    "experience_reward": 300,
+    "gold_reward": 150,
+    "unique_loot": [
+      "Sandworm Scale",
+      "Desert Crystal",
+      "Burrower's Fang"
+    ]
   }
 }

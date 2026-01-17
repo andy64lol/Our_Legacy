@@ -338,5 +338,15 @@
     "experience_reward": 90,
     "gold_reward": 50,
     "loot_table": ["Storm Elemental Core", "Lightning Crystal", "Spirit Dust"]
+  },
+  "sand_viper": {
+    "name": "Sand Viper",
+    "hp": 40,
+    "attack": 16,
+    "defense": 4,
+    "speed": 18,
+    "experience_reward": 45,
+    "gold_reward": 22,
+    "loot_table": ["Serpent Tail", "Venom Sac"]
   }
 }
