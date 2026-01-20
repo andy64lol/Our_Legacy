@@ -532,7 +532,7 @@ class ScriptingEngine:
                 print(f"{Colors.YELLOW}Node.js test failed. Scripting disabled.{Colors.END}")
                 return
 
-            self.scripting_enabled = True
+            self.scripting_enabled = False
             print(f"{Colors.GREEN}Scripting engine initialized successfully.{Colors.END}")
 
         except Exception as e:
@@ -3425,7 +3425,7 @@ class Game:
                 print(f"   {Colors.DARK_GRAY}{desc}{Colors.END}")
                 print(f"   {rarity_color}{rarity.title()}{Colors.END} | Level {level_req}" +
                       (f" | {Colors.CYAN}{class_req}{Colors.END}" if class_req else ""))
-                print(f"   {Colors.GOLD}{market_price}{Colors.END} gold (was {original_price})")
+                print(f"   {price_color}{market_price}{Colors.END} gold (was {original_price})")
 
             print(f"\n{Colors.YELLOW}Options:{Colors.END}")
             print(f"1-{len(page_items)}. Buy Item")
