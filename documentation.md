@@ -156,10 +156,4 @@ The Battle UI displays:
 
 ## Scripting API
 
-The `GameAPI` class in `scripting.py` allows for extensive modding via event hooks:
-- `on_battle_start`
-- `on_player_turn`
-- `on_explore`
-- `on_player_levelup`
-
-Scripts can be enabled/disabled in `data/config.json`.
+[Go to new_scripting.md for more info](new_scripting.md).

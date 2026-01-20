@@ -1,0 +1,119 @@
+{
+  "version": "2.0",
+  "last_updated": null,
+  "activities": [],
+  "player": {
+    "uuid": "0641b0bd-7775-4883-91ce-a8d663f6dcec",
+    "name": "andy",
+    "class": "Hunter",
+    "health": 100,
+    "maxHealth": 100,
+    "mp": 50,
+    "maxMP": 750,
+    "level": 107,
+    "exp": 891,
+    "gold": 1000000000000000000000000001168,
+    "inventory": [
+      "Hunter's Bow",
+      "Hunting Knife",
+      "Leather Armor",
+      "Health Potion",
+      "Dragon Spear",
+      "Spellsword",
+      "Dark Crystal",
+      "Magic Staff",
+      "Spellsword",
+      "Magic Staff",
+      "Shadow Blade",
+      "Shadow Blade",
+      "Shadow Blade",
+      "Fire Gem",
+      "Fire Gem",
+      "Dark Crystal",
+      "Dark Crystal",
+      "Shadow Blade",
+      "Mana Potion",
+      "Shadow Blade",
+      "Dark Crystal",
+      "Magic Staff",
+      "Shadow Blade",
+      "Magic Staff",
+      "Magic Staff",
+      "Dark Crystal",
+      "Dark Crystal",
+      "Dark Crystal",
+      "Shadow Blade",
+      "Shadow Blade",
+      "Dark Crystal",
+      "Shadow Blade",
+      "Dragon Bone",
+      "Dragon Bone",
+      "Dragon Bone",
+      "Void Heart",
+      "Void Heart",
+      "Poison Crystal",
+      "Poison Crystal",
+      "Dark Crystal"
+    ],
+    "companions": [
+      {
+        "id": "companion_7",
+        "name": "Ragnar the Warlord",
+        "level": 1,
+        "equipment": {
+          "weapon": null,
+          "armor": null,
+          "accessory": null
+        }
+      },
+      {
+        "id": "companion_11",
+        "name": "Skiff von Stratoscrate",
+        "level": 1,
+        "equipment": {
+          "weapon": null,
+          "armor": null,
+          "accessory": null
+        }
+      }
+    ],
+    "equipped": {
+      "weapon": "Hunter's Bow",
+      "armor": "Leather Armor",
+      "accessory": null
+    },
+    "lastItemConsumed": null,
+    "lastItemObtained": null
+  },
+  "location": {
+    "id": "abyss_gate",
+    "name": "Abyss Gate",
+    "connections": [
+      "void_cavern"
+    ],
+    "canRest": false,
+    "restCost": 10,
+    "difficulty": 5
+  },
+  "enemy": {
+    "id": "",
+    "name": "",
+    "isBoss": false,
+    "hp": 0,
+    "maxHp": 0
+  },
+  "battle": {
+    "active": false,
+    "enemyId": null,
+    "bossId": null
+  },
+  "missions": {
+    "finished": [],
+    "ongoing": [],
+    "notAccepted": []
+  },
+  "system": {
+    "latestSave": null
+  },
+  "effects": []
+}

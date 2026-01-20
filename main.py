@@ -1,8 +1,6 @@
 """
 Our Legacy - Text-Based CLI Fantasy RPG Game
 A comprehensive exploration and grinding-driven RPG experience
-
-This file includes the Scripting API for modding and extending the game.
 """
 
 import json
@@ -12,11 +10,13 @@ import sys
 import time
 import uuid
 from datetime import datetime, timedelta
-from typing import Dict, List, Any, Optional, Callable
+from typing import Dict, List, Any, Optional
 import difflib
 import signal
 import traceback
 import io
+import subprocess
+import tempfile
 
 # Optional HTTP library for market API
 try:
@@ -36,6 +36,9 @@ try:
     import readline
 except Exception:
     readline = None
+
+# Global color toggle
+COLORS_ENABLED = True
 
 
 class Colors:
@@ -63,9 +66,16 @@ class Colors:
     EPIC = '\033[95m'  # Magenta
     LEGENDARY = '\033[93m'  # Gold
 
+    @staticmethod
+    def _color(code: str) -> str:
+        """Return color code if colors are enabled, otherwise empty string"""
+        global COLORS_ENABLED
+        return code if COLORS_ENABLED else ""
+
 
 def clear_screen():
     """Clear the terminal screen in a cross-platform way."""
+    time.sleep(1)
     command = 'cls' if os.name == 'nt' else 'clear'
     os.system(command)
 
@@ -258,1776 +268,464 @@ def disable_tab_completion(prev_completer):
     readline.set_completer(prev_completer)
 
 
-class GameAPI:
-    """Main API interface for game scripting."""
-
-    def __init__(self, game_instance=None):
-        """Initialize the scripting API with a game instance.
-
-        Args:
-            game_instance: Reference to the main Game instance
-        """
-        self.game = game_instance
-        self.hooks: Dict[str, List[Callable]] = {
-            'on_battle_start': [],
-            'on_battle_end': [],
-            'on_player_levelup': [],
-            'on_item_acquired': [],
-            'on_companion_hired': [],
-            'on_mission_complete': [],
-            'on_buff_applied': [],
-            'on_area_entered': [],
-            'on_explore': [],
-            'on_player_turn': [],
-            'on_enemy_turn': [],
-            'on_loot_drop': [],
-            'on_shop_open': [],
-            'on_tavern_open': [],
-        }
-        self.custom_data: Dict[str, Any] = {}
-
-    # ============ Player Access ============
-
-    def get_player(self) -> Optional[Dict[str, Any]]:
-        """Get current player data as a dictionary."""
-        if not self.game or not self.game.player:
-            return None
-        p = self.game.player
-        return {
-            'name':
-            p.name,
-            'class':
-            p.character_class,
-            'rank':
-            p.rank,
-            'level':
-            p.level,
-            'experience':
-            p.experience,
-            'hp':
-            p.hp,
-            'max_hp':
-            p.max_hp,
-            'mp':
-            p.mp,
-            'max_mp':
-            p.max_mp,
-            'attack':
-            p.get_effective_attack(),
-            'defense':
-            p.get_effective_defense(),
-            'speed':
-            p.get_effective_speed(),
-            'gold':
-            p.gold,
-            'inventory':
-            p.inventory.copy(),
-            'companions': [
-                c.get('name') if isinstance(c, dict) else c
-                for c in p.companions
-            ],
-            'active_buffs':
-            p.active_buffs.copy(),
-        }
-
-    def set_player_stat(self, stat: str, value: int) -> bool:
-        """Modify a player stat.
-
-        Args:
-            stat: 'hp', 'mp', 'attack', 'defense', 'speed', 'gold', 'level', 'experience'
-            value: New value
-
-        Returns:
-            True if successful, False otherwise
-        """
-        if not self.game or not self.game.player:
-            return False
-
-        p = self.game.player
-        try:
-            if stat == 'hp':
-                p.hp = min(p.max_hp, max(0, value))
-            elif stat == 'mp':
-                p.mp = min(p.max_mp, max(0, value))
-            elif stat == 'attack':
-                p.attack = max(0, value)
-            elif stat == 'defense':
-                p.defense = max(0, value)
-            elif stat == 'speed':
-                p.speed = max(0, value)
-            elif stat == 'gold':
-                p.gold = max(0, value)
-            elif stat == 'level':
-                p.level = max(1, value)
-                p._update_rank()
-            elif stat == 'experience':
-                p.experience = max(0, value)
-            else:
-                return False
-            return True
-        except Exception:
-            return False
-
-    def add_item(self, item_name: str, count: int = 1) -> bool:
-        """Add items to player inventory.
-
-        Args:
-            item_name: Name of item to add
-            count: How many to add
-
-        Returns:
-            True if successful
-        """
-        if not self.game or not self.game.player:
-            return False
-        try:
-            for _ in range(count):
-                self.game.player.inventory.append(item_name)
-            return True
-        except Exception:
-            return False
-
-    def remove_item(self, item_name: str, count: int = 1) -> bool:
-        """Remove items from player inventory.
-
-        Args:
-            item_name: Name of item to remove
-            count: How many to remove
-
-        Returns:
-            True if successful
-        """
-        if not self.game or not self.game.player:
-            return False
-        try:
-            for _ in range(count):
-                if item_name in self.game.player.inventory:
-                    self.game.player.inventory.remove(item_name)
-                else:
-                    return False
-            return True
-        except Exception:
-            return False
-
-    def apply_buff(self, buff_name: str, duration: int,
-                   modifiers: Dict[str, int]) -> bool:
-        """Apply a temporary buff to the player.
-
-        Args:
-            buff_name: Name of the buff
-            duration: How many turns it lasts
-            modifiers: Dict like {'attack_bonus': 5, 'defense_bonus': 3}
-
-        Returns:
-            True if successful
-        """
-        if not self.game or not self.game.player:
-            return False
-        try:
-            self.game.player.apply_buff(buff_name, duration, modifiers)
-            return True
-        except Exception:
-            return False
-
-    def heal_player(self, amount: int) -> int:
-        """Heal player HP.
-
-        Args:
-            amount: How much to heal
-
-        Returns:
-            Actual amount healed
-        """
-        if not self.game or not self.game.player:
-            return 0
-        old_hp = self.game.player.hp
-        self.game.player.heal(amount)
-        return self.game.player.hp - old_hp
-
-    def restore_mp(self, amount: int) -> int:
-        """Restore player MP.
-
-        Args:
-            amount: How much to restore
-
-        Returns:
-            Actual amount restored
-        """
-        if not self.game or not self.game.player:
-            return 0
-        old_mp = self.game.player.mp
-        self.game.player.mp = min(self.game.player.max_mp,
-                                  self.game.player.mp + amount)
-        return self.game.player.mp - old_mp
-
-    # ============ Companions ============
-
-    def get_companions(self) -> List[Dict[str, Any]]:
-        """Get list of hired companions."""
-        if not self.game or not self.game.player:
-            return []
-        companions = []
-        for c in self.game.player.companions:
-            if isinstance(c, dict):
-                companions.append({
-                    'name': c.get('name'),
-                    'id': c.get('id'),
-                    'level': c.get('level', 1),
-                })
-            else:
-                companions.append({'name': c, 'id': None, 'level': 1})
-        return companions
-
-    def hire_companion(self, companion_name: str) -> bool:
-        """Hire a companion by name.
-
-        Args:
-            companion_name: Name of companion from companions.json
-
-        Returns:
-            True if successful
-        """
-        if not self.game or not self.game.player:
-            return False
-        if len(self.game.player.companions) >= 4:
-            return False
-        try:
-            # Find companion data
-            for cid, cdata in self.game.companions_data.items():
-                if cdata.get('name') == companion_name:
-                    # Hire without cost check
-                    companion_data = {
-                        'id': cid,
-                        'name': cdata.get('name'),
-                        'level': 1,
-                        'equipment': {
-                            'weapon': None,
-                            'armor': None,
-                            'accessory': None
-                        }
-                    }
-                    self.game.player.companions.append(companion_data)
-                    self.game.player.update_stats_from_equipment(
-                        self.game.items_data, self.game.companions_data)
-                    return True
-            return False
-        except Exception:
-            return False
-
-    # ============ Game Data Access ============
-
-    def get_items_data(self) -> Dict[str, Any]:
-        """Get all items data."""
-        return self.game.items_data.copy() if self.game else {}
-
-    def get_enemies_data(self) -> Dict[str, Any]:
-        """Get all enemies data."""
-        return self.game.enemies_data.copy() if self.game else {}
-
-    def get_areas_data(self) -> Dict[str, Any]:
-        """Get all areas data."""
-        return self.game.areas_data.copy() if self.game else {}
-
-    def get_companions_data(self) -> Dict[str, Any]:
-        """Get all companions data."""
-        return self.game.companions_data.copy() if self.game else {}
-
-    def get_current_area(self) -> Optional[str]:
-        """Get current area ID."""
-        return self.game.current_area if self.game else None
-
-    def set_current_area(self, area_id: str) -> bool:
-        """Travel to an area.
-
-        Args:
-            area_id: Area identifier
-
-        Returns:
-            True if successful
-        """
-        if not self.game or area_id not in self.game.areas_data:
-            return False
-        self.game.current_area = area_id
-        return True
-
-    def get_area_info(self, area_id: str) -> Optional[Dict[str, Any]]:
-        """Get info about an area."""
-        if not self.game or area_id not in self.game.areas_data:
-            return None
-        return self.game.areas_data[area_id].copy()
-
-    # ============ Missions ============
-
-    def get_missions(self) -> Dict[str, Dict[str, Any]]:
-        """Get all missions data."""
-        return self.game.missions_data.copy() if self.game else {}
-
-    def get_mission_progress(self) -> Dict[str, Dict[str, Any]]:
-        """Get current mission progress."""
-        return self.game.mission_progress.copy() if self.game else {}
-
-    def accept_mission(self, mission_id: str) -> bool:
-        """Accept a mission."""
-        if not self.game:
-            return False
-        try:
-            self.game.accept_mission(mission_id)
-            return True
-        except Exception:
-            return False
-
-    def complete_mission(self, mission_id: str) -> bool:
-        """Force complete a mission."""
-        if not self.game or mission_id not in self.game.mission_progress:
-            return False
-        try:
-            self.game.complete_mission(mission_id)
-            return True
-        except Exception:
-            return False
-
-    # ============ Events & Hooks ============
-
-    def register_hook(self, event_name: str, callback: Callable) -> bool:
-        """Register a callback for a game event.
-
-        Args:
-            event_name: Name of event ('on_battle_start', 'on_player_levelup', etc.)
-            callback: Function to call when event fires
-
-        Returns:
-            True if successful
-        """
-        if event_name not in self.hooks:
-            return False
-        self.hooks[event_name].append(callback)
-        return True
-
-    def trigger_hook(self, event_name: str, *args, **kwargs) -> List[Any]:
-        """Trigger all callbacks for an event.
-
-        Args:
-            event_name: Name of event
-            *args, **kwargs: Arguments to pass to callbacks
-
-        Returns:
-            List of callback results
-        """
-        if event_name not in self.hooks:
-            return []
-        results = []
-        for callback in self.hooks[event_name]:
-            try:
-                result = callback(*args, **kwargs)
-                results.append(result)
-            except Exception as e:
-                print(f"Error in hook {event_name}: {e}")
-        return results
-
-    def trigger_event(self, event_name: str, *args, **kwargs) -> bool:
-        """Trigger all callbacks for an event and return True if any returned True.
-
-        This is used for events that can be 'handled' by a script to override
-        default game behavior.
-
-        Args:
-            event_name: Name of event
-            *args, **kwargs: Arguments to pass to callbacks
-
-        Returns:
-            True if any callback returned True, False otherwise
-        """
-        results = self.trigger_hook(event_name, *args, **kwargs)
-        return any(results)
-
-    # ============ Custom Data Storage ============
-
-    def store_data(self, key: str, value: Any) -> None:
-        """Store custom script data (persists in memory during game session).
-
-        Args:
-            key: Data key
-            value: Any JSON-serializable value
-        """
-        self.custom_data[key] = value
-
-    def retrieve_data(self, key: str, default=None) -> Any:
-        """Retrieve custom script data.
-
-        Args:
-            key: Data key
-            default: Default value if key not found
-
-        Returns:
-            Stored value or default
-        """
-        return self.custom_data.get(key, default)
-
-    def clear_data(self, key: str) -> bool:
-        """Clear a stored data key.
-
-        Args:
-            key: Data key to remove
-
-        Returns:
-            True if key existed and was removed
-        """
-        if key in self.custom_data:
-            del self.custom_data[key]
-            return True
-        return False
-
-    # ============ Utilities ============
-
-    def log(self, message: str) -> None:
-        """Log a message to console."""
-        print(f"[Script] {message}")
-
-    def get_random_item(self, items_list: List[str]) -> Optional[str]:
-        """Pick a random item from a list."""
-        if not items_list:
-            return None
-        return random.choice(items_list)
-
-    def create_custom_enemy(self, name: str,
-                            stats: Dict[str, int]) -> Dict[str, Any]:
-        """Create a custom enemy dynamically.
-
-        Args:
-            name: Enemy name
-            stats: Dict with 'hp', 'attack', 'defense', 'speed', 'experience_reward', 'gold_reward'
-
-        Returns:
-            Enemy data dict
-        """
-        return {
-            'name': name,
-            'hp': stats.get('hp', 50),
-            'attack': stats.get('attack', 5),
-            'defense': stats.get('defense', 2),
-            'speed': stats.get('speed', 5),
-            'experience_reward': stats.get('experience_reward', 10),
-            'gold_reward': stats.get('gold_reward', 5),
-            'loot_table': stats.get('loot_table', []),
-        }
-
-    # ============ Combat Hooks & Modifiers ============
-
-    def get_combat_multipliers(self) -> Dict[str, float]:
-        """Get current combat damage multipliers.
-
-        Returns:
-            Dict with 'player_damage_mult', 'enemy_damage_mult', 'experience_mult'
-        """
-        if not self.game:
-            return {
-                'player_damage_mult': 1.0,
-                'enemy_damage_mult': 1.0,
-                'experience_mult': 1.0
-            }
-        return {
-            'player_damage_mult': getattr(self.game, 'player_damage_mult',
-                                          1.0),
-            'enemy_damage_mult': getattr(self.game, 'enemy_damage_mult', 1.0),
-            'experience_mult': getattr(self.game, 'experience_mult', 1.0),
-        }
-
-    def set_combat_multipliers(self,
-                               player_mult: float = 1.0,
-                               enemy_mult: float = 1.0,
-                               exp_mult: float = 1.0) -> bool:
-        """Set combat damage and reward multipliers.
-
-        Args:
-            player_mult: Multiplier for player damage (default 1.0)
-            enemy_mult: Multiplier for enemy damage (default 1.0)
-            exp_mult: Multiplier for experience rewards (default 1.0)
-
-        Returns:
-            True if successful
-        """
-        if not self.game:
-            return False
-        self.game.player_damage_mult = max(0.1, player_mult)
-        self.game.enemy_damage_mult = max(0.1, enemy_mult)
-        self.game.experience_mult = max(0.1, exp_mult)
-        return True
-
-    # ============ Inventory & Equipment ============
-
-    def get_inventory(self) -> List[str]:
-        """Get player's full inventory list."""
-        if not self.game or not self.game.player:
-            return []
-        return self.game.player.inventory.copy()
-
-    def get_inventory_count(self, item_name: str) -> int:
-        """Count how many of an item player has.
-
-        Args:
-            item_name: Name of item
-
-        Returns:
-            Count of item in inventory
-        """
-        if not self.game or not self.game.player:
-            return 0
-        return self.game.player.inventory.count(item_name)
-
-    def clear_inventory(self) -> bool:
-        """Clear entire inventory (dangerous!)."""
-        if not self.game or not self.game.player:
-            return False
-        self.game.player.inventory.clear()
-        return True
-
-    def get_equipped_items(self) -> Dict[str, Optional[str]]:
-        """Get equipped weapon, armor, offhand, and accessories.
-
-        Returns:
-            Dict with 'weapon', 'armor', 'offhand', 'accessory_1', 'accessory_2', 'accessory_3'
-        """
-        if not self.game or not self.game.player:
-            return {}
-        return self.game.player.equipment.copy()
-
-    def equip_item(self, item_name: str, slot: Optional[str] = None) -> bool:
-        """Equip an item.
-
-        Args:
-            item_name: Item to equip
-            slot: 'weapon', 'armor', 'offhand', 'accessory_1', 'accessory_2', 'accessory_3' (auto-detect if None)
-
-        Returns:
-            True if successful
-        """
-        if not self.game or not self.game.player or item_name not in self.game.player.inventory:
-            return False
-        try:
-            if item_name in self.game.items_data:
-                item_data = self.game.items_data[item_name]
-                item_type = item_data.get('type')
-
-                if slot is None:
-                    # Auto-detect slot
-                    if item_type == 'weapon':
-                        slot = 'weapon'
-                    elif item_type == 'armor':
-                        slot = 'armor'
-                    elif item_type == 'offhand':
-                        slot = 'offhand'
-                    elif item_type == 'accessory':
-                        # Find first free accessory slot
-                        for i in [1, 2, 3]:
-                            acc = self.game.player.equipment.get(
-                                f'accessory_{i}')
-                            if not acc:
-                                slot = f'accessory_{i}'
-                                break
-                        if not slot:
-                            slot = 'accessory_1'
-
-                if slot in self.game.player.equipment:
-                    self.game.player.equipment[slot] = item_name
-                    self.game.player._update_equipment_slots()
-                    self.game.player.update_stats_from_equipment(
-                        self.game.items_data, self.game.companions_data)
-                    return True
-        except Exception:
-            pass
-        return False
-
-    def unequip_item(self, slot: str) -> Optional[str]:
-        """Unequip an item from a slot.
-
-        Args:
-            slot: 'weapon', 'armor', 'offhand', 'accessory_1', 'accessory_2', 'accessory_3'
-
-        Returns:
-            Name of unequipped item, or None if slot was empty
-        """
-        if not self.game or not self.game.player:
-            return None
-        try:
-            if slot in self.game.player.equipment:
-                item = self.game.player.equipment[slot]
-                self.game.player.equipment[slot] = None
-                self.game.player._update_equipment_slots()
-                self.game.player.update_stats_from_equipment(
-                    self.game.items_data, self.game.companions_data)
-                return item
-            return None
-        except Exception:
-            return None
-
-    def swap_equipment(self, slot1: str, slot2: str) -> bool:
-        """Swap items between two equipment slots.
-
-        Args:
-            slot1: First slot
-            slot2: Second slot
-
-        Returns:
-            True if successful
-        """
-        if not self.game or not self.game.player:
-            return False
-        try:
-            equipped = self.game.player.equipment
-            if slot1 in equipped and slot2 in equipped:
-                equipped[slot1], equipped[slot2] = equipped[slot2], equipped[
-                    slot1]
-                self.game.player._update_equipment_slots()
-                self.game.player.update_stats_from_equipment(
-                    self.game.items_data, self.game.companions_data)
-                return True
-            return False
-        except Exception:
-            return False
-
-    def get_item_price(self, item_name: str) -> int:
-        """Get the value/price of an item.
-
-        Args:
-            item_name: Name of item
-
-        Returns:
-            Price in gold (0 if not found)
-        """
-        if not self.game or item_name not in self.game.items_data:
-            return 0
-        item_data = self.game.items_data[item_name]
-        return item_data.get('price', 0)
-
-    def get_inventory_value(self) -> int:
-        """Calculate total value of all items in inventory.
-
-        Returns:
-            Total gold value
-        """
-        if not self.game or not self.game.player:
-            return 0
-        total = 0
-        for item_name in self.game.player.inventory:
-            total += self.get_item_price(item_name)
-        return total
-
-    def buy_item(self, item_name: str, quantity: int = 1) -> bool:
-        """Buy an item (costs gold).
-
-        Args:
-            item_name: Item to buy
-            quantity: How many to buy
-
-        Returns:
-            True if successful (has enough gold)
-        """
-        if not self.game or not self.game.player or item_name not in self.game.items_data:
-            return False
-
-        price = self.get_item_price(item_name)
-        total_cost = price * quantity
-
-        if self.game.player.gold < total_cost:
-            return False
-
-        # Deduct gold and add items
-        self.game.player.gold -= total_cost
-        for _ in range(quantity):
-            self.game.player.inventory.append(item_name)
-
-        return True
-
-    def sell_item(self, item_name: str, quantity: int = 1) -> int:
-        """Sell items from inventory for gold.
-
-        Args:
-            item_name: Item to sell
-            quantity: How many to sell
-
-        Returns:
-            Gold received (0 if failed)
-        """
-        if not self.game or not self.game.player:
-            return 0
-
-        # Check if player has enough items
-        if self.game.player.inventory.count(item_name) < quantity:
-            return 0
-
-        price = self.get_item_price(item_name)
-        total_gold = price * quantity
-
-        # Remove items and add gold
-        for _ in range(quantity):
-            self.game.player.inventory.remove(item_name)
-        self.game.player.gold += total_gold
-
-        return total_gold
-
-    def give_item(self, item_name: str, quantity: int = 1) -> bool:
-        """Give player item(s) without cost.
-
-        Args:
-            item_name: Item to give
-            quantity: How many to give
-
-        Returns:
-            True if successful
-        """
-        if not self.game or not self.game.player:
-            return False
-        try:
-            for _ in range(quantity):
-                self.game.player.inventory.append(item_name)
-            return True
-        except Exception:
-            return False
-
-    def take_item(self, item_name: str, quantity: int = 1) -> int:
-        """Remove item(s) from player inventory without payment.
-
-        Args:
-            item_name: Item to remove
-            quantity: How many to remove
-
-        Returns:
-            Number of items actually removed
-        """
-        if not self.game or not self.game.player:
-            return 0
-
-        removed = 0
-        for _ in range(quantity):
-            if item_name in self.game.player.inventory:
-                self.game.player.inventory.remove(item_name)
-                removed += 1
-            else:
-                break
-
-        return removed
-
-    def has_item(self, item_name: str, minimum_quantity: int = 1) -> bool:
-        """Check if player has item(s).
-
-        Args:
-            item_name: Item to check for
-            minimum_quantity: Minimum quantity needed
-
-        Returns:
-            True if player has enough
-        """
-        if not self.game or not self.game.player:
-            return False
-        return self.game.player.inventory.count(item_name) >= minimum_quantity
-
-    def sort_inventory(self) -> bool:
-        """Sort player's inventory alphabetically.
-
-        Returns:
-            True if successful
-        """
-        if not self.game or not self.game.player:
-            return False
-        try:
-            self.game.player.inventory.sort()
-            return True
-        except Exception:
-            return False
-
-    def get_inventory_summary(self) -> Dict[str, int]:
-        """Get count of each unique item in inventory.
-
-        Returns:
-            Dict with item names as keys and counts as values
-        """
-        if not self.game or not self.game.player:
-            return {}
-        summary = {}
-        for item in self.game.player.inventory:
-            summary[item] = summary.get(item, 0) + 1
-        return summary
-
-    def get_item_info(self, item_name: str) -> Optional[Dict[str, Any]]:
-        """Get detailed info about an item.
-
-        Args:
-            item_name: Item name
-
-        Returns:
-            Item data or None
-        """
-        if not self.game or item_name not in self.game.items_data:
-            return None
-        return self.game.items_data[item_name].copy()
-
-    # ============ Stat Getters ============
-
-    def get_base_stats(self) -> Dict[str, int]:
-        """Get player's base stats (before equipment/buffs).
-
-        Returns:
-            Dict with 'hp', 'mp', 'attack', 'defense', 'speed'
-        """
-        if not self.game or not self.game.player:
-            return {}
-        p = self.game.player
-        return {
-            'hp': p.base_max_hp,
-            'mp': p.base_max_mp,
-            'attack': p.base_attack,
-            'defense': p.base_defense,
-            'speed': p.base_speed,
-        }
-
-    def get_effective_stats(self) -> Dict[str, int]:
-        """Get player's effective stats (after equipment/buffs).
-
-        Returns:
-            Dict with current effective stats
-        """
-        if not self.game or not self.game.player:
-            return {}
-        p = self.game.player
-        return {
-            'hp': p.hp,
-            'max_hp': p.max_hp,
-            'mp': p.mp,
-            'max_mp': p.max_mp,
-            'attack': p.get_effective_attack(),
-            'defense': p.get_effective_defense(),
-            'speed': p.get_effective_speed(),
-        }
-
-    # ============ Area & Exploration ============
-
-    def get_area_connections(self, area_id: str) -> List[str]:
-        """Get areas connected to given area.
-
-        Args:
-            area_id: Area identifier
-
-        Returns:
-            List of connected area IDs
-        """
-        if not self.game or area_id not in self.game.areas_data:
-            return []
-        area = self.game.areas_data[area_id]
-        return area.get('connections', [])
-
-    def get_area_enemies(self, area_id: str) -> List[str]:
-        """Get enemies that spawn in an area.
-
-        Args:
-            area_id: Area identifier
-
-        Returns:
-            List of enemy IDs
-        """
-        if not self.game or area_id not in self.game.areas_data:
-            return []
-        area = self.game.areas_data[area_id]
-        return area.get('possible_enemies', [])
-
-    def add_area_enemy(self, area_id: str, enemy_id: str) -> bool:
-        """Add an enemy to an area's spawn list.
-
-        Args:
-            area_id: Area identifier
-            enemy_id: Enemy identifier
-
-        Returns:
-            True if successful
-        """
-        if not self.game or area_id not in self.game.areas_data:
-            return False
-        area = self.game.areas_data[area_id]
-        if enemy_id not in area.get('possible_enemies', []):
-            area['possible_enemies'].append(enemy_id)
-            return True
-        return False
-
-    def remove_area_enemy(self, area_id: str, enemy_id: str) -> bool:
-        """Remove an enemy from an area's spawn list.
-
-        Args:
-            area_id: Area identifier
-            enemy_id: Enemy identifier
-
-        Returns:
-            True if successful
-        """
-        if not self.game or area_id not in self.game.areas_data:
-            return False
-        area = self.game.areas_data[area_id]
-        if enemy_id in area.get('possible_enemies', []):
-            area['possible_enemies'].remove(enemy_id)
-            return True
-        return False
-
-    def set_area_difficulty(self, area_id: str, difficulty: int) -> bool:
-        """Set an area's difficulty level.
-
-        Args:
-            area_id: Area identifier
-            difficulty: 1-5 difficulty rating
-
-        Returns:
-            True if successful
-        """
-        if not self.game or area_id not in self.game.areas_data:
-            return False
-        if not 1 <= difficulty <= 5:
-            return False
-        self.game.areas_data[area_id]['difficulty'] = difficulty
-        return True
-
-    # ============ Spells & Abilities ============
-
-    def get_spells(self) -> Dict[str, Dict[str, Any]]:
-        """Get all spell data."""
-        return self.game.spells_data.copy() if self.game else {}
-
-    def learn_spell(self, spell_name: str) -> bool:
-        """Make a spell learnable (add to items that can cast it).
-
-        Args:
-            spell_name: Name of spell from spells.json
-
-        Returns:
-            True if successful
-        """
-        if not self.game or spell_name not in self.game.spells_data:
-            return False
-        # Mark spell as learned in custom data
-        learned = self.retrieve_data('learned_spells', set())
-        if isinstance(learned, list):
-            learned = set(learned)
-        learned.add(spell_name)
-        self.store_data('learned_spells', list(learned))
-        return True
-
-    def get_learned_spells(self) -> List[str]:
-        """Get list of spells player has learned."""
-        return self.retrieve_data('learned_spells', [])
-
-    # ============ Experience & Leveling ============
-
-    def add_experience(self, amount: int) -> bool:
-        """Give player experience points.
-
-        Args:
-            amount: XP to add
-
-        Returns:
-            True if successful
-        """
-        if not self.game or not self.game.player:
-            return False
-        self.game.player.experience += amount
-        return True
-
-    def level_up(self, levels: int = 1) -> bool:
-        """Force level up the player.
-
-        Args:
-            levels: Number of levels to gain
-
-        Returns:
-            True if successful
-        """
-        if not self.game or not self.game.player:
-            return False
-        p = self.game.player
-        for _ in range(levels):
-            p.level_up()
-        return True
-
-    def get_level_progress(self) -> Dict[str, Any]:
-        """Get player's current level progress.
-
-        Returns:
-            Dict with 'level', 'experience', 'experience_to_next'
-        """
-        if not self.game or not self.game.player:
-            return {}
-        p = self.game.player
-        return {
-            'level': p.level,
-            'experience': p.experience,
-            'experience_to_next': p.experience_to_next,
-            'experience_for_next_level':
-            int(p.experience_to_next - p.experience),
-        }
-
-    # ============ Buff Management ============
-
-    def get_active_buffs(self) -> List[Dict[str, Any]]:
-        """Get list of active buffs on player.
-
-        Returns:
-            List of buff dicts with name, duration, modifiers
-        """
-        if not self.game or not self.game.player:
-            return []
-        return self.game.player.active_buffs.copy()
-
-    def remove_buff(self, buff_name: str) -> bool:
-        """Remove a specific buff from player.
-
-        Args:
-            buff_name: Name of buff to remove
-
-        Returns:
-            True if buff was removed
-        """
-        if not self.game or not self.game.player:
-            return False
-        buffs = self.game.player.active_buffs
-        for i, buff in enumerate(buffs):
-            if buff.get('name') == buff_name:
-                buffs.pop(i)
-                return True
-        return False
-
-    def clear_buffs(self) -> int:
-        """Remove all buffs from player.
-
-        Returns:
-            Number of buffs removed
-        """
-        if not self.game or not self.game.player:
-            return 0
-        count = len(self.game.player.active_buffs)
-        self.game.player.active_buffs.clear()
-        return count
-
-    def extend_buff(self, buff_name: str, extra_duration: int) -> bool:
-        """Extend the duration of a buff.
-
-        Args:
-            buff_name: Name of buff
-            extra_duration: Additional turns to extend
-
-        Returns:
-            True if successful
-        """
-        if not self.game or not self.game.player:
-            return False
-        for buff in self.game.player.active_buffs:
-            if buff.get('name') == buff_name:
-                buff['duration'] = buff.get('duration', 0) + extra_duration
-                return True
-        return False
-
-    # ============ Mission Management ============
-
-    def has_mission_completed(self, mission_id: str) -> bool:
-        """Check if a mission has been completed.
-
-        Args:
-            mission_id: Mission identifier
-
-        Returns:
-            True if completed
-        """
-        if not self.game:
-            return False
-        progress = self.game.mission_progress.get(mission_id, {})
-        return progress.get('completed', False)
-
-    def get_mission_info(self, mission_id: str) -> Optional[Dict[str, Any]]:
-        """Get detailed info about a specific mission.
-
-        Args:
-            mission_id: Mission identifier
-
-        Returns:
-            Mission data dict or None
-        """
-        if not self.game or mission_id not in self.game.missions_data:
-            return None
-        return self.game.missions_data[mission_id].copy()
-
-    def reset_mission(self, mission_id: str) -> bool:
-        """Reset a mission to incomplete state.
-
-        Args:
-            mission_id: Mission identifier
-
-        Returns:
-            True if successful
-        """
-        if not self.game or mission_id not in self.game.missions_data:
-            return False
-        if mission_id in self.game.mission_progress:
-            del self.game.mission_progress[mission_id]
-        return True
-
-    # ============ Statistics & Tracking ============
-
-    def get_game_statistics(self) -> Dict[str, Any]:
-        """Get gameplay statistics.
-
-        Returns:
-            Dict with 'enemies_defeated', 'bosses_defeated', 'missions_completed', etc.
-        """
-        if not self.game:
-            return {}
-        return {
-            'enemies_defeated':
-            self.retrieve_data('enemies_defeated', 0),
-            'bosses_defeated':
-            self.retrieve_data('bosses_defeated', 0),
-            'missions_completed':
-            len([
-                m for m in self.game.mission_progress.values()
-                if m.get('completed')
-            ]),
-            'gold_earned':
-            self.retrieve_data('gold_earned', 0),
-            'items_collected':
-            self.retrieve_data('items_collected', 0),
-            'playtime_seconds':
-            self.retrieve_data('playtime_seconds', 0),
-        }
-
-    def increment_statistic(self, stat_name: str, amount: int = 1) -> int:
-        """Increment a game statistic.
-
-        Args:
-            stat_name: Statistic name
-            amount: Amount to increment by
-
-        Returns:
-            New statistic value
-        """
-        current = self.retrieve_data(stat_name, 0)
-        new_value = current + amount
-        self.store_data(stat_name, new_value)
-        return new_value
-
-    # ============ Validation & Checks ============
-
-    def is_mission_available(self, mission_id: str) -> bool:
-        """Check if player can accept a mission (meets level/prerequisites).
-
-        Args:
-            mission_id: Mission identifier
-
-        Returns:
-            True if player can accept
-        """
-        if not self.game or not self.game.player or mission_id not in self.game.missions_data:
-            return False
-        mission = self.game.missions_data[mission_id]
-        player_level = self.game.player.level
-
-        # Check level requirement
-        if mission.get('unlock_level', 1) > player_level:
-            return False
-
-        # Check prerequisites
-        for prereq in mission.get('prerequisites', []):
-            if not self.has_mission_completed(prereq):
-                return False
-
-        return True
-
-    def can_equip_item(self, item_name: str) -> bool:
-        """Check if player meets requirements to equip an item.
-
-        Args:
-            item_name: Item name
-
-        Returns:
-            True if can equip
-        """
-        if not self.game or item_name not in self.game.items_data:
-            return False
-        item = self.game.items_data[item_name]
-        requirements = item.get('requirements', {})
-
-        if not self.game.player:
-            return False
-
-        # Check level requirement
-        if self.game.player.level < requirements.get('level', 1):
-            return False
-
-        # Check class requirement (if any)
-        if 'class' in requirements:
-            if self.game.player.character_class != requirements['class']:
-                return False
-
-        return True
-
-    # ============ Debugging ============
-
-    def dump_player_data(self) -> str:
-        """Get formatted string of all player data (for debugging).
-
-        Returns:
-            Formatted player data string
-        """
-        player_data = self.get_player()
-        if not player_data:
-            return "No player data"
-
-        lines = ["=== Player Data ==="]
-        for key, value in player_data.items():
-            if isinstance(value, list) and len(value) > 5:
-                lines.append(f"{key}: [{len(value)} items]")
-            else:
-                lines.append(f"{key}: {value}")
-        return "\n".join(lines)
-
-    def list_all_enemies(self) -> List[str]:
-        """Get list of all enemy IDs.
-
-        Returns:
-            List of enemy identifiers
-        """
-        return list(self.game.enemies_data.keys()) if self.game else []
-
-    def list_all_items(self) -> List[str]:
-        """Get list of all item names.
-
-        Returns:
-            List of item names
-        """
-        return list(self.game.items_data.keys()) if self.game else []
-
-    def list_all_areas(self) -> List[str]:
-        """Get list of all area IDs.
-
-        Returns:
-            List of area identifiers
-        """
-        return list(self.game.areas_data.keys()) if self.game else []
-
-    def list_all_companions(self) -> List[str]:
-        """Get list of all companion names.
-
-        Returns:
-            List of companion identifiers
-        """
-        return list(self.game.companions_data.keys()) if self.game else []
-
-
-# Global API instance (set by Game class when game starts)
+# Market API URL and cooldown (set by Game class when game starts)
 game_api = None
-
-# Global script manager instance
-script_manager = None
-
-
-class ScriptManager:
-    """Manages script loading, hook registration, and execution for the game.
-    
-    This class provides a centralized system for managing game scripts through
-    a configuration file (scripts.json) that defines which scripts respond to
-    which game events.
-    
-    Features:
-    - Centralized hook configuration via scripts.json
-    - Priority-based hook execution order
-    - Dependency resolution between scripts
-    - Error isolation (one script failing doesn't break others)
-    - Dynamic hook registration and unregistration
-    """
-    
-    def __init__(self, game_instance=None):
-        """Initialize the script manager.
-        
-        Args:
-            game_instance: Reference to the main Game instance
-        """
-        self.game = game_instance
-        self.api = None
-        self.config: Dict[str, Any] = {}
-        self.scripts: Dict[str, Any] = {}
-        self.registered_hooks: Dict[str, List[Dict[str, Any]]] = {}
-        self.script_modules: Dict[str, Any] = {}
-        self.enabled = False
-        self.load_error: Optional[str] = None
-        
-        # Available event types for validation
-        self.valid_events = {
-            'on_battle_start', 'on_battle_end', 'on_player_turn', 'on_enemy_turn',
-            'on_player_levelup', 'on_item_acquired', 'on_companion_hired',
-            'on_mission_complete', 'on_buff_applied', 'on_area_entered',
-            'on_explore', 'on_loot_drop', 'on_shop_open', 'on_tavern_open',
-            'on_startup', 'on_shutdown'
-        }
-    
-    def initialize(self, api: 'GameAPI') -> bool:
-        """Initialize the script manager with the game API.
-        
-        Args:
-            api: The GameAPI instance
-            
-        Returns:
-            True if initialization successful
-        """
-        self.api = api
-        
-        # Load configuration
-        if not self._load_config():
-            self.load_error = "Failed to load scripts.json"
-            return False
-        
-        # Check if scripting is enabled
-        settings = self.config.get('settings', {})
-        if not settings.get('auto_load_all', True):
-            self.enabled = False
-            return True
-        
-        self.enabled = True
-        
-        # Load scripts
-        if not self._load_scripts():
-            return False
-        
-        # Register hooks from configuration
-        if not self._register_hooks():
-            return False
-        
-        # Initialize scripts (call init_script functions)
-        self._initialize_scripts()
-        
-        return True
-    
-    def _load_config(self) -> bool:
-        """Load scripts.json configuration file.
-        
-        Returns:
-            True if config loaded successfully
-        """
-        try:
-            # Try to load from scripts.json
-            if os.path.exists('scripts.json'):
-                with open('scripts.json', 'r') as f:
-                    self.config = json.load(f)
-                return True
-            else:
-                # Fall back to config.json if scripts.json doesn't exist
-                return self._load_config_from_legacy()
-        except (json.JSONDecodeError, IOError) as e:
-            print(f"Error loading scripts.json: {e}")
-            self.config = {}
-            return False
-    
-    def _load_config_from_legacy(self) -> bool:
-        """Load configuration from legacy config.json format.
-        
-        This maintains backward compatibility with the old system.
-        
-        Returns:
-            True if config loaded successfully
-        """
-        try:
-            if os.path.exists('data/config.json'):
-                with open('data/config.json', 'r') as f:
-                    config = json.load(f)
-                
-                # Convert legacy format to new format
-                scripts_list = config.get('scripts', [])
-                settings = {
-                    'auto_load_all': config.get('auto_load_scripts', True),
-                    'error_handling': 'log_only',
-                    'log_level': 'info'
-                }
-                
-                # Build hooks from scripts list (all hooks for all scripts)
-                # This is a simplified conversion - in production, scripts
-                # would declare their hooks explicitly
-                hooks: Dict[str, List[Dict[str, Any]]] = {}
-                for i, script_name in enumerate(scripts_list):
-                    # Default priority based on order in list
-                    priority = 100 - (i * 10)
-                    for event in self.valid_events:
-                        if event not in hooks:
-                            hooks[event] = []
-                        hooks[event].append({
-                            'script': script_name,
-                            'priority': priority
-                        })
-                
-                self.config = {
-                    'version': '1.0',
-                    'description': 'Converted from legacy config',
-                    'settings': settings,
-                    'hooks': hooks
-                }
-                return True
-        except (json.JSONDecodeError, IOError) as e:
-            print(f"Error loading legacy config: {e}")
-        
-        # Use default empty config
-        self.config = {
-            'version': '1.0',
-            'settings': {},
-            'hooks': {}
-        }
-        return True
-    
-    def _load_scripts(self) -> bool:
-        """Load all enabled scripts.
-        
-        Returns:
-            True if all scripts loaded successfully
-        """
-        settings = self.config.get('settings', {})
-        hooks = self.config.get('hooks', {})
-        
-        # Collect all unique script names from hooks
-        script_names: set = set()
-        for event_hooks in hooks.values():
-            for hook_config in event_hooks:
-                if isinstance(hook_config, dict):
-                    script_name = hook_config.get('script')
-                else:
-                    script_name = hook_config
-                if script_name:
-                    script_names.add(script_name)
-        
-        # Load each script module
-        for script_name in sorted(script_names):
-            if not self._load_script_module(script_name):
-                print(f"Warning: Failed to load script '{script_name}'")
-                # Continue loading other scripts
-        
-        return True
-    
-    def _load_script_module(self, script_name: str) -> bool:
-        """Load a single script module.
-        
-        Args:
-            script_name: Name of the script to load
-            
-        Returns:
-            True if script loaded successfully
-        """
-        try:
-            # Import the script module
-            module = __import__(f'scripts.{script_name}', fromlist=[''])
-            self.script_modules[script_name] = module
-            
-            # Try to get script info if it exists
-            if hasattr(module, 'SCRIPT_INFO'):
-                self.scripts[script_name] = {
-                    'info': module.SCRIPT_INFO,
-                    'module': module
-                }
-            else:
-                self.scripts[script_name] = {
-                    'info': {'name': script_name, 'version': '1.0'},
-                    'module': module
-                }
-            
-            return True
-        except ImportError as e:
-            print(f"Error importing script '{script_name}': {e}")
-            return False
-    
-    def _register_hooks(self) -> bool:
-        """Register all hooks from configuration.
-        
-        Returns:
-            True if all hooks registered successfully
-        """
-        hooks = self.config.get('hooks', {})
-        
-        for event_name, event_hooks in hooks.items():
-            if event_name not in self.valid_events:
-                print(f"Warning: Unknown event '{event_name}' in scripts.json")
-                continue
-            
-            # Sort hooks by priority (higher priority first)
-            sorted_hooks = sorted(event_hooks, key=lambda x: x.get('priority', 50) if isinstance(x, dict) else 50, reverse=True)
-            
-            self.registered_hooks[event_name] = []
-            
-            for hook_config in sorted_hooks:
-                if isinstance(hook_config, dict):
-                    script_name = hook_config.get('script')
-                    priority = hook_config.get('priority', 50)
-                else:
-                    script_name = hook_config
-                    priority = 50
-                
-                if not script_name or script_name not in self.script_modules:
-                    continue
-                
-                module = self.script_modules[script_name]
-                
-                # Get handler function name from HOOKS dict if it exists
-                handler_name = None
-                if hasattr(module, 'HOOKS') and isinstance(module.HOOKS, dict):
-                    handler_name = module.HOOKS.get(event_name)
-                else:
-                    # Default handler name based on event
-                    handler_name = self._get_default_handler_name(event_name)
-                
-                if not handler_name:
-                    continue
-                
-                # Get the handler function
-                handler = getattr(module, handler_name, None)
-                if not handler or not callable(handler):
-                    continue
-                
-                # Register the hook
-                self.registered_hooks[event_name].append({
-                    'script': script_name,
-                    'handler': handler,
-                    'priority': priority
-                })
-                
-                # Also register with GameAPI for compatibility
-                if self.api and hasattr(self.api, 'register_hook'):
-                    self.api.register_hook(event_name, handler)
-        
-        return True
-    
-    def _get_default_handler_name(self, event_name: str) -> Optional[str]:
-        """Get the default handler function name for an event.
-        
-        Args:
-            event_name: Name of the event
-            
-        Returns:
-            Handler function name or None
-        """
-        # Convert event name to handler name
-        # e.g., on_battle_start -> on_battle_start_handler
-        return f"{event_name}_handler"
-    
-    def _initialize_scripts(self) -> bool:
-        """Call init_script() function for all loaded scripts.
-        
-        Returns:
-            True if all initializations successful
-        """
-        for script_name, script_data in self.scripts.items():
-            module = script_data.get('module')
-            if module and hasattr(module, 'init_script'):
-                try:
-                    module.init_script()
-                except Exception as e:
-                    print(f"Error initializing script '{script_name}': {e}")
-        
-        return True
-    
-    def trigger_event(self, event_name: str, *args, **kwargs) -> List[Any]:
-        """Trigger an event and call all registered handlers.
-        
-        Args:
-            event_name: Name of the event to trigger
-            *args: Arguments to pass to handlers
-            **kwargs: Keyword arguments to pass to handlers
-            
-        Returns:
-            List of return values from handlers
-        """
-        if event_name not in self.registered_hooks:
-            return []
-        
-        results = []
-        settings = self.config.get('settings', {})
-        error_handling = settings.get('error_handling', 'log_only')
-        
-        for hook_info in self.registered_hooks[event_name]:
-            handler = hook_info.get('handler')
-            script_name = hook_info.get('script', 'unknown')
-            
-            if not handler:
-                continue
-            
-            try:
-                result = handler(*args, **kwargs)
-                results.append(result)
-            except Exception as e:
-                if error_handling == 'log_only':
-                    print(f"Script error in '{script_name}' during '{event_name}': {e}")
-                elif error_handling == 'crash':
-                    raise
-                elif error_handling == 'continue':
-                    # Continue execution, result is None
-                    results.append(None)
-        
-        return results
-    
-    def trigger_event_first(self, event_name: str, *args, **kwargs) -> Any:
-        """Trigger an event and return the first non-None result.
-        
-        This is useful for events where you want to know if any script
-        "handled" the event.
-        
-        Args:
-            event_name: Name of the event to trigger
-            *args: Arguments to pass to handlers
-            **kwargs: Keyword arguments to pass to handlers
-            
-        Returns:
-            First non-None return value, or None
-        """
-        results = self.trigger_event(event_name, *args, **kwargs)
-        for result in results:
-            if result is not None:
-                return result
-        return None
-    
-    def register_custom_hook(self, event_name: str, handler: Callable, 
-                            script_name: str = 'custom', priority: int = 50) -> bool:
-        """Register a custom hook at runtime.
-        
-        Args:
-            event_name: Name of the event
-            handler: Handler function
-            script_name: Name of the script registering the hook
-            priority: Execution priority (higher = runs first)
-            
-        Returns:
-            True if registered successfully
-        """
-        if event_name not in self.registered_hooks:
-            self.registered_hooks[event_name] = []
-        
-        # Add to sorted hooks
-        self.registered_hooks[event_name].append({
-            'script': script_name,
-            'handler': handler,
-            'priority': priority
-        })
-        
-        # Re-sort hooks by priority
-        self.registered_hooks[event_name].sort(
-            key=lambda x: x.get('priority', 50), reverse=True
-        )
-        
-        # Also register with GameAPI
-        if self.api and hasattr(self.api, 'register_hook'):
-            self.api.register_hook(event_name, handler)
-        
-        return True
-    
-    def unregister_hook(self, event_name: str, handler: Callable) -> bool:
-        """Unregister a hook handler.
-        
-        Args:
-            event_name: Name of the event
-            handler: Handler function to remove
-            
-        Returns:
-            True if unregistered successfully
-        """
-        if event_name not in self.registered_hooks:
-            return False
-        
-        for i, hook_info in enumerate(self.registered_hooks[event_name]):
-            if hook_info.get('handler') == handler:
-                del self.registered_hooks[event_name][i]
-                
-                # Also unregister from GameAPI
-                if self.api:
-                    # GameAPI doesn't have unregister_hook, but we can
-                    # work around this by having a wrapper
-                    pass
-                
-                return True
-        
-        return False
-    
-    def get_registered_events(self) -> List[str]:
-        """Get list of all registered events.
-        
-        Returns:
-            List of event names with registered handlers
-        """
-        return list(self.registered_hooks.keys())
-    
-    def get_handlers_for_event(self, event_name: str) -> List[Dict[str, Any]]:
-        """Get all handlers registered for an event.
-        
-        Args:
-            event_name: Name of the event
-            
-        Returns:
-            List of handler info dicts
-        """
-        return self.registered_hooks.get(event_name, [])
-    
-    def is_enabled(self) -> bool:
-        """Check if scripting is enabled.
-        
-        Returns:
-            True if scripting is enabled
-        """
-        return self.enabled
-    
-    def get_config(self) -> Dict[str, Any]:
-        """Get the current configuration.
-        
-        Returns:
-            Configuration dictionary
-        """
-        return self.config
-    
-    def get_script_info(self, script_name: str) -> Optional[Dict[str, Any]]:
-        """Get information about a loaded script.
-        
-        Args:
-            script_name: Name of the script
-            
-        Returns:
-            Script info dict or None
-        """
-        return self.scripts.get(script_name)
-    
-    def list_scripts(self) -> List[str]:
-        """Get list of all loaded scripts.
-        
-        Returns:
-            List of script names
-        """
-        return list(self.scripts.keys())
-    
-    def log(self, message: str) -> None:
-        """Log a message if logging is enabled.
-        
-        Args:
-            message: Message to log
-        """
-        settings = self.config.get('settings', {})
-        log_level = settings.get('log_level', 'info')
-        
-        if log_level == 'debug':
-            print(f"[ScriptManager] {message}")
-        elif log_level == 'info':
-            print(f"[ScriptManager] {message}")
-    
-    def shutdown(self) -> None:
-        """Clean up script manager on game shutdown."""
-        # Call shutdown functions if they exist
-        for script_name, script_data in self.scripts.items():
-            module = script_data.get('module')
-            if module and hasattr(module, 'shutdown_script'):
-                try:
-                    module.shutdown_script()
-                except Exception as e:
-                    print(f"Error shutting down script '{script_name}': {e}")
-        
-        # Clear all hooks
-        self.registered_hooks.clear()
-        self.script_modules.clear()
-        self.scripts.clear()
-        self.enabled = False
 
 # Market API URL and cooldown
 MARKET_API_URL = "https://our-legacy.vercel.app/api/market"
 MARKET_COOLDOWN_MINUTES = 10
+
+# Check for Node.js availability for scripting
+NODE_AVAILABLE = None
+
+
+def _check_node_available():
+    """Check if Node.js is available in the system"""
+    global NODE_AVAILABLE
+    if NODE_AVAILABLE is not None:
+        return NODE_AVAILABLE
+    try:
+        result = subprocess.run(['node', '--version'],
+                               capture_output=True,
+                               text=True,
+                               timeout=5)
+        if result.returncode == 0:
+            NODE_AVAILABLE = True
+            print(f"{Colors.GREEN}Node.js detected: {result.stdout.strip()}{Colors.END}")
+        else:
+            NODE_AVAILABLE = False
+    except (FileNotFoundError, subprocess.TimeoutExpired, Exception) as e:
+        NODE_AVAILABLE = False
+    return NODE_AVAILABLE
+
+
+class ScriptingEngine:
+    """JavaScript scripting engine using Node.js for game scripting functionality"""
+
+    def __init__(self):
+        self.scripting_enabled = False
+        self.activities_file = 'scripts/activities.json'
+        self.current_activities = []
+        self._init_context()
+        self._load_game_state_to_activities()
+
+    def _load_game_state_to_activities(self):
+        """Load current game state into activities.json for script access"""
+        try:
+            # Read current activities.json or create default structure
+            data = {
+                'version': '2.0',
+                'last_updated': None,
+                'activities': [],
+                'player': {
+                    'uuid': '',
+                    'name': '',
+                    'class': '',
+                    'health': 100,
+                    'maxHealth': 100,
+                    'mp': 50,
+                    'maxMP': 50,
+                    'level': 1,
+                    'exp': 0,
+                    'gold': 100,
+                    'inventory': [],
+                    'companions': [],
+                    'equipped': {
+                        'weapon': None,
+                        'offhand': None,
+                        'armor': None,
+                        'accessory': None
+                    },
+                    'lastItemConsumed': None,
+                    'lastItemObtained': None
+                },
+                'location': {
+                    'id': 'starting_village',
+                    'name': 'Starting Village',
+                    'connections': [],
+                    'canRest': True,
+                    'restCost': 10,
+                    'difficulty': 1
+                },
+                'enemy': {
+                    'id': '',
+                    'name': '',
+                    'isBoss': False,
+                    'hp': 0,
+                    'maxHp': 0
+                },
+                'battle': {
+                    'active': False,
+                    'enemyId': None,
+                    'bossId': None
+                },
+                'missions': {
+                    'finished': [],
+                    'ongoing': [],
+                    'notAccepted': []
+                },
+                'system': {
+                    'latestSave': None
+                },
+                'effects': []
+            }
+            
+            # Try to load existing file
+            if os.path.exists(self.activities_file):
+                with open(self.activities_file, 'r') as f:
+                    existing = json.load(f)
+                    # Merge with existing data
+                    if existing.get('version') == '2.0':
+                        data = existing
+            
+            # Write back to file
+            with open(self.activities_file, 'w') as f:
+                json.dump(data, f, indent=2)
+                
+            print(f"{Colors.CYAN}Activities file initialized{Colors.END}")
+            
+        except Exception as e:
+            print(f"{Colors.YELLOW}Warning: Could not initialize activities: {e}{Colors.END}")
+    
+    def sync_game_state_to_activities(self, game_instance=None):
+        """Sync current game state to activities.json for script access"""
+        try:
+            # Load existing data
+            data = {
+                'version': '2.0',
+                'last_updated': None,
+                'activities': [],
+                'player': {
+                    'uuid': '',
+                    'name': '',
+                    'class': '',
+                    'health': 100,
+                    'maxHealth': 100,
+                    'mp': 50,
+                    'maxMP': 50,
+                    'level': 1,
+                    'exp': 0,
+                    'gold': 100,
+                    'inventory': [],
+                    'companions': [],
+                    'equipped': {
+                        'weapon': None,
+                        'offhand': None,
+                        'armor': None,
+                        'accessory': None
+                    },
+                    'lastItemConsumed': None,
+                    'lastItemObtained': None
+                },
+                'location': {
+                    'id': 'starting_village',
+                    'name': 'Starting Village',
+                    'connections': [],
+                    'canRest': True,
+                    'restCost': 10,
+                    'difficulty': 1
+                },
+                'enemy': {
+                    'id': '',
+                    'name': '',
+                    'isBoss': False,
+                    'hp': 0,
+                    'maxHp': 0
+                },
+                'battle': {
+                    'active': False,
+                    'enemyId': None,
+                    'bossId': None
+                },
+                'missions': {
+                    'finished': [],
+                    'ongoing': [],
+                    'notAccepted': []
+                },
+                'system': {
+                    'latestSave': None
+                },
+                'effects': []
+            }
+            
+            # Try to load existing file
+            if os.path.exists(self.activities_file):
+                with open(self.activities_file, 'r') as f:
+                    existing = json.load(f)
+                    if existing.get('version') == '2.0':
+                        data = existing
+            
+            # Update with current game state if game instance provided and has player
+            if game_instance and hasattr(game_instance, 'player') and game_instance.player:
+                data['player'] = {
+                    'uuid': game_instance.player.uuid,
+                    'name': game_instance.player.name,
+                    'class': game_instance.player.character_class,
+                    'health': game_instance.player.hp,
+                    'maxHealth': game_instance.player.max_hp,
+                    'mp': game_instance.player.mp,
+                    'maxMP': game_instance.player.max_mp,
+                    'level': game_instance.player.level,
+                    'exp': game_instance.player.experience,
+                    'gold': game_instance.player.gold,
+                    'inventory': game_instance.player.inventory,
+                    'companions': game_instance.player.companions,
+                    'equipped': game_instance.player.equipment,
+                    'lastItemConsumed': None,
+                    'lastItemObtained': None
+                }
+            
+            # Update with current location
+            if game_instance and hasattr(game_instance, 'current_area'):
+                area_data = game_instance.areas_data.get(game_instance.current_area, {})
+                data['location'] = {
+                    'id': game_instance.current_area,
+                    'name': area_data.get('name', game_instance.current_area),
+                    'connections': area_data.get('connections', []),
+                    'canRest': area_data.get('can_rest', False),
+                    'restCost': area_data.get('rest_cost', 10),
+                    'difficulty': area_data.get('difficulty', 1)
+                }
+            
+            # Update missions state
+            if game_instance:
+                data['missions'] = {
+                    'finished': game_instance.completed_missions if hasattr(game_instance, 'completed_missions') else [],
+                    'ongoing': list(game_instance.mission_progress.keys()) if hasattr(game_instance, 'mission_progress') else [],
+                    'notAccepted': []
+                }
+            
+            # Write back to file
+            with open(self.activities_file, 'w') as f:
+                json.dump(data, f, indent=2)
+                
+        except Exception as e:
+            print(f"{Colors.YELLOW}Warning: Could not sync game state to activities: {e}{Colors.END}")
+    
+    def sync_activities_from_file(self):
+        """Sync activities from activities.json back to Python state after script execution"""
+        try:
+            if os.path.exists(self.activities_file):
+                with open(self.activities_file, 'r') as f:
+                    data = json.load(f)
+                    self.current_activities = data.get('activities', [])
+                    
+                print(f"{Colors.CYAN}Activities synced from file ({len(self.current_activities)} items){Colors.END}")
+                return True
+        except Exception as e:
+            print(f"{Colors.YELLOW}Warning: Could not sync activities from file: {e}{Colors.END}")
+        return False
+
+    def _init_context(self):
+        """Initialize the scripting context using Node.js"""
+        if not _check_node_available():
+            print(f"{Colors.YELLOW}Node.js not available. Scripting disabled.{Colors.END}")
+            return
+
+        try:
+            # Test Node.js can execute
+            result = subprocess.run(['node', '-e', 'console.log("test")'],
+                                   capture_output=True,
+                                   text=True,
+                                   timeout=5)
+            if result.returncode != 0:
+                print(f"{Colors.YELLOW}Node.js test failed. Scripting disabled.{Colors.END}")
+                return
+
+            self.scripting_enabled = True
+            print(f"{Colors.GREEN}Scripting engine initialized successfully.{Colors.END}")
+
+        except Exception as e:
+            print(f"{Colors.RED}Failed to initialize scripting engine: {e}{Colors.END}")
+            self.scripting_enabled = False
+
+    def execute_script(self, script_code: str) -> bool:
+        """Execute JavaScript code using Node.js"""
+        if not self.scripting_enabled:
+            return False
+
+        try:
+            # Create a temporary file with the script
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.js', delete=False) as f:
+                # Write the API first
+                api_file = 'scripts/scripting_API.js'
+                if os.path.exists(api_file):
+                    with open(api_file, 'r') as api_f:
+                        f.write(api_f.read())
+                        f.write('\n')
+
+                # Write the user script
+                f.write('\n// User script\n')
+                f.write(script_code)
+                f.write('\n')
+
+                temp_path = f.name
+
+            # Execute with Node.js
+            result = subprocess.run(['node', temp_path],
+                                   capture_output=True,
+                                   text=True,
+                                   timeout=30)
+
+            # Clean up temp file
+            try:
+                os.unlink(temp_path)
+            except Exception:
+                pass
+
+            # Print any output
+            if result.stdout.strip():
+                for line in result.stdout.strip().split('\n'):
+                    print(f"{Colors.CYAN}[Script] {line}{Colors.END}")
+
+            # Check for errors
+            if result.returncode != 0:
+                if result.stderr.strip():
+                    print(f"{Colors.RED}Script error: {result.stderr}{Colors.END}")
+                return False
+
+            return True
+
+        except subprocess.TimeoutExpired:
+            print(f"{Colors.RED}Script execution timed out{Colors.END}")
+            return False
+        except Exception as e:
+            print(f"{Colors.RED}Script execution error: {e}{Colors.END}")
+            return False
+
+    def execute_file(self, filepath: str) -> bool:
+        """Execute a JavaScript file using Node.js"""
+        if not os.path.exists(filepath):
+            return False
+
+        if not self.scripting_enabled:
+            return False
+
+        try:
+            # Execute with Node.js
+            result = subprocess.run(['node', filepath],
+                                   capture_output=True,
+                                   text=True,
+                                   timeout=30)
+
+            # Print any output
+            if result.stdout.strip():
+                for line in result.stdout.strip().split('\n'):
+                    print(f"{Colors.CYAN}[Script] {line}{Colors.END}")
+
+            # Check for errors
+            if result.returncode != 0:
+                if result.stderr.strip():
+                    print(f"{Colors.RED}Script error: {result.stderr}{Colors.END}")
+                return False
+
+            return True
+
+        except subprocess.TimeoutExpired:
+            print(f"{Colors.RED}Script execution timed out{Colors.END}")
+            return False
+        except Exception as e:
+            print(f"{Colors.RED}Error executing script file {filepath}: {e}{Colors.END}")
+            return False
+    
+    def load_activities(self) -> List[Dict]:
+        """Load activities from the activities file"""
+        try:
+            if os.path.exists(self.activities_file):
+                with open(self.activities_file, 'r') as f:
+                    data = json.load(f)
+                    self.current_activities = data.get('activities', [])
+                    return self.current_activities
+        except Exception as e:
+            print(f"{Colors.RED}Error loading activities: {e}{Colors.END}")
+        return []
+    
+    def save_activities(self):
+        """Save activities to the activities file"""
+        try:
+            data = {
+                'activities': self.current_activities,
+                'last_updated': datetime.now().isoformat(),
+                'scripting_enabled': self.scripting_enabled,
+                'version': '1.0'
+            }
+            with open(self.activities_file, 'w') as f:
+                json.dump(data, f, indent=2)
+        except Exception as e:
+            print(f"{Colors.RED}Error saving activities: {e}{Colors.END}")
+    
+    def add_activity(self, activity_type: str, details: Optional[Dict] = None):
+        """Add an activity to the tracking list"""
+        activity: Dict[str, Any] = {
+            'type': activity_type,
+            'timestamp': datetime.now().isoformat()
+        }
+        if details:
+            activity['details'] = details
+        
+        self.current_activities.append(activity)
+        
+        # Keep only last 1000 activities to prevent file bloat
+        if len(self.current_activities) > 1000:
+            self.current_activities = self.current_activities[-1000:]
+    
+    def clear_activities(self):
+        """Clear all activities"""
+        self.current_activities = []
+        self.save_activities()
+    
+    def get_activities(self) -> List[Dict]:
+        """Get all recorded activities"""
+        return self.current_activities
+    
+    def execute_scripts_from_config(self, game_instance=None):
+        """Execute all scripts listed in scripts/scripts.json"""
+        scripts_config = 'scripts/scripts.json'
+
+        if not os.path.exists(scripts_config):
+            return
+
+        # Sync game state to activities.json before executing scripts
+        self.sync_game_state_to_activities(game_instance)
+
+        try:
+            with open(scripts_config, 'r') as f:
+                config = json.load(f)
+
+            if isinstance(config, list):
+                scripts = config
+            elif isinstance(config, dict) and config.get('scripts'):
+                scripts = config['scripts']
+            else:
+                return
+
+            for script_name in scripts:
+                script_path = f"scripts/{script_name}.js"
+                if os.path.exists(script_path):
+                    print(f"{Colors.CYAN}Executing script: {script_name}{Colors.END}")
+                    self.execute_file(script_path)
+                    self.add_activity('script_executed', {'script': script_name})
+            
+            # Sync activities back from file after script execution
+            self.sync_activities_from_file()
+            
+            # Sync game state again to capture any changes made by scripts
+            self.sync_game_state_to_activities(game_instance)
+            
+        except Exception as e:
+            print(f"{Colors.RED}Error executing scripts from config: {e}{Colors.END}")
+    
+    def reload_api(self):
+        """Reload the scripting API"""
+        self._init_context()
+    
+    def is_enabled(self) -> bool:
+        """Check if scripting is enabled"""
+        return self.scripting_enabled
+
+
+# Global scripting engine instance
+scripting_engine = ScriptingEngine()
 
 
 class MarketAPI:
@@ -2145,48 +843,6 @@ class MarketAPI:
         if data and data.get('ok'):
             return data.get('itemsByType', {})
         return {}
-
-
-def init_scripting_api(game_instance) -> GameAPI:
-    """Initialize the scripting API with a game instance.
-
-    Called by Game class during game startup.
-    """
-    global game_api
-    game_api = GameAPI(game_instance)
-    return game_api
-
-
-def get_api() -> Optional[GameAPI]:
-    """Get the global GameAPI instance."""
-    return game_api
-
-
-def init_script_manager(game_instance) -> ScriptManager:
-    """Initialize the script manager with a game instance.
-
-    Called by Game class during game startup after init_scripting_api.
-    
-    Args:
-        game_instance: Reference to the main Game instance
-        
-    Returns:
-        ScriptManager instance
-    """
-    global script_manager
-    script_manager = ScriptManager(game_instance)
-    
-    # Initialize with the API if it exists
-    if game_api:
-        script_manager.initialize(game_api)
-    
-    return script_manager
-
-
-def get_script_manager() -> Optional[ScriptManager]:
-    """Get the global ScriptManager instance."""
-    return script_manager
-
 
 class Character:
     """Player character class"""
@@ -2763,12 +1419,10 @@ class Game:
         self.spells_data: Dict[str, Any] = {}
         self.effects_data: Dict[str, Any] = {}
         self.companions_data: Dict[str, Any] = {}
-        self.mission_progress: Dict[str, Dict] = {
+        self.mission_progress: Dict[str, Any] = {
         }  # mission_id -> {current_count, target_count, completed, type}
         self.completed_missions: List[str] = []
         self.config: Dict[str, Any] = {}
-        self.scripting_enabled: bool = False
-        self.script_api: Optional[Any] = None
         self.market_api: Optional[MarketAPI] = None
         self.crafting_data: Dict[str, Any] = {}
 
@@ -2818,26 +1472,23 @@ class Game:
         try:
             with open('data/config.json', 'r') as f:
                 self.config = json.load(f)
-            self.scripting_enabled = self.config.get('scripting_enabled',
-                                                     False)
-            if self.scripting_enabled:
-                print(
-                    "Scripting API is EXPERIMENTAL and may have stability issues."
-                )
         except FileNotFoundError:
             # Default config if file doesn't exist
             self.config = {
-                'scripting_enabled': False,
                 'auto_load_scripts': True,
-                'scripts': [],
-                'difficulty': 'normal',
+                'scripts_enabled': True,
                 'autosave_enabled': True,
-                'autosave_interval': 5
+                'autosave_interval': 5,
+                'colors_enabled': True
             }
             self.scripting_enabled = False
         except json.JSONDecodeError:
             print("Warning: config.json is invalid JSON. Using defaults.")
             self.scripting_enabled = False
+
+        # Set global color toggle
+        global COLORS_ENABLED
+        COLORS_ENABLED = self.config.get('colors_enabled', True)
 
         # Initialize Market API
         self.market_api = MarketAPI()
@@ -2885,18 +1536,12 @@ class Game:
             clear_screen()
             print(f"{Colors.BOLD}=== CONFIGURATIONS ==={Colors.END}")
 
-            # Scripting Enabled
-            scripting_enabled = self.config.get('scripting_enabled', False)
-            scripting_color = Colors.GREEN if scripting_enabled else Colors.RED
-            scripting_status = "Enabled" if scripting_enabled else "Disabled"
+            # Scripts Enabled
+            scripts_enabled = self.config.get('scripts_enabled', True)
+            scripts_color = Colors.GREEN if scripts_enabled else Colors.RED
+            scripts_status = "Enabled" if scripts_enabled else "Disabled"
             print(
-                f"1. Scripting Enabled: {scripting_color}{scripting_status}{Colors.END}"
-            )
-
-            # Difficulty
-            difficulty = self.config.get('difficulty', 'normal')
-            print(
-                f"2. Difficulty: {Colors.YELLOW}{difficulty.title()}{Colors.END}"
+                f"1. Scripts Enabled: {scripts_color}{scripts_status}{Colors.END}"
             )
 
             # Autosave Enabled
@@ -2904,7 +1549,7 @@ class Game:
             autosave_color = Colors.GREEN if autosave_enabled else Colors.RED
             autosave_status = "Enabled" if autosave_enabled else "Disabled"
             print(
-                f"3. Autosave Enabled: {autosave_color}{autosave_status}{Colors.END}"
+                f"2. Autosave Enabled: {autosave_color}{autosave_status}{Colors.END}"
             )
 
             # Auto Load Scripts
@@ -2912,41 +1557,48 @@ class Game:
             auto_load_color = Colors.GREEN if auto_load else Colors.RED
             auto_load_status = "Enabled" if auto_load else "Disabled"
             print(
-                f"4. Auto Load Scripts: {auto_load_color}{auto_load_status}{Colors.END}"
+                f"3. Auto Load Scripts: {auto_load_color}{auto_load_status}{Colors.END}"
+            )
+
+            # Colors Enabled
+            colors_enabled = self.config.get('colors_enabled', True)
+            colors_color = Colors.GREEN if colors_enabled else Colors.RED
+            colors_status = "Enabled" if colors_enabled else "Disabled"
+            print(
+                f"4. Colors Enabled: {colors_color}{colors_status}{Colors.END}"
             )
 
             print("5. Back to Main Menu")
 
             choice = ask("Choose an option (1-5): ")
             if choice == "1":
-                # Toggle scripting_enabled
-                self.config['scripting_enabled'] = not scripting_enabled
+                # Toggle scripts_enabled
+                self.config['scripts_enabled'] = not scripts_enabled
                 print(
-                    f"Scripting Enabled set to: {'Enabled' if self.config['scripting_enabled'] else 'Disabled'}"
+                    f"Scripts Enabled set to: {'Enabled' if self.config['scripts_enabled'] else 'Disabled'}"
                 )
                 self.save_config()
             elif choice == "2":
-                # Change difficulty
-                difficulties = ['easy', 'normal', 'hard']
-                current_index = difficulties.index(
-                    difficulty) if difficulty in difficulties else 0
-                new_index = (current_index + 1) % len(difficulties)
-                self.config['difficulty'] = difficulties[new_index]
-                print(
-                    f"Difficulty set to: {self.config['difficulty'].title()}")
-                self.save_config()
-            elif choice == "3":
                 # Toggle autosave_enabled
                 self.config['autosave_enabled'] = not autosave_enabled
                 print(
                     f"Autosave Enabled set to: {'Enabled' if self.config['autosave_enabled'] else 'Disabled'}"
                 )
                 self.save_config()
-            elif choice == "4":
+            elif choice == "3":
                 # Toggle auto_load_scripts
                 self.config['auto_load_scripts'] = not auto_load
                 print(
                     f"Auto Load Scripts set to: {'Enabled' if self.config['auto_load_scripts'] else 'Disabled'}"
+                )
+                self.save_config()
+            elif choice == "4":
+                # Toggle colors_enabled
+                self.config['colors_enabled'] = not colors_enabled
+                global COLORS_ENABLED
+                COLORS_ENABLED = self.config['colors_enabled']
+                print(
+                    f"Colors Enabled set to: {'Enabled' if self.config['colors_enabled'] else 'Disabled'}"
                 )
                 self.save_config()
             elif choice == "5":
@@ -3147,41 +1799,76 @@ class Game:
 
         if choice == "1":
             self.explore()
+            # Execute scripts after user action
+            if self.config.get('auto_load_scripts', True) and self.config.get('scripts_enabled', True):
+                scripting_engine.execute_scripts_from_config(self)
         elif choice == "2":
             if self.player:
                 self.player.display_stats()
+                if self.config.get('auto_load_scripts', True) and self.config.get('scripts_enabled', True):
+                    scripting_engine.execute_scripts_from_config(self)
             else:
                 print("No character created yet.")
         elif choice == "3":
             self.travel()
+            if self.config.get('auto_load_scripts', True) and self.config.get('scripts_enabled', True):
+                scripting_engine.execute_scripts_from_config(self)
         elif choice == "4":
             self.view_inventory()
+            if self.config.get('auto_load_scripts', True) and self.config.get('scripts_enabled', True):
+                scripting_engine.execute_scripts_from_config(self)           
         elif choice == "5":
             self.view_missions()
+            if self.config.get('auto_load_scripts', True) and self.config.get('scripts_enabled', True):
+                scripting_engine.execute_scripts_from_config(self)
         elif choice == "6":
             self.fight_boss_menu()
+            if self.config.get('auto_load_scripts', True) and self.config.get('scripts_enabled', True):
+                scripting_engine.execute_scripts_from_config(self)            
         elif choice == "7":
             self.visit_tavern()
+            if self.config.get('auto_load_scripts', True) and self.config.get('scripts_enabled', True):
+                scripting_engine.execute_scripts_from_config(self)
         elif choice == "8":
             self.visit_shop()
+            if self.config.get('auto_load_scripts', True) and self.config.get('scripts_enabled', True):
+                scripting_engine.execute_scripts_from_config(self)
         elif choice == "9":
             self.visit_alchemy()
+            if self.config.get('auto_load_scripts', True) and self.config.get('scripts_enabled', True):
+                scripting_engine.execute_scripts_from_config(self)
         elif choice == "10":
             self.visit_market()
+            if self.config.get('auto_load_scripts', True) and self.config.get('scripts_enabled', True):
+                scripting_engine.execute_scripts_from_config(self)
         elif choice == "11":
             self.rest()
+            if self.config.get('auto_load_scripts', True) and self.config.get('scripts_enabled', True):
+                scripting_engine.execute_scripts_from_config(self)
         elif choice == "12":
             self.manage_companions()
+            if self.config.get('auto_load_scripts', True) and self.config.get('scripts_enabled', True):
+                scripting_engine.execute_scripts_from_config(self)
         elif choice == "13":
             self.save_game()
+            if self.config.get('auto_load_scripts', True) and self.config.get('scripts_enabled', True):
+                scripting_engine.execute_scripts_from_config(self)
         elif choice == "14":
             self.load_game()
+            if self.config.get('auto_load_scripts', True) and self.config.get('scripts_enabled', True):
+                scripting_engine.execute_scripts_from_config(self)
         elif choice == "15":
             self.claim_rewards()
+            if self.config.get('auto_load_scripts', True) and self.config.get('scripts_enabled', True):
+                scripting_engine.execute_scripts_from_config(self)
         elif choice == "16":
             self.quit_game()
+            if self.config.get('auto_load_scripts', True) and self.config.get('scripts_enabled', True):
+                scripting_engine.execute_scripts_from_config(self)
         else:
             print("Invalid choice. Please try again.")
+            if self.config.get('auto_load_scripts', True) and self.config.get('scripts_enabled', True):
+                scripting_engine.execute_scripts_from_config(self)
 
     def fight_boss_menu(self):
         """Menu to select and fight a boss in the current area"""
@@ -3256,11 +1943,6 @@ class Game:
         # Continuous mission check on every action
         self.update_mission_progress('check', '')
 
-        # Script override for exploration
-        if self.script_api and self.script_api.trigger_event(
-                'on_explore', self.current_area):
-            return
-
         area_data = self.areas_data.get(self.current_area, {})
         area_name = area_data.get("name", "Unknown Area")
 
@@ -3308,11 +1990,6 @@ class Game:
     def battle(self, enemy: Enemy):
         """Handle turn-based battle"""
         if not self.player:
-            return
-
-        # Script override for battle start
-        if self.script_api and self.script_api.trigger_event(
-                'on_battle_start', enemy.name):
             return
 
         print(f"\n{Colors.BOLD}=== BATTLE ==={Colors.END}")
@@ -3451,11 +2128,6 @@ class Game:
     def player_turn(self, enemy: Enemy) -> bool:
         """Player's turn in battle. Returns False if player fled."""
         if not self.player:
-            return True
-
-        # Script override for player turn
-        if self.script_api and self.script_api.trigger_event(
-                'on_player_turn', enemy.name):
             return True
 
         print(f"\n{Colors.BOLD}Your turn!{Colors.END}")
@@ -5125,7 +3797,7 @@ class Game:
             save_index = int(choice) - 1
             if 0 <= save_index < len(save_files):
                 save_file = save_files[save_index]
-                filename = os.path.join(saves_dir, save_file)
+                filename = os.path.join(str(saves_dir), save_file)
 
                 try:
                     with open(filename, 'r') as f:
@@ -5767,26 +4439,6 @@ class Game:
 def main():
     """Main entry point"""
     game = Game()
-
-    # Initialize scripting API if enabled
-    if game.scripting_enabled:
-        try:
-            game.script_api = init_scripting_api(game)
-            print(
-                f"{Colors.YELLOW}Scripting API enabled (EXPERIMENTAL){Colors.END}"
-            )
-
-            # Auto-load scripts if configured
-            if game.config.get('auto_load_scripts', True):
-                script_list = game.config.get('scripts', [])
-                for script_name in script_list:
-                    try:
-                        __import__(f'scripts.{script_name}')
-                        print(f"Loaded script: {script_name}")
-                    except Exception as e:
-                        print(f"Error loading script {script_name}: {e}")
-        except ImportError:
-            print(f"{Colors.YELLOW}Scripting API not available.{Colors.END}")
 
     # Setup global handlers for Ctrl+C and uncaught exceptions so we can save before exit
     try:
