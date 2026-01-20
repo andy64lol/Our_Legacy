@@ -499,5 +499,19 @@
     "area": "outlaw_lands_of_bridagrak_oblast",
     "unlock_level": 8,
     "prerequisites": ["giant_slayer"]
+  },
+  "sabotage_ninja_operations": {
+    "name": "Sabotage operations from Ninja clans",
+    "description": "Infiltrate the Ninja clans operating in the port and sabotage their plans.",
+    "type": "kill",
+    "target": "ninja",
+    "target_count": 10,
+    "reward": {
+      "experience": 500,
+      "gold": 900
+    },
+    "area": "port_lianghai",
+    "unlock_level": 8,
+    "prerequisites": ["shadow_bow"]
   }
 }

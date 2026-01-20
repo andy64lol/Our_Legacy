@@ -2410,5 +2410,29 @@
       "description":"A sharp fang from a subterranean burrower, coated in earthen residue",
       "price":45,
       "rarity":"common"
+   },
+   "Ninja's Shuriken":{
+      "type": "weapon",
+      "description": "A sharp shuriken used by ninjas for quick attacks.",
+      "attack_bonus": 50,
+      "speed_bonus": 40,
+      "price": 100,
+      "rarity": "uncommon",
+      "requirements": {
+         "level": 4,
+         "class": "Rogue"
+      }
+   },
+   "Ninjato":{
+      "type": "weapon",
+      "description": "A lightweight sword favored by ninjas for swift strikes.",
+      "attack_bonus": 110,
+      "speed_bonus": 90,
+      "price": 220,
+      "rarity": "rare",
+      "requirements": {
+         "level": 5,
+         "class": "Rogue"
+      }
    }
 }
