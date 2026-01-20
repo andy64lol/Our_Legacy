@@ -21,5 +21,6 @@ wheels/
 .installed.cfg
 *.egg
 venv/
-.zenflow/
+scripts/activities.json
 .zencoder/
+.zenflow/
