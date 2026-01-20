@@ -348,5 +348,14 @@
     "experience_reward": 45,
     "gold_reward": 22,
     "loot_table": ["Serpent Tail", "Venom Sac"]
+  },
+  "ninja":{
+    "name": "Ninja",
+    "hp": 90,
+    "attack": 30,
+    "defense": 20,
+    "speed": 40,
+    "gold_reward": 50,
+    "loot_table": ["Ninja's Shuriken","Ninjato"]
   }
 }

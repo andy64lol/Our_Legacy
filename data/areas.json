@@ -360,5 +360,29 @@
     "difficulty": 4,
     "rest_cost": 20,
     "can_rest": true
+  },
+  "port_nova_terrabla":{
+    "name": "Port Nova Terrabla",
+    "description": "A vibrant port city known for its exotic goods and diverse population. Adventurers gather here before setting sail towards the continent of Yixuan.",
+    "possible_enemies": ["bandit", "thief"],
+    "possible_bosses": [],
+    "shops": ["general_store"],
+    "missions_available": true,
+    "connections": ["desert_of_aukrahama", "port_lianghai"],
+    "difficulty": 3,
+    "rest_cost": 15,
+    "can_rest": true
+  },
+  "port_lianghai":{
+    "name": "Port Liãnghǎi",
+    "description": "A bustling harbor city on the eastern coast of the continent of Yixuan, known for its seafood markets and skilled shipbuilders. From here, adventurers can embark on voyages to distant lands across the sea.",
+    "possible_enemies": ["bandit", "thief"],
+    "possible_bosses": [],
+    "shops": ["general_store"],
+    "missions_available": true,
+    "connections": ["port_nova_terrabla"],
+    "difficulty": 3,
+    "rest_cost": 15,
+    "can_rest": true
   }
 }

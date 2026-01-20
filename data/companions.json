@@ -121,5 +121,18 @@
     "action_chance": 0.7,
     "abilities": [{"name": "Forbidden Knowledge", "type": "mp_regen", "mp_per_turn": 7, "duration": 5}],
     "price": 900
+  },
+  "companion_12":{
+    "name": "Baijiang the shade",
+    "class": "Ninja",
+    "rank": "legendary",
+    "description": "A stealthy ninja who excels in speed and critical strikes, mastering the art of silent elimination.",
+    "attack_bonus": 190,
+    "speed_bonus": 300,
+    "crit_chance": 50,
+    "crit_damage_bonus": 200,
+    "action_chance": 0.9,
+    "abilities": [{"name": "Shadow Strike", "type": "crit_boost", "crit_damage_bonus": 20, "duration": 3}],
+    "price": 950
   }
 }
