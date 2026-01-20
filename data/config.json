@@ -1,5 +1,5 @@
 {
-  "scripting_enabled": false,
+  "scripting_enabled": true,
   "auto_load_scripts": true,
   "scripts": [
     "example_achievement_system",
