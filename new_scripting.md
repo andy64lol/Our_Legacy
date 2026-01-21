@@ -1,6 +1,6 @@
 # Javascript Scripting API Documentation
 
-This API allows you to interact with the game world using Javascript (powered by QuickJS). 
+This API allows you to interact with the game world using Javascript (powered by Node.js). 
 
 ## Getting Started
 
@@ -9,8 +9,7 @@ To use the API in your scripts, you should import the necessary modules from `sc
 ```javascript
 import { 
     player, enemy, battle, map, missions, system, 
-    events, getActivities, clearActivities, getActivityCount, 
-    log, print, activities, loadActivities, saveActivities 
+    menu, tellraw, log, print
 } from './scripting_API.js';
 ```
 
@@ -19,9 +18,15 @@ import {
 - `print(message)`: Outputs a message to the game console (displayed as `[Script] message`).
 - `tellraw(message)`: Outputs raw text directly to the game console without the `[Script]` prefix. Use this for immersive text that appears as if the game itself is narrating.
 - `log(message)`: Logs a message with a timestamp.
-- `getActivityCount()`: Returns the number of API actions performed in the current execution.
-- `getActivities()`: Returns an array of all logged activities.
-- `clearActivities()`: Resets the activity log.
+
+## Menu API (`menu`)
+
+The Menu API allows scripts to dynamically interact with the game's UI.
+
+- `menu.addButton(id, label, actionScript)`: Adds a custom button to the main menu. When clicked, it will execute the specified script file.
+- `menu.removeButton(id)`: Removes a previously added script button.
+- `menu.hide()`: Hides the main menu (clears the screen).
+- `menu.show()`: Forces the main menu to reappear.
 
 ## Player Module (`player`)
 
@@ -29,101 +34,48 @@ import {
 - `player.uuid()`: Returns the player's unique identifier.
 - `player.name()`: Returns the player's current name.
 - `player.class()`: Returns the player's current class.
-- `player.level`: Returns the player's current level (Direct property).
+- `player.level`: Returns the player's current level.
 - `player.changeName(newName)`: Changes the player's name.
 - `player.changeClass(newClass)`: Changes the player's class.
 
 ### Health & Mana
 - `player.getHealth()` / `player.getMaxHealth()`: Get current or maximum HP.
-- `player.setHealth(value)` / `player.setMaxHealth(value)`: Set HP values directly.
-- `player.addHealth(amount)` / `player.addMaxHealth(amount)`: Increase/Decrease HP values.
-- `player.getMP()` / `player.getMaxMP()`: Get current or maximum Mana.
-- `player.setMP(value)` / `player.setMaxMP(value)`: Set Mana values directly.
-- `player.addMP(amount)` / `player.addMaxMP(amount)`: Increase/Decrease Mana values.
+- `player.setHealth(value)` / `player.addHealth(amount)`: Manage HP.
+- `player.getMP()` / `player.setMP(value)`: Manage Mana.
 
-### Experience & Leveling
-- `player.exp.set(value)`: Sets the player's experience.
+### Experience & Economy
 - `player.exp.add(amount)`: Adds experience points.
+- `player.gold()`: Returns current gold.
+- `player.giveGold(amount)`: Adds gold.
+- `player.deleteGold(amount)`: Removes gold.
 
 ### Status Effects
-- `player.hasEffect(effectId)`: Check if an effect is active.
-- `player.addEffect(effectId)`: Apply a new status effect (e.g., 'poison', 'regeneration').
+- `player.hasEffect(effectId)`: Check if an effect is active (synchronized from the game's buff system).
+- `player.addEffect(effectId)`: Apply a new status effect.
 
 ### Location
 - `player.location()`: Returns current location object `{ id, name }`.
-- `player.setLocation(locationId)`: Move the player to a new location.
-- `player.locationsConnectedToCurrent()`: Returns an array of accessible neighboring locations.
+- `player.setLocation(locationId)`: Move the player.
 
-### Inventory & Economy
-- `player.inventory()`: Returns an array of items in the player's possession.
-- `player.hasItem(itemId, amount = 1)`: Check for specific items.
-- `player.addItem(itemId, amount = 1)`: Add items to inventory.
-- `player.removeItem(itemId, amount = 1)`: Remove items from inventory.
-- `player.gold()`: Get current gold amount.
-- `player.giveGold()`: Add gold to the player.
-- `player.deleteGold()`: Remove gold from the player.
-- `player.lastItemConsumed()`: Get the ID of the last item used.
-- `player.lastItemObtained()`: Get the ID of the last item picked up.
-
-### Equipment
-- `player.getEquipped()`: Returns current equipment `{ weapon, offhand, armor, accessory }`.
-- `player.equip(itemId)`: Equip an item.
-- `player.unequip(itemId)`: Unequip an item.
-- `player.hasItemEquipped(itemId)`: Check if an item is currently being worn.
-
-### Companions
-- `player.companions()`: List all current companions.
-- `player.companionSlot(slotNumber)`: Get details of a companion in a specific slot.
-- `player.joinCompanion(companionId)`: Recruit a companion.
-- `player.disbandCompanion(companionId)`: Remove a companion.
+### Inventory & Equipment
+- `player.inventory()`: Returns an array of item IDs.
+- `player.hasItem(itemId, amount)`: Check for items.
+- `player.addItem(itemId, amount)`: Add items.
+- `player.removeItem(itemId, amount)`: Remove items.
+- `player.getEquipped()`: Returns current equipment.
 
 ## Battle Module (`battle`)
 
-- `battle.start(enemyId)`: Initiate a regular battle.
-- `battle.bossfightStart(bossId)`: Initiate a boss encounter.
+- `battle.start(enemyId)`: Initiate a battle.
 - `battle.win()`: Force a victory.
-- `battle.lose()`: Force a defeat.
-- `battle.flee()`: Attempt to escape the battle.
 
 ## Enemy Module (`enemy`)
 
-- `enemy.id()`: Get the current enemy's ID.
-- `enemy.isBoss()`: Check if the current enemy is a boss.
+- `enemy.id()`: Get current enemy ID.
 - `enemy.hp()`: Get current enemy HP.
-- `enemy.setCurrentHP(value)`: Set enemy HP directly.
-- `enemy.addCurrentHP(amount)`: Modify enemy HP.
-
-## Map Module (`map`)
-
-- `map.getDifficulty()`: Get the difficulty level of the current area.
-- `map.getCanRest()`: Check if resting is allowed here.
-- `map.getCanRestCosts()`: Get the cost to rest.
-- `map.getAvalaibleMaterials()`: List harvestable materials in the area.
-- `map.getAvalaibleMonster()` / `map.getAvalaibleBoss()`: List potential encounters.
-- `map.getAvalaibleShops()`: List accessible shops.
-- `map.getAvalaibleConnections()`: List neighboring map nodes.
-
-## Missions Module (`missions`)
-
-- `missions.getNotAccepted()`: List available missions.
-- `missions.getOngoing()`: List active missions.
-- `missions.getFinished()`: List completed missions.
-- `missions.accept(missionId)`: Accept a new mission.
-- `missions.finish(missionId)`: Complete a mission.
-- `missions.deleteFromOngoing(missionId)` / `missions.deleteFromFinished(missionId)`: Remove mission records.
-
-## Events System (`events`)
-
-- `events.on(eventName, callback)`: Listen for a specific event.
-- `events.emit(eventName, data)`: Trigger a custom event with data.
-
-## System Module (`system`)
-
-- `system.saveGame()`: Save current progress.
-- `system.latest_save()`: Get timestamp or info of the last save.
-- `system.deleteSaveFile()`: Wipe save data.
+- `enemy.setCurrentHP(value)`: Set enemy HP.
 
 ---
 
 ### Technical Implementation
-The system executes scripts listed in `scripts/scripts.json` inside the `scripts/` directory whenever the user interacts with the game. Data is synchronized via `scripts/activities.json`.
+The engine uses Node.js to run scripts. Game state is synced to `scripts/activities.json` before execution, and the API updates this file to send actions back to the Python engine.
