@@ -532,7 +532,7 @@ class ScriptingEngine:
                 print(f"{Colors.YELLOW}Node.js test failed. Scripting disabled.{Colors.END}")
                 return
 
-            self.scripting_enabled = False
+            self.scripting_enabled = True
             print(f"{Colors.GREEN}Scripting engine initialized successfully.{Colors.END}")
 
         except Exception as e:
@@ -574,9 +574,30 @@ class ScriptingEngine:
                 pass
 
             # Print any output
+            hide_menu = False
+            show_menu = False
             if result.stdout.strip():
                 for line in result.stdout.strip().split('\n'):
-                    print(f"{Colors.CYAN}[Script] {line}{Colors.END}")
+                    # Check for raw output marker from tellraw()
+                    if line.startswith('__RAW_OUTPUT__'):
+                        # Print without [Script] prefix for tellraw
+                        raw_content = line[len('__RAW_OUTPUT__'):]
+                        print(raw_content)
+                    elif line.startswith('__HIDE_MENU__'):
+                        # Hide menu (clear screen)
+                        hide_menu = True
+                    elif line.startswith('__SHOW_MENU__'):
+                        # Show menu again
+                        show_menu = True
+                    else:
+                        print(f"{Colors.CYAN}[Script] {line}{Colors.END}")
+            
+            # Execute menu actions after processing output
+            if hide_menu:
+                clear_screen()
+            if show_menu:
+                # Re-display the main menu or welcome screen
+                print(f"{Colors.CYAN}Returning to main menu...{Colors.END}")
 
             # Check for errors
             if result.returncode != 0:
@@ -609,9 +630,30 @@ class ScriptingEngine:
                                    timeout=30)
 
             # Print any output
+            hide_menu = False
+            show_menu = False
             if result.stdout.strip():
                 for line in result.stdout.strip().split('\n'):
-                    print(f"{Colors.CYAN}[Script] {line}{Colors.END}")
+                    # Check for raw output marker from tellraw()
+                    if line.startswith('__RAW_OUTPUT__'):
+                        # Print without [Script] prefix for tellraw
+                        raw_content = line[len('__RAW_OUTPUT__'):]
+                        print(raw_content)
+                    elif line.startswith('__HIDE_MENU__'):
+                        # Hide menu (clear screen)
+                        hide_menu = True
+                    elif line.startswith('__SHOW_MENU__'):
+                        # Show menu again
+                        show_menu = True
+                    else:
+                        print(f"{Colors.CYAN}[Script] {line}{Colors.END}")
+            
+            # Execute menu actions after processing output
+            if hide_menu:
+                clear_screen()
+            if show_menu:
+                # Re-display the main menu or welcome screen
+                print(f"{Colors.CYAN}Returning to main menu...{Colors.END}")
 
             # Check for errors
             if result.returncode != 0:
