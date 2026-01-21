@@ -769,6 +769,56 @@ class ScriptingEngine:
 # Global scripting engine instance
 scripting_engine = ScriptingEngine()
 
+# Global dictionary to store dynamic menu buttons added via scripting
+# Format: { "button_label": { "type": "file" | "inline", "value": "script_name.js" | "script_code" } }
+dynamic_buttons: Dict[str, Dict[str, str]] = {}
+
+# Path to buttons file for persistence
+BUTTONS_FILE = 'scripts/buttons.json'
+
+
+def load_dynamic_buttons():
+    """Load dynamic buttons from buttons.json file"""
+    global dynamic_buttons
+    try:
+        if os.path.exists(BUTTONS_FILE):
+            with open(BUTTONS_FILE, 'r') as f:
+                data = json.load(f)
+                if data.get('buttons'):
+                    dynamic_buttons = data['buttons']
+                    print(f"{Colors.CYAN}Loaded {len(dynamic_buttons)} dynamic buttons{Colors.END}")
+        else:
+            # Create default buttons file
+            default_data = {
+                'version': '1.0',
+                'last_updated': datetime.now().isoformat(),
+                'buttons': {}
+            }
+            with open(BUTTONS_FILE, 'w') as f:
+                json.dump(default_data, f, indent=2)
+            dynamic_buttons = {}
+            print(f"{Colors.CYAN}Created buttons file{Colors.END}")
+    except Exception as e:
+        print(f"{Colors.YELLOW}Warning: Could not load buttons: {e}{Colors.END}")
+        dynamic_buttons = {}
+
+
+def save_dynamic_buttons():
+    """Save dynamic buttons to buttons.json file"""
+    global dynamic_buttons
+    try:
+        data = {
+            'version': '1.0',
+            'last_updated': datetime.now().isoformat(),
+            'buttons': dynamic_buttons
+        }
+        with open(BUTTONS_FILE, 'w') as f:
+            json.dump(data, f, indent=2)
+        return True
+    except Exception as e:
+        print(f"{Colors.RED}Error saving buttons: {e}{Colors.END}")
+        return False
+
 
 class MarketAPI:
     """API for accessing the Elite Market with 10-minute cooldown"""
@@ -1472,6 +1522,9 @@ class Game:
         self.market_api: Optional[MarketAPI] = None
         self.crafting_data: Dict[str, Any] = {}
 
+        # Load dynamic buttons from file
+        load_dynamic_buttons()
+        
         # Load game data
         self.load_game_data()
         self.load_config()
@@ -1801,7 +1854,8 @@ class Game:
         print("14. Load Game")
         print("15. Claim Rewards")
         print("16. Quit")
-        choice = ask("Choose an option (1-16): ", allow_empty=False)
+        print("17. Others")
+        choice = ask("Choose an option (1-17): ", allow_empty=False)
 
         # Normalize textual shortcuts to numbers for backward compatibility
         shortcut_map = {
@@ -1836,7 +1890,9 @@ class Game:
             'claim': '15',
             'c': '15',
             'quit': '16',
-            'q': '16'
+            'q': '16',
+            'others': '17',
+            'o': '17'
         }
 
         normalized = choice.strip().lower()
@@ -1909,6 +1965,10 @@ class Game:
                 scripting_engine.execute_scripts_from_config(self)
         elif choice == "16":
             self.quit_game()
+            if self.config.get('auto_load_scripts', True) and self.config.get('scripts_enabled', True):
+                scripting_engine.execute_scripts_from_config(self)
+        elif choice == "17":
+            self.others_menu()
             if self.config.get('auto_load_scripts', True) and self.config.get('scripts_enabled', True):
                 scripting_engine.execute_scripts_from_config(self)
         else:
@@ -4127,6 +4187,103 @@ class Game:
         print("Thank you for playing Our Legacy!")
         print("Your legacy will be remembered...")
         sys.exit(0)
+
+    def others_menu(self):
+        """Display the Others menu with dynamically added buttons from scripting"""
+        global dynamic_buttons
+        
+        # Refresh buttons from file (in case JavaScript scripts added new ones)
+        load_dynamic_buttons()
+        
+        while True:
+            clear_screen()
+            print(f"{Colors.BOLD}=== OTHERS ==={Colors.END}")
+            
+            # Check if there are any dynamic buttons
+            if not dynamic_buttons:
+                print("\nNo additional options available.")
+                print("Use system.addButton() in scripts to add custom menu buttons.")
+            else:
+                print("\nAvailable options:")
+                # Display all dynamically added buttons
+                button_labels = list(dynamic_buttons.keys())
+                for i, label in enumerate(button_labels, 1):
+                    print(f"{i}. {label}")
+                print()
+                print(f"{Colors.YELLOW}Options:{Colors.END}")
+                print(f"1-{len(button_labels)}. Select option")
+                print("D. Delete a button")
+                print("B. Back to Main Menu")
+            
+            if not dynamic_buttons:
+                choice = ask("\nPress Enter to go back: ").strip()
+                if choice == '' or choice.lower() == 'b':
+                    break
+            else:
+                choice = ask("\nChoose an option: ").strip().upper()
+                
+                if choice == 'B' or choice == '':
+                    break
+                elif choice == 'D':
+                    # Delete a button
+                    if dynamic_buttons:
+                        try:
+                            idx = int(ask(f"Delete which button (1-{len(dynamic_buttons)})? ")) - 1
+                            if 0 <= idx < len(dynamic_buttons):
+                                label = list(dynamic_buttons.keys())[idx]
+                                del dynamic_buttons[label]
+                                # Save to file after deletion
+                                save_dynamic_buttons()
+                                print(f"Button '{label}' deleted.")
+                                time.sleep(1)
+                            else:
+                                print("Invalid selection.")
+                                time.sleep(1)
+                        except ValueError:
+                            print("Invalid input.")
+                            time.sleep(1)
+                    else:
+                        print("No buttons to delete.")
+                        time.sleep(1)
+                elif choice.isdigit():
+                    idx = int(choice) - 1
+                    button_labels = list(dynamic_buttons.keys())
+                    if 0 <= idx < len(button_labels):
+                        label = button_labels[idx]
+                        button_info = dynamic_buttons[label]
+                        self._execute_dynamic_button(button_info)
+                        # Refresh buttons after execution (in case script modified them)
+                        load_dynamic_buttons()
+                    else:
+                        print("Invalid selection.")
+                        time.sleep(1)
+                else:
+                    print("Invalid choice.")
+                    time.sleep(1)
+
+    def _execute_dynamic_button(self, button_info):
+        """Execute the script associated with a dynamic button"""
+        button_type = button_info.get('type', '')
+        value = button_info.get('value', '')
+        
+        if button_type == 'file':
+            # Execute a script file
+            script_path = f"scripts/{value}"
+            if os.path.exists(script_path):
+                print(f"\n{Colors.CYAN}Executing: {value}{Colors.END}")
+                scripting_engine.execute_file(script_path)
+            else:
+                print(f"{Colors.RED}Script file not found: {value}{Colors.END}")
+        elif button_type == 'inline':
+            # Execute inline script code
+            print(f"\n{Colors.CYAN}Executing custom script...{Colors.END}")
+            scripting_engine.execute_script(value)
+        else:
+            print(f"{Colors.RED}Unknown button type: {button_type}{Colors.END}")
+        
+        # Pause to let user see output
+        ask("\nPress Enter to continue: ").strip()
+
 
     def _gather_materials(self):
         """Gather materials based on current area's difficulty and theme."""

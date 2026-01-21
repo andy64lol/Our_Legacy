@@ -11,6 +11,12 @@ var lastActivityTime = 0;
 // Path to activities file (relative to script location)
 var ACTIVITIES_FILE = 'scripts/activities.json';
 
+// Path to buttons file (for dynamic menu buttons)
+var BUTTONS_FILE = 'scripts/buttons.json';
+
+// Global buttons storage
+var dynamicButtons = {};
+
 // Initialize Date.now() equivalent for environments that don't have it
 var _nowTimestamp = (typeof Date !== 'undefined' && Date.now) ? Date.now() : Math.floor(new Date().getTime());
 if (typeof Date === 'undefined' || typeof Date.now === 'undefined') {
@@ -712,6 +718,143 @@ var system = {
         if (typeof console !== 'undefined' && console.log) {
             console.log("__SHOW_MENU__");
         }
+    },
+    
+    // ============================================
+    // Dynamic Buttons Management
+    // ============================================
+    
+    /**
+     * Add a new dynamic menu button
+     * @param {string} label - The button label (what shows in menu)
+     * @param {string} type - "file" for script file, "inline" for inline script
+     * @param {string} value - If type="file": script filename (e.g., "my_script" for scripts/my_script.js)
+     *                         If type="inline": JavaScript code to execute
+     * @returns {string} Success message or error
+     */
+    addButton: function(label, type, value) {
+        activities.push({ type: 'system.addButton', label: label, type: type, value: value, time: getTimestamp() });
+        
+        // Validate inputs
+        if (!label || typeof label !== 'string') {
+            return "Error: Button label must be a non-empty string";
+        }
+        if (!type || !['file', 'inline'].includes(type.toLowerCase())) {
+            return "Error: Button type must be 'file' or 'inline'";
+        }
+        if (!value || typeof value !== 'string') {
+            return "Error: Button value must be a non-empty string";
+        }
+        
+        var buttonType = type.toLowerCase();
+        
+        // Add the button
+        dynamicButtons[label] = {
+            type: buttonType,
+            value: value
+        };
+        
+        // Save to file
+        saveButtons();
+        
+        log("Added button: " + label + " (type: " + buttonType + ")");
+        return "Button '" + label + "' added successfully";
+    },
+    
+    /**
+     * Delete a dynamic menu button
+     * @param {string} label - The button label to delete
+     * @returns {string} Success message or error
+     */
+    deleteButton: function(label) {
+        activities.push({ type: 'system.deleteButton', label: label, time: getTimestamp() });
+        
+        // Validate input
+        if (!label || typeof label !== 'string') {
+            return "Error: Button label must be a non-empty string";
+        }
+        
+        // Check if button exists
+        if (!dynamicButtons.hasOwnProperty(label)) {
+            return "Error: Button '" + label + "' does not exist";
+        }
+        
+        // Delete the button
+        delete dynamicButtons[label];
+        
+        // Save to file
+        saveButtons();
+        
+        log("Deleted button: " + label);
+        return "Button '" + label + "' deleted successfully";
+    },
+    
+    /**
+     * Define or update the script for an existing button (for inline scripts)
+     * @param {string} label - The button label
+     * @param {string} scriptCode - The JavaScript code to execute when button is clicked
+     * @returns {string} Success message or error
+     */
+    defineButtonScript: function(label, scriptCode) {
+        activities.push({ type: 'system.defineButtonScript', label: label, time: getTimestamp() });
+        
+        // Validate inputs
+        if (!label || typeof label !== 'string') {
+            return "Error: Button label must be a non-empty string";
+        }
+        if (!scriptCode || typeof scriptCode !== 'string') {
+            return "Error: Script code must be a non-empty string";
+        }
+        
+        // Check if button exists
+        if (!dynamicButtons.hasOwnProperty(label)) {
+            return "Error: Button '" + label + "' does not exist. Use system.addButton() first";
+        }
+        
+        // Update the button's script
+        dynamicButtons[label].type = 'inline';
+        dynamicButtons[label].value = scriptCode;
+        
+        // Save to file
+        saveButtons();
+        
+        log("Updated script for button: " + label);
+        return "Button script for '" + label + "' updated successfully";
+    },
+    
+    /**
+     * List all dynamic buttons
+     * @returns {Object} Object containing all buttons {label: {type, value}, ...}
+     */
+    listButtons: function() {
+        activities.push({ type: 'system.listButtons', time: getTimestamp() });
+        var result = {};
+        for (var key in dynamicButtons) {
+            result[key] = dynamicButtons[key];
+        }
+        return result;
+    },
+    
+    /**
+     * Check if a button exists
+     * @param {string} label - The button label to check
+     * @returns {boolean} True if button exists
+     */
+    hasButton: function(label) {
+        activities.push({ type: 'system.hasButton', label: label, time: getTimestamp() });
+        return dynamicButtons.hasOwnProperty(label);
+    },
+    
+    /**
+     * Clear all dynamic buttons
+     * @returns {string} Success message
+     */
+    clearButtons: function() {
+        activities.push({ type: 'system.clearButtons', time: getTimestamp() });
+        dynamicButtons = {};
+        saveButtons();
+        log("Cleared all buttons");
+        return "All buttons cleared successfully";
     }
 };
 
@@ -777,7 +920,82 @@ function getActivityCount() {
     return activities.length;
 }
 
+// ============================================
+// Dynamic Buttons Management Functions
+// ============================================
+
+// Load buttons from file using Node.js fs
+function loadButtons() {
+    if (typeof require !== 'undefined') {
+        var fs = require('fs');
+        try {
+            if (fs.existsSync(BUTTONS_FILE)) {
+                var data = fs.readFileSync(BUTTONS_FILE, 'utf8');
+                var parsed = JSON.parse(data);
+                if (parsed.buttons) {
+                    dynamicButtons = parsed.buttons;
+                }
+                log("Buttons loaded from " + BUTTONS_FILE);
+            } else {
+                // Create default buttons file
+                var defaultData = {
+                    version: "1.0",
+                    last_updated: new Date().toISOString(),
+                    buttons: {}
+                };
+                fs.writeFileSync(BUTTONS_FILE, JSON.stringify(defaultData, null, 2));
+                dynamicButtons = {};
+                log("Created default buttons file");
+            }
+            return true;
+        } catch (e) {
+            print("Error loading buttons: " + e.message);
+            return false;
+        }
+    }
+    return false;
+}
+
+// Save buttons to file using Node.js fs
+function saveButtons() {
+    if (typeof require !== 'undefined') {
+        var fs = require('fs');
+        try {
+            var data = {
+                version: "1.0",
+                last_updated: new Date().toISOString(),
+                buttons: dynamicButtons
+            };
+            
+            fs.writeFileSync(BUTTONS_FILE, JSON.stringify(data, null, 2));
+            log("Buttons saved to " + BUTTONS_FILE);
+            return true;
+        } catch (e) {
+            print("Error saving buttons: " + e.message);
+            return false;
+        }
+    }
+    return false;
+}
+
+// Get all buttons
+function getButtons() {
+    activities.push({ type: 'getButtons', time: getTimestamp() });
+    var result = {};
+    for (var key in dynamicButtons) {
+        result[key] = dynamicButtons[key];
+    }
+    return result;
+}
+
+// Auto-load buttons on initialization (Node.js)
+if (typeof require !== 'undefined') {
+    loadButtons();
+}
+
+// ============================================
 // Export for QuickJS and Node.js
+// ============================================
 // For QuickJS: use globalThis (or just assign to the global object)
 // For Node.js: use global
 var _exportTarget = (typeof globalThis !== 'undefined') ? globalThis : (typeof global !== 'undefined') ? global : this;
