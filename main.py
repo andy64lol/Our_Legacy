@@ -1058,8 +1058,12 @@ class Character:
 
     def _update_rank(self):
         """Simple rank tiers based on level"""
-        if self.level >= 30:
+        if self.level >= 90:
             self.rank = "Legend"
+        elif self.level >= 60:
+            self.rank = "Hero"
+        elif self.level >= 40:
+            self.rank = "Mythic"
         elif self.level >= 20:
             self.rank = "Champion"
         elif self.level >= 15:
