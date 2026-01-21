@@ -16,7 +16,8 @@ import {
 
 ## Global Utilities
 
-- `print(message)`: Outputs a message to the game console.
+- `print(message)`: Outputs a message to the game console (displayed as `[Script] message`).
+- `tellraw(message)`: Outputs raw text directly to the game console without the `[Script]` prefix. Use this for immersive text that appears as if the game itself is narrating.
 - `log(message)`: Logs a message with a timestamp.
 - `getActivityCount()`: Returns the number of API actions performed in the current execution.
 - `getActivities()`: Returns an array of all logged activities.

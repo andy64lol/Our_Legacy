@@ -698,6 +698,20 @@ var system = {
     deleteSaveFile: function() { 
         activities.push({ type: 'system.deleteSaveFile', time: getTimestamp() }); 
         return true;
+    },
+    hideMenu: function() {
+        // Clears the terminal screen
+        activities.push({ type: 'system.hideMenu', time: getTimestamp() });
+        if (typeof console !== 'undefined' && console.log) {
+            console.log("__HIDE_MENU__");
+        }
+    },
+    showMenu: function() {
+        // Shows the game menu again
+        activities.push({ type: 'system.showMenu', time: getTimestamp() });
+        if (typeof console !== 'undefined' && console.log) {
+            console.log("__SHOW_MENU__");
+        }
     }
 };
 
@@ -737,6 +751,16 @@ function print(message) {
     }
 }
 
+// tellraw - display raw text on screen without [script] prefix
+// Uses a special marker that the game engine detects to print without prefix
+function tellraw(message) {
+    if (typeof globalPrint !== 'undefined') {
+        globalPrint("__RAW_OUTPUT__" + message);
+    } else if (typeof console !== 'undefined' && console.log) {
+        console.log("__RAW_OUTPUT__" + message);
+    }
+}
+
 function log(message) {
     activities.push({ type: 'log', message: message, time: getTimestamp() });
 }
@@ -770,6 +794,7 @@ _exportTarget.clearActivities = clearActivities;
 _exportTarget.getActivityCount = getActivityCount;
 _exportTarget.log = log;
 _exportTarget.print = print;
+_exportTarget.tellraw = tellraw;
 _exportTarget.Date = Date;
 _exportTarget.JSON = JSON;
 _exportTarget.activities = activities;
@@ -790,6 +815,7 @@ export {
     getActivityCount,
     log,
     print,
+    tellraw,
     activities,
     loadActivities,
     saveActivities
