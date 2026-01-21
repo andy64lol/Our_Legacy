@@ -11,12 +11,6 @@ var lastActivityTime = 0;
 // Path to activities file (relative to script location)
 var ACTIVITIES_FILE = 'scripts/activities.json';
 
-// Path to buttons file (for dynamic menu buttons)
-var BUTTONS_FILE = 'scripts/buttons.json';
-
-// Global buttons storage
-var dynamicButtons = {};
-
 // Initialize Date.now() equivalent for environments that don't have it
 var _nowTimestamp = (typeof Date !== 'undefined' && Date.now) ? Date.now() : Math.floor(new Date().getTime());
 if (typeof Date === 'undefined' || typeof Date.now === 'undefined') {
@@ -69,60 +63,32 @@ function loadActivities() {
     if (typeof require !== 'undefined') {
         var fs = require('fs');
         try {
+            if (!fs.existsSync(ACTIVITIES_FILE)) {
+                return false;
+            }
             var data = fs.readFileSync(ACTIVITIES_FILE, 'utf8');
+            if (!data) return false;
             var parsed = JSON.parse(data);
             
-            // Load player state
-            if (parsed.player) {
-                global.playerState = parsed.player;
-            }
+            // Load state
+            if (parsed.player) global.playerState = parsed.player;
+            if (parsed.location) global.locationState = parsed.location;
+            if (parsed.enemy) global.enemyState = parsed.enemy;
+            if (parsed.battle) global.battleState = parsed.battle;
+            if (parsed.missions) global.missionsState = parsed.missions;
+            if (parsed.system) global.systemState = parsed.system;
+            if (parsed.effects) global.effectsState = parsed.effects;
+            if (parsed.activities) activities = parsed.activities;
             
-            // Load location state
-            if (parsed.location) {
-                global.locationState = parsed.location;
-            }
-            
-            // Load enemy state
-            if (parsed.enemy) {
-                global.enemyState = parsed.enemy;
-            }
-            
-            // Load battle state
-            if (parsed.battle) {
-                global.battleState = parsed.battle;
-            }
-            
-            // Load missions state
-            if (parsed.missions) {
-                global.missionsState = parsed.missions;
-            }
-            
-            // Load system state
-            if (parsed.system) {
-                global.systemState = parsed.system;
-            }
-            
-            // Load effects
-            if (parsed.effects) {
-                global.effectsState = parsed.effects;
-            }
-            
-            // Load activities history
-            if (parsed.activities) {
-                activities = parsed.activities;
-            }
-            
-            log("Activities loaded from " + ACTIVITIES_FILE);
             return true;
         } catch (e) {
-            print("Error loading activities: " + e.message);
             return false;
         }
     }
     return false;
 }
 
-// Save activities to file using Node.js fs
+// Save activities to file
 function saveActivities() {
     if (typeof require !== 'undefined') {
         var fs = require('fs');
@@ -139,922 +105,80 @@ function saveActivities() {
                 system: global.systemState || {},
                 effects: global.effectsState || []
             };
-            
             fs.writeFileSync(ACTIVITIES_FILE, JSON.stringify(data, null, 2));
-            log("Activities saved to " + ACTIVITIES_FILE);
             return true;
         } catch (e) {
-            print("Error saving activities: " + e.message);
             return false;
         }
     }
     return false;
 }
 
-// Initialize global state if not exists
+// Initialize global state
 if (typeof global !== 'undefined') {
-    if (!global.playerState) {
-        global.playerState = {
-            uuid: "",
-            name: "",
-            class: "",
-            health: 100,
-            maxHealth: 100,
-            mp: 50,
-            maxMP: 50,
-            level: 1,
-            exp: 0,
-            gold: 100,
-            inventory: [],
-            companions: [],
-            equipped: {
-                weapon: null,
-                offhand: null,
-                armor: null,
-                accessory: null
-            },
-            lastItemConsumed: null,
-            lastItemObtained: null
-        };
-    }
-    
-    if (!global.locationState) {
-        global.locationState = {
-            id: "starting_village",
-            name: "Starting Village",
-            connections: [],
-            canRest: true,
-            restCost: 10,
-            difficulty: 1
-        };
-    }
-    
-    if (!global.enemyState) {
-        global.enemyState = {
-            id: "",
-            name: "",
-            isBoss: false,
-            hp: 0,
-            maxHp: 0
-        };
-    }
-    
-    if (!global.battleState) {
-        global.battleState = {
-            active: false,
-            enemyId: null,
-            bossId: null
-        };
-    }
-    
-    if (!global.missionsState) {
-        global.missionsState = {
-            finished: [],
-            ongoing: [],
-            notAccepted: []
-        };
-    }
-    
-    if (!global.systemState) {
-        global.systemState = {
-            latestSave: null
-        };
-    }
-    
-    if (!global.effectsState) {
-        global.effectsState = [];
-    }
+    if (!global.playerState) global.playerState = { health: 100, maxHealth: 100, mp: 50, maxMP: 50, level: 1, gold: 100, inventory: [], companions: [], equipped: {} };
+    if (!global.locationState) global.locationState = { id: "starting_village", connections: [] };
+    if (!global.enemyState) global.enemyState = { hp: 0 };
+    if (!global.battleState) global.battleState = { active: false };
+    if (!global.missionsState) global.missionsState = { finished: [], ongoing: [], notAccepted: [] };
+    if (!global.systemState) global.systemState = {};
+    if (!global.effectsState) global.effectsState = [];
 }
 
-// Auto-load activities on initialization (Node.js)
-if (typeof require !== 'undefined') {
-    loadActivities();
-}
+if (typeof require !== 'undefined') loadActivities();
 
-// Player API object
+// APIs
 var player = {
-    // Player info
-    uuid: function() { 
-        activities.push({ type: 'uuid', time: getTimestamp() }); 
-        return global.playerState.uuid || '';
-    },
-    name: function() { 
-        activities.push({ type: 'name', time: getTimestamp() }); 
-        return global.playerState.name || '';
-    },
-    class: function() { 
-        activities.push({ type: 'class', time: getTimestamp() }); 
-        return global.playerState.class || '';
-    },
-    
-    // Player modifications
-    changeName: function(newName) { 
-        activities.push({ type: 'changeName', newName: newName, time: getTimestamp() }); 
-        global.playerState.name = newName;
-        saveActivities();
-        return "Name change requested: " + newName;
-    },
-    changeClass: function(newClass) { 
-        activities.push({ type: 'changeClass', newClass: newClass, time: getTimestamp() }); 
-        global.playerState.class = newClass;
-        saveActivities();
-        return "Class change requested: " + newClass;
-    },
-    
-    // Health management
-    getHealth: function() { 
-        activities.push({ type: 'getHealth', time: getTimestamp() }); 
-        return global.playerState.health || 0;
-    },
-    getMaxHealth: function() { 
-        activities.push({ type: 'getMaxHealth', time: getTimestamp() }); 
-        return global.playerState.maxHealth || 0;
-    },
-    setHealth: function(value) { 
-        activities.push({ type: 'setHealth', value: value, time: getTimestamp() }); 
-        global.playerState.health = value;
-        saveActivities();
-        return value;
-    },
-    setMaxHealth: function(value) { 
-        activities.push({ type: 'setMaxHealth', value: value, time: getTimestamp() }); 
-        global.playerState.maxHealth = value;
-        saveActivities();
-        return value;
-    },
-    addHealth: function(amount) { 
-        activities.push({ type: 'addHealth', amount: amount, time: getTimestamp() }); 
-        global.playerState.health = (global.playerState.health || 0) + amount;
-        saveActivities();
-        return amount;
-    },
-    addMaxHealth: function(amount) { 
-        activities.push({ type: 'addMaxHealth', amount: amount, time: getTimestamp() }); 
-        global.playerState.maxHealth = (global.playerState.maxHealth || 0) + amount;
-        saveActivities();
-        return amount;
-    },
-    
-    // MP management
-    getMP: function() { 
-        activities.push({ type: 'getMP', time: getTimestamp() }); 
-        return global.playerState.mp || 0;
-    },
-    getMaxMP: function() { 
-        activities.push({ type: 'getMaxMP', time: getTimestamp() }); 
-        return global.playerState.maxMP || 0;
-    },
-    setMP: function(value) { 
-        activities.push({ type: 'setMP', value: value, time: getTimestamp() }); 
-        global.playerState.mp = value;
-        saveActivities();
-        return value;
-    },
-    setMaxMP: function(value) { 
-        activities.push({ type: 'setMaxMP', value: value, time: getTimestamp() }); 
-        global.playerState.maxMP = value;
-        saveActivities();
-        return value;
-    },
-    addMP: function(amount) { 
-        activities.push({ type: 'addMP', amount: amount, time: getTimestamp() }); 
-        global.playerState.mp = (global.playerState.mp || 0) + amount;
-        saveActivities();
-        return amount;
-    },
-    addMaxMP: function(amount) { 
-        activities.push({ type: 'addMaxMP', amount: amount, time: getTimestamp() }); 
-        global.playerState.maxMP = (global.playerState.maxMP || 0) + amount;
-        saveActivities();
-        return amount;
-    },
-    
-    // Effects
-    hasEffect: function(effectId) { 
-        activities.push({ type: 'hasEffect', effectId: effectId, time: getTimestamp() }); 
-        return global.effectsState && global.effectsState.indexOf(effectId) !== -1;
-    },
-    addEffect: function(effectId) { 
-        activities.push({ type: 'addEffect', effectId: effectId, time: getTimestamp() }); 
-        if (!global.effectsState) global.effectsState = [];
-        if (global.effectsState.indexOf(effectId) === -1) {
-            global.effectsState.push(effectId);
-            saveActivities();
-        }
-        return effectId;
-    },
-    
-    // Location
-    location: function() { 
-        activities.push({ type: 'location', time: getTimestamp() }); 
-        return { 
-            id: global.locationState.id || '', 
-            name: global.locationState.name || '' 
-        };
-    },
-    setLocation: function(locationId) { 
-        activities.push({ type: 'setLocation', locationId: locationId, time: getTimestamp() }); 
-        global.locationState.id = locationId;
-        saveActivities();
-        return locationId;
-    },
-    locationsConnectedToCurrent: function() { 
-        activities.push({ type: 'locationsConnectedToCurrent', time: getTimestamp() }); 
-        return global.locationState.connections || [];
-    },
-    
-    // Level
-    level: {
-        set: function(value) { 
-            activities.push({ type: 'level.set', value: value, time: getTimestamp() }); 
-            global.playerState.level = value;
-            saveActivities();
-            return value;
-        },
-        add: function(amount) { 
-            activities.push({ type: 'level.add', amount: amount, time: getTimestamp() }); 
-            global.playerState.level = (global.playerState.level || 1) + amount;
-            saveActivities();
-            return amount;
-        }
-    },
-    
-    // Experience
-    exp: {
-        set: function(value) { 
-            activities.push({ type: 'exp.set', value: value, time: getTimestamp() }); 
-            global.playerState.exp = value;
-            saveActivities();
-            return value;
-        },
-        add: function(amount) { 
-            activities.push({ type: 'exp.add', amount: amount, time: getTimestamp() }); 
-            global.playerState.exp = (global.playerState.exp || 0) + amount;
-            saveActivities();
-            return amount;
-        }
-    },
-    
-    // Inventory
-    hasItem: function(itemId, amount) { 
-        if (amount === undefined) amount = 1;
-        activities.push({ type: 'hasItem', itemId: itemId, amount: amount, time: getTimestamp() }); 
-        var count = 0;
-        var inventory = global.playerState.inventory || [];
-        for (var i = 0; i < inventory.length; i++) {
-            if (inventory[i] === itemId) count++;
-        }
-        return count >= amount;
-    },
-    addItem: function(itemId, amount) { 
-        if (amount === undefined) amount = 1;
-        activities.push({ type: 'addItem', itemId: itemId, amount: amount, time: getTimestamp() }); 
-        if (!global.playerState.inventory) global.playerState.inventory = [];
-        for (var i = 0; i < amount; i++) {
-            global.playerState.inventory.push(itemId);
-        }
-        global.playerState.lastItemObtained = itemId;
-        saveActivities();
-        return { itemId: itemId, amount: amount };
-    },
-    removeItem: function(itemId, amount) { 
-        if (amount === undefined) amount = 1;
-        activities.push({ type: 'removeItem', itemId: itemId, amount: amount, time: getTimestamp() }); 
-        var removed = 0;
-        if (global.playerState.inventory) {
-            for (var i = global.playerState.inventory.length - 1; i >= 0 && removed < amount; i--) {
-                if (global.playerState.inventory[i] === itemId) {
-                    global.playerState.inventory.splice(i, 1);
-                    removed++;
-                }
-            }
-        }
-        saveActivities();
-        return { itemId: itemId, amount: removed };
-    },
-    
-    inventory: function() { 
-        activities.push({ type: 'inventory', time: getTimestamp() }); 
-        return global.playerState.inventory || [];
-    },
-    
-    // Gold
-    gold: function() { 
-        activities.push({ type: 'gold', time: getTimestamp() }); 
-        return global.playerState.gold || 0;
-    },
-    giveGold: function() { 
-        activities.push({ type: 'giveGold', time: getTimestamp() }); 
-        return 0;
-    },
-    deleteGold: function() { 
-        activities.push({ type: 'deleteGold', time: getTimestamp() }); 
-        return 0;
-    },
-    
-    // Companions
-    companions: function() { 
-        activities.push({ type: 'companions', time: getTimestamp() }); 
-        return global.playerState.companions || [];
-    },
-    companionSlot: function(slotNumber) { 
-        activities.push({ type: 'companionSlot', slotNumber: slotNumber, time: getTimestamp() }); 
-        var companions = global.playerState.companions || [];
-        if (slotNumber >= 0 && slotNumber < companions.length) {
-            return companions[slotNumber];
-        }
-        return null;
-    },
-    
-    joinCompanion: function(companionId) { 
-        activities.push({ type: 'joinCompanion', companionId: companionId, time: getTimestamp() }); 
-        if (!global.playerState.companions) global.playerState.companions = [];
-        global.playerState.companions.push(companionId);
-        saveActivities();
-        return companionId;
-    },
-    disbandCompanion: function(companionId) { 
-        activities.push({ type: 'disbandCompanion', companionId: companionId, time: getTimestamp() }); 
-        if (global.playerState.companions) {
-            var idx = global.playerState.companions.indexOf(companionId);
-            if (idx !== -1) {
-                global.playerState.companions.splice(idx, 1);
-                saveActivities();
-            }
-        }
-        return companionId;
-    },
-    
-    // Equipment
-    getEquipped: function() { 
-        activities.push({ type: 'getEquipped', time: getTimestamp() }); 
-        return global.playerState.equipped || { weapon: null, offhand: null, armor: null, accessory: null };
-    },
-    
-    equip: function(itemId) { 
-        activities.push({ type: 'equip', itemId: itemId, time: getTimestamp() }); 
-        global.playerState.equipped = global.playerState.equipped || { weapon: null, offhand: null, armor: null, accessory: null };
-        // Determine slot based on item type (simplified)
-        global.playerState.equipped.weapon = itemId;
-        saveActivities();
-        return itemId;
-    },
-    unequip: function(itemId) { 
-        activities.push({ type: 'unequip', itemId: itemId, time: getTimestamp() }); 
-        if (global.playerState.equipped) {
-            if (global.playerState.equipped.weapon === itemId) global.playerState.equipped.weapon = null;
-            if (global.playerState.equipped.armor === itemId) global.playerState.equipped.armor = null;
-            if (global.playerState.equipped.accessory === itemId) global.playerState.equipped.accessory = null;
-            saveActivities();
-        }
-        return itemId;
-    },
-    
-    hasItemEquipped: function(itemId) { 
-        activities.push({ type: 'hasItemEquipped', itemId: itemId, time: getTimestamp() }); 
-        var equipped = global.playerState.equipped || {};
-        return equipped.weapon === itemId || equipped.armor === itemId || equipped.accessory === itemId;
-    },
-    
-    // Last items
-    lastItemConsumed: function() { 
-        activities.push({ type: 'lastItemConsumed', time: getTimestamp() }); 
-        return global.playerState.lastItemConsumed || null;
-    },
-    lastItemObtained: function() { 
-        activities.push({ type: 'lastItemObtained', time: getTimestamp() }); 
-        return global.playerState.lastItemObtained || null;
-    }
+    uuid: function() { return global.playerState.uuid || ''; },
+    name: function() { return global.playerState.name || ''; },
+    class: function() { return global.playerState.class || ''; },
+    changeName: function(n) { activities.push({type:'changeName', name:n}); global.playerState.name=n; saveActivities(); },
+    changeClass: function(c) { activities.push({type:'changeClass', class:c}); global.playerState.class=c; saveActivities(); },
+    getHealth: function() { return global.playerState.health || 0; },
+    getMaxHealth: function() { return global.playerState.maxHealth || 0; },
+    setHealth: function(v) { global.playerState.health=v; saveActivities(); },
+    addHealth: function(a) { global.playerState.health=(global.playerState.health||0)+a; saveActivities(); },
+    getMP: function() { return global.playerState.mp || 0; },
+    setMP: function(v) { global.playerState.mp=v; saveActivities(); },
+    addMP: function(a) { global.playerState.mp=(global.playerState.mp||0)+a; saveActivities(); },
+    hasEffect: function(id) { return global.effectsState.indexOf(id)!==-1; },
+    addEffect: function(id) { if(global.effectsState.indexOf(id)===-1){global.effectsState.push(id);saveActivities();} },
+    location: function() { return { id: global.locationState.id, name: global.locationState.name }; },
+    setLocation: function(id) { global.locationState.id=id; saveActivities(); },
+    level: { set: function(v) { global.playerState.level=v; saveActivities(); }, add: function(a) { global.playerState.level=(global.playerState.level||1)+a; saveActivities(); } },
+    exp: { set: function(v) { global.playerState.exp=v; saveActivities(); }, add: function(a) { global.playerState.exp=(global.playerState.exp||0)+a; saveActivities(); } },
+    gold: function() { return global.playerState.gold || 0; },
+    giveGold: function(a) { global.playerState.gold=(global.playerState.gold||0)+(a||0); saveActivities(); },
+    deleteGold: function(a) { global.playerState.gold=Math.max(0, (global.playerState.gold||0)-(a||0)); saveActivities(); },
+    inventory: function() { return global.playerState.inventory || []; },
+    addItem: function(id, a) { activities.push({type:'addItem', id:id, amount:a||1}); saveActivities(); },
+    removeItem: function(id, a) { activities.push({type:'removeItem', id:id, amount:a||1}); saveActivities(); },
+    companions: function() { return global.playerState.companions || []; }
 };
 
-// Enemy API object
 var enemy = {
-    id: function() { 
-        activities.push({ type: 'enemy.id', time: getTimestamp() }); 
-        return global.enemyState.id || '';
-    },
-    isBoss: function() { 
-        activities.push({ type: 'enemy.isBoss', time: getTimestamp() }); 
-        return global.enemyState.isBoss || false;
-    },
-    
-    hp: function() { 
-        activities.push({ type: 'enemy.hp', time: getTimestamp() }); 
-        return global.enemyState.hp || 0;
-    },
-    setCurrentHP: function(value) { 
-        activities.push({ type: 'enemy.setCurrentHP', value: value, time: getTimestamp() }); 
-        global.enemyState.hp = value;
-        saveActivities();
-        return value;
-    },
-    addCurrentHP: function(amount) { 
-        activities.push({ type: 'enemy.addCurrentHP', amount: amount, time: getTimestamp() }); 
-        global.enemyState.hp = (global.enemyState.hp || 0) + amount;
-        saveActivities();
-        return amount;
-    }
+    id: function() { return global.enemyState.id || ''; },
+    hp: function() { return global.enemyState.hp || 0; },
+    setCurrentHP: function(v) { global.enemyState.hp=v; saveActivities(); }
 };
 
-// Battle API object
 var battle = {
-    start: function(enemyId) { 
-        activities.push({ type: 'battle.start', enemyId: enemyId, time: getTimestamp() }); 
-        global.battleState.active = true;
-        global.battleState.enemyId = enemyId;
-        global.battleState.bossId = null;
-        saveActivities();
-        return enemyId;
-    },
-    bossfightStart: function(bossId) { 
-        activities.push({ type: 'battle.bossfightStart', bossId: bossId, time: getTimestamp() }); 
-        global.battleState.active = true;
-        global.battleState.bossId = bossId;
-        global.battleState.enemyId = null;
-        saveActivities();
-        return bossId;
-    },
-    
-    flee: function() { 
-        activities.push({ type: 'battle.flee', time: getTimestamp() }); 
-        global.battleState.active = false;
-        saveActivities();
-        return true;
-    },
-    lose: function() { 
-        activities.push({ type: 'battle.lose', time: getTimestamp() }); 
-        global.battleState.active = false;
-        saveActivities();
-        return true;
-    },
-    win: function() { 
-        activities.push({ type: 'battle.win', time: getTimestamp() }); 
-        global.battleState.active = false;
-        saveActivities();
-        return true;
-    }
+    start: function(id) { activities.push({type:'battle.start', id:id}); saveActivities(); },
+    win: function() { activities.push({type:'battle.win'}); saveActivities(); }
 };
 
-// Map API object
-var map = {
-    getAvalaibleMaterials: function() { 
-        activities.push({ type: 'map.getAvalaibleMaterials', time: getTimestamp() }); 
-        return [];
-    },
-    getAvalaibleBoss: function() { 
-        activities.push({ type: 'map.getAvalaibleBoss', time: getTimestamp() }); 
-        return [];
-    },
-    getAvalaibleMonster: function() { 
-        activities.push({ type: 'map.getAvalaibleMonster', time: getTimestamp() }); 
-        return [];
-    },
-    getAvalaibleShops: function() { 
-        activities.push({ type: 'map.getAvalaibleShops', time: getTimestamp() }); 
-        return [];
-    },
-    getAvalaibleConnections: function() { 
-        activities.push({ type: 'map.getAvalaibleConnections', time: getTimestamp() }); 
-        return global.locationState.connections || [];
-    },
-    
-    getCanRest: function() { 
-        activities.push({ type: 'map.getCanRest', time: getTimestamp() }); 
-        return global.locationState.canRest || false;
-    },
-    getCanRestCosts: function() { 
-        activities.push({ type: 'map.getCanRestCosts', time: getTimestamp() }); 
-        return global.locationState.restCost || 0;
-    },
-    getDifficulty: function() { 
-        activities.push({ type: 'map.getDifficulty', time: getTimestamp() }); 
-        return global.locationState.difficulty || 1;
-    }
+var menu = {
+    addButton: function(id, label, action) { print('__ADD_BUTTON__' + JSON.stringify({id:id, label:label, action:action})); },
+    removeButton: function(id) { print('__REMOVE_BUTTON__' + id); },
+    hide: function() { print('__HIDE_MENU__'); },
+    show: function() { print('__SHOW_MENU__'); }
 };
 
-// Missions API object
-var missions = {
-    getFinished: function() { 
-        activities.push({ type: 'missions.getFinished', time: getTimestamp() }); 
-        return global.missionsState.finished || [];
-    },
-    getOngoing: function() { 
-        activities.push({ type: 'missions.getOngoing', time: getTimestamp() }); 
-        return global.missionsState.ongoing || [];
-    },
-    getNotAccepted: function() { 
-        activities.push({ type: 'missions.getNotAccepted', time: getTimestamp() }); 
-        return global.missionsState.notAccepted || [];
-    },
-    
-    accept: function(missionId) { 
-        activities.push({ type: 'missions.accept', missionId: missionId, time: getTimestamp() }); 
-        if (!global.missionsState.ongoing) global.missionsState.ongoing = [];
-        if (global.missionsState.notAccepted) {
-            var idx = global.missionsState.notAccepted.indexOf(missionId);
-            if (idx !== -1) global.missionsState.notAccepted.splice(idx, 1);
-        }
-        global.missionsState.ongoing.push(missionId);
-        saveActivities();
-        return missionId;
-    },
-    finish: function(missionId) { 
-        activities.push({ type: 'missions.finish', missionId: missionId, time: getTimestamp() }); 
-        if (global.missionsState.ongoing) {
-            var idx = global.missionsState.ongoing.indexOf(missionId);
-            if (idx !== -1) global.missionsState.ongoing.splice(idx, 1);
-        }
-        if (!global.missionsState.finished) global.missionsState.finished = [];
-        global.missionsState.finished.push(missionId);
-        saveActivities();
-        return missionId;
-    },
-    
-    deleteFromOngoing: function(missionId) { 
-        activities.push({ type: 'missions.deleteFromOngoing', missionId: missionId, time: getTimestamp() }); 
-        if (global.missionsState.ongoing) {
-            var idx = global.missionsState.ongoing.indexOf(missionId);
-            if (idx !== -1) global.missionsState.ongoing.splice(idx, 1);
-            saveActivities();
-        }
-        return missionId;
-    },
-    deleteFromFinished: function(missionId) { 
-        activities.push({ type: 'missions.deleteFromFinished', missionId: missionId, time: getTimestamp() }); 
-        if (global.missionsState.finished) {
-            var idx = global.missionsState.finished.indexOf(missionId);
-            if (idx !== -1) global.missionsState.finished.splice(idx, 1);
-            saveActivities();
-        }
-        return missionId;
-    }
-};
+function tellraw(msg) { print('__RAW_OUTPUT__' + msg); }
+function print(msg) { console.log(msg); }
+function log(msg) { console.log("[" + new Date().toISOString() + "] " + msg); }
 
-// System API object
-var system = {
-    latest_save: function() { 
-        activities.push({ type: 'system.latest_save', time: getTimestamp() }); 
-        return global.systemState.latestSave || null;
-    },
-    saveGame: function() { 
-        activities.push({ type: 'system.saveGame', time: getTimestamp() }); 
-        saveActivities();
-        return true;
-    },
-    deleteSaveFile: function() { 
-        activities.push({ type: 'system.deleteSaveFile', time: getTimestamp() }); 
-        return true;
-    },
-    hideMenu: function() {
-        // Clears the terminal screen
-        activities.push({ type: 'system.hideMenu', time: getTimestamp() });
-        if (typeof console !== 'undefined' && console.log) {
-            console.log("__HIDE_MENU__");
-        }
-    },
-    showMenu: function() {
-        // Shows the game menu again
-        activities.push({ type: 'system.showMenu', time: getTimestamp() });
-        if (typeof console !== 'undefined' && console.log) {
-            console.log("__SHOW_MENU__");
-        }
-    },
-    
-    // ============================================
-    // Dynamic Buttons Management
-    // ============================================
-    
-    /**
-     * Add a new dynamic menu button
-     * @param {string} label - The button label (what shows in menu)
-     * @param {string} type - "file" for script file, "inline" for inline script
-     * @param {string} value - If type="file": script filename (e.g., "my_script" for scripts/my_script.js)
-     *                         If type="inline": JavaScript code to execute
-     * @returns {string} Success message or error
-     */
-    addButton: function(label, type, value) {
-        activities.push({ type: 'system.addButton', label: label, type: type, value: value, time: getTimestamp() });
-        
-        // Validate inputs
-        if (!label || typeof label !== 'string') {
-            return "Error: Button label must be a non-empty string";
-        }
-        if (!type || !['file', 'inline'].includes(type.toLowerCase())) {
-            return "Error: Button type must be 'file' or 'inline'";
-        }
-        if (!value || typeof value !== 'string') {
-            return "Error: Button value must be a non-empty string";
-        }
-        
-        var buttonType = type.toLowerCase();
-        
-        // Add the button
-        dynamicButtons[label] = {
-            type: buttonType,
-            value: value
-        };
-        
-        // Save to file
-        saveButtons();
-        
-        log("Added button: " + label + " (type: " + buttonType + ")");
-        return "Button '" + label + "' added successfully";
-    },
-    
-    /**
-     * Delete a dynamic menu button
-     * @param {string} label - The button label to delete
-     * @returns {string} Success message or error
-     */
-    deleteButton: function(label) {
-        activities.push({ type: 'system.deleteButton', label: label, time: getTimestamp() });
-        
-        // Validate input
-        if (!label || typeof label !== 'string') {
-            return "Error: Button label must be a non-empty string";
-        }
-        
-        // Check if button exists
-        if (!dynamicButtons.hasOwnProperty(label)) {
-            return "Error: Button '" + label + "' does not exist";
-        }
-        
-        // Delete the button
-        delete dynamicButtons[label];
-        
-        // Save to file
-        saveButtons();
-        
-        log("Deleted button: " + label);
-        return "Button '" + label + "' deleted successfully";
-    },
-    
-    /**
-     * Define or update the script for an existing button (for inline scripts)
-     * @param {string} label - The button label
-     * @param {string} scriptCode - The JavaScript code to execute when button is clicked
-     * @returns {string} Success message or error
-     */
-    defineButtonScript: function(label, scriptCode) {
-        activities.push({ type: 'system.defineButtonScript', label: label, time: getTimestamp() });
-        
-        // Validate inputs
-        if (!label || typeof label !== 'string') {
-            return "Error: Button label must be a non-empty string";
-        }
-        if (!scriptCode || typeof scriptCode !== 'string') {
-            return "Error: Script code must be a non-empty string";
-        }
-        
-        // Check if button exists
-        if (!dynamicButtons.hasOwnProperty(label)) {
-            return "Error: Button '" + label + "' does not exist. Use system.addButton() first";
-        }
-        
-        // Update the button's script
-        dynamicButtons[label].type = 'inline';
-        dynamicButtons[label].value = scriptCode;
-        
-        // Save to file
-        saveButtons();
-        
-        log("Updated script for button: " + label);
-        return "Button script for '" + label + "' updated successfully";
-    },
-    
-    /**
-     * List all dynamic buttons
-     * @returns {Object} Object containing all buttons {label: {type, value}, ...}
-     */
-    listButtons: function() {
-        activities.push({ type: 'system.listButtons', time: getTimestamp() });
-        var result = {};
-        for (var key in dynamicButtons) {
-            result[key] = dynamicButtons[key];
-        }
-        return result;
-    },
-    
-    /**
-     * Check if a button exists
-     * @param {string} label - The button label to check
-     * @returns {boolean} True if button exists
-     */
-    hasButton: function(label) {
-        activities.push({ type: 'system.hasButton', label: label, time: getTimestamp() });
-        return dynamicButtons.hasOwnProperty(label);
-    },
-    
-    /**
-     * Clear all dynamic buttons
-     * @returns {string} Success message
-     */
-    clearButtons: function() {
-        activities.push({ type: 'system.clearButtons', time: getTimestamp() });
-        dynamicButtons = {};
-        saveButtons();
-        log("Cleared all buttons");
-        return "All buttons cleared successfully";
-    }
-};
-
-// Events system
-var events = {
-    listeners: {},
-    
-    on: function(eventName, callback) {
-        if (!this.listeners[eventName]) {
-            this.listeners[eventName] = [];
-        }
-        this.listeners[eventName].push(callback);
-        activities.push({ type: 'events.on', eventName: eventName, time: getTimestamp() });
-    },
-    
-    emit: function(eventName, data) {
-        activities.push({ type: 'events.emit', eventName: eventName, time: getTimestamp() });
-        if (this.listeners[eventName]) {
-            for (var i = 0; i < this.listeners[eventName].length; i++) {
-                try {
-                    this.listeners[eventName][i](data);
-                } catch (e) {
-                    print("Error in event handler: " + e);
-                }
-            }
-        }
-    }
-};
-
-// Utility functions
-function print(message) {
-    // This will be replaced with actual print function from the game
-    if (typeof globalPrint !== 'undefined') {
-        globalPrint(message);
-    } else if (typeof console !== 'undefined' && console.log) {
-        console.log(message);
-    }
+if (typeof exports !== 'undefined') {
+    exports.player = player; exports.enemy = enemy; exports.battle = battle;
+    exports.menu = menu; exports.tellraw = tellraw; exports.print = print; exports.log = log;
 }
-
-// tellraw - display raw text on screen without [script] prefix
-// Uses a special marker that the game engine detects to print without prefix
-function tellraw(message) {
-    if (typeof globalPrint !== 'undefined') {
-        globalPrint("__RAW_OUTPUT__" + message);
-    } else if (typeof console !== 'undefined' && console.log) {
-        console.log("__RAW_OUTPUT__" + message);
-    }
-}
-
-function log(message) {
-    activities.push({ type: 'log', message: message, time: getTimestamp() });
-}
-
-function getActivities() {
-    return activities;
-}
-
-function clearActivities() {
-    activities = [];
-}
-
-function getActivityCount() {
-    return activities.length;
-}
-
-// ============================================
-// Dynamic Buttons Management Functions
-// ============================================
-
-// Load buttons from file using Node.js fs
-function loadButtons() {
-    if (typeof require !== 'undefined') {
-        var fs = require('fs');
-        try {
-            if (fs.existsSync(BUTTONS_FILE)) {
-                var data = fs.readFileSync(BUTTONS_FILE, 'utf8');
-                var parsed = JSON.parse(data);
-                if (parsed.buttons) {
-                    dynamicButtons = parsed.buttons;
-                }
-                log("Buttons loaded from " + BUTTONS_FILE);
-            } else {
-                // Create default buttons file
-                var defaultData = {
-                    version: "1.0",
-                    last_updated: new Date().toISOString(),
-                    buttons: {}
-                };
-                fs.writeFileSync(BUTTONS_FILE, JSON.stringify(defaultData, null, 2));
-                dynamicButtons = {};
-                log("Created default buttons file");
-            }
-            return true;
-        } catch (e) {
-            print("Error loading buttons: " + e.message);
-            return false;
-        }
-    }
-    return false;
-}
-
-// Save buttons to file using Node.js fs
-function saveButtons() {
-    if (typeof require !== 'undefined') {
-        var fs = require('fs');
-        try {
-            var data = {
-                version: "1.0",
-                last_updated: new Date().toISOString(),
-                buttons: dynamicButtons
-            };
-            
-            fs.writeFileSync(BUTTONS_FILE, JSON.stringify(data, null, 2));
-            log("Buttons saved to " + BUTTONS_FILE);
-            return true;
-        } catch (e) {
-            print("Error saving buttons: " + e.message);
-            return false;
-        }
-    }
-    return false;
-}
-
-// Get all buttons
-function getButtons() {
-    activities.push({ type: 'getButtons', time: getTimestamp() });
-    var result = {};
-    for (var key in dynamicButtons) {
-        result[key] = dynamicButtons[key];
-    }
-    return result;
-}
-
-// Auto-load buttons on initialization (Node.js)
-if (typeof require !== 'undefined') {
-    loadButtons();
-}
-
-// ============================================
-// Export for QuickJS and Node.js
-// ============================================
-// For QuickJS: use globalThis (or just assign to the global object)
-// For Node.js: use global
-var _exportTarget = (typeof globalThis !== 'undefined') ? globalThis : (typeof global !== 'undefined') ? global : this;
-
-_exportTarget.player = player;
-_exportTarget.enemy = enemy;
-_exportTarget.battle = battle;
-_exportTarget.map = map;
-_exportTarget.missions = missions;
-_exportTarget.system = system;
-_exportTarget.events = events;
-_exportTarget.getActivities = getActivities;
-_exportTarget.clearActivities = clearActivities;
-_exportTarget.getActivityCount = getActivityCount;
-_exportTarget.log = log;
-_exportTarget.print = print;
-_exportTarget.tellraw = tellraw;
-_exportTarget.Date = Date;
-_exportTarget.JSON = JSON;
-_exportTarget.activities = activities;
-_exportTarget.loadActivities = loadActivities;
-_exportTarget.saveActivities = saveActivities;
-
-// Also export for ES modules
-export {
-    player,
-    enemy,
-    battle,
-    map,
-    missions,
-    system,
-    events,
-    getActivities,
-    clearActivities,
-    getActivityCount,
-    log,
-    print,
-    tellraw,
-    activities,
-    loadActivities,
-    saveActivities
-};
-
-// For ES modules in Node.js, also assign to globalThis explicitly
-if (typeof globalThis !== 'undefined') {
-    globalThis.player = player;
-    globalThis.enemy = enemy;
-    globalThis.battle = battle;
-    globalThis.map = map;
-    globalThis.missions = missions;
-    globalThis.system = system;
-    globalThis.events = events;
-    globalThis.getActivities = getActivities;
-    globalThis.clearActivities = clearActivities;
-    globalThis.getActivityCount = getActivityCount;
-    globalThis.log = log;
-    globalThis.print = print;
-    globalThis.activities = activities;
-    globalThis.loadActivities = loadActivities;
-    globalThis.saveActivities = saveActivities;
-}
-
