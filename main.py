@@ -553,11 +553,10 @@ class ScriptingEngine:
                         battle_triggered = False
                         for act in self.current_activities:
                             act_type = act.get('type')
-                            if act_type == 'battle.start' and not battle_triggered:
+                            if act_type == 'battle.start':
                                 enemy_id = act.get('id')
-                                # print(f"{Colors.YELLOW}Triggering battle with {enemy_id}...{Colors.END}")
-                                # We don't trigger battle here anymore, we do it in show_others_menu
-                                pass
+                                if enemy_id:
+                                    game_instance.start_battle(enemy_id)
                             elif act_type == 'addItem':
                                 item_id = act.get('id')
                                 amount = act.get('amount', 1)
