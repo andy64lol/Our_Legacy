@@ -1309,11 +1309,11 @@ class Character:
     def display_stats(self):
         """Display character statistics"""
         clear_screen()
-        print(f"{Colors.CYAN}=" * 60 + f"{Colors.END}")
+        print(f"{Colors.CYAN}{'=' * 60}{Colors.END}")
         print(
             f"             {Colors.BOLD}{Colors.YELLOW}CHARACTER PROFILE{Colors.END}"
         )
-        print(f"{Colors.CYAN}=" * 60 + f"{Colors.END}")
+        print(f"{Colors.CYAN}{'=' * 60}{Colors.END}")
 
         print(f"\n {Colors.BOLD}{Colors.WHITE}Name:   {self.name}{Colors.END}")
         print(
@@ -2055,13 +2055,13 @@ class Game:
         self.update_mission_progress('check', '')
 
         clear_screen()
-        print(f"{Colors.CYAN}=" * 60 + f"{Colors.END}")
+        print(f"{Colors.CYAN}{'=' * 60}{Colors.END}")
         print(
             f"             {Colors.BOLD}{Colors.YELLOW}MAIN MENU{Colors.END}")
         print(
             f"       {Colors.WHITE}Location: {self.areas_data.get(self.current_area, {}).get('name', self.current_area)}{Colors.END}"
         )
-        print(f"{Colors.CYAN}=" * 60 + f"{Colors.END}\n")
+        print(f"{Colors.CYAN}{'=' * 60}{Colors.END}\n")
 
         # Grid-like display for main menu
         menu_items = [("1", "Explore", Colors.GREEN),
@@ -4463,9 +4463,9 @@ class Game:
         """Display the Others menu with scripts from buttons.json"""
         while True:
             clear_screen()
-            print(f"{Colors.CYAN}=" * 60)
+            print(f"{Colors.CYAN}{'=' * 60}{Colors.END}")
             print(f"                   {Colors.BOLD}{Colors.YELLOW}Others{Colors.END}")
-            print(f"{Colors.CYAN}=" * 60 + f"{Colors.END}\n")
+            print(f"{Colors.CYAN}{'=' * 60}{Colors.END}\n")
 
             custom_buttons = []
             if os.path.exists("buttons.json"):
@@ -4482,7 +4482,7 @@ class Game:
                 for i, btn in enumerate(custom_buttons, 1):
                     print(f"{Colors.WHITE}{i}.{Colors.END} {Colors.MAGENTA}{btn['label']}{Colors.END}")
 
-            print(f"\n{Colors.CYAN}=" * 60)
+            print(f"\n{Colors.CYAN}{'=' * 60}{Colors.END}")
             choice = ask(f"Choose an action (1-{len(custom_buttons)}) or Enter to go back: ", allow_empty=True)
 
             if not choice:
