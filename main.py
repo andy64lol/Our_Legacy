@@ -4491,15 +4491,13 @@ class Game:
                     btn = custom_buttons[idx]
                     script_path = btn.get('script_path')
                     if script_path and os.path.exists(script_path):
-                        print(f"{Colors.YELLOW}Executing {btn['label']}...{Colors.END}")
                         try:
                             subprocess.run([sys.executable, script_path], check=True)
-                            print(f"{Colors.GREEN}Execution complete.{Colors.END}")
                         except Exception as e:
-                            print(f"{Colors.RED}Error executing script: {e}{Colors.END}")
-                        input(f"\n{Colors.WHITE}Press Enter to return...{Colors.END}")
+                            print(f"{Colors.RED}Error: {e}{Colors.END}")
+                            time.sleep(1)
                     else:
-                        print(f"{Colors.RED}Script not found: {script_path}{Colors.END}")
+                        print(f"{Colors.RED}Script not found.{Colors.END}")
                         time.sleep(1)
                 else:
                     print(f"{Colors.RED}Invalid choice.{Colors.END}")
