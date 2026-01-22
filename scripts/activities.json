@@ -1,7 +1,19 @@
 {
   "version": "2.0",
-  "last_updated": "2026-01-22T20:02:00.997Z",
+  "last_updated": "2026-01-22T20:10:15.109Z",
   "activities": [
+    {
+      "type": "addItem",
+      "id": "Health Potion",
+      "amount": 1
+    },
+    {
+      "type": "battle.start",
+      "id": "goblin_scout"
+    },
+    {
+      "type": "battle.win"
+    },
     {
       "type": "addItem",
       "id": "Health Potion",
@@ -31,9 +43,9 @@
     "uuid": "0641b0bd-7775-4883-91ce-a8d663f6dcec",
     "name": "andy",
     "class": "Hunter",
-    "health": 140,
+    "health": 150,
     "maxHealth": 120,
-    "mp": 770,
+    "mp": 775,
     "maxMP": 760,
     "level": 107,
     "exp": 956,
