@@ -3695,11 +3695,10 @@ class Game:
             print(f"{Colors.RED}Enemy {enemy_id} not found!{Colors.END}")
             return
 
-        from combat import Battle
         enemy_data = self.enemies_data[enemy_id]
-        # Pass all required arguments to Battle constructor
-        battle = Battle(self.player, enemy_id, enemy_data, self.items_data, self.companions_data, self.effects_data)
-        battle.battle_loop()
+        enemy = Enemy(enemy_data)
+        print(f"\n{Colors.RED}A wild {enemy.name} appears!{Colors.END}")
+        self.battle(enemy)
 
     def visit_market(self):
         """Visit the Elite Market - browse and buy items from the API at 50% off"""
