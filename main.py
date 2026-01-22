@@ -1368,6 +1368,12 @@ class Character:
                     f"  {Colors.WHITE}{display_slot:<12}:{Colors.END} {Colors.LIGHT_GRAY}Empty{Colors.END}"
                 )
 
+        # Companions section
+        if hasattr(self, 'companions') and self.companions:
+            print(f"\n {Colors.CYAN}{Colors.BOLD}--- COMPANIONS ---{Colors.END}")
+            for companion in self.companions:
+                print(f"  {Colors.YELLOW}• {companion}{Colors.END}")
+
         # Active buffs
         if self.active_buffs:
             print(
@@ -2085,11 +2091,8 @@ class Game:
                       ("16", "Quit", Colors.RED)]
 
         # Add custom buttons to menu_items
-        start_index = 17
-        for btn in custom_buttons:
-            menu_items.append((str(start_index), btn['label'], Colors.MAGENTA))
-            start_index += 1
-
+        # Removed dynamic adding to main menu - moved to "Others" menu
+        
         for i in range(0, len(menu_items), 2):
             item1 = menu_items[i]
             line = f" {Colors.WHITE}{item1[0]:>2}.{Colors.END} {item1[2]}{item1[1]:<18}{Colors.END}"
@@ -2098,29 +2101,16 @@ class Game:
                 line += f" {Colors.WHITE}{item2[0]:>2}.{Colors.END} {item2[2]}{item2[1]:<18}{Colors.END}"
             print(line)
 
+        print(f" {Colors.WHITE}17.{Colors.END} {Colors.LIGHT_GRAY}Others{Colors.END}")
+
         print()
         choice = ask(f"{Colors.BOLD}Choose your next action: {Colors.END}",
                      allow_empty=False)
 
-        # Handle custom buttons
-        if choice.isdigit() and int(choice) >= 17:
-            idx = int(choice) - 17
-            if idx < len(custom_buttons):
-                btn = custom_buttons[idx]
-                script_path = btn.get('script_path')
-                if script_path and os.path.exists(script_path):
-                    print(f"{Colors.YELLOW}Executing {btn['label']}...{Colors.END}")
-                    try:
-                        subprocess.run([sys.executable, script_path], check=True)
-                        print(f"{Colors.GREEN}Execution complete.{Colors.END}")
-                    except Exception as e:
-                        print(f"{Colors.RED}Error executing script: {e}{Colors.END}")
-                    input(f"\n{Colors.WHITE}Press Enter to return to main menu...{Colors.END}")
-                    return # Recursively call main_menu via the loop in main()
-                else:
-                    print(f"{Colors.RED}Script not found: {script_path}{Colors.END}")
-                    time.sleep(1)
-                return
+        # Handle Others menu
+        if choice == "17" or choice.lower() in ["others", "o"]:
+            self.show_others_menu()
+            return
 
         # Normalize textual shortcuts to numbers for backward compatibility
         shortcut_map = {
