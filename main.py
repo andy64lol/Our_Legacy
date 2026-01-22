@@ -555,10 +555,9 @@ class ScriptingEngine:
                             act_type = act.get('type')
                             if act_type == 'battle.start' and not battle_triggered:
                                 enemy_id = act.get('id')
-                                print(f"{Colors.YELLOW}Triggering battle with {enemy_id}...{Colors.END}")
-                                if enemy_id and hasattr(self, 'start_battle'):
-                                    battle_triggered = True
-                                    self.start_battle(enemy_id)
+                                # print(f"{Colors.YELLOW}Triggering battle with {enemy_id}...{Colors.END}")
+                                # We don't trigger battle here anymore, we do it in show_others_menu
+                                pass
                             elif act_type == 'addItem':
                                 item_id = act.get('id')
                                 amount = act.get('amount', 1)
@@ -3698,6 +3697,7 @@ class Game:
 
         from combat import Battle
         enemy_data = self.enemies_data[enemy_id]
+        # Pass all required arguments to Battle constructor
         battle = Battle(self.player, enemy_id, enemy_data, self.items_data, self.companions_data, self.effects_data)
         battle.battle_loop()
 
@@ -4559,6 +4559,14 @@ class Game:
                             self.scripting_engine.sync_activities_from_file(self)
                             if self.player:
                                 self.player.update_stats_from_equipment(self.items_data)
+                            
+                            # Process any battle that was triggered by the script
+                            for act in self.scripting_engine.current_activities:
+                                if act.get('type') == 'battle.start':
+                                    enemy_id = act.get('id')
+                                    if enemy_id:
+                                        self.start_battle(enemy_id)
+                                        break # Only one battle at a time
                             
                             input(f"\n{Colors.LIGHT_GRAY}Press Enter to continue...{Colors.END}")
                         except Exception as e:
