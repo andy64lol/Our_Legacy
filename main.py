@@ -853,39 +853,125 @@ class ScriptingEngine:
         """Check if scripting is enabled"""
         return self.scripting_enabled
 
+    def _save_button_to_file(self, btn_data: Dict):
+        """Save a button to buttons.json for persistence - simplified format"""
+        try:
+            buttons_path = 'scripts/buttons.json'
+            buttons_data = {}
+            
+            # Load existing data
+            if os.path.exists(buttons_path):
+                with open(buttons_path, 'r') as f:
+                    existing = json.load(f)
+                    # Support both old and new formats
+                    if isinstance(existing, dict) and existing.get('buttons'):
+                        buttons_data = existing['buttons']
+                    else:
+                        # New simplified format - filter out metadata
+                        buttons_data = {k: v for k, v in existing.items()
+                                       if k not in ('version', 'last_updated')}
+            
+            # Add the button using label as key and script name as value
+            btn_id = btn_data.get('id', '')
+            btn_label = btn_data.get('label', btn_id)
+            script_name = btn_data.get('action', btn_id)
+            
+            # Store in simplified format: "Label": "scriptname"
+            buttons_data[btn_label] = script_name
+            
+            # Save back to file in simplified format
+            with open(buttons_path, 'w') as f:
+                json.dump(buttons_data, f, indent=2)
+                
+            # Also update global dynamic_buttons
+            global dynamic_buttons
+            dynamic_buttons[btn_label] = script_name
+            
+        except Exception as e:
+            print(f"{Colors.YELLOW}Warning: Could not save button: {e}{Colors.END}")
+
+    def _remove_button_from_file(self, btn_id: str):
+        """Remove a button from buttons.json - simplified format"""
+        try:
+            buttons_path = 'scripts/buttons.json'
+            if not os.path.exists(buttons_path):
+                return
+                
+            with open(buttons_path, 'r') as f:
+                buttons_data = json.load(f)
+            
+            # Support both old and new formats
+            if isinstance(buttons_data, dict) and buttons_data.get('buttons'):
+                buttons_dict = buttons_data['buttons']
+            else:
+                # New simplified format - filter out metadata
+                buttons_dict = {k: v for k, v in buttons_data.items()
+                               if k not in ('version', 'last_updated')}
+            
+            # Find and remove button by label matching btn_id
+            removed = False
+            for label in list(buttons_dict.keys()):
+                # Match by label or script name
+                script_name = buttons_dict[label]
+                if label == btn_id or script_name == btn_id:
+                    del buttons_dict[label]
+                    removed = True
+                    break
+            
+            if removed:
+                # Save back in simplified format
+                with open(buttons_path, 'w') as f:
+                    json.dump(buttons_dict, f, indent=2)
+                
+                # Also update global dynamic_buttons
+                global dynamic_buttons
+                for label in list(dynamic_buttons.keys()):
+                    script_name = dynamic_buttons[label]
+                    if label == btn_id or script_name == btn_id:
+                        del dynamic_buttons[label]
+                        break
+                        
+        except Exception as e:
+            print(f"{Colors.YELLOW}Warning: Could not remove button: {e}{Colors.END}")
+
 
 # Global scripting engine instance
 scripting_engine = ScriptingEngine()
 
 # Global dictionary to store dynamic menu buttons added via scripting
-# Format: { "button_label": { "type": "file" | "inline", "value": "script_name.js" | "script_code" } }
-dynamic_buttons: Dict[str, Dict[str, str]] = {}
+# Simplified format: { "button_label": "script_name" }
+# Old format (for backward compatibility): { "button_label": { "type": "file"|"inline", "value": "script_name"|"script_code" } }
+dynamic_buttons: Dict[str, str] = {}
 
 # Path to buttons file for persistence
 BUTTONS_FILE = 'scripts/buttons.json'
 
 
 def load_dynamic_buttons():
-    """Load dynamic buttons from buttons.json file"""
+    """Load dynamic buttons from buttons.json file - supports simplified key-value format"""
     global dynamic_buttons
     try:
         if os.path.exists(BUTTONS_FILE):
             with open(BUTTONS_FILE, 'r') as f:
                 data = json.load(f)
-                if data.get('buttons'):
-                    dynamic_buttons = data['buttons']
+                # Support simplified format: {"ButtonName": "scriptname"}
+                # Also support old format: {"buttons": {"ButtonName": {...}}}
+                if isinstance(data, dict):
+                    # Check for old format with 'buttons' key
+                    if data.get('buttons') and isinstance(data['buttons'], dict):
+                        dynamic_buttons = data['buttons']
+                    else:
+                        # New simplified format - filter out metadata keys
+                        dynamic_buttons = {k: v for k, v in data.items() 
+                                          if k not in ('version', 'last_updated')}
+                    
                     print(
                         f"{Colors.CYAN}Loaded {len(dynamic_buttons)} dynamic buttons{Colors.END}"
                     )
         else:
-            # Create default buttons file
-            default_data = {
-                'version': '1.0',
-                'last_updated': datetime.now().isoformat(),
-                'buttons': {}
-            }
+            # Create default buttons file in simplified format
             with open(BUTTONS_FILE, 'w') as f:
-                json.dump(default_data, f, indent=2)
+                json.dump({}, f, indent=2)
             dynamic_buttons = {}
             print(f"{Colors.CYAN}Created buttons file{Colors.END}")
     except Exception as e:
@@ -895,16 +981,12 @@ def load_dynamic_buttons():
 
 
 def save_dynamic_buttons():
-    """Save dynamic buttons to buttons.json file"""
+    """Save dynamic buttons to buttons.json file in simplified format"""
     global dynamic_buttons
     try:
-        data = {
-            'version': '1.0',
-            'last_updated': datetime.now().isoformat(),
-            'buttons': dynamic_buttons
-        }
+        # Save in simplified format: {"ButtonName": "scriptname"}
         with open(BUTTONS_FILE, 'w') as f:
-            json.dump(data, f, indent=2)
+            json.dump(dynamic_buttons, f, indent=2)
         return True
     except Exception as e:
         print(f"{Colors.RED}Error saving buttons: {e}{Colors.END}")
@@ -4520,26 +4602,37 @@ class Game:
                     time.sleep(1)
 
     def _execute_dynamic_button(self, button_info):
-        """Execute the script associated with a dynamic button"""
-        button_type = button_info.get('type', '')
-        value = button_info.get('value', '')
-
-        if button_type == 'file':
-            # Execute a script file
-            script_path = f"scripts/{value}"
+        """Execute the script associated with a dynamic button - supports simplified format"""
+        # Handle simplified format: button_info is just the script name string
+        if isinstance(button_info, str):
+            script_name = button_info
+            script_path = f"scripts/{script_name}"
             if os.path.exists(script_path):
-                print(f"\n{Colors.CYAN}Executing: {value}{Colors.END}")
+                print(f"\n{Colors.CYAN}Executing: {script_name}{Colors.END}")
                 scripting_engine.execute_file(script_path)
             else:
                 print(
-                    f"{Colors.RED}Script file not found: {value}{Colors.END}")
-        elif button_type == 'inline':
-            # Execute inline script code
-            print(f"\n{Colors.CYAN}Executing custom script...{Colors.END}")
-            scripting_engine.execute_script(value)
+                    f"{Colors.RED}Script file not found: {script_name}{Colors.END}")
         else:
-            print(
-                f"{Colors.RED}Unknown button type: {button_type}{Colors.END}")
+            # Handle old format with dict (backward compatibility)
+            button_type = button_info.get('type', '')
+            value = button_info.get('value', '')
+
+            if button_type == 'file':
+                script_path = f"scripts/{value}"
+                if os.path.exists(script_path):
+                    print(f"\n{Colors.CYAN}Executing: {value}{Colors.END}")
+                    scripting_engine.execute_file(script_path)
+                else:
+                    print(
+                        f"{Colors.RED}Script file not found: {value}{Colors.END}")
+            elif button_type == 'inline':
+                # Execute inline script code
+                print(f"\n{Colors.CYAN}Executing custom script...{Colors.END}")
+                scripting_engine.execute_script(value)
+            else:
+                print(
+                    f"{Colors.RED}Unknown button type: {button_type}{Colors.END}")
 
         # Pause to let user see output
         ask("\nPress Enter to continue: ").strip()
