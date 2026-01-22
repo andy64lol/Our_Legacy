@@ -168,8 +168,6 @@ var battle = {
 };
 
 var menu = {
-    addButton: function(id, label, action) { print('__ADD_BUTTON__' + JSON.stringify({id:id, label:label, action:action})); },
-    removeButton: function(id) { print('__REMOVE_BUTTON__' + id); },
     hide: function() { print('__HIDE_MENU__'); },
     show: function() { print('__SHOW_MENU__'); }
 };
