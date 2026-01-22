@@ -522,13 +522,53 @@ class ScriptingEngine:
                 f"{Colors.YELLOW}Warning: Could not sync game state to activities: {e}{Colors.END}"
             )
 
-    def sync_activities_from_file(self):
+    def sync_activities_from_file(self, game_instance=None):
         """Sync activities from activities.json back to Python state after script execution"""
         try:
             if os.path.exists(self.activities_file):
                 with open(self.activities_file, 'r') as f:
                     data = json.load(f)
                     self.current_activities = data.get('activities', [])
+                    
+                    # Update state in game_instance
+                    if game_instance:
+                        # Sync player state
+                        if 'player' in data and game_instance.player:
+                            p = data['player']
+                            game_instance.player.hp = p.get('health', game_instance.player.hp)
+                            game_instance.player.max_hp = p.get('maxHealth', game_instance.player.max_hp)
+                            game_instance.player.mp = p.get('mp', game_instance.player.mp)
+                            game_instance.player.max_mp = p.get('maxMP', game_instance.player.max_mp)
+                            game_instance.player.level = p.get('level', game_instance.player.level)
+                            game_instance.player.gold = p.get('gold', game_instance.player.gold)
+                            game_instance.player.inventory = p.get('inventory', game_instance.player.inventory)
+                            game_instance.player.character_class = p.get('class', game_instance.player.character_class)
+                            game_instance.player.name = p.get('name', game_instance.player.name)
+                        
+                        # Sync location
+                        if 'location' in data and 'id' in data['location']:
+                            game_instance.current_area = data['location']['id']
+                        
+                        # Process activities/commands
+                        for act in self.current_activities:
+                            act_type = act.get('type')
+                            if act_type == 'battle.start':
+                                enemy_id = act.get('id')
+                                if enemy_id and hasattr(game_instance, 'start_battle'):
+                                    game_instance.start_battle(enemy_id)
+                            elif act_type == 'addItem':
+                                item_id = act.get('id')
+                                amount = act.get('amount', 1)
+                                if item_id and game_instance.player:
+                                    for _ in range(amount):
+                                        game_instance.player.inventory.append(item_id)
+                            elif act_type == 'removeItem':
+                                item_id = act.get('id')
+                                amount = act.get('amount', 1)
+                                if item_id and game_instance.player:
+                                    for _ in range(amount):
+                                        if item_id in game_instance.player.inventory:
+                                            game_instance.player.inventory.remove(item_id)
 
                 print(
                     f"{Colors.CYAN}Activities synced from file ({len(self.current_activities)} items){Colors.END}"
@@ -4501,7 +4541,7 @@ class Game:
                             subprocess.run(['node', script_path], check=True)
                             
                             # Sync state back after execution
-                            self.scripting_engine.sync_activities_from_file()
+                            self.scripting_engine.sync_activities_from_file(self)
                             if self.player:
                                 self.player.update_stats_from_equipment(self.items_data)
                             
