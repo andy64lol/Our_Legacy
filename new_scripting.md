@@ -30,6 +30,37 @@ The Menu API allows scripts to dynamically interact with the game's UI.
 
 - `tellraw(message)`: Outputs raw text directly to the game console without the `[Script]` prefix. Use this for immersive text that appears as if the game itself is narrating.
 
+## Adding Custom Actions (Buttons)
+
+Custom actions are defined in `scripts/buttons.json`. These actions appear in the "Others" menu in-game.
+
+### Configuration Structure (`scripts/buttons.json`)
+
+The file should contain a `buttons` array with the following fields for each entry:
+
+```json
+{
+  "buttons": [
+    {
+      "label": "Camp",
+      "script_path": "scripts/camp.js",
+      "description": "Set up camp to rest and boost your stats."
+    }
+  ]
+}
+```
+
+- `label`: The name displayed in the menu.
+- `script_path`: The relative path to the `.js` file to execute.
+- `description`: A short explanation of what the script does.
+
+### Adding a New Button
+
+1. Create your JavaScript logic in a new file within the `scripts/` directory (e.g., `scripts/my_feature.js`).
+2. Open `scripts/buttons.json`.
+3. Add a new object to the `buttons` array pointing to your script.
+4. Restart the game or re-enter the "Others" menu to see your new action.
+
 ## Player Module (`player`)
 
 ### Basic Information
