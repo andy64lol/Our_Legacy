@@ -464,8 +464,10 @@ class ScriptingEngine:
                                          'player') and game_instance.player:
                 # Get current effects
                 effects = []
-                if hasattr(game_instance.player, 'active_buffs'):
+                if hasattr(game_instance.player, 'active_buffs') and isinstance(game_instance.player.active_buffs, dict):
                     effects = list(game_instance.player.active_buffs.keys())
+                elif hasattr(game_instance.player, 'active_buffs') and isinstance(game_instance.player.active_buffs, list):
+                    effects = game_instance.player.active_buffs
 
                 data['player'] = {
                     'uuid': game_instance.player.uuid,
@@ -616,6 +618,7 @@ class ScriptingEngine:
                         print(raw_content)
                     elif line.startswith('__HIDE_MENU__'):
                         hide_menu = True
+                        clear_screen()
                     elif line.startswith('__SHOW_MENU__'):
                         show_menu = True
                     elif line.startswith('__ADD_BUTTON__'):
@@ -709,6 +712,7 @@ class ScriptingEngine:
                         print(raw_content)
                     elif line.startswith('__HIDE_MENU__'):
                         hide_menu = True
+                        clear_screen()
                     elif line.startswith('__SHOW_MENU__'):
                         show_menu = True
                     elif line.startswith('__ADD_BUTTON__'):
