@@ -157,8 +157,17 @@ export const enemy = {
 };
 
 export const battle = {
-    start: async function(id) { activities.push({type:'battle.start', id:id}); await saveActivities(); },
-    win: async function(id) { activities.push({type:'battle.win'}); await saveActivities(); }
+    start: async function(id) { 
+        activities.push({type:'battle.start', id:id}); 
+        global.battleState.active = true;
+        global.battleState.enemyId = id;
+        await saveActivities(); 
+    },
+    win: async function() { 
+        activities.push({type:'battle.win'}); 
+        global.battleState.active = false;
+        await saveActivities(); 
+    }
 };
 
 export const menu = {

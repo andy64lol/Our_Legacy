@@ -2,8 +2,7 @@
   "buttons": [
     {
       "label": "Camp",
-      "script_path": "scripts/camp.js",
-      "description": "Set up camp to rest and boost your stats. Only works in dangerous areas."
+      "script_path": "scripts/camp.js"
     }
   ]
 }
