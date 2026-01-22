@@ -1,34 +1,62 @@
 /**
- * RPG Scripting Engine Test
- * Covers core API functionality and Node.js execution
+ * RPG Scripting Engine Comprehensive Test
+ * Tests every function in the Scripting API
  */
 
-const fs = require('fs');
-const path = require('path');
+const { player, enemy, battle, menu, print, log, tellraw } = require('./scripting_API.js');
 
-// Mock global state for standalone testing if needed
-global.playerState = global.playerState || { name: "Test Player", level: 1, hp: 100 };
+console.log("=== RPG SCRIPTING API FULL TEST ===");
 
-console.log("=== Node.js Scripting Engine Test ===");
-
-// 1. Verify filesystem access
 try {
-    const activitiesPath = path.resolve(__dirname, 'activities.json');
-    if (fs.existsSync(activitiesPath)) {
-        console.log("✓ Found activities.json");
-        const data = JSON.parse(fs.readFileSync(activitiesPath, 'utf8'));
-        console.log(`✓ Loaded player: ${data.player.name} (Level ${data.player.level})`);
-    } else {
-        console.log("! activities.json not found (expected in scripts/ directory)");
-    }
+    // 1. Player API Tests
+    log("Testing Player API...");
+    print(`Name: ${player.name()}`);
+    print(`Class: ${player.class()}`);
+    print(`UUID: ${player.uuid()}`);
+    
+    const initialHP = player.getHealth();
+    player.addHealth(10);
+    print(`HP changed: ${initialHP} -> ${player.getHealth()}`);
+    
+    player.addMP(5);
+    print(`MP: ${player.getMP()}`);
+    
+    player.giveGold(50);
+    print(`Gold: ${player.gold()}`);
+    
+    player.addItem('Health Potion', 1);
+    print(`Inventory contains ${player.inventory().length} items`);
+    
+    player.addEffect('Blessed');
+    print(`Has 'Blessed' effect: ${player.hasEffect('Blessed')}`);
+    
+    const loc = player.location();
+    print(`Current Location: ${loc.name} (${loc.id})`);
+
+    // 2. Enemy API Tests
+    log("Testing Enemy API...");
+    print(`Enemy ID: ${enemy.id()}`);
+    print(`Enemy HP: ${enemy.hp()}`);
+    enemy.setCurrentHP(50);
+
+    // 3. Battle API Tests
+    log("Testing Battle API...");
+    battle.start('goblin_scout');
+    battle.win();
+
+    // 4. Menu API Tests (Visual verification)
+    log("Testing Menu API...");
+    menu.hide();
+    menu.show();
+
+    // 5. Output API Tests
+    tellraw("Custom RAW message test");
+
+    console.log("\n✓ ALL API FUNCTIONS EXECUTED SUCCESSFULLY");
 } catch (err) {
-    console.error("✗ Filesystem test failed:", err.message);
+    console.error("\n✗ TEST FAILED:");
+    console.error(err.stack);
+    process.exit(1);
 }
 
-// 2. Test basic logic
-const testValue = 42;
-if (testValue * 2 === 84) {
-    console.log("✓ JavaScript basic logic verified");
-}
-
-console.log("=== Test Complete ===");
+console.log("=== TEST COMPLETE ===");
