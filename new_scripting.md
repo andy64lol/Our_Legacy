@@ -57,7 +57,7 @@ The file should contain a `buttons` array with the following fields for each ent
 ### Adding a New Button
 
 1. Create your JavaScript logic in a new file within the `scripts/` directory (e.g., `scripts/my_feature.js`).
-2. Open `scripts/buttons.json`.
+2. Open `buttons.json` which should be outside the folder `scripts/`.
 3. Add a new object to the `buttons` array pointing to your script.
 4. Restart the game or re-enter the "Others" menu to see your new action.
 
