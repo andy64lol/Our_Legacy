@@ -24,3 +24,4 @@ venv/
 scripts/activities.json
 .zencoder/
 .zenflow/
+.replit
