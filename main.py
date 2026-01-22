@@ -554,6 +554,7 @@ class ScriptingEngine:
                             act_type = act.get('type')
                             if act_type == 'battle.start':
                                 enemy_id = act.get('id')
+                                print(f"{Colors.YELLOW}Triggering battle with {enemy_id}...{Colors.END}")
                                 if enemy_id and hasattr(game_instance, 'start_battle'):
                                     game_instance.start_battle(enemy_id)
                             elif act_type == 'addItem':
