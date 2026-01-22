@@ -23,10 +23,12 @@ import {
 
 The Menu API allows scripts to dynamically interact with the game's UI.
 
-- `menu.addButton(id, label, actionScript)`: Adds a custom button to the main menu. When clicked, it will execute the specified script file.
-- `menu.removeButton(id)`: Removes a previously added script button.
 - `menu.hide()`: Hides the main menu (clears the screen).
 - `menu.show()`: Forces the main menu to reappear.
+
+## Interaction API (`tellraw`)
+
+- `tellraw(message)`: Outputs raw text directly to the game console without the `[Script]` prefix. Use this for immersive text that appears as if the game itself is narrating.
 
 ## Player Module (`player`)
 
@@ -48,6 +50,9 @@ The Menu API allows scripts to dynamically interact with the game's UI.
 - `player.gold()`: Returns current gold.
 - `player.giveGold(amount)`: Adds gold.
 - `player.deleteGold(amount)`: Removes gold.
+- `player.inventory()`: Returns current inventory.
+- `player.addItem(itemId, amount)`: Adds items.
+- `player.removeItem(itemId, amount)`: Removes items.
 
 ### Status Effects
 - `player.hasEffect(effectId)`: Check if an effect is active (synchronized from the game's buff system).

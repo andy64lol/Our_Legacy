@@ -34,13 +34,9 @@ Preferred communication style: Simple, everyday language.
 
 ### Scripting System (`/scripts/`)
 - **Engine**: JavaScript (Node.js 20+) via subprocess execution from Python
+- **Documentation**: Full API reference is available in `new_scripting.md`
 - **State Sync**: `activities.json` bridges Python game state with JavaScript scripts
-- **API**: `scripting_API.js` provides extensive control:
-    - `player`: Manage stats (HP/MP), gold, level, exp, inventory, and location
-    - `battle`: Trigger battles using `battle.start(enemyId)`
-    - `enemy`: Monitor and modify current enemy HP
-    - `menu`: Control UI visibility (`hide()`/`show()`)
-    - `tellraw()`: Print output without internal prefixes
+- **API**: `scripting_API.js` provides extensive control over player, battle, and UI.
 - **Custom Buttons**: `scripts/buttons.json` defines script-triggered menu actions accessible via the "Others" menu
 - **Lifecycle**: State is synced from Python to JS before execution, and synced back to Python after execution
 
