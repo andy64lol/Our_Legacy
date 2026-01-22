@@ -2057,17 +2057,15 @@ class Game:
         )
         print(f"{Colors.CYAN}=" * 60 + f"{Colors.END}\n")
 
-        # Display dynamic script buttons
-        if hasattr(
-                self,
-                'scripting_engine') and self.scripting_engine and hasattr(
-                    self.scripting_engine,
-                    'script_buttons') and self.scripting_engine.script_buttons:
-            for btn_id, btn in self.scripting_engine.script_buttons.items():
-                print(
-                    f" {Colors.CYAN}[Script]{Colors.END} {Colors.YELLOW}{btn['label']}{Colors.END} {Colors.LIGHT_GRAY}(ID: {btn_id}){Colors.END}"
-                )
-            print()
+        # Load and display buttons from buttons.json
+        custom_buttons = []
+        if os.path.exists("buttons.json"):
+            try:
+                with open("buttons.json", "r") as f:
+                    data = json.load(f)
+                    custom_buttons = data.get("buttons", [])
+            except Exception as e:
+                print(f"{Colors.RED}Error loading buttons.json: {e}{Colors.END}")
 
         # Grid-like display for main menu
         menu_items = [("1", "Explore", Colors.GREEN),
@@ -2084,8 +2082,13 @@ class Game:
                       ("12", "Companions", Colors.CYAN),
                       ("13", "Save", Colors.BLUE), ("14", "Load", Colors.BLUE),
                       ("15", "Rewards", Colors.YELLOW),
-                      ("16", "Quit", Colors.RED),
-                      ("17", "Others", Colors.LIGHT_GRAY)]
+                      ("16", "Quit", Colors.RED)]
+
+        # Add custom buttons to menu_items
+        start_index = 17
+        for btn in custom_buttons:
+            menu_items.append((str(start_index), btn['label'], Colors.MAGENTA))
+            start_index += 1
 
         for i in range(0, len(menu_items), 2):
             item1 = menu_items[i]
@@ -2099,42 +2102,44 @@ class Game:
         choice = ask(f"{Colors.BOLD}Choose your next action: {Colors.END}",
                      allow_empty=False)
 
+        # Handle custom buttons
+        if choice.isdigit() and int(choice) >= 17:
+            idx = int(choice) - 17
+            if idx < len(custom_buttons):
+                btn = custom_buttons[idx]
+                script_path = btn.get('script_path')
+                if script_path and os.path.exists(script_path):
+                    print(f"{Colors.YELLOW}Executing {btn['label']}...{Colors.END}")
+                    try:
+                        subprocess.run([sys.executable, script_path], check=True)
+                        print(f"{Colors.GREEN}Execution complete.{Colors.END}")
+                    except Exception as e:
+                        print(f"{Colors.RED}Error executing script: {e}{Colors.END}")
+                    input(f"\n{Colors.WHITE}Press Enter to return to main menu...{Colors.END}")
+                    return # Recursively call main_menu via the loop in main()
+                else:
+                    print(f"{Colors.RED}Script not found: {script_path}{Colors.END}")
+                    time.sleep(1)
+                return
+
         # Normalize textual shortcuts to numbers for backward compatibility
         shortcut_map = {
-            'explore': '1',
-            'e': '1',
-            'view': '2',
-            'v': '2',
-            'travel': '3',
-            't': '3',
-            'inventory': '4',
-            'i': '4',
-            'missions': '5',
-            'm': '5',
+            'explore': '1', 'e': '1',
+            'view': '2', 'v': '2',
+            'travel': '3', 't': '3',
+            'inventory': '4', 'i': '4',
+            'missions': '5', 'm': '5',
             'boss': '6',
             'tavern': '7',
-            'shop': '8',
-            's': '8',
-            'alchemy': '9',
-            'alc': '9',
-            'craft': '9',
-            'crafting': '9',
-            'market': '10',
-            'mkt': '10',
-            'elite': '10',
-            'rest': '11',
-            'r': '11',
-            'companions': '12',
-            'comp': '12',
+            'shop': '8', 's': '8',
+            'alchemy': '9', 'alc': '9', 'craft': '9',
+            'market': '10', 'mkt': '10',
+            'rest': '11', 'r': '11',
+            'companions': '12', 'comp': '12',
             'save': '13',
-            'load': '14',
-            'l': '14',
-            'claim': '15',
-            'c': '15',
-            'quit': '16',
-            'q': '16',
-            'others': '17',
-            'o': '17'
+            'load': '14', 'l': '14',
+            'claim': '15', 'c': '15',
+            'quit': '16', 'q': '16'
         }
 
         normalized = choice.strip().lower()
@@ -2143,89 +2148,39 @@ class Game:
 
         if choice == "1":
             self.explore()
-            # Execute scripts after user action
-            if self.config.get('auto_load_scripts', True) and self.config.get(
-                    'scripts_enabled', True):
-                self.scripting_engine.execute_scripts_from_config(self)
         elif choice == "2":
             if self.player:
                 self.player.display_stats()
-                if self.config.get('auto_load_scripts',
-                                   True) and self.config.get(
-                                       'scripts_enabled', True):
-                    self.scripting_engine.execute_scripts_from_config(self)
             else:
                 print("No character created yet.")
         elif choice == "3":
             self.travel()
-            if self.config.get('auto_load_scripts', True) and self.config.get(
-                    'scripts_enabled', True):
-                self.scripting_engine.execute_scripts_from_config(self)
         elif choice == "4":
             self.view_inventory()
-            if self.config.get('auto_load_scripts', True) and self.config.get(
-                    'scripts_enabled', True):
-                self.scripting_engine.execute_scripts_from_config(self)
         elif choice == "5":
             self.view_missions()
-            if self.config.get('auto_load_scripts', True) and self.config.get(
-                    'scripts_enabled', True):
-                self.scripting_engine.execute_scripts_from_config(self)
         elif choice == "6":
             self.fight_boss_menu()
-            if self.config.get('auto_load_scripts', True) and self.config.get(
-                    'scripts_enabled', True):
-                self.scripting_engine.execute_scripts_from_config(self)
         elif choice == "7":
             self.visit_tavern()
-            if self.config.get('auto_load_scripts', True) and self.config.get(
-                    'scripts_enabled', True):
-                self.scripting_engine.execute_scripts_from_config(self)
         elif choice == "8":
             self.visit_shop()
-            if self.config.get('auto_load_scripts', True) and self.config.get(
-                    'scripts_enabled', True):
-                self.scripting_engine.execute_scripts_from_config(self)
         elif choice == "9":
             self.visit_alchemy()
-            if self.config.get('auto_load_scripts', True) and self.config.get(
-                    'scripts_enabled', True):
-                self.scripting_engine.execute_scripts_from_config(self)
         elif choice == "10":
             self.visit_market()
-            if self.config.get('auto_load_scripts', True) and self.config.get(
-                    'scripts_enabled', True):
-                self.scripting_engine.execute_scripts_from_config(self)
         elif choice == "11":
             self.rest()
-            if self.config.get('auto_load_scripts', True) and self.config.get(
-                    'scripts_enabled', True):
-                self.scripting_engine.execute_scripts_from_config(self)
         elif choice == "12":
             self.manage_companions()
-            if self.config.get('auto_load_scripts', True) and self.config.get(
-                    'scripts_enabled', True):
-                self.scripting_engine.execute_scripts_from_config(self)
         elif choice == "13":
             self.save_game()
-            if self.config.get('auto_load_scripts', True) and self.config.get(
-                    'scripts_enabled', True):
-                self.scripting_engine.execute_scripts_from_config(self)
         elif choice == "14":
             self.load_game()
-            if self.config.get('auto_load_scripts', True) and self.config.get(
-                    'scripts_enabled', True):
-                self.scripting_engine.execute_scripts_from_config(self)
         elif choice == "15":
             self.claim_rewards()
-            if self.config.get('auto_load_scripts', True) and self.config.get(
-                    'scripts_enabled', True):
-                self.scripting_engine.execute_scripts_from_config(self)
         elif choice == "16":
             self.quit_game()
-            if self.config.get('auto_load_scripts', True) and self.config.get(
-                    'scripts_enabled', True):
-                self.scripting_engine.execute_scripts_from_config(self)
 
     def fight_boss_menu(self):
         """Menu to select and fight a boss in the current area"""

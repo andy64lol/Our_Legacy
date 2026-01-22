@@ -1,0 +1,8 @@
+{
+  "buttons": [
+    {
+      "label": "Custom Action",
+      "script_path": "scripts/custom_action.py"
+    }
+  ]
+}
