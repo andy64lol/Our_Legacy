@@ -4499,14 +4499,13 @@ class Game:
                             # Execute script using Node.js
                             # Ensure we're in the right directory or provide absolute path
                             subprocess.run(['node', script_path], check=True)
-                            input(f"\n{Colors.LIGHT_GRAY}Press Enter to continue...{Colors.END}")
                             
                             # Sync state back after execution
                             self.scripting_engine.sync_activities_from_file()
                             if self.player:
                                 self.player.update_stats_from_equipment(self.items_data)
-                            else:
-                                print(f"{Colors.YELLOW}Warning: Player not initialized. Stats not updated.{Colors.END}")
+                            
+                            input(f"\n{Colors.LIGHT_GRAY}Press Enter to continue...{Colors.END}")
                         except Exception as e:
                             print(f"{Colors.RED}Error: {e}{Colors.END}")
                     else:
