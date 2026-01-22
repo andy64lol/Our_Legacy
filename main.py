@@ -4498,7 +4498,7 @@ class Game:
                             
                             # Sync state back after execution
                             self.scripting_engine.sync_activities_from_file()
-                            self.update_stats_from_equipment(self.items_data)
+                            self.player.update_stats_from_equipment(self.items_data)
                         except Exception as e:
                             print(f"{Colors.RED}Error: {e}{Colors.END}")
                     else:
