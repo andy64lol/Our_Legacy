@@ -1,8 +1,8 @@
 {
   "buttons": [
     {
-      "label": "Custom Action",
-      "script_path": "scripts/custom_action.py"
+      "label": "Test Script",
+      "script_path": "scripts/test.js"
     }
   ]
 }

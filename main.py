@@ -2077,9 +2077,6 @@ class Game:
                       ("15", "Rewards", Colors.YELLOW),
                       ("16", "Quit", Colors.RED)]
 
-        # Add custom buttons to menu_items
-        # Removed dynamic adding to main menu - moved to "Others" menu
-        
         for i in range(0, len(menu_items), 2):
             item1 = menu_items[i]
             line = f" {Colors.WHITE}{item1[0]:>2}.{Colors.END} {item1[2]}{item1[1]:<18}{Colors.END}"
@@ -4492,7 +4489,8 @@ class Game:
                     script_path = btn.get('script_path')
                     if script_path and os.path.exists(script_path):
                         try:
-                            subprocess.run([sys.executable, script_path], check=True)
+                            # Use node to execute JavaScript scripts
+                            subprocess.run(['node', script_path], check=True)
                         except Exception as e:
                             print(f"{Colors.RED}Error: {e}{Colors.END}")
                             time.sleep(1)
@@ -4505,29 +4503,6 @@ class Game:
             else:
                 print(f"{Colors.RED}Invalid input.{Colors.END}")
                 time.sleep(1)
-
-    def others_menu(self):
-        """Display the Others menu with dynamically added buttons from scripting"""
-        global dynamic_buttons
-
-        # Refresh buttons from file (in case JavaScript scripts added new ones)
-        load_dynamic_buttons()
-
-        while True:
-            clear_screen()
-            print(f"{Colors.BOLD}=== OTHERS ==={Colors.END}")
-
-            # Check if there are any dynamic buttons
-            if not dynamic_buttons:
-                print("\nNo additional options available.")
-                print(
-                    "Use system.addButton() in scripts to add custom menu buttons."
-                )
-            else:
-                print("\nAvailable options:")
-                # Display all dynamically added buttons
-                button_labels = list(dynamic_buttons.keys())
-                for i, label in enumerate(button_labels, 1):
                     print(f"{i}. {label}")
                 print()
                 print(f"{Colors.YELLOW}Options:{Colors.END}")
