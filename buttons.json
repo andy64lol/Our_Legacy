@@ -1,8 +1,8 @@
 {
   "buttons": [
     {
-      "label": "Test Script",
-      "script_path": "scripts/test.js"
+      "label": "Camp here",
+      "script_path": "scripts/camp.js"
     }
   ]
 }
