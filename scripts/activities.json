@@ -1,14 +1,39 @@
 {
   "version": "2.0",
-  "last_updated": "2026-01-21T21:53:18.402Z",
-  "activities": [],
+  "last_updated": "2026-01-22T20:02:00.997Z",
+  "activities": [
+    {
+      "type": "addItem",
+      "id": "Health Potion",
+      "amount": 1
+    },
+    {
+      "type": "battle.start",
+      "id": "goblin_scout"
+    },
+    {
+      "type": "battle.win"
+    },
+    {
+      "type": "addItem",
+      "id": "Health Potion",
+      "amount": 1
+    },
+    {
+      "type": "battle.start",
+      "id": "goblin_scout"
+    },
+    {
+      "type": "battle.win"
+    }
+  ],
   "player": {
     "uuid": "0641b0bd-7775-4883-91ce-a8d663f6dcec",
     "name": "andy",
     "class": "Hunter",
-    "health": 120,
+    "health": 140,
     "maxHealth": 120,
-    "mp": 760,
+    "mp": 770,
     "maxMP": 760,
     "level": 107,
     "exp": 956,
@@ -100,7 +125,7 @@
     "id": "",
     "name": "",
     "isBoss": false,
-    "hp": 0,
+    "hp": 50,
     "maxHp": 0
   },
   "battle": {
@@ -116,5 +141,7 @@
   "system": {
     "latestSave": null
   },
-  "effects": []
+  "effects": [
+    "Blessed"
+  ]
 }
