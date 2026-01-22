@@ -8,7 +8,9 @@ async function run() {
     tellraw('"Hand over your gold!"');
     
     // Initiate battle with the 'thief' enemy ID from enemies.json
+    console.log('__RAW_OUTPUT__Starting battle...');
     await battle.start('thief');
+    console.log('__RAW_OUTPUT__Battle command sent.');
 }
 
 run();
