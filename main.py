@@ -4489,8 +4489,16 @@ class Game:
                     script_path = btn.get('script_path')
                     if script_path and os.path.exists(script_path):
                         try:
+                            # Sync state before execution
+                            self.scripting_engine.sync_game_state_to_activities(self)
+                            
                             # Execute script using Node.js
+                            # Ensure we're in the right directory or provide absolute path
                             subprocess.run(['node', script_path], check=True)
+                            
+                            # Sync state back after execution
+                            self.scripting_engine.sync_activities_from_file()
+                            self.update_stats_from_equipment(self.items_data)
                         except Exception as e:
                             print(f"{Colors.RED}Error: {e}{Colors.END}")
                     else:
