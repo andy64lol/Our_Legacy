@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "last_updated": "2026-01-22T20:36:28.205Z",
+  "last_updated": "2026-01-22T20:38:51.167Z",
   "activities": [
     {
       "type": "addItem",
@@ -53,6 +53,10 @@
     {
       "type": "battle.start",
       "id": "thief"
+    },
+    {
+      "type": "battle.start",
+      "id": "thief"
     }
   ],
   "player": {
@@ -70,7 +74,15 @@
       "Enchanting Lute",
       "Steel Dagger",
       "Colourful Cloth Robe",
-      "Mana Potion"
+      "Mana Potion",
+      "Health Potion",
+      "Health Potion",
+      "Health Potion",
+      "Health Potion",
+      "Health Potion",
+      "Health Potion",
+      "Health Potion",
+      "Health Potion"
     ],
     "companions": [],
     "equipped": {
