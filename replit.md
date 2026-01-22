@@ -33,10 +33,16 @@ Preferred communication style: Simple, everyday language.
 | `config.json` | Game configuration and scripting settings |
 
 ### Scripting System (`/scripts/`)
-- **Engine**: JavaScript (Node.js) via subprocess execution from Python
+- **Engine**: JavaScript (Node.js 20+) via subprocess execution from Python
 - **State Sync**: `activities.json` bridges Python game state with JavaScript scripts
-- **API**: `scripting_API.js` provides player, battle, map, and menu manipulation functions
-- **Custom Buttons**: `buttons.json` defines script-triggered menu actions
+- **API**: `scripting_API.js` provides extensive control:
+    - `player`: Manage stats (HP/MP), gold, level, exp, inventory, and location
+    - `battle`: Trigger battles using `battle.start(enemyId)`
+    - `enemy`: Monitor and modify current enemy HP
+    - `menu`: Control UI visibility (`hide()`/`show()`)
+    - `tellraw()`: Print output without internal prefixes
+- **Custom Buttons**: `scripts/buttons.json` defines script-triggered menu actions accessible via the "Others" menu
+- **Lifecycle**: State is synced from Python to JS before execution, and synced back to Python after execution
 
 ### Save System
 - Save files stored in `/data/saves/` as JSON

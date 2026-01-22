@@ -1,8 +1,0 @@
-{
-  "buttons": [
-    {
-      "label": "Camp",
-      "script_path": "scripts/camp.js"
-    }
-  ]
-}

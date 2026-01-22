@@ -4506,9 +4506,10 @@ class Game:
             print(f"{Colors.CYAN}{'=' * 60}{Colors.END}\n")
 
             custom_buttons = []
-            if os.path.exists("buttons.json"):
+            buttons_path = os.path.join("scripts", "buttons.json")
+            if os.path.exists(buttons_path):
                 try:
-                    with open("buttons.json", "r") as f:
+                    with open(buttons_path, "r") as f:
                         data = json.load(f)
                         custom_buttons = data.get("buttons", [])
                 except Exception as e:
