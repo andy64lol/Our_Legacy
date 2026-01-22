@@ -550,13 +550,15 @@ class ScriptingEngine:
                             game_instance.current_area = data['location']['id']
                         
                         # Process activities/commands
+                        battle_triggered = False
                         for act in self.current_activities:
                             act_type = act.get('type')
-                            if act_type == 'battle.start':
+                            if act_type == 'battle.start' and not battle_triggered:
                                 enemy_id = act.get('id')
                                 print(f"{Colors.YELLOW}Triggering battle with {enemy_id}...{Colors.END}")
-                                if enemy_id and hasattr(game_instance, 'start_battle'):
-                                    game_instance.start_battle(enemy_id)
+                                if enemy_id and hasattr(self, 'start_battle'):
+                                    battle_triggered = True
+                                    self.start_battle(enemy_id)
                             elif act_type == 'addItem':
                                 item_id = act.get('id')
                                 amount = act.get('amount', 1)
@@ -3687,6 +3689,17 @@ class Game:
                     break  # Refresh
             if break_outer:
                 break
+
+    def start_battle(self, enemy_id):
+        """Starts a battle loop with the given enemy ID"""
+        if enemy_id not in self.enemies_data:
+            print(f"{Colors.RED}Enemy {enemy_id} not found!{Colors.END}")
+            return
+
+        from combat import Battle
+        enemy_data = self.enemies_data[enemy_id]
+        battle = Battle(self.player, enemy_id, enemy_data, self.items_data, self.companions_data, self.effects_data)
+        battle.battle_loop()
 
     def visit_market(self):
         """Visit the Elite Market - browse and buy items from the API at 50% off"""

@@ -8,8 +8,8 @@
 var activities = [];
 var lastActivityTime = 0;
 
-// Path to activities file (relative to script location)
-var ACTIVITIES_FILE = 'scripts/activities.json';
+// Path to activities file
+var ACTIVITIES_FILE = 'activities.json';
 
 // Initialize Date.now() equivalent for environments that don't have it
 var _nowTimestamp = (typeof Date !== 'undefined' && Date.now) ? Date.now() : Math.floor(new Date().getTime());
