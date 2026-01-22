@@ -1,1 +1,1 @@
-print('Custom script executed successfully!')
+print('Hello from the script!')
