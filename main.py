@@ -2063,16 +2063,6 @@ class Game:
         )
         print(f"{Colors.CYAN}=" * 60 + f"{Colors.END}\n")
 
-        # Load and display buttons from buttons.json
-        custom_buttons = []
-        if os.path.exists("buttons.json"):
-            try:
-                with open("buttons.json", "r") as f:
-                    data = json.load(f)
-                    custom_buttons = data.get("buttons", [])
-            except Exception as e:
-                print(f"{Colors.RED}Error loading buttons.json: {e}{Colors.END}")
-
         # Grid-like display for main menu
         menu_items = [("1", "Explore", Colors.GREEN),
                       ("2", "View Character", Colors.CYAN),
