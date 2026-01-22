@@ -4489,110 +4489,16 @@ class Game:
                     script_path = btn.get('script_path')
                     if script_path and os.path.exists(script_path):
                         try:
-                            # Use node to execute JavaScript scripts
+                            # Execute script using Node.js
                             subprocess.run(['node', script_path], check=True)
                         except Exception as e:
                             print(f"{Colors.RED}Error: {e}{Colors.END}")
-                            time.sleep(1)
                     else:
                         print(f"{Colors.RED}Script not found.{Colors.END}")
-                        time.sleep(1)
                 else:
                     print(f"{Colors.RED}Invalid choice.{Colors.END}")
-                    time.sleep(1)
             else:
                 print(f"{Colors.RED}Invalid input.{Colors.END}")
-                time.sleep(1)
-                    print(f"{i}. {label}")
-                print()
-                print(f"{Colors.YELLOW}Options:{Colors.END}")
-                print(f"1-{len(button_labels)}. Select option")
-                print("D. Delete a button")
-                print("B. Back to Main Menu")
-
-            if not dynamic_buttons:
-                choice = ask("\nPress Enter to go back: ").strip()
-                if choice == '' or choice.lower() == 'b':
-                    break
-            else:
-                choice = ask("\nChoose an option: ").strip().upper()
-
-                if choice == 'B' or choice == '':
-                    break
-                elif choice == 'D':
-                    # Delete a button
-                    if dynamic_buttons:
-                        try:
-                            idx = int(
-                                ask(f"Delete which button (1-{len(dynamic_buttons)})? "
-                                    )) - 1
-                            if 0 <= idx < len(dynamic_buttons):
-                                label = list(dynamic_buttons.keys())[idx]
-                                del dynamic_buttons[label]
-                                # Save to file after deletion
-                                save_dynamic_buttons()
-                                print(f"Button '{label}' deleted.")
-                                time.sleep(1)
-                            else:
-                                print("Invalid selection.")
-                                time.sleep(1)
-                        except ValueError:
-                            print("Invalid input.")
-                            time.sleep(1)
-                    else:
-                        print("No buttons to delete.")
-                        time.sleep(1)
-                elif choice.isdigit():
-                    idx = int(choice) - 1
-                    button_labels = list(dynamic_buttons.keys())
-                    if 0 <= idx < len(button_labels):
-                        label = button_labels[idx]
-                        button_info = dynamic_buttons[label]
-                        self._execute_dynamic_button(button_info)
-                        # Refresh buttons after execution (in case script modified them)
-                        load_dynamic_buttons()
-                    else:
-                        print("Invalid selection.")
-                        time.sleep(1)
-                else:
-                    print("Invalid choice.")
-                    time.sleep(1)
-
-    def _execute_dynamic_button(self, button_info):
-        """Execute the script associated with a dynamic button - supports simplified format"""
-        # Handle simplified format: button_info is just the script name string
-        if isinstance(button_info, str):
-            script_name = button_info
-            script_path = f"scripts/{script_name}"
-            if os.path.exists(script_path):
-                print(f"\n{Colors.CYAN}Executing: {script_name}{Colors.END}")
-                scripting_engine.execute_file(script_path)
-            else:
-                print(
-                    f"{Colors.RED}Script file not found: {script_name}{Colors.END}")
-        else:
-            # Handle old format with dict (backward compatibility)
-            button_type = button_info.get('type', '')
-            value = button_info.get('value', '')
-
-            if button_type == 'file':
-                script_path = f"scripts/{value}"
-                if os.path.exists(script_path):
-                    print(f"\n{Colors.CYAN}Executing: {value}{Colors.END}")
-                    scripting_engine.execute_file(script_path)
-                else:
-                    print(
-                        f"{Colors.RED}Script file not found: {value}{Colors.END}")
-            elif button_type == 'inline':
-                # Execute inline script code
-                print(f"\n{Colors.CYAN}Executing custom script...{Colors.END}")
-                scripting_engine.execute_script(value)
-            else:
-                print(
-                    f"{Colors.RED}Unknown button type: {button_type}{Colors.END}")
-
-        # Pause to let user see output
-        ask("\nPress Enter to continue: ").strip()
 
     def _gather_materials(self):
         """Gather materials based on current area's difficulty and theme."""
