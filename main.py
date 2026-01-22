@@ -4469,6 +4469,58 @@ class Game:
         print("Your legacy will be remembered...")
         sys.exit(0)
 
+    def show_others_menu(self):
+        """Display the Others menu with scripts from buttons.json"""
+        while True:
+            clear_screen()
+            print(f"{Colors.CYAN}=" * 60)
+            print(f"                   {Colors.BOLD}{Colors.YELLOW}Others{Colors.END}")
+            print(f"{Colors.CYAN}=" * 60 + f"{Colors.END}\n")
+
+            custom_buttons = []
+            if os.path.exists("buttons.json"):
+                try:
+                    with open("buttons.json", "r") as f:
+                        data = json.load(f)
+                        custom_buttons = data.get("buttons", [])
+                except Exception as e:
+                    print(f"{Colors.RED}Error loading buttons.json: {e}{Colors.END}")
+
+            if not custom_buttons:
+                print(f"{Colors.LIGHT_GRAY}No custom actions available.{Colors.END}")
+            else:
+                for i, btn in enumerate(custom_buttons, 1):
+                    print(f"{Colors.WHITE}{i}.{Colors.END} {Colors.MAGENTA}{btn['label']}{Colors.END}")
+
+            print(f"\n{Colors.CYAN}=" * 60)
+            choice = ask(f"Choose an action (1-{len(custom_buttons)}) or Enter to go back: ", allow_empty=True)
+
+            if not choice:
+                break
+
+            if choice.isdigit():
+                idx = int(choice) - 1
+                if 0 <= idx < len(custom_buttons):
+                    btn = custom_buttons[idx]
+                    script_path = btn.get('script_path')
+                    if script_path and os.path.exists(script_path):
+                        print(f"{Colors.YELLOW}Executing {btn['label']}...{Colors.END}")
+                        try:
+                            subprocess.run([sys.executable, script_path], check=True)
+                            print(f"{Colors.GREEN}Execution complete.{Colors.END}")
+                        except Exception as e:
+                            print(f"{Colors.RED}Error executing script: {e}{Colors.END}")
+                        input(f"\n{Colors.WHITE}Press Enter to return...{Colors.END}")
+                    else:
+                        print(f"{Colors.RED}Script not found: {script_path}{Colors.END}")
+                        time.sleep(1)
+                else:
+                    print(f"{Colors.RED}Invalid choice.{Colors.END}")
+                    time.sleep(1)
+            else:
+                print(f"{Colors.RED}Invalid input.{Colors.END}")
+                time.sleep(1)
+
     def others_menu(self):
         """Display the Others menu with dynamically added buttons from scripting"""
         global dynamic_buttons
