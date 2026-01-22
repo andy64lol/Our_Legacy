@@ -15,11 +15,7 @@
       "defense": 2,
       "speed": 1
     },
-    "starting_items": [
-      "Iron Sword",
-      "Leather Armor",
-      "Health Potion"
-    ],
+    "starting_items": ["Iron Sword", "Leather Armor", "Health Potion"],
     "starting_gold": 100
   },
   "Mage": {
@@ -62,14 +58,10 @@
       "defense": 1,
       "speed": 2
     },
-    "starting_items": [
-      "Steel Dagger",
-      "Leather Armor",
-      "Health Potion"
-    ],
+    "starting_items": ["Steel Dagger", "Leather Armor", "Health Potion"],
     "starting_gold": 100
   },
-  "Hunter":{
+  "Hunter": {
     "description": "Experienced tracker and archer with an incredible aim",
     "base_stats": {
       "hp": 100,
@@ -93,7 +85,8 @@
     ],
     "starting_gold": 100
   },
-  "Bard":{
+  "Bard": {
+    "description": "A musician who uses their song to inspire allies and weaken enemies",
     "base_stats": {
       "hp": 70,
       "mp": 60,

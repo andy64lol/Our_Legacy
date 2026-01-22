@@ -1,7 +1,19 @@
 {
   "version": "2.0",
-  "last_updated": "2026-01-22T20:10:15.109Z",
+  "last_updated": "2026-01-22T20:14:08.293Z",
   "activities": [
+    {
+      "type": "addItem",
+      "id": "Health Potion",
+      "amount": 1
+    },
+    {
+      "type": "battle.start",
+      "id": "goblin_scout"
+    },
+    {
+      "type": "battle.win"
+    },
     {
       "type": "addItem",
       "id": "Health Potion",
@@ -40,98 +52,45 @@
     }
   ],
   "player": {
-    "uuid": "0641b0bd-7775-4883-91ce-a8d663f6dcec",
+    "uuid": "4101969b-c6f6-4ec5-85ce-54c5375d0616",
     "name": "andy",
-    "class": "Hunter",
-    "health": 150,
-    "maxHealth": 120,
-    "mp": 775,
-    "maxMP": 760,
-    "level": 107,
-    "exp": 956,
-    "gold": 1e+30,
+    "class": "Bard",
+    "health": 80,
+    "maxHealth": 70,
+    "mp": 65,
+    "maxMP": 85,
+    "level": 1,
+    "exp": 0,
+    "gold": 350,
     "inventory": [
-      "Hunter's Bow",
-      "Hunting Knife",
-      "Leather Armor",
-      "Health Potion",
-      "Dragon Spear",
-      "Spellsword",
-      "Dark Crystal",
-      "Magic Staff",
-      "Spellsword",
-      "Magic Staff",
-      "Shadow Blade",
-      "Shadow Blade",
-      "Shadow Blade",
-      "Fire Gem",
-      "Fire Gem",
-      "Dark Crystal",
-      "Dark Crystal",
-      "Shadow Blade",
-      "Mana Potion",
-      "Shadow Blade",
-      "Dark Crystal",
-      "Magic Staff",
-      "Shadow Blade",
-      "Magic Staff",
-      "Magic Staff",
-      "Dark Crystal",
-      "Dark Crystal",
-      "Dark Crystal",
-      "Shadow Blade",
-      "Shadow Blade",
-      "Dark Crystal",
-      "Shadow Blade",
-      "Dragon Bone",
-      "Dragon Bone",
-      "Dragon Bone",
-      "Void Heart",
-      "Void Heart",
-      "Poison Crystal",
-      "Poison Crystal",
-      "Dark Crystal",
-      "Goblin Ear"
+      "Enchanting Lute",
+      "Steel Dagger",
+      "Colourful Cloth Robe",
+      "Mana Potion"
     ],
-    "companions": [
-      {
-        "id": "companion_7",
-        "name": "Ragnar the Warlord",
-        "level": 1,
-        "equipment": {
-          "weapon": null,
-          "armor": null,
-          "accessory": null
-        }
-      },
-      {
-        "id": "companion_11",
-        "name": "Skiff von Stratoscrate",
-        "level": 1,
-        "equipment": {
-          "weapon": null,
-          "armor": null,
-          "accessory": null
-        }
-      }
-    ],
+    "companions": [],
     "equipped": {
-      "weapon": "Hunter's Bow",
-      "armor": "Leather Armor",
-      "accessory": null
+      "weapon": "Enchanting Lute",
+      "armor": "Colourful Cloth Robe",
+      "offhand": null,
+      "accessory_1": null,
+      "accessory_2": null,
+      "accessory_3": null
     },
     "lastItemConsumed": null,
     "lastItemObtained": null
   },
   "location": {
-    "id": "abyss_gate",
-    "name": "Abyss Gate",
+    "id": "starting_village",
+    "name": "Starting Village",
     "connections": [
-      "void_cavern"
+      "forest_path",
+      "ancient_ruins",
+      "tavern"
     ],
-    "canRest": false,
-    "restCost": 10,
-    "difficulty": 5
+    "canRest": true,
+    "restCost": 5,
+    "difficulty": 1
   },
   "enemy": {
     "id": "",
