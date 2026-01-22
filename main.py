@@ -1374,11 +1374,8 @@ class Character:
             for companion in self.companions:
                 print(f"  {Colors.YELLOW}• {companion}{Colors.END}")
 
-        # Active buffs
+        print(f"\n {Colors.CYAN}{Colors.BOLD}--- ACTIVE EFFECTS ---{Colors.END}")
         if self.active_buffs:
-            print(
-                f"\n {Colors.CYAN}{Colors.BOLD}--- ACTIVE EFFECTS ---{Colors.END}"
-            )
             for b in self.active_buffs:
                 mods = ', '.join(f"{k}:{v}"
                                  for k, v in b.get('modifiers', {}).items())
@@ -1386,7 +1383,7 @@ class Character:
                     f"  {Colors.YELLOW}• {b.get('name')}{Colors.END} ({b.get('duration')} turns) - {Colors.LIGHT_GRAY}{mods}{Colors.END}"
                 )
 
-        print(f"\n{Colors.CYAN}=" * 60 + f"{Colors.END}")
+        print(f"\n{Colors.CYAN}{'=' * 60}{Colors.END}")
         ask("\nPress Enter to return to menu...")
 
     def update_stats_from_equipment(
