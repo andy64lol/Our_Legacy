@@ -1443,8 +1443,8 @@ class Character:
         self.defense = self.base_defense
         self.speed = self.base_speed
 
-        # Apply bonuses from each equipped item
-        for slot in ("weapon", "armor", "accessory"):
+        # Apply bonuses from each equipped item (including all accessory slots)
+        for slot in ("weapon", "armor", "accessory_1", "accessory_2", "accessory_3"):
             item_name = self.equipment.get(slot)
             if not item_name:
                 continue
@@ -4402,7 +4402,7 @@ class Game:
 
         invalid_items = []
 
-        for slot in ("weapon", "armor", "accessory"):
+        for slot in ("weapon", "armor", "accessory_1", "accessory_2", "accessory_3"):
             item_name = self.player.equipment.get(slot)
             if not item_name:
                 continue
@@ -4531,7 +4531,8 @@ class Game:
                 print(f"{Colors.LIGHT_GRAY}No custom actions available.{Colors.END}")
             else:
                 for i, btn in enumerate(custom_buttons, 1):
-                    print(f"{Colors.WHITE}{i}.{Colors.END} {Colors.MAGENTA}{btn['label']}{Colors.END}")
+                    label = btn.get('label', 'Unknown')
+                    print(f"{Colors.WHITE}{i}.{Colors.END} {Colors.MAGENTA}{label}{Colors.END}")
 
             print(f"\n{Colors.CYAN}{'=' * 60}{Colors.END}")
             choice = ask(f"Choose an action (1-{len(custom_buttons)}) or Enter to go back: ", allow_empty=True)
