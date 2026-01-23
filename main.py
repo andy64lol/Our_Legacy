@@ -275,436 +275,6 @@ game_api = None
 MARKET_API_URL = "https://our-legacy.vercel.app/api/market"
 MARKET_COOLDOWN_MINUTES = 10
 
-
-class ScriptingEngine:
-    """JavaScript scripting engine using Node.js for game scripting functionality"""
-
-    def __init__(self):
-        self.scripting_enabled = False
-        self.activities_file = 'scripts/activities.json'
-        self.current_activities = []
-        self._init_context()
-        self._load_game_state_to_activities()
-
-    def _load_game_state_to_activities(self):
-        """Load current game state into activities.json for script access"""
-        try:
-            # Read current activities.json or create default structure
-            data = {
-                'version': '2.0',
-                'last_updated': None,
-                'activities': [],
-                'player': {
-                    'uuid': '',
-                    'name': '',
-                    'class': '',
-                    'health': 100,
-                    'maxHealth': 100,
-                    'mp': 50,
-                    'maxMP': 50,
-                    'level': 1,
-                    'exp': 0,
-                    'gold': 100,
-                    'inventory': [],
-                    'companions': [],
-                    'equipped': {
-                        'weapon': None,
-                        'offhand': None,
-                        'armor': None,
-                        'accessory': None
-                    },
-                    'lastItemConsumed': None,
-                    'lastItemObtained': None
-                },
-                'location': {
-                    'id': 'starting_village',
-                    'name': 'Starting Village',
-                    'connections': [],
-                    'canRest': True,
-                    'restCost': 10,
-                    'difficulty': 1
-                },
-                'enemy': {
-                    'id': '',
-                    'name': '',
-                    'isBoss': False,
-                    'hp': 0,
-                    'maxHp': 0
-                },
-                'battle': {
-                    'active': False,
-                    'enemyId': None,
-                    'bossId': None
-                },
-                'missions': {
-                    'finished': [],
-                    'ongoing': [],
-                    'notAccepted': []
-                },
-                'system': {
-                    'latestSave': None
-                },
-                'effects': []
-            }
-            
-            # Try to load existing file
-            if os.path.exists(self.activities_file):
-                with open(self.activities_file, 'r') as f:
-                    existing = json.load(f)
-                    # Merge with existing data
-                    if existing.get('version') == '2.0':
-                        data = existing
-            
-            # Write back to file
-            with open(self.activities_file, 'w') as f:
-                json.dump(data, f, indent=2)
-                
-            print(f"{Colors.CYAN}Activities file initialized{Colors.END}")
-            
-        except Exception as e:
-            print(f"{Colors.YELLOW}Warning: Could not initialize activities: {e}{Colors.END}")
-    
-    def sync_game_state_to_activities(self, game_instance=None):
-        """Sync current game state to activities.json for script access"""
-        try:
-            # Load existing data
-            data = {
-                'version': '2.0',
-                'last_updated': None,
-                'activities': [],
-                'player': {
-                    'uuid': '',
-                    'name': '',
-                    'class': '',
-                    'health': 100,
-                    'maxHealth': 100,
-                    'mp': 50,
-                    'maxMP': 50,
-                    'level': 1,
-                    'exp': 0,
-                    'gold': 100,
-                    'inventory': [],
-                    'companions': [],
-                    'equipped': {
-                        'weapon': None,
-                        'offhand': None,
-                        'armor': None,
-                        'accessory': None
-                    },
-                    'lastItemConsumed': None,
-                    'lastItemObtained': None
-                },
-                'location': {
-                    'id': 'starting_village',
-                    'name': 'Starting Village',
-                    'connections': [],
-                    'canRest': True,
-                    'restCost': 10,
-                    'difficulty': 1
-                },
-                'enemy': {
-                    'id': '',
-                    'name': '',
-                    'isBoss': False,
-                    'hp': 0,
-                    'maxHp': 0
-                },
-                'battle': {
-                    'active': False,
-                    'enemyId': None,
-                    'bossId': None
-                },
-                'missions': {
-                    'finished': [],
-                    'ongoing': [],
-                    'notAccepted': []
-                },
-                'system': {
-                    'latestSave': None
-                },
-                'effects': []
-            }
-            
-            # Try to load existing file
-            if os.path.exists(self.activities_file):
-                with open(self.activities_file, 'r') as f:
-                    existing = json.load(f)
-                    if existing.get('version') == '2.0':
-                        data = existing
-            
-            # Update with current game state if game instance provided and has player
-            if game_instance and hasattr(game_instance, 'player') and game_instance.player:
-                data['player'] = {
-                    'uuid': game_instance.player.uuid,
-                    'name': game_instance.player.name,
-                    'class': game_instance.player.character_class,
-                    'health': game_instance.player.hp,
-                    'maxHealth': game_instance.player.max_hp,
-                    'mp': game_instance.player.mp,
-                    'maxMP': game_instance.player.max_mp,
-                    'level': game_instance.player.level,
-                    'exp': game_instance.player.experience,
-                    'gold': game_instance.player.gold,
-                    'inventory': game_instance.player.inventory,
-                    'companions': game_instance.player.companions,
-                    'equipped': game_instance.player.equipment,
-                    'lastItemConsumed': None,
-                    'lastItemObtained': None
-                }
-            
-            # Update with current location
-            if game_instance and hasattr(game_instance, 'current_area'):
-                area_data = game_instance.areas_data.get(game_instance.current_area, {})
-                data['location'] = {
-                    'id': game_instance.current_area,
-                    'name': area_data.get('name', game_instance.current_area),
-                    'connections': area_data.get('connections', []),
-                    'canRest': area_data.get('can_rest', False),
-                    'restCost': area_data.get('rest_cost', 10),
-                    'difficulty': area_data.get('difficulty', 1)
-                }
-            
-            # Update missions state
-            if game_instance:
-                data['missions'] = {
-                    'finished': game_instance.completed_missions if hasattr(game_instance, 'completed_missions') else [],
-                    'ongoing': list(game_instance.mission_progress.keys()) if hasattr(game_instance, 'mission_progress') else [],
-                    'notAccepted': []
-                }
-            
-            # Write back to file
-            with open(self.activities_file, 'w') as f:
-                json.dump(data, f, indent=2)
-                
-        except Exception as e:
-            print(f"{Colors.YELLOW}Warning: Could not sync game state to activities: {e}{Colors.END}")
-    
-    def sync_activities_from_file(self):
-        """Sync activities from activities.json back to Python state after script execution"""
-        try:
-            if os.path.exists(self.activities_file):
-                with open(self.activities_file, 'r') as f:
-                    data = json.load(f)
-                    self.current_activities = data.get('activities', [])
-                    
-                print(f"{Colors.CYAN}Activities synced from file ({len(self.current_activities)} items){Colors.END}")
-                return True
-        except Exception as e:
-            print(f"{Colors.YELLOW}Warning: Could not sync activities from file: {e}{Colors.END}")
-        return False
-
-    def _init_context(self):
-        """Initialize the scripting context using Node.js"""
-        if not _check_node_available():
-            print(f"{Colors.YELLOW}Node.js not available. Scripting disabled.{Colors.END}")
-            return
-
-        try:
-            # Test Node.js can execute
-            result = subprocess.run(['node', '-e', 'console.log("test")'],
-                                   capture_output=True,
-                                   text=True,
-                                   timeout=5)
-            if result.returncode != 0:
-                print(f"{Colors.YELLOW}Node.js test failed. Scripting disabled.{Colors.END}")
-                return
-
-            self.scripting_enabled = False
-            print(f"{Colors.GREEN}Scripting engine initialized successfully.{Colors.END}")
-
-        except Exception as e:
-            print(f"{Colors.RED}Failed to initialize scripting engine: {e}{Colors.END}")
-            self.scripting_enabled = False
-
-    def execute_script(self, script_code: str) -> bool:
-        """Execute JavaScript code using Node.js"""
-        if not self.scripting_enabled:
-            return False
-
-        try:
-            # Create a temporary file with the script
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.js', delete=False) as f:
-                # Write the API first
-                api_file = 'scripts/scripting_API.js'
-                if os.path.exists(api_file):
-                    with open(api_file, 'r') as api_f:
-                        f.write(api_f.read())
-                        f.write('\n')
-
-                # Write the user script
-                f.write('\n// User script\n')
-                f.write(script_code)
-                f.write('\n')
-
-                temp_path = f.name
-
-            # Execute with Node.js
-            result = subprocess.run(['node', temp_path],
-                                   capture_output=True,
-                                   text=True,
-                                   timeout=30)
-
-            # Clean up temp file
-            try:
-                os.unlink(temp_path)
-            except Exception:
-                pass
-
-            # Print any output
-            if result.stdout.strip():
-                for line in result.stdout.strip().split('\n'):
-                    print(f"{Colors.CYAN}[Script] {line}{Colors.END}")
-
-            # Check for errors
-            if result.returncode != 0:
-                if result.stderr.strip():
-                    print(f"{Colors.RED}Script error: {result.stderr}{Colors.END}")
-                return False
-
-            return True
-
-        except subprocess.TimeoutExpired:
-            print(f"{Colors.RED}Script execution timed out{Colors.END}")
-            return False
-        except Exception as e:
-            print(f"{Colors.RED}Script execution error: {e}{Colors.END}")
-            return False
-
-    def execute_file(self, filepath: str) -> bool:
-        """Execute a JavaScript file using Node.js"""
-        if not os.path.exists(filepath):
-            return False
-
-        if not self.scripting_enabled:
-            return False
-
-        try:
-            # Execute with Node.js
-            result = subprocess.run(['node', filepath],
-                                   capture_output=True,
-                                   text=True,
-                                   timeout=30)
-
-            # Print any output
-            if result.stdout.strip():
-                for line in result.stdout.strip().split('\n'):
-                    print(f"{Colors.CYAN}[Script] {line}{Colors.END}")
-
-            # Check for errors
-            if result.returncode != 0:
-                if result.stderr.strip():
-                    print(f"{Colors.RED}Script error: {result.stderr}{Colors.END}")
-                return False
-
-            return True
-
-        except subprocess.TimeoutExpired:
-            print(f"{Colors.RED}Script execution timed out{Colors.END}")
-            return False
-        except Exception as e:
-            print(f"{Colors.RED}Error executing script file {filepath}: {e}{Colors.END}")
-            return False
-    
-    def load_activities(self) -> List[Dict]:
-        """Load activities from the activities file"""
-        try:
-            if os.path.exists(self.activities_file):
-                with open(self.activities_file, 'r') as f:
-                    data = json.load(f)
-                    self.current_activities = data.get('activities', [])
-                    return self.current_activities
-        except Exception as e:
-            print(f"{Colors.RED}Error loading activities: {e}{Colors.END}")
-        return []
-    
-    def save_activities(self):
-        """Save activities to the activities file"""
-        try:
-            data = {
-                'activities': self.current_activities,
-                'last_updated': datetime.now().isoformat(),
-                'scripting_enabled': self.scripting_enabled,
-                'version': '1.0'
-            }
-            with open(self.activities_file, 'w') as f:
-                json.dump(data, f, indent=2)
-        except Exception as e:
-            print(f"{Colors.RED}Error saving activities: {e}{Colors.END}")
-    
-    def add_activity(self, activity_type: str, details: Optional[Dict] = None):
-        """Add an activity to the tracking list"""
-        activity: Dict[str, Any] = {
-            'type': activity_type,
-            'timestamp': datetime.now().isoformat()
-        }
-        if details:
-            activity['details'] = details
-        
-        self.current_activities.append(activity)
-        
-        # Keep only last 1000 activities to prevent file bloat
-        if len(self.current_activities) > 1000:
-            self.current_activities = self.current_activities[-1000:]
-    
-    def clear_activities(self):
-        """Clear all activities"""
-        self.current_activities = []
-        self.save_activities()
-    
-    def get_activities(self) -> List[Dict]:
-        """Get all recorded activities"""
-        return self.current_activities
-    
-    def execute_scripts_from_config(self, game_instance=None):
-        """Execute all scripts listed in scripts/scripts.json"""
-        scripts_config = 'scripts/scripts.json'
-
-        if not os.path.exists(scripts_config):
-            return
-
-        # Sync game state to activities.json before executing scripts
-        self.sync_game_state_to_activities(game_instance)
-
-        try:
-            with open(scripts_config, 'r') as f:
-                config = json.load(f)
-
-            if isinstance(config, list):
-                scripts = config
-            elif isinstance(config, dict) and config.get('scripts'):
-                scripts = config['scripts']
-            else:
-                return
-
-            for script_name in scripts:
-                script_path = f"scripts/{script_name}.js"
-                if os.path.exists(script_path):
-                    print(f"{Colors.CYAN}Executing script: {script_name}{Colors.END}")
-                    self.execute_file(script_path)
-                    self.add_activity('script_executed', {'script': script_name})
-            
-            # Sync activities back from file after script execution
-            self.sync_activities_from_file()
-            
-            # Sync game state again to capture any changes made by scripts
-            self.sync_game_state_to_activities(game_instance)
-            
-        except Exception as e:
-            print(f"{Colors.RED}Error executing scripts from config: {e}{Colors.END}")
-    
-    def reload_api(self):
-        """Reload the scripting API"""
-        self._init_context()
-    
-    def is_enabled(self) -> bool:
-        """Check if scripting is enabled"""
-        return self.scripting_enabled
-
-
-# Global scripting engine instance
-scripting_engine = ScriptingEngine()
-
-
 class MarketAPI:
     """API for accessing the Elite Market with 10-minute cooldown"""
 
@@ -1399,7 +969,6 @@ class Game:
         self.mission_progress: Dict[str, Any] = {
         }  # mission_id -> {current_count, target_count, completed, type}
         self.completed_missions: List[str] = []
-        self.config: Dict[str, Any] = {}
         self.market_api: Optional[MarketAPI] = None
         self.crafting_data: Dict[str, Any] = {}
 
@@ -1445,27 +1014,10 @@ class Game:
             sys.exit(1)
 
     def load_config(self):
-        """Load configuration from config.json"""
-        try:
-            with open('data/config.json', 'r') as f:
-                self.config = json.load(f)
-        except FileNotFoundError:
-            # Default config if file doesn't exist
-            self.config = {
-                'auto_load_scripts': True,
-                'scripts_enabled': True,
-                'autosave_enabled': True,
-                'autosave_interval': 5,
-                'colors_enabled': True
-            }
-            self.scripting_enabled = False
-        except json.JSONDecodeError:
-            print("Warning: config.json is invalid JSON. Using defaults.")
-            self.scripting_enabled = False
-
-        # Set global color toggle
+        """Load configuration - uses hardcoded defaults since config file is removed"""
+        # Set global color toggle to True by default
         global COLORS_ENABLED
-        COLORS_ENABLED = self.config.get('colors_enabled', True)
+        COLORS_ENABLED = True
 
         # Initialize Market API
         self.market_api = MarketAPI()
@@ -1489,109 +1041,20 @@ class Game:
             print(f"{Colors.BOLD}=== MAIN MENU ==={Colors.END}")
             print("1. New Game")
             print("2. Load Game")
-            print("3. Configurations")
-            print("4. Quit")
+            print("3. Quit")
             print()
 
-            choice = ask("Choose an option (1-4): ")
+            choice = ask("Choose an option (1-3): ")
             if choice == "1":
                 return "new_game"
             elif choice == "2":
                 return "load_game"
             elif choice == "3":
-                self.configurations_menu()
-            elif choice == "4":
                 print("Thank you for playing Our Legacy!")
                 clear_screen()
                 sys.exit(0)
             else:
-                print("Invalid choice. Please enter 1, 2, 3, or 4.")
-
-    def configurations_menu(self):
-        """Display and allow toggling of configuration settings"""
-        while True:
-            clear_screen()
-            print(f"{Colors.BOLD}=== CONFIGURATIONS ==={Colors.END}")
-
-            # Scripts Enabled
-            scripts_enabled = self.config.get('scripts_enabled', True)
-            scripts_color = Colors.GREEN if scripts_enabled else Colors.RED
-            scripts_status = "Enabled" if scripts_enabled else "Disabled"
-            print(
-                f"1. Scripts Enabled: {scripts_color}{scripts_status}{Colors.END}"
-            )
-
-            # Autosave Enabled
-            autosave_enabled = self.config.get('autosave_enabled', True)
-            autosave_color = Colors.GREEN if autosave_enabled else Colors.RED
-            autosave_status = "Enabled" if autosave_enabled else "Disabled"
-            print(
-                f"2. Autosave Enabled: {autosave_color}{autosave_status}{Colors.END}"
-            )
-
-            # Auto Load Scripts
-            auto_load = self.config.get('auto_load_scripts', True)
-            auto_load_color = Colors.GREEN if auto_load else Colors.RED
-            auto_load_status = "Enabled" if auto_load else "Disabled"
-            print(
-                f"3. Auto Load Scripts: {auto_load_color}{auto_load_status}{Colors.END}"
-            )
-
-            # Colors Enabled
-            colors_enabled = self.config.get('colors_enabled', True)
-            colors_color = Colors.GREEN if colors_enabled else Colors.RED
-            colors_status = "Enabled" if colors_enabled else "Disabled"
-            print(
-                f"4. Colors Enabled: {colors_color}{colors_status}{Colors.END}"
-            )
-
-            print("5. Back to Main Menu")
-
-            choice = ask("Choose an option (1-5): ")
-            if choice == "1":
-                # Toggle scripts_enabled
-                self.config['scripts_enabled'] = not scripts_enabled
-                print(
-                    f"Scripts Enabled set to: {'Enabled' if self.config['scripts_enabled'] else 'Disabled'}"
-                )
-                self.save_config()
-            elif choice == "2":
-                # Toggle autosave_enabled
-                self.config['autosave_enabled'] = not autosave_enabled
-                print(
-                    f"Autosave Enabled set to: {'Enabled' if self.config['autosave_enabled'] else 'Disabled'}"
-                )
-                self.save_config()
-            elif choice == "3":
-                # Toggle auto_load_scripts
-                self.config['auto_load_scripts'] = not auto_load
-                print(
-                    f"Auto Load Scripts set to: {'Enabled' if self.config['auto_load_scripts'] else 'Disabled'}"
-                )
-                self.save_config()
-            elif choice == "4":
-                # Toggle colors_enabled
-                self.config['colors_enabled'] = not colors_enabled
-                global COLORS_ENABLED
-                COLORS_ENABLED = self.config['colors_enabled']
-                print(
-                    f"Colors Enabled set to: {'Enabled' if self.config['colors_enabled'] else 'Disabled'}"
-                )
-                self.save_config()
-            elif choice == "5":
-                break
-            else:
-                print("Invalid choice. Please enter 1, 2, 3, 4, or 5.")
-            time.sleep(1)  # Brief pause
-
-    def save_config(self):
-        """Save the current config to config.json"""
-        try:
-            with open('data/config.json', 'w') as f:
-                json.dump(self.config, f, indent=2)
-            print("Configuration saved.")
-        except Exception as e:
-            print(f"Error saving config: {e}")
+                print("Invalid choice. Please enter 1, 2, or 3.")
 
     def display_available_classes(self):
         """Display all available character classes from classes.json"""
@@ -1776,76 +1239,57 @@ class Game:
 
         if choice == "1":
             self.explore()
-            # Execute scripts after user action
-            if self.config.get('auto_load_scripts', True) and self.config.get('scripts_enabled', True):
-                scripting_engine.execute_scripts_from_config(self)
+            
         elif choice == "2":
             if self.player:
                 self.player.display_stats()
-                if self.config.get('auto_load_scripts', True) and self.config.get('scripts_enabled', True):
-                    scripting_engine.execute_scripts_from_config(self)
             else:
                 print("No character created yet.")
         elif choice == "3":
             self.travel()
-            if self.config.get('auto_load_scripts', True) and self.config.get('scripts_enabled', True):
-                scripting_engine.execute_scripts_from_config(self)
+            
         elif choice == "4":
             self.view_inventory()
-            if self.config.get('auto_load_scripts', True) and self.config.get('scripts_enabled', True):
-                scripting_engine.execute_scripts_from_config(self)           
+                       
         elif choice == "5":
             self.view_missions()
-            if self.config.get('auto_load_scripts', True) and self.config.get('scripts_enabled', True):
-                scripting_engine.execute_scripts_from_config(self)
+            
         elif choice == "6":
             self.fight_boss_menu()
-            if self.config.get('auto_load_scripts', True) and self.config.get('scripts_enabled', True):
-                scripting_engine.execute_scripts_from_config(self)            
+                        
         elif choice == "7":
             self.visit_tavern()
-            if self.config.get('auto_load_scripts', True) and self.config.get('scripts_enabled', True):
-                scripting_engine.execute_scripts_from_config(self)
+            
         elif choice == "8":
             self.visit_shop()
-            if self.config.get('auto_load_scripts', True) and self.config.get('scripts_enabled', True):
-                scripting_engine.execute_scripts_from_config(self)
+            
         elif choice == "9":
             self.visit_alchemy()
-            if self.config.get('auto_load_scripts', True) and self.config.get('scripts_enabled', True):
-                scripting_engine.execute_scripts_from_config(self)
+            
         elif choice == "10":
             self.visit_market()
-            if self.config.get('auto_load_scripts', True) and self.config.get('scripts_enabled', True):
-                scripting_engine.execute_scripts_from_config(self)
+            
         elif choice == "11":
             self.rest()
-            if self.config.get('auto_load_scripts', True) and self.config.get('scripts_enabled', True):
-                scripting_engine.execute_scripts_from_config(self)
+            
         elif choice == "12":
             self.manage_companions()
-            if self.config.get('auto_load_scripts', True) and self.config.get('scripts_enabled', True):
-                scripting_engine.execute_scripts_from_config(self)
+            
         elif choice == "13":
             self.save_game()
-            if self.config.get('auto_load_scripts', True) and self.config.get('scripts_enabled', True):
-                scripting_engine.execute_scripts_from_config(self)
+            
         elif choice == "14":
             self.load_game()
-            if self.config.get('auto_load_scripts', True) and self.config.get('scripts_enabled', True):
-                scripting_engine.execute_scripts_from_config(self)
+            
         elif choice == "15":
             self.claim_rewards()
-            if self.config.get('auto_load_scripts', True) and self.config.get('scripts_enabled', True):
-                scripting_engine.execute_scripts_from_config(self)
+            
         elif choice == "16":
             self.quit_game()
-            if self.config.get('auto_load_scripts', True) and self.config.get('scripts_enabled', True):
-                scripting_engine.execute_scripts_from_config(self)
+            
         else:
             print("Invalid choice. Please try again.")
-            if self.config.get('auto_load_scripts', True) and self.config.get('scripts_enabled', True):
-                scripting_engine.execute_scripts_from_config(self)
+            
 
     def fight_boss_menu(self):
         """Menu to select and fight a boss in the current area"""
