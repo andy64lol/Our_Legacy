@@ -27,6 +27,7 @@ except ImportError:
     REQUESTS_AVAILABLE = False
     try:
         import urllib.request
+        import urllib.parse
     except ImportError:
         pass
 
@@ -274,31 +275,6 @@ game_api = None
 MARKET_API_URL = "https://our-legacy.vercel.app/api/market"
 MARKET_COOLDOWN_MINUTES = 10
 
-# Check for Node.js availability for scripting
-NODE_AVAILABLE = None
-
-
-def _check_node_available():
-    """Check if Node.js is available in the system"""
-    global NODE_AVAILABLE
-    if NODE_AVAILABLE is not None:
-        return NODE_AVAILABLE
-    try:
-        result = subprocess.run(['node', '--version'],
-                                capture_output=True,
-                                text=True,
-                                timeout=5)
-        if result.returncode == 0:
-            NODE_AVAILABLE = True
-            print(
-                f"{Colors.GREEN}Node.js detected: {result.stdout.strip()}{Colors.END}"
-            )
-        else:
-            NODE_AVAILABLE = False
-    except (FileNotFoundError, subprocess.TimeoutExpired, Exception):
-        NODE_AVAILABLE = False
-    return NODE_AVAILABLE
-
 
 class ScriptingEngine:
     """JavaScript scripting engine using Node.js for game scripting functionality"""
@@ -307,7 +283,6 @@ class ScriptingEngine:
         self.scripting_enabled = False
         self.activities_file = 'scripts/activities.json'
         self.current_activities = []
-        self.script_buttons = {}  # Initialize script buttons
         self._init_context()
         self._load_game_state_to_activities()
 
@@ -371,7 +346,7 @@ class ScriptingEngine:
                 },
                 'effects': []
             }
-
+            
             # Try to load existing file
             if os.path.exists(self.activities_file):
                 with open(self.activities_file, 'r') as f:
@@ -379,18 +354,16 @@ class ScriptingEngine:
                     # Merge with existing data
                     if existing.get('version') == '2.0':
                         data = existing
-
+            
             # Write back to file
             with open(self.activities_file, 'w') as f:
                 json.dump(data, f, indent=2)
-
+                
             print(f"{Colors.CYAN}Activities file initialized{Colors.END}")
-
+            
         except Exception as e:
-            print(
-                f"{Colors.YELLOW}Warning: Could not initialize activities: {e}{Colors.END}"
-            )
-
+            print(f"{Colors.YELLOW}Warning: Could not initialize activities: {e}{Colors.END}")
+    
     def sync_game_state_to_activities(self, game_instance=None):
         """Sync current game state to activities.json for script access"""
         try:
@@ -451,24 +424,16 @@ class ScriptingEngine:
                 },
                 'effects': []
             }
-
+            
             # Try to load existing file
             if os.path.exists(self.activities_file):
                 with open(self.activities_file, 'r') as f:
                     existing = json.load(f)
                     if existing.get('version') == '2.0':
                         data = existing
-
+            
             # Update with current game state if game instance provided and has player
-            if game_instance and hasattr(game_instance,
-                                         'player') and game_instance.player:
-                # Get current effects
-                effects = []
-                if hasattr(game_instance.player, 'active_buffs') and isinstance(game_instance.player.active_buffs, dict):
-                    effects = list(game_instance.player.active_buffs.keys())
-                elif hasattr(game_instance.player, 'active_buffs') and isinstance(game_instance.player.active_buffs, list):
-                    effects = game_instance.player.active_buffs
-
+            if game_instance and hasattr(game_instance, 'player') and game_instance.player:
                 data['player'] = {
                     'uuid': game_instance.player.uuid,
                     'name': game_instance.player.name,
@@ -486,12 +451,10 @@ class ScriptingEngine:
                     'lastItemConsumed': None,
                     'lastItemObtained': None
                 }
-                data['effects'] = effects
-
+            
             # Update with current location
             if game_instance and hasattr(game_instance, 'current_area'):
-                area_data = game_instance.areas_data.get(
-                    game_instance.current_area, {})
+                area_data = game_instance.areas_data.get(game_instance.current_area, {})
                 data['location'] = {
                     'id': game_instance.current_area,
                     'name': area_data.get('name', game_instance.current_area),
@@ -500,29 +463,23 @@ class ScriptingEngine:
                     'restCost': area_data.get('rest_cost', 10),
                     'difficulty': area_data.get('difficulty', 1)
                 }
-
+            
             # Update missions state
             if game_instance:
                 data['missions'] = {
-                    'finished':
-                    game_instance.completed_missions if hasattr(
-                        game_instance, 'completed_missions') else [],
-                    'ongoing':
-                    list(game_instance.mission_progress.keys()) if hasattr(
-                        game_instance, 'mission_progress') else [],
+                    'finished': game_instance.completed_missions if hasattr(game_instance, 'completed_missions') else [],
+                    'ongoing': list(game_instance.mission_progress.keys()) if hasattr(game_instance, 'mission_progress') else [],
                     'notAccepted': []
                 }
-
+            
             # Write back to file
             with open(self.activities_file, 'w') as f:
                 json.dump(data, f, indent=2)
-
+                
         except Exception as e:
-            print(
-                f"{Colors.YELLOW}Warning: Could not sync game state to activities: {e}{Colors.END}"
-            )
-
-    def sync_activities_from_file(self, game_instance=None):
+            print(f"{Colors.YELLOW}Warning: Could not sync game state to activities: {e}{Colors.END}")
+    
+    def sync_activities_from_file(self):
         """Sync activities from activities.json back to Python state after script execution"""
         try:
             if os.path.exists(self.activities_file):
@@ -530,86 +487,33 @@ class ScriptingEngine:
                     data = json.load(f)
                     self.current_activities = data.get('activities', [])
                     
-                    # Update state in game_instance
-                    if game_instance:
-                        # Sync player state
-                        if 'player' in data and game_instance.player:
-                            p = data['player']
-                            game_instance.player.hp = p.get('health', game_instance.player.hp)
-                            game_instance.player.max_hp = p.get('maxHealth', game_instance.player.max_hp)
-                            game_instance.player.mp = p.get('mp', game_instance.player.mp)
-                            game_instance.player.max_mp = p.get('maxMP', game_instance.player.max_mp)
-                            game_instance.player.level = p.get('level', game_instance.player.level)
-                            game_instance.player.gold = p.get('gold', game_instance.player.gold)
-                            game_instance.player.inventory = p.get('inventory', game_instance.player.inventory)
-                            game_instance.player.character_class = p.get('class', game_instance.player.character_class)
-                            game_instance.player.name = p.get('name', game_instance.player.name)
-                        
-                        # Sync location
-                        if 'location' in data and 'id' in data['location']:
-                            game_instance.current_area = data['location']['id']
-                        
-                        # Process activities/commands
-                        battle_triggered = False
-                        for act in self.current_activities:
-                            act_type = act.get('type')
-                            if act_type == 'battle.start':
-                                enemy_id = act.get('id')
-                                if enemy_id:
-                                    game_instance.start_battle(enemy_id)
-                            elif act_type == 'addItem':
-                                item_id = act.get('id')
-                                amount = act.get('amount', 1)
-                                if item_id and game_instance.player:
-                                    for _ in range(amount):
-                                        game_instance.player.inventory.append(item_id)
-                            elif act_type == 'removeItem':
-                                item_id = act.get('id')
-                                amount = act.get('amount', 1)
-                                if item_id and game_instance.player:
-                                    for _ in range(amount):
-                                        if item_id in game_instance.player.inventory:
-                                            game_instance.player.inventory.remove(item_id)
-
-                print(
-                    f"{Colors.CYAN}Activities synced from file ({len(self.current_activities)} items){Colors.END}"
-                )
+                print(f"{Colors.CYAN}Activities synced from file ({len(self.current_activities)} items){Colors.END}")
                 return True
         except Exception as e:
-            print(
-                f"{Colors.YELLOW}Warning: Could not sync activities from file: {e}{Colors.END}"
-            )
+            print(f"{Colors.YELLOW}Warning: Could not sync activities from file: {e}{Colors.END}")
         return False
 
     def _init_context(self):
         """Initialize the scripting context using Node.js"""
         if not _check_node_available():
-            print(
-                f"{Colors.YELLOW}Node.js not available. Scripting disabled.{Colors.END}"
-            )
+            print(f"{Colors.YELLOW}Node.js not available. Scripting disabled.{Colors.END}")
             return
 
         try:
             # Test Node.js can execute
             result = subprocess.run(['node', '-e', 'console.log("test")'],
-                                    capture_output=True,
-                                    text=True,
-                                    timeout=5)
+                                   capture_output=True,
+                                   text=True,
+                                   timeout=5)
             if result.returncode != 0:
-                print(
-                    f"{Colors.YELLOW}Node.js test failed. Scripting disabled.{Colors.END}"
-                )
+                print(f"{Colors.YELLOW}Node.js test failed. Scripting disabled.{Colors.END}")
                 return
 
-            self.scripting_enabled = True
-            print(
-                f"{Colors.GREEN}Scripting engine initialized successfully.{Colors.END}"
-            )
+            self.scripting_enabled = False
+            print(f"{Colors.GREEN}Scripting engine initialized successfully.{Colors.END}")
 
         except Exception as e:
-            print(
-                f"{Colors.RED}Failed to initialize scripting engine: {e}{Colors.END}"
-            )
+            print(f"{Colors.RED}Failed to initialize scripting engine: {e}{Colors.END}")
             self.scripting_enabled = False
 
     def execute_script(self, script_code: str) -> bool:
@@ -619,9 +523,7 @@ class ScriptingEngine:
 
         try:
             # Create a temporary file with the script
-            with tempfile.NamedTemporaryFile(mode='w',
-                                             suffix='.js',
-                                             delete=False) as f:
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.js', delete=False) as f:
                 # Write the API first
                 api_file = 'scripts/scripting_API.js'
                 if os.path.exists(api_file):
@@ -638,9 +540,9 @@ class ScriptingEngine:
 
             # Execute with Node.js
             result = subprocess.run(['node', temp_path],
-                                    capture_output=True,
-                                    text=True,
-                                    timeout=30)
+                                   capture_output=True,
+                                   text=True,
+                                   timeout=30)
 
             # Clean up temp file
             try:
@@ -649,48 +551,14 @@ class ScriptingEngine:
                 pass
 
             # Print any output
-            hide_menu = False
-            show_menu = False
             if result.stdout.strip():
                 for line in result.stdout.strip().split('\n'):
-                    # Check for special script commands
-                    if line.startswith('__RAW_OUTPUT__'):
-                        raw_content = line[len('__RAW_OUTPUT__'):]
-                        print(raw_content)
-                    elif line.startswith('__HIDE_MENU__'):
-                        hide_menu = True
-                        clear_screen()
-                    elif line.startswith('__SHOW_MENU__'):
-                        show_menu = True
-                    elif line.startswith('__ADD_BUTTON__'):
-                        try:
-                            btn_data = json.loads(line[len('__ADD_BUTTON__'):])
-                            if not hasattr(self, 'script_buttons'):
-                                self.script_buttons = {}
-                            self.script_buttons[btn_data['id']] = btn_data
-                        except Exception:
-                            pass
-                    elif line.startswith('__REMOVE_BUTTON__'):
-                        btn_id = line[len('__REMOVE_BUTTON__'):].strip()
-                        if hasattr(self, 'script_buttons'
-                                   ) and btn_id in self.script_buttons:
-                            del self.script_buttons[btn_id]
-                    else:
-                        print(f"{Colors.CYAN}[Script] {line}{Colors.END}")
-
-            # Execute menu actions after processing output
-            if hide_menu:
-                clear_screen()
-            if show_menu:
-                # Re-display the main menu or welcome screen
-                print(f"{Colors.CYAN}Returning to main menu...{Colors.END}")
+                    print(f"{Colors.CYAN}[Script] {line}{Colors.END}")
 
             # Check for errors
             if result.returncode != 0:
                 if result.stderr.strip():
-                    print(
-                        f"{Colors.RED}Script error: {result.stderr}{Colors.END}"
-                    )
+                    print(f"{Colors.RED}Script error: {result.stderr}{Colors.END}")
                 return False
 
             return True
@@ -711,80 +579,21 @@ class ScriptingEngine:
             return False
 
         try:
-            # Create a temporary file to merge API and script
-            with tempfile.NamedTemporaryFile(mode='w',
-                                             suffix='.js',
-                                             delete=False) as f:
-                # Write the API first
-                api_file = 'scripts/scripting_API.js'
-                if os.path.exists(api_file):
-                    with open(api_file, 'r') as api_f:
-                        f.write(api_f.read())
-                        f.write('\n')
-
-                # Read and write the target script
-                with open(filepath, 'r') as script_f:
-                    f.write('\n// Target script\n')
-                    f.write(script_f.read())
-                    f.write('\n')
-
-                temp_path = f.name
-
             # Execute with Node.js
-            result = subprocess.run(['node', temp_path],
-                                    capture_output=True,
-                                    text=True,
-                                    timeout=30)
-
-            # Clean up temp file
-            try:
-                os.unlink(temp_path)
-            except Exception:
-                pass
+            result = subprocess.run(['node', filepath],
+                                   capture_output=True,
+                                   text=True,
+                                   timeout=30)
 
             # Print any output
-            hide_menu = False
-            show_menu = False
             if result.stdout.strip():
                 for line in result.stdout.strip().split('\n'):
-                    # Check for special script commands
-                    if line.startswith('__RAW_OUTPUT__'):
-                        raw_content = line[len('__RAW_OUTPUT__'):]
-                        print(raw_content)
-                    elif line.startswith('__HIDE_MENU__'):
-                        hide_menu = True
-                        clear_screen()
-                    elif line.startswith('__SHOW_MENU__'):
-                        show_menu = True
-                    elif line.startswith('__ADD_BUTTON__'):
-                        try:
-                            btn_data = json.loads(line[len('__ADD_BUTTON__'):])
-                            if not hasattr(self, 'script_buttons'):
-                                self.script_buttons = {}
-                            self.script_buttons[btn_data['id']] = btn_data
-                        except Exception:
-                            pass
-                    elif line.startswith('__REMOVE_BUTTON__'):
-                        btn_id = line[len('__REMOVE_BUTTON__'):].strip()
-                        if hasattr(self, 'script_buttons'
-                                   ) and btn_id in self.script_buttons:
-                            del self.script_buttons[btn_id]
-                    else:
-                        print(f"{Colors.CYAN}[Script] {line}{Colors.END}")
-
-            # Execute menu actions after processing output
-            if hide_menu:
-                clear_screen()
-            if show_menu:
-                # Re-display the main menu or welcome screen
-                print(f"{Colors.CYAN}Returning to main menu...{Colors.END}")
+                    print(f"{Colors.CYAN}[Script] {line}{Colors.END}")
 
             # Check for errors
             if result.returncode != 0:
                 if result.stderr.strip():
-                    print(
-                        f"{Colors.RED}Script error: {result.stderr}{Colors.END}"
-                    )
+                    print(f"{Colors.RED}Script error: {result.stderr}{Colors.END}")
                 return False
 
             return True
@@ -793,11 +602,9 @@ class ScriptingEngine:
             print(f"{Colors.RED}Script execution timed out{Colors.END}")
             return False
         except Exception as e:
-            print(
-                f"{Colors.RED}Error executing script file {filepath}: {e}{Colors.END}"
-            )
+            print(f"{Colors.RED}Error executing script file {filepath}: {e}{Colors.END}")
             return False
-
+    
     def load_activities(self) -> List[Dict]:
         """Load activities from the activities file"""
         try:
@@ -809,7 +616,7 @@ class ScriptingEngine:
         except Exception as e:
             print(f"{Colors.RED}Error loading activities: {e}{Colors.END}")
         return []
-
+    
     def save_activities(self):
         """Save activities to the activities file"""
         try:
@@ -823,7 +630,7 @@ class ScriptingEngine:
                 json.dump(data, f, indent=2)
         except Exception as e:
             print(f"{Colors.RED}Error saving activities: {e}{Colors.END}")
-
+    
     def add_activity(self, activity_type: str, details: Optional[Dict] = None):
         """Add an activity to the tracking list"""
         activity: Dict[str, Any] = {
@@ -832,22 +639,22 @@ class ScriptingEngine:
         }
         if details:
             activity['details'] = details
-
+        
         self.current_activities.append(activity)
-
+        
         # Keep only last 1000 activities to prevent file bloat
         if len(self.current_activities) > 1000:
             self.current_activities = self.current_activities[-1000:]
-
+    
     def clear_activities(self):
         """Clear all activities"""
         self.current_activities = []
         self.save_activities()
-
+    
     def get_activities(self) -> List[Dict]:
         """Get all recorded activities"""
         return self.current_activities
-
+    
     def execute_scripts_from_config(self, game_instance=None):
         """Execute all scripts listed in scripts/scripts.json"""
         scripts_config = 'scripts/scripts.json'
@@ -872,170 +679,30 @@ class ScriptingEngine:
             for script_name in scripts:
                 script_path = f"scripts/{script_name}.js"
                 if os.path.exists(script_path):
-                    print(
-                        f"{Colors.CYAN}Executing script: {script_name}{Colors.END}"
-                    )
+                    print(f"{Colors.CYAN}Executing script: {script_name}{Colors.END}")
                     self.execute_file(script_path)
-                    self.add_activity('script_executed',
-                                      {'script': script_name})
-
+                    self.add_activity('script_executed', {'script': script_name})
+            
             # Sync activities back from file after script execution
             self.sync_activities_from_file()
-
+            
             # Sync game state again to capture any changes made by scripts
             self.sync_game_state_to_activities(game_instance)
-
+            
         except Exception as e:
-            print(
-                f"{Colors.RED}Error executing scripts from config: {e}{Colors.END}"
-            )
-
+            print(f"{Colors.RED}Error executing scripts from config: {e}{Colors.END}")
+    
     def reload_api(self):
         """Reload the scripting API"""
         self._init_context()
-
+    
     def is_enabled(self) -> bool:
         """Check if scripting is enabled"""
         return self.scripting_enabled
 
-    def _save_button_to_file(self, btn_data: Dict):
-        """Save a button to buttons.json for persistence - simplified format"""
-        try:
-            buttons_path = 'scripts/buttons.json'
-            buttons_data = {}
-            
-            # Load existing data
-            if os.path.exists(buttons_path):
-                with open(buttons_path, 'r') as f:
-                    existing = json.load(f)
-                    # Support both old and new formats
-                    if isinstance(existing, dict) and existing.get('buttons'):
-                        buttons_data = existing['buttons']
-                    else:
-                        # New simplified format - filter out metadata
-                        buttons_data = {k: v for k, v in existing.items()
-                                       if k not in ('version', 'last_updated')}
-            
-            # Add the button using label as key and script name as value
-            btn_id = btn_data.get('id', '')
-            btn_label = btn_data.get('label', btn_id)
-            script_name = btn_data.get('action', btn_id)
-            
-            # Store in simplified format: "Label": "scriptname"
-            buttons_data[btn_label] = script_name
-            
-            # Save back to file in simplified format
-            with open(buttons_path, 'w') as f:
-                json.dump(buttons_data, f, indent=2)
-                
-            # Also update global dynamic_buttons
-            global dynamic_buttons
-            dynamic_buttons[btn_label] = script_name
-            
-        except Exception as e:
-            print(f"{Colors.YELLOW}Warning: Could not save button: {e}{Colors.END}")
-
-    def _remove_button_from_file(self, btn_id: str):
-        """Remove a button from buttons.json - simplified format"""
-        try:
-            buttons_path = 'scripts/buttons.json'
-            if not os.path.exists(buttons_path):
-                return
-                
-            with open(buttons_path, 'r') as f:
-                buttons_data = json.load(f)
-            
-            # Support both old and new formats
-            if isinstance(buttons_data, dict) and buttons_data.get('buttons'):
-                buttons_dict = buttons_data['buttons']
-            else:
-                # New simplified format - filter out metadata
-                buttons_dict = {k: v for k, v in buttons_data.items()
-                               if k not in ('version', 'last_updated')}
-            
-            # Find and remove button by label matching btn_id
-            removed = False
-            for label in list(buttons_dict.keys()):
-                # Match by label or script name
-                script_name = buttons_dict[label]
-                if label == btn_id or script_name == btn_id:
-                    del buttons_dict[label]
-                    removed = True
-                    break
-            
-            if removed:
-                # Save back in simplified format
-                with open(buttons_path, 'w') as f:
-                    json.dump(buttons_dict, f, indent=2)
-                
-                # Also update global dynamic_buttons
-                global dynamic_buttons
-                for label in list(dynamic_buttons.keys()):
-                    script_name = dynamic_buttons[label]
-                    if label == btn_id or script_name == btn_id:
-                        del dynamic_buttons[label]
-                        break
-                        
-        except Exception as e:
-            print(f"{Colors.YELLOW}Warning: Could not remove button: {e}{Colors.END}")
-
 
 # Global scripting engine instance
 scripting_engine = ScriptingEngine()
-
-# Global dictionary to store dynamic menu buttons added via scripting
-# Simplified format: { "button_label": "script_name" }
-# Old format (for backward compatibility): { "button_label": { "type": "file"|"inline", "value": "script_name"|"script_code" } }
-dynamic_buttons: Dict[str, str] = {}
-
-# Path to buttons file for persistence
-BUTTONS_FILE = 'scripts/buttons.json'
-
-
-def load_dynamic_buttons():
-    """Load dynamic buttons from buttons.json file - supports simplified key-value format"""
-    global dynamic_buttons
-    try:
-        if os.path.exists(BUTTONS_FILE):
-            with open(BUTTONS_FILE, 'r') as f:
-                data = json.load(f)
-                # Support simplified format: {"ButtonName": "scriptname"}
-                # Also support old format: {"buttons": {"ButtonName": {...}}}
-                if isinstance(data, dict):
-                    # Check for old format with 'buttons' key
-                    if data.get('buttons') and isinstance(data['buttons'], dict):
-                        dynamic_buttons = data['buttons']
-                    else:
-                        # New simplified format - filter out metadata keys
-                        dynamic_buttons = {k: v for k, v in data.items() 
-                                          if k not in ('version', 'last_updated')}
-                    
-                    print(
-                        f"{Colors.CYAN}Loaded {len(dynamic_buttons)} dynamic buttons{Colors.END}"
-                    )
-        else:
-            # Create default buttons file in simplified format
-            with open(BUTTONS_FILE, 'w') as f:
-                json.dump({}, f, indent=2)
-            dynamic_buttons = {}
-            print(f"{Colors.CYAN}Created buttons file{Colors.END}")
-    except Exception as e:
-        print(
-            f"{Colors.YELLOW}Warning: Could not load buttons: {e}{Colors.END}")
-        dynamic_buttons = {}
-
-
-def save_dynamic_buttons():
-    """Save dynamic buttons to buttons.json file in simplified format"""
-    global dynamic_buttons
-    try:
-        # Save in simplified format: {"ButtonName": "scriptname"}
-        with open(BUTTONS_FILE, 'w') as f:
-            json.dump(dynamic_buttons, f, indent=2)
-        return True
-    except Exception as e:
-        print(f"{Colors.RED}Error saving buttons: {e}{Colors.END}")
-        return False
 
 
 class MarketAPI:
@@ -1053,9 +720,7 @@ class MarketAPI:
         elapsed = datetime.now() - self.last_fetch
         return elapsed < timedelta(minutes=self.cooldown_minutes)
 
-    def fetch_market_data(self,
-                          force_refresh: bool = False
-                          ) -> Optional[Dict[str, Any]]:
+    def fetch_market_data(self, force_refresh: bool = False) -> Optional[Dict[str, Any]]:
         """Fetch market data from the API with caching and cooldown"""
         # Check cache validity
         if not force_refresh and self._is_cache_valid():
@@ -1064,8 +729,7 @@ class MarketAPI:
 
         # Check cooldown
         if self.last_fetch and not self._is_cache_valid():
-            remaining = timedelta(minutes=self.cooldown_minutes) - (
-                datetime.now() - self.last_fetch)
+            remaining = timedelta(minutes=self.cooldown_minutes) - (datetime.now() - self.last_fetch)
             mins = int(remaining.total_seconds() // 60)
             secs = int(remaining.total_seconds() % 60)
             print(
@@ -1073,9 +737,7 @@ class MarketAPI:
             )
             return None
 
-        print(
-            f"{Colors.CYAN}Checking if merchants are in the market...{Colors.END}"
-        )
+        print(f"{Colors.CYAN}Checking if merchants are in the market...{Colors.END}")
 
         # Try to fetch from API using requests
         if REQUESTS_AVAILABLE and requests is not None:
@@ -1088,9 +750,7 @@ class MarketAPI:
                     print(f"{Colors.GREEN}Market is open!{Colors.END}")
                     return data
                 else:
-                    print(
-                        f"{Colors.RED}Failed to reach to the market: HTTP {response.status_code}{Colors.END}"
-                    )
+                    print(f"{Colors.RED}Failed to reach to the market: HTTP {response.status_code}{Colors.END}")
             except requests.exceptions.RequestException as e:
                 print(f"{Colors.RED}Network error: {e}{Colors.END}")
         else:
@@ -1160,7 +820,6 @@ class MarketAPI:
         if data and data.get('ok'):
             return data.get('itemsByType', {})
         return {}
-
 
 class Character:
     """Player character class"""
@@ -1334,12 +993,8 @@ class Character:
 
     def _update_rank(self):
         """Simple rank tiers based on level"""
-        if self.level >= 90:
+        if self.level >= 30:
             self.rank = "Legend"
-        elif self.level >= 60:
-            self.rank = "Hero"
-        elif self.level >= 40:
-            self.rank = "Mythic"
         elif self.level >= 20:
             self.rank = "Champion"
         elif self.level >= 15:
@@ -1353,83 +1008,75 @@ class Character:
 
     def display_stats(self):
         """Display character statistics"""
-        clear_screen()
-        print(f"{Colors.CYAN}{'=' * 60}{Colors.END}")
         print(
-            f"             {Colors.BOLD}{Colors.YELLOW}CHARACTER PROFILE{Colors.END}"
+            f"\n{Colors.CYAN}{Colors.BOLD}=== {self.name} - Level {self.level} {self.character_class} ({self.rank}) ==={Colors.END}"
         )
-        print(f"{Colors.CYAN}{'=' * 60}{Colors.END}")
-
-        print(f"\n {Colors.BOLD}{Colors.WHITE}Name:   {self.name}{Colors.END}")
-        print(
-            f" {Colors.BOLD}{Colors.WHITE}Class:  {self.character_class} ({self.rank}){Colors.END}"
-        )
-
         # HP and MP with visual bars
         hp_bar = create_hp_mp_bar(self.hp,
                                   self.max_hp,
-                                  width=25,
+                                  width=20,
                                   color=Colors.RED)
         mp_bar = create_hp_mp_bar(self.mp,
                                   self.max_mp,
-                                  width=25,
+                                  width=20,
                                   color=Colors.BLUE)
         exp_bar = create_progress_bar(self.experience,
                                       self.experience_to_next,
-                                      width=25,
+                                      width=20,
                                       color=Colors.MAGENTA)
 
-        print(f"\n {Colors.RED}HP:  {Colors.END}{hp_bar}")
-        print(f" {Colors.BLUE}MP:  {Colors.END}{mp_bar}")
-        print(f" {Colors.MAGENTA}EXP: {Colors.END}{exp_bar}")
+        print(f"HP:  {hp_bar}")
+        print(f"MP:  {mp_bar}")
+        print(f"Exp: {exp_bar}")
 
-        # Stats section
-        print(f"\n {Colors.CYAN}{Colors.BOLD}--- STATISTICS ---{Colors.END}")
+        # Stats with visual indicators
+        print(f"\n{create_separator('-', 50)}")
         print(
-            f"  {Colors.WHITE}Attack:  {Colors.YELLOW}{self.attack}{Colors.END}"
-        )
+            f"Attack:  {Colors.YELLOW}{Colors.BOLD}{self.attack}{Colors.END}")
         print(
-            f"  {Colors.WHITE}Defense: {Colors.YELLOW}{self.defense}{Colors.END}"
-        )
-        print(
-            f"  {Colors.WHITE}Speed:   {Colors.YELLOW}{self.speed}{Colors.END}"
-        )
-        print(f"  {Colors.WHITE}Gold:    {Colors.GOLD}{self.gold}{Colors.END}")
+            f"Defense: {Colors.YELLOW}{Colors.BOLD}{self.defense}{Colors.END}")
+        print(f"Speed:   {Colors.YELLOW}{Colors.BOLD}{self.speed}{Colors.END}")
+        print(f"Gold:    {Colors.GOLD}{Colors.BOLD}{self.gold}{Colors.END}")
 
-        # Equipment section
-        print(f"\n {Colors.CYAN}{Colors.BOLD}--- EQUIPMENT ---{Colors.END}")
-        for slot in [
-                'weapon', 'armor', 'offhand', 'accessory_1', 'accessory_2',
-                'accessory_3'
-        ]:
+        # Equipped items with better formatting
+        print(f"\n{create_separator('-', 50)}")
+        print(f"{Colors.CYAN}{Colors.BOLD}EQUIPPED ITEMS:{Colors.END}")
+        for slot in ['weapon', 'armor', 'accessory']:
             item_name = self.equipment.get(slot, 'None')
-            display_slot = slot.replace('_', ' ').title()
-            if item_name and item_name != 'None':
-                print(
-                    f"  {Colors.WHITE}{display_slot:<12}:{Colors.END} {Colors.GREEN}{item_name}{Colors.END}"
-                )
+            if item_name != 'None':
+                print(f"  {slot.title():<10}: {item_name}")
             else:
                 print(
-                    f"  {Colors.WHITE}{display_slot:<12}:{Colors.END} {Colors.LIGHT_GRAY}Empty{Colors.END}"
+                    f"  {slot.title():<10}: {Colors.DARK_GRAY}None{Colors.END}"
                 )
 
-        # Companions section
-        if hasattr(self, 'companions') and self.companions:
-            print(f"\n {Colors.CYAN}{Colors.BOLD}--- COMPANIONS ---{Colors.END}")
-            for companion in self.companions:
-                print(f"  {Colors.YELLOW}• {companion}{Colors.END}")
+        # Display companions if any
+        if self.companions:
+            print(f"\n{create_separator('-', 50)}")
+            print(
+                f"{Colors.CYAN}{Colors.BOLD}COMPANIONS ({len(self.companions)}/4):{Colors.END}"
+            )
+            for i, companion in enumerate(self.companions, 1):
+                if isinstance(companion, dict):
+                    comp_name = companion.get('name')
+                    comp_level = companion.get('level', 1)
+                    print(
+                        f"  {i}. {Colors.CYAN}{comp_name}{Colors.END} (Level {comp_level})"
+                    )
+                else:
+                    print(f"  {i}. {Colors.CYAN}{companion}{Colors.END}")
 
-        print(f"\n {Colors.CYAN}{Colors.BOLD}--- ACTIVE EFFECTS ---{Colors.END}")
+        # Active buffs
         if self.active_buffs:
+            print(f"\n{create_separator('-', 50)}")
+            print(f"{Colors.CYAN}{Colors.BOLD}ACTIVE BUFFS:{Colors.END}")
             for b in self.active_buffs:
                 mods = ', '.join(f"{k}:{v}"
                                  for k, v in b.get('modifiers', {}).items())
                 print(
-                    f"  {Colors.YELLOW}• {b.get('name')}{Colors.END} ({b.get('duration')} turns) - {Colors.LIGHT_GRAY}{mods}{Colors.END}"
-                )
+                    f"  - {b.get('name')} ({b.get('duration')} turns): {mods}")
 
-        print(f"\n{Colors.CYAN}{'=' * 60}{Colors.END}")
-        ask("\nPress Enter to return to menu...")
+        print(f"{create_separator('=', 50)}")
 
     def update_stats_from_equipment(
             self,
@@ -1443,8 +1090,8 @@ class Character:
         self.defense = self.base_defense
         self.speed = self.base_speed
 
-        # Apply bonuses from each equipped item (including all accessory slots)
-        for slot in ("weapon", "armor", "accessory_1", "accessory_2", "accessory_3"):
+        # Apply bonuses from each equipped item
+        for slot in ("weapon", "armor", "accessory"):
             item_name = self.equipment.get(slot)
             if not item_name:
                 continue
@@ -1755,10 +1402,6 @@ class Game:
         self.config: Dict[str, Any] = {}
         self.market_api: Optional[MarketAPI] = None
         self.crafting_data: Dict[str, Any] = {}
-        self.scripting_engine = ScriptingEngine()
-
-        # Load dynamic buttons from file
-        load_dynamic_buttons()
 
         # Load game data
         self.load_game_data()
@@ -1789,7 +1432,7 @@ class Game:
                     self.companions_data = json.load(f)
             except FileNotFoundError:
                 self.companions_data = {}
-
+            
             # Optional crafting data
             try:
                 with open('data/crafting.json', 'r') as f:
@@ -1832,43 +1475,25 @@ class Game:
         while True:
             clear_screen()
             print(f"{Colors.CYAN}{Colors.BOLD}")
-            print(f"{Colors.CYAN}=" * 60 + f"{Colors.END}")
+            print("=" * 60)
+            print("             OUR LEGACY")
+            print("       Text-Based CLI Fantasy RPG")
+            print("=" * 60)
+            print(f"{Colors.END}")
+            print("Welcome, adventurer! Your legacy awaits...")
             print(
-                f"             {Colors.BOLD}{Colors.YELLOW}OUR LEGACY{Colors.END}"
-            )
-            print(
-                f"       {Colors.WHITE}Text-Based CLI Fantasy RPG{Colors.END}")
-            print(f"{Colors.CYAN}=" * 60 + f"{Colors.END}")
-            print(
-                f"\n{Colors.GREEN}Welcome, adventurer! Your legacy awaits...{Colors.END}"
-            )
-            print(
-                f"{Colors.WHITE}Choose your path wisely, for every decision shapes your destiny.{Colors.END}"
+                "Choose your path wisely, for every decision shapes your destiny."
             )
             print()
 
-            print(
-                f"{Colors.BOLD}{Colors.MAGENTA}--- MAIN MENU ---{Colors.END}")
-
-            # Display dynamic script buttons
-            if hasattr(
-                    self,
-                    'scripting_engine') and self.scripting_engine and hasattr(
-                        self.scripting_engine, 'script_buttons'
-                    ) and self.scripting_engine.script_buttons:
-                for btn_id, btn in self.scripting_engine.script_buttons.items(
-                ):
-                    print(
-                        f"{Colors.CYAN}[Script]{Colors.END} {Colors.YELLOW}{btn['label']}{Colors.END} {Colors.LIGHT_GRAY}(ID: {btn_id}){Colors.END}"
-                    )
-
-            print(f"{Colors.WHITE}1. New Game{Colors.END}")
-            print(f"{Colors.WHITE}2. Load Game{Colors.END}")
-            print(f"{Colors.WHITE}3. Configurations{Colors.END}")
-            print(f"{Colors.RED}4. Quit{Colors.END}")
+            print(f"{Colors.BOLD}=== MAIN MENU ==={Colors.END}")
+            print("1. New Game")
+            print("2. Load Game")
+            print("3. Configurations")
+            print("4. Quit")
             print()
 
-            choice = ask(f"{Colors.BOLD}Choose an option (1-4): {Colors.END}")
+            choice = ask("Choose an option (1-4): ")
             if choice == "1":
                 return "new_game"
             elif choice == "2":
@@ -1886,18 +1511,14 @@ class Game:
         """Display and allow toggling of configuration settings"""
         while True:
             clear_screen()
-            print(f"{Colors.CYAN}=" * 60 + f"{Colors.END}")
-            print(
-                f"             {Colors.BOLD}{Colors.YELLOW}CONFIGURATIONS{Colors.END}"
-            )
-            print(f"{Colors.CYAN}=" * 60 + f"{Colors.END}\n")
+            print(f"{Colors.BOLD}=== CONFIGURATIONS ==={Colors.END}")
 
             # Scripts Enabled
             scripts_enabled = self.config.get('scripts_enabled', True)
             scripts_color = Colors.GREEN if scripts_enabled else Colors.RED
             scripts_status = "Enabled" if scripts_enabled else "Disabled"
             print(
-                f" {Colors.WHITE}1.{Colors.END} Scripts Enabled:    {scripts_color}{scripts_status}{Colors.END}"
+                f"1. Scripts Enabled: {scripts_color}{scripts_status}{Colors.END}"
             )
 
             # Autosave Enabled
@@ -1905,7 +1526,7 @@ class Game:
             autosave_color = Colors.GREEN if autosave_enabled else Colors.RED
             autosave_status = "Enabled" if autosave_enabled else "Disabled"
             print(
-                f" {Colors.WHITE}2.{Colors.END} Autosave Enabled:   {autosave_color}{autosave_status}{Colors.END}"
+                f"2. Autosave Enabled: {autosave_color}{autosave_status}{Colors.END}"
             )
 
             # Auto Load Scripts
@@ -1913,7 +1534,7 @@ class Game:
             auto_load_color = Colors.GREEN if auto_load else Colors.RED
             auto_load_status = "Enabled" if auto_load else "Disabled"
             print(
-                f" {Colors.WHITE}3.{Colors.END} Auto Load Scripts:  {auto_load_color}{auto_load_status}{Colors.END}"
+                f"3. Auto Load Scripts: {auto_load_color}{auto_load_status}{Colors.END}"
             )
 
             # Colors Enabled
@@ -1921,14 +1542,12 @@ class Game:
             colors_color = Colors.GREEN if colors_enabled else Colors.RED
             colors_status = "Enabled" if colors_enabled else "Disabled"
             print(
-                f" {Colors.WHITE}4.{Colors.END} Colors Enabled:     {colors_color}{colors_status}{Colors.END}"
+                f"4. Colors Enabled: {colors_color}{colors_status}{Colors.END}"
             )
 
-            print(f"\n {Colors.LIGHT_GRAY}5. Back to Main Menu{Colors.END}")
-            print()
+            print("5. Back to Main Menu")
 
-            choice = ask(
-                f"{Colors.BOLD}Select a setting to toggle (1-5): {Colors.END}")
+            choice = ask("Choose an option (1-5): ")
             if choice == "1":
                 # Toggle scripts_enabled
                 self.config['scripts_enabled'] = not scripts_enabled
@@ -2096,69 +1715,59 @@ class Game:
         # Continuous mission check on every main menu return
         self.update_mission_progress('check', '')
 
-        clear_screen()
-        print(f"{Colors.CYAN}{'=' * 60}{Colors.END}")
-        print(
-            f"             {Colors.BOLD}{Colors.YELLOW}MAIN MENU{Colors.END}")
-        print(
-            f"       {Colors.WHITE}Location: {self.areas_data.get(self.current_area, {}).get('name', self.current_area)}{Colors.END}"
-        )
-        print(f"{Colors.CYAN}{'=' * 60}{Colors.END}\n")
-
-        # Grid-like display for main menu
-        menu_items = [("1", "Explore", Colors.GREEN),
-                      ("2", "View Character", Colors.CYAN),
-                      ("3", "Travel", Colors.BLUE),
-                      ("4", "Inventory", Colors.YELLOW),
-                      ("5", "Missions", Colors.MAGENTA),
-                      ("6", "Fight Boss", Colors.RED),
-                      ("7", "Tavern", Colors.ORANGE),
-                      ("8", "Shop", Colors.GOLD),
-                      ("9", "Alchemy", Colors.PURPLE),
-                      ("10", "Market", Colors.WHITE),
-                      ("11", "Rest", Colors.GREEN),
-                      ("12", "Companions", Colors.CYAN),
-                      ("13", "Save", Colors.BLUE), ("14", "Load", Colors.BLUE),
-                      ("15", "Rewards", Colors.YELLOW),
-                      ("16", "Quit", Colors.RED)]
-
-        for i in range(0, len(menu_items), 2):
-            item1 = menu_items[i]
-            line = f" {Colors.WHITE}{item1[0]:>2}.{Colors.END} {item1[2]}{item1[1]:<18}{Colors.END}"
-            if i + 1 < len(menu_items):
-                item2 = menu_items[i + 1]
-                line += f" {Colors.WHITE}{item2[0]:>2}.{Colors.END} {item2[2]}{item2[1]:<18}{Colors.END}"
-            print(line)
-
-        print(f" {Colors.WHITE}17.{Colors.END} {Colors.LIGHT_GRAY}Others{Colors.END}")
-
-        print()
-        choice = ask(f"{Colors.BOLD}Choose your next action: {Colors.END}",
-                     allow_empty=False)
-
-        # Handle Others menu
-        if choice == "17" or choice.lower() in ["others", "o"]:
-            self.show_others_menu()
-            return
+        print(f"\n{Colors.BOLD}=== MAIN MENU ==={Colors.END}")
+        print("1. Explore")
+        print("2. View Character")
+        print("3. Travel")
+        print("4. Inventory")
+        print("5. Missions")
+        print("6. Fight Boss")
+        print("7. Tavern")
+        print("8. Shop")
+        print("9. Alchemy")
+        print("10. Elite Market")
+        print("11. Rest")
+        print("12. Companions")
+        print("13. Save Game")
+        print("14. Load Game")
+        print("15. Claim Rewards")
+        print("16. Quit")
+        choice = ask("Choose an option (1-16): ", allow_empty=False)
 
         # Normalize textual shortcuts to numbers for backward compatibility
         shortcut_map = {
-            'explore': '1', 'e': '1',
-            'view': '2', 'v': '2',
-            'travel': '3', 't': '3',
-            'inventory': '4', 'i': '4',
-            'missions': '5', 'm': '5',
+            'explore': '1',
+            'e': '1',
+            'view': '2',
+            'v': '2',
+            'travel': '3',
+            't': '3',
+            'inventory': '4',
+            'i': '4',
+            'missions': '5',
+            'm': '5',
             'boss': '6',
             'tavern': '7',
-            'shop': '8', 's': '8',
-            'alchemy': '9', 'alc': '9', 'craft': '9',
-            'market': '10', 'mkt': '10',
-            'rest': '11', 'r': '11',
-            'companions': '12', 'comp': '12',
+            'shop': '8',
+            's': '8',
+            'alchemy': '9',
+            'alc': '9',
+            'craft': '9',
+            'crafting': '9',
+            'market': '10',
+            'mkt': '10',
+            'elite': '10',
+            'rest': '11',
+            'r': '11',
+            'companions': '12',
+            'comp': '12',
             'save': '13',
-            'load': '14', 'l': '14',
-            'claim': '15', 'c': '15',
-            'quit': '16', 'q': '16'
+            'load': '14',
+            'l': '14',
+            'claim': '15',
+            'c': '15',
+            'quit': '16',
+            'q': '16'
         }
 
         normalized = choice.strip().lower()
@@ -2167,39 +1776,76 @@ class Game:
 
         if choice == "1":
             self.explore()
+            # Execute scripts after user action
+            if self.config.get('auto_load_scripts', True) and self.config.get('scripts_enabled', True):
+                scripting_engine.execute_scripts_from_config(self)
         elif choice == "2":
             if self.player:
                 self.player.display_stats()
+                if self.config.get('auto_load_scripts', True) and self.config.get('scripts_enabled', True):
+                    scripting_engine.execute_scripts_from_config(self)
             else:
                 print("No character created yet.")
         elif choice == "3":
             self.travel()
+            if self.config.get('auto_load_scripts', True) and self.config.get('scripts_enabled', True):
+                scripting_engine.execute_scripts_from_config(self)
         elif choice == "4":
             self.view_inventory()
+            if self.config.get('auto_load_scripts', True) and self.config.get('scripts_enabled', True):
+                scripting_engine.execute_scripts_from_config(self)           
         elif choice == "5":
             self.view_missions()
+            if self.config.get('auto_load_scripts', True) and self.config.get('scripts_enabled', True):
+                scripting_engine.execute_scripts_from_config(self)
         elif choice == "6":
             self.fight_boss_menu()
+            if self.config.get('auto_load_scripts', True) and self.config.get('scripts_enabled', True):
+                scripting_engine.execute_scripts_from_config(self)            
         elif choice == "7":
             self.visit_tavern()
+            if self.config.get('auto_load_scripts', True) and self.config.get('scripts_enabled', True):
+                scripting_engine.execute_scripts_from_config(self)
         elif choice == "8":
             self.visit_shop()
+            if self.config.get('auto_load_scripts', True) and self.config.get('scripts_enabled', True):
+                scripting_engine.execute_scripts_from_config(self)
         elif choice == "9":
             self.visit_alchemy()
+            if self.config.get('auto_load_scripts', True) and self.config.get('scripts_enabled', True):
+                scripting_engine.execute_scripts_from_config(self)
         elif choice == "10":
             self.visit_market()
+            if self.config.get('auto_load_scripts', True) and self.config.get('scripts_enabled', True):
+                scripting_engine.execute_scripts_from_config(self)
         elif choice == "11":
             self.rest()
+            if self.config.get('auto_load_scripts', True) and self.config.get('scripts_enabled', True):
+                scripting_engine.execute_scripts_from_config(self)
         elif choice == "12":
             self.manage_companions()
+            if self.config.get('auto_load_scripts', True) and self.config.get('scripts_enabled', True):
+                scripting_engine.execute_scripts_from_config(self)
         elif choice == "13":
             self.save_game()
+            if self.config.get('auto_load_scripts', True) and self.config.get('scripts_enabled', True):
+                scripting_engine.execute_scripts_from_config(self)
         elif choice == "14":
             self.load_game()
+            if self.config.get('auto_load_scripts', True) and self.config.get('scripts_enabled', True):
+                scripting_engine.execute_scripts_from_config(self)
         elif choice == "15":
             self.claim_rewards()
+            if self.config.get('auto_load_scripts', True) and self.config.get('scripts_enabled', True):
+                scripting_engine.execute_scripts_from_config(self)
         elif choice == "16":
             self.quit_game()
+            if self.config.get('auto_load_scripts', True) and self.config.get('scripts_enabled', True):
+                scripting_engine.execute_scripts_from_config(self)
+        else:
+            print("Invalid choice. Please try again.")
+            if self.config.get('auto_load_scripts', True) and self.config.get('scripts_enabled', True):
+                scripting_engine.execute_scripts_from_config(self)
 
     def fight_boss_menu(self):
         """Menu to select and fight a boss in the current area"""
@@ -2359,7 +2005,7 @@ class Game:
             player_mp_bar = create_hp_mp_bar(self.player.mp,
                                              self.player.max_mp, 20,
                                              Colors.BLUE)
-
+            
             # Check for boss for special health bar
             if isinstance(enemy, Boss):
                 enemy_hp_bar = create_boss_hp_bar(enemy.hp, enemy.max_hp)
@@ -3035,110 +2681,79 @@ class Game:
             print("No character created yet.")
             return
 
-        while True:
-            clear_screen()
-            print(f"{Colors.CYAN}=" * 60 + f"{Colors.END}")
-            print(
-                f"             {Colors.BOLD}{Colors.YELLOW}INVENTORY{Colors.END}"
-            )
-            print(f"       {Colors.GOLD}Gold: {self.player.gold}{Colors.END}")
-            print(f"{Colors.CYAN}=" * 60 + f"{Colors.END}\n")
+        print(f"\n{Colors.BOLD}=== INVENTORY ==={Colors.END}")
+        print(f"Gold: {Colors.GOLD}{self.player.gold}{Colors.END}")
 
-            if not self.player.inventory:
-                print(
-                    f" {Colors.LIGHT_GRAY}Your inventory is empty.{Colors.END}"
-                )
-                ask("\nPress Enter to return...")
-                break
+        if not self.player.inventory:
+            print("Your inventory is empty.")
+            return
 
-            # Group items by type
-            items_by_type = {}
-            for item in self.player.inventory:
+        # Group items by type
+        items_by_type = {}
+        for item in self.player.inventory:
+            item_type = self.items_data.get(item, {}).get("type", "unknown")
+            if item_type not in items_by_type:
+                items_by_type[item_type] = []
+            items_by_type[item_type].append(item)
+
+        for item_type, items in items_by_type.items():
+            print(f"\n{Colors.CYAN}{item_type.title()}:{Colors.END}")
+            for item in items:
                 item_data = self.items_data.get(item, {})
-                item_type = item_data.get("type", "Other")
-                if item_type not in items_by_type:
-                    items_by_type[item_type] = []
-                items_by_type[item_type].append(item)
+                print(f"  - {item}")
+                if item_data.get("description"):
+                    print(f"    {item_data['description']}")
 
-            for item_type, items in items_by_type.items():
-                print(
-                    f" {Colors.CYAN}{Colors.BOLD}[ {item_type.upper()} ]{Colors.END}"
-                )
-                # Count duplicates
-                counts = {}
-                for it in items:
-                    counts[it] = counts.get(it, 0) + 1
-
-                for item_id, count in counts.items():
-                    item_data = self.items_data.get(item_id, {})
-                    count_str = f" x{count}" if count > 1 else ""
-                    print(
-                        f"  {Colors.WHITE}• {item_id}{Colors.YELLOW}{count_str}{Colors.END}"
-                    )
-                    if item_data.get("description"):
-                        print(
-                            f"    {Colors.LIGHT_GRAY}{item_data['description']}{Colors.END}"
-                        )
-                print()
-
-            print(f" {Colors.CYAN}{Colors.BOLD}--- ACTIONS ---{Colors.END}")
-            print(f" {Colors.WHITE}E.{Colors.END} Equip Item")
-            print(f" {Colors.WHITE}U.{Colors.END} Unequip Item")
-            print(f" {Colors.WHITE}B.{Colors.END} Back")
-            print()
-
-            choice = ask(
-                f"{Colors.BOLD}Select an action: {Colors.END}").upper()
-
-            if choice == 'B' or not choice:
-                break
-            elif choice == 'E':
-                equipable = [
-                    it for it in list(set(self.player.inventory))
-                    if self.items_data.get(it, {}).get('type') in ('weapon',
-                                                                   'armor',
-                                                                   'accessory',
-                                                                   'offhand')
-                ]
-                if not equipable:
-                    print(f"{Colors.RED}No equipable items found.{Colors.END}")
-                    time.sleep(1)
-                    continue
-
-                print(f"\n {Colors.CYAN}Select item to equip:{Colors.END}")
+        # Offer equip/unequip options for equipment items
+        equipable = [
+            it for it in self.player.inventory
+            if self.items_data.get(it, {}).get('type') in ('weapon', 'armor',
+                                                           'accessory',
+                                                           'offhand')
+        ]
+        if equipable:
+            print("\nEquipment options:")
+            print("  E. Equip an item from inventory")
+            print("  U. Unequip a slot")
+            choice = ask("Choose option (E/U) or press Enter to return: ")
+            if choice.lower() == 'e':
+                print("\nEquipable items:")
                 for i, item in enumerate(equipable, 1):
-                    print(f"  {i}. {item}")
-
-                sel = ask(f"Choose (1-{len(equipable)}) or Enter: ")
-                if sel.isdigit() and 1 <= int(sel) <= len(equipable):
-                    item_name = equipable[int(sel) - 1]
-                    if self.player.equip(item_name, self.items_data):
-                        print(
-                            f"{Colors.GREEN}Equipped {item_name}.{Colors.END}")
-                    else:
-                        print(
-                            f"{Colors.RED}Requirements not met for {item_name}.{Colors.END}"
-                        )
-                    time.sleep(1)
-            elif choice == 'U':
-                print(f"\n {Colors.CYAN}Select slot to unequip:{Colors.END}")
-                slots = [s for s, v in self.player.equipment.items() if v]
-                if not slots:
-                    print(f"{Colors.RED}Nothing equipped.{Colors.END}")
-                    time.sleep(1)
-                    continue
-
-                for i, slot in enumerate(slots, 1):
                     print(
-                        f"  {i}. {slot.replace('_', ' ').title()}: {self.player.equipment[slot]}"
+                        f"{i}. {item} - {self.items_data.get(item, {}).get('description','')}"
                     )
-
-                sel = ask(f"Choose (1-{len(slots)}) or Enter: ")
-                if sel.isdigit() and 1 <= int(sel) <= len(slots):
-                    slot_name = slots[int(sel) - 1]
-                    removed = self.player.unequip(slot_name, self.items_data)
-                    print(f"{Colors.YELLOW}Unequipped {removed}.{Colors.END}")
-                    time.sleep(1)
+                sel = ask(
+                    f"Choose item to equip (1-{len(equipable)}) or press Enter: "
+                )
+                if sel and sel.isdigit():
+                    idx = int(sel) - 1
+                    if 0 <= idx < len(equipable):
+                        item_name = equipable[idx]
+                        ok = self.player.equip(item_name, self.items_data)
+                        if ok:
+                            print(f"Equipped {item_name}.")
+                        else:
+                            print(
+                                f"Cannot equip {item_name} (requirements not met)."
+                            )
+            elif choice.lower() == 'u':
+                print("\nCurrently equipped:")
+                for slot in ('weapon', 'armor', 'offhand', 'accessory_1',
+                             'accessory_2', 'accessory_3'):
+                    print(
+                        f"{slot.title()}: {self.player.equipment.get(slot, 'None')}"
+                    )
+                slot_choice = ask(
+                    "Enter slot to unequip (weapon/armor/offhand/accessory_1/accessory_2/accessory_3) or press Enter: "
+                )
+                valid_slots = ('weapon', 'armor', 'offhand', 'accessory_1',
+                               'accessory_2', 'accessory_3')
+                if slot_choice in valid_slots:
+                    removed = self.player.unequip(slot_choice, self.items_data)
+                    if removed:
+                        print(f"Unequipped {removed} from {slot_choice}.")
+                    else:
+                        print("Nothing to unequip from that slot.")
 
     def view_missions(self):
         """View and manage missions"""
@@ -3491,105 +3106,96 @@ class Game:
             )
             return
 
+        # Simple logic: combine all items from all shops in this area
+        # In this game, shops are mostly identifiers, but we can filter items by their 'shop_type' or similar
+        # For now, let's filter items_data to only show relevant items for the current area
+        # Most areas have specific shop IDs like "general_store", "equipment_shop"
+
+        print(
+            f"\n{Colors.BOLD}=== SHOP ({', '.join(area_shops)}) ==={Colors.END}"
+        )
+        print("Welcome to the shop! What would you like to buy?")
+        print(f"\nYour gold: {Colors.GOLD}{self.player.gold}{Colors.END}")
+
+        # Filter items based on the shop types available in the area
+        shop_items = {}
+        for item_name, item_data in self.items_data.items():
+            # Skip materials and items already in inventory
+            if item_data.get(
+                    "type"
+            ) == "material" or item_name in self.player.inventory:
+                continue
+
+            # Check if item belongs to any shop in the current area
+            # If item has no shop_tags, it might be a general item
+            item_shops = item_data.get("shops", ["general_store"])
+            if any(s in area_shops for s in item_shops):
+                shop_items[item_name] = item_data
+
+        if not shop_items:
+            print("No items available for purchase here.")
+            return
+
+        # Paginate items (10 per page)
+        items_list = list(shop_items.items())
+        page_size = 10
+        current_page = 0
+
         while True:
-            clear_screen()
-            print(f"{Colors.CYAN}=" * 60 + f"{Colors.END}")
-            print(
-                f"             {Colors.BOLD}{Colors.YELLOW}SHOP: {', '.join(area_shops).upper()}{Colors.END}"
-            )
-            print(f"       {Colors.GOLD}Gold: {self.player.gold}{Colors.END}")
-            print(f"{Colors.CYAN}=" * 60 + f"{Colors.END}\n")
+            start = current_page * page_size
+            end = start + page_size
+            page_items = items_list[start:end]
 
-            shop_items = {}
-            for item_name, item_data in self.items_data.items():
-                if item_data.get(
-                        "type"
-                ) == "material" or item_name in self.player.inventory:
-                    continue
-                item_shops = item_data.get("shops", ["general_store"])
-                if any(s in area_shops for s in item_shops):
-                    shop_items[item_name] = item_data
-
-            if not shop_items:
-                print(
-                    f" {Colors.LIGHT_GRAY}No items available for purchase.{Colors.END}"
-                )
-                ask("\nPress Enter to return...")
+            if not page_items:
+                print("No more items.")
                 break
 
-            items_list = list(shop_items.items())
-            page_size = 8
-            current_page = 0  # This should be outside the while loop if we want it to persist, but for this edit I'll keep it simple or fix it.
-            # Actually, to make it work properly with the loop:
-            break_outer = False
-            while True:
-                start = current_page * page_size
-                end = start + page_size
-                page_items = items_list[start:end]
+            print(
+                f"\n--- Page {current_page + 1} of {(len(items_list) + page_size - 1) // page_size} ---"
+            )
+            for i, (item_name, item_data) in enumerate(page_items, 1):
+                price = item_data.get("price", "?")
+                rarity = item_data.get("rarity", "unknown")
+                desc = item_data.get("description", "")
+                print(
+                    f"{i}. {item_name} ({rarity}) - {Colors.GOLD}{price} gold{Colors.END}"
+                )
+                print(f"   {desc}")
 
-                if not page_items and current_page > 0:
+            print("Shortcuts: N-next, P-prev, Enter-leave")
+            choice = ask(
+                f"\nBuy item (1-{len(page_items)}), [N]ext page, [P]rev page, [S]ell, or press Enter to leave: "
+            )
+
+            if not choice:
+                break
+            elif choice.lower() == 'n':
+                if end < len(items_list):
+                    current_page += 1
+                else:
+                    print("No more pages.")
+            elif choice.lower() == 'p':
+                if current_page > 0:
                     current_page -= 1
-                    continue
-
-                print(
-                    f" {Colors.CYAN}--- Page {current_page + 1} of {(len(items_list) + page_size - 1) // page_size} ---{Colors.END}"
-                )
-                for i, (item_name, item_data) in enumerate(page_items, 1):
-                    price = item_data.get("price", "?")
-                    rarity = item_data.get("rarity", "common")
-                    color = get_rarity_color(
-                        rarity) if 'get_rarity_color' in globals(
-                        ) else Colors.WHITE
-                    print(
-                        f"  {Colors.WHITE}{i}.{Colors.END} {color}{item_name}{Colors.END} - {Colors.GOLD}{price} gold{Colors.END}"
-                    )
-                    print(
-                        f"     {Colors.LIGHT_GRAY}{item_data.get('description', '')}{Colors.END}"
-                    )
-
-                print(
-                    f"\n {Colors.CYAN}{Colors.BOLD}--- ACTIONS ---{Colors.END}"
-                )
-                print(
-                    f" {Colors.WHITE}N.{Colors.END} Next Page    {Colors.WHITE}P.{Colors.END} Prev Page"
-                )
-                print(
-                    f" {Colors.WHITE}S.{Colors.END} Sell Items   {Colors.WHITE}B.{Colors.END} Back"
-                )
-                print()
-
-                choice = ask(
-                    f"{Colors.BOLD}Select (1-{len(page_items)}/Action): {Colors.END}"
-                ).upper()
-
-                if choice == 'B' or not choice:
-                    break_outer = True
-                    break
-                elif choice == 'N':
-                    if end < len(items_list):
-                        current_page += 1
-                elif choice == 'P':
-                    if current_page > 0:
-                        current_page -= 1
-                elif choice == 'S':
-                    self.shop_sell()
-                    break  # Refresh list
-                elif choice.isdigit() and 1 <= int(choice) <= len(page_items):
-                    item_name, item_data = page_items[int(choice) - 1]
+                else:
+                    print("Already on first page.")
+            elif choice.isdigit():
+                item_idx = int(choice) - 1
+                if 0 <= item_idx < len(page_items):
+                    item_name, item_data = page_items[item_idx]
                     price = item_data.get("price", 0)
                     if self.player.gold >= price:
                         self.player.gold -= price
                         self.player.inventory.append(item_name)
-                        print(
-                            f"{Colors.GREEN}Purchased {item_name}!{Colors.END}"
-                        )
+                        print(f"Purchased {item_name} for {price} gold!")
                         self.update_mission_progress('collect', item_name)
                     else:
-                        print(f"{Colors.RED}Not enough gold!{Colors.END}")
-                    time.sleep(1)
-                    break  # Refresh list
-            if break_outer:
-                break
+                        print("Not enough gold!")
+                else:
+                    print("Invalid choice.")
+            elif choice.lower() == 's':
+                # Sell flow
+                self.shop_sell()
 
     def visit_tavern(self):
         """Visit the tavern to hire companions."""
@@ -3597,107 +3203,87 @@ class Game:
             print("No character created yet.")
             return
 
+        print(f"\n{Colors.BOLD}=== TAVERN ==={Colors.END}")
+        print(
+            "Welcome to The Rusty Tankard. Here you can hire companions to join your party."
+        )
+        print(f"Your gold: {Colors.GOLD}{self.player.gold}{Colors.END}")
+
+        companions = list(self.companions_data.items())
+        if not companions:
+            print("No companions are available at the moment.")
+            return
+
+        page_size = 6
+        current_page = 0
+
         while True:
-            clear_screen()
-            print(f"{Colors.CYAN}=" * 60 + f"{Colors.END}")
-            print(
-                f"             {Colors.BOLD}{Colors.YELLOW}THE RUSTY TANKARD{Colors.END}"
-            )
-            print(f"       {Colors.GOLD}Gold: {self.player.gold}{Colors.END}")
-            print(f"{Colors.CYAN}=" * 60 + f"{Colors.END}\n")
+            start = current_page * page_size
+            end = start + page_size
+            page_items = companions[start:end]
 
             print(
-                f" {Colors.WHITE}Welcome! Looking for some muscle for your party?{Colors.END}\n"
+                f"\n--- Page {current_page + 1} of {(len(companions) + page_size - 1) // page_size} ---"
             )
-
-            companions = list(self.companions_data.items())
-            if not companions:
+            for i, (cid, cdata) in enumerate(page_items, 1):
+                price = cdata.get('price', '?')
+                desc = cdata.get('description', '')
                 print(
-                    f" {Colors.LIGHT_GRAY}No companions are available right now.{Colors.END}"
+                    f"{i}. {cdata.get('name', cid)} - {Colors.GOLD}{price} gold{Colors.END}"
                 )
-                ask("\nPress Enter to return...")
+                print(f"   {desc}")
+
+            print("Shortcuts: N-next, P-prev, Enter-leave")
+            choice = ask(
+                f"\nHire companion (1-{len(page_items)}) or press Enter to leave: "
+            )
+
+            if not choice:
                 break
-
-            page_size = 4
-            current_page = 0
-            break_outer = False
-
-            while True:
-                start = current_page * page_size
-                end = start + page_size
-                page_items = companions[start:end]
-
-                print(
-                    f" {Colors.CYAN}--- Page {current_page + 1} ---{Colors.END}"
-                )
-                for i, (cid, cdata) in enumerate(page_items, 1):
-                    price = cdata.get('price', '?')
-                    print(
-                        f"  {Colors.WHITE}{i}.{Colors.END} {Colors.CYAN}{cdata.get('name', cid)}{Colors.END} - {Colors.GOLD}{price} gold{Colors.END}"
-                    )
-                    print(
-                        f"     {Colors.LIGHT_GRAY}{cdata.get('description', '')}{Colors.END}"
-                    )
-
-                print(
-                    f"\n {Colors.WHITE}N. Next    P. Prev    B. Back{Colors.END}"
-                )
-                choice = ask(
-                    f"{Colors.BOLD}Hire (1-{len(page_items)})/Action: {Colors.END}"
-                ).upper()
-
-                if choice == 'B' or not choice:
-                    break_outer = True
-                    break
-                elif choice == 'N':
-                    if end < len(companions):
-                        current_page += 1
-                elif choice == 'P':
-                    if current_page > 0:
-                        current_page -= 1
-                elif choice.isdigit() and 1 <= int(choice) <= len(page_items):
-                    cid, cdata = page_items[int(choice) - 1]
+            elif choice.lower() == 'n':
+                if end < len(companions):
+                    current_page += 1
+                else:
+                    print("No more pages.")
+            elif choice.lower() == 'p':
+                if current_page > 0:
+                    current_page -= 1
+                else:
+                    print("Already on first page.")
+            elif choice.isdigit():
+                idx = int(choice) - 1
+                if 0 <= idx < len(page_items):
+                    cid, cdata = page_items[idx]
                     price = cdata.get('price', 0)
                     if self.player.gold >= price:
                         if len(self.player.companions) >= 4:
                             print(
-                                f"{Colors.RED}Party is full! (Max 4){Colors.END}"
+                                "You already have the maximum number of companions (4)."
                             )
-                        else:
-                            self.player.gold -= price
-                            companion_data = {
-                                "id": cid,
-                                "name": cdata.get('name', cid),
-                                "level": 1,
-                                "equipment": {
-                                    "weapon": None,
-                                    "armor": None,
-                                    "accessory": None
-                                }
+                            continue
+                        self.player.gold -= price
+                        # Create companion data with equipment and level
+                        companion_data = {
+                            "id": cid,
+                            "name": cdata.get('name', cid),
+                            "level": 1,
+                            "equipment": {
+                                "weapon": None,
+                                "armor": None,
+                                "accessory": None
                             }
-                            self.player.companions.append(companion_data)
-                            print(
-                                f"{Colors.GREEN}Hired {cdata.get('name', cid)}!{Colors.END}"
-                            )
-                            self.player.update_stats_from_equipment(
-                                self.items_data, self.companions_data)
+                        }
+                        self.player.companions.append(companion_data)
+                        print(
+                            f"Hired {cdata.get('name', cid)} for {price} gold!"
+                        )
+                        # Recalculate stats with new companion bonus
+                        self.player.update_stats_from_equipment(
+                            self.items_data, self.companions_data)
                     else:
-                        print(f"{Colors.RED}Not enough gold!{Colors.END}")
-                    time.sleep(1)
-                    break  # Refresh
-            if break_outer:
-                break
-
-    def start_battle(self, enemy_id):
-        """Starts a battle loop with the given enemy ID"""
-        if enemy_id not in self.enemies_data:
-            print(f"{Colors.RED}Enemy {enemy_id} not found!{Colors.END}")
-            return
-
-        enemy_data = self.enemies_data[enemy_id]
-        enemy = Enemy(enemy_data)
-        print(f"\n{Colors.RED}A wild {enemy.name} appears!{Colors.END}")
-        self.battle(enemy)
+                        print("Not enough gold!")
+                else:
+                    print("Invalid choice.")
 
     def visit_market(self):
         """Visit the Elite Market - browse and buy items from the API at 50% off"""
@@ -3709,8 +3295,7 @@ class Game:
             print("Market API not available.")
             return
 
-        print(
-            f"\n{Colors.MAGENTA}{Colors.BOLD}=== ELITE MARKET ==={Colors.END}")
+        print(f"\n{Colors.MAGENTA}{Colors.BOLD}=== ELITE MARKET ==={Colors.END}")
         print("Welcome to the Elite Market! All items sold at 50% OFF!")
         print(f"\nYour gold: {Colors.GOLD}{self.player.gold}{Colors.END}")
 
@@ -3719,22 +3304,14 @@ class Game:
         if remaining and remaining.total_seconds() > 0:
             mins = int(remaining.total_seconds() // 60)
             secs = int(remaining.total_seconds() % 60)
-            print(
-                f"\n{Colors.YELLOW}Market cooldown: {mins}m {secs}s remaining{Colors.END}"
-            )
+            print(f"\n{Colors.YELLOW}Market cooldown: {mins}m {secs}s remaining{Colors.END}")
 
         # Fetch market data
         market_data = self.market_api.fetch_market_data()
         if not market_data or not market_data.get('ok'):
-            print(
-                f"\n{Colors.RED}{Colors.BOLD}Market is currently closed!{Colors.END}"
-            )
-            print(
-                f"{Colors.YELLOW}Merchants have travelled to another distant far place!{Colors.END}"
-            )
-            print(
-                f"{Colors.YELLOW}Please wait until the merchants arrive!{Colors.END}"
-            )
+            print(f"\n{Colors.RED}{Colors.BOLD}Market is currently closed!{Colors.END}")
+            print(f"{Colors.YELLOW}Merchants have travelled to another distant far place!{Colors.END}")
+            print(f"{Colors.YELLOW}Please wait until the merchants arrive!{Colors.END}")
             return
 
         items = self.market_api.get_all_items()
@@ -3752,17 +3329,14 @@ class Game:
         print("  5. By Max Price")
         print("  R. Refresh market (forces new fetch)")
 
-        choice = ask("\nChoose filter (1-5, R) or press Enter to browse all: "
-                     ).strip().upper()
+        choice = ask("\nChoose filter (1-5, R) or press Enter to browse all: ").strip().upper()
 
         filtered_items = items
 
         if choice == '1' or not choice:
             pass  # All items
         elif choice == '2':
-            print(
-                "\nItem types: weapon, armor, consumable, accessory, material, offhand"
-            )
+            print("\nItem types: weapon, armor, consumable, accessory, material, offhand")
             item_type = ask("Enter type: ").strip().lower()
             filtered_items = self.market_api.filter_items(item_type=item_type)
         elif choice == '3':
@@ -3776,8 +3350,7 @@ class Game:
         elif choice == '5':
             try:
                 max_price = int(ask("Enter max price: ").strip())
-                filtered_items = self.market_api.filter_items(
-                    max_price=max_price)
+                filtered_items = self.market_api.filter_items(max_price=max_price)
             except ValueError:
                 print("Invalid price, showing all items.")
         elif choice == 'R':
@@ -3791,8 +3364,7 @@ class Game:
             return
 
         # Sort by market price by default
-        filtered_items = sorted(filtered_items,
-                                key=lambda x: x.get('marketPrice', 0))
+        filtered_items = sorted(filtered_items, key=lambda x: x.get('marketPrice', 0))
 
         # Paginate and display items
         page_size = 8
@@ -3817,8 +3389,7 @@ class Game:
                 rarity = item.get('rarity', 'common')
                 original_price = item.get('originalPrice', 0)
                 market_price = item.get('marketPrice', 0)
-                desc = item.get('description',
-                                '')[:60]  # Truncate long descriptions
+                desc = item.get('description', '')[:60]  # Truncate long descriptions
                 reqs = item.get('requirements')
                 class_req = reqs.get('class') if reqs else None
                 level_req = reqs.get('level', 1) if reqs else 1
@@ -3829,13 +3400,9 @@ class Game:
 
                 print(f"\n{i}. {rarity_color}{name}{Colors.END} ({item_type})")
                 print(f"   {Colors.DARK_GRAY}{desc}{Colors.END}")
-                print(
-                    f"   {rarity_color}{rarity.title()}{Colors.END} | Level {level_req}"
-                    + (f" | {Colors.CYAN}{class_req}{Colors.END}"
-                       if class_req else ""))
-                print(
-                    f"   {price_color}{market_price}{Colors.END} gold (was {original_price})"
-                )
+                print(f"   {rarity_color}{rarity.title()}{Colors.END} | Level {level_req}" +
+                      (f" | {Colors.CYAN}{class_req}{Colors.END}" if class_req else ""))
+                print(f"   {price_color}{market_price}{Colors.END} gold (was {original_price})")
 
             print(f"\n{Colors.YELLOW}Options:{Colors.END}")
             print(f"1-{len(page_items)}. Buy Item")
@@ -3865,30 +3432,17 @@ class Game:
                 sub_choice = ask("Choose filter: ").strip()
                 if sub_choice == '1':
                     item_type = ask("Enter type: ").strip().lower()
-                    filtered_items = [
-                        it for it in filtered_items
-                        if it.get('type', '').lower() == item_type
-                    ]
+                    filtered_items = [it for it in filtered_items if it.get('type', '').lower() == item_type]
                 elif sub_choice == '2':
                     rarity = ask("Enter rarity: ").strip().lower()
-                    filtered_items = [
-                        it for it in filtered_items
-                        if it.get('rarity', '').lower() == rarity
-                    ]
+                    filtered_items = [it for it in filtered_items if it.get('rarity', '').lower() == rarity]
                 elif sub_choice == '3':
                     class_req = ask("Enter class: ").strip()
-                    filtered_items = [
-                        it for it in filtered_items
-                        if (it.get('requirements') or {}
-                            ).get('class', '').lower() == class_req.lower()
-                    ]
+                    filtered_items = [it for it in filtered_items if (it.get('requirements') or {}).get('class', '').lower() == class_req.lower()]
                 elif sub_choice == '4':
                     try:
                         max_price = int(ask("Enter max price: ").strip())
-                        filtered_items = [
-                            it for it in filtered_items
-                            if it.get('marketPrice', 0) <= max_price
-                        ]
+                        filtered_items = [it for it in filtered_items if it.get('marketPrice', 0) <= max_price]
                     except ValueError:
                         pass
                 current_page = 0
@@ -3902,14 +3456,10 @@ class Game:
                     if self.player.gold >= market_price:
                         self.player.gold -= market_price
                         self.player.inventory.append(name)
-                        print(
-                            f"\n{Colors.GREEN}Purchased {name} for {market_price} gold!{Colors.END}"
-                        )
+                        print(f"\n{Colors.GREEN}Purchased {name} for {market_price} gold!{Colors.END}")
                         self.update_mission_progress('collect', name)
                     else:
-                        print(
-                            f"\n{Colors.RED}Not enough gold! Need {market_price}, have {self.player.gold}.{Colors.END}"
-                        )
+                        print(f"\n{Colors.RED}Not enough gold! Need {market_price}, have {self.player.gold}.{Colors.END}")
                 else:
                     print("Invalid selection.")
 
@@ -4402,7 +3952,7 @@ class Game:
 
         invalid_items = []
 
-        for slot in ("weapon", "armor", "accessory_1", "accessory_2", "accessory_3"):
+        for slot in ("weapon", "armor", "accessory"):
             item_name = self.player.equipment.get(slot)
             if not item_name:
                 continue
@@ -4509,74 +4059,6 @@ class Game:
         print("Your legacy will be remembered...")
         sys.exit(0)
 
-    def show_others_menu(self):
-        """Display the Others menu with scripts from buttons.json"""
-        while True:
-            clear_screen()
-            print(f"{Colors.CYAN}{'=' * 60}{Colors.END}")
-            print(f"                   {Colors.BOLD}{Colors.YELLOW}Others{Colors.END}")
-            print(f"{Colors.CYAN}{'=' * 60}{Colors.END}\n")
-
-            custom_buttons = []
-            buttons_path = os.path.join("scripts", "buttons.json")
-            if os.path.exists(buttons_path):
-                try:
-                    with open(buttons_path, "r") as f:
-                        data = json.load(f)
-                        custom_buttons = data.get("buttons", [])
-                except Exception as e:
-                    print(f"{Colors.RED}Error loading buttons.json: {e}{Colors.END}")
-
-            if not custom_buttons:
-                print(f"{Colors.LIGHT_GRAY}No custom actions available.{Colors.END}")
-            else:
-                for i, btn in enumerate(custom_buttons, 1):
-                    label = btn.get('label', 'Unknown')
-                    print(f"{Colors.WHITE}{i}.{Colors.END} {Colors.MAGENTA}{label}{Colors.END}")
-
-            print(f"\n{Colors.CYAN}{'=' * 60}{Colors.END}")
-            choice = ask(f"Choose an action (1-{len(custom_buttons)}) or Enter to go back: ", allow_empty=True)
-
-            if not choice:
-                break
-
-            if choice.isdigit():
-                idx = int(choice) - 1
-                if 0 <= idx < len(custom_buttons):
-                    btn = custom_buttons[idx]
-                    script_path = btn.get('script_path')
-                    if script_path and os.path.exists(script_path):
-                        try:
-                            # Sync state before execution
-                            self.scripting_engine.sync_game_state_to_activities(self)
-                            
-                            # Execute script using Node.js
-                            # Ensure we're in the right directory or provide absolute path
-                            subprocess.run(['node', script_path], check=True)
-                            
-                            # Sync state back after execution
-                            self.scripting_engine.sync_activities_from_file(self)
-                            if self.player:
-                                self.player.update_stats_from_equipment(self.items_data)
-                            
-                            # Process any battle that was triggered by the script
-                            for act in self.scripting_engine.current_activities:
-                                if act.get('type') == 'battle.start':
-                                    enemy_id = act.get('id')
-                                    if enemy_id:
-                                        self.start_battle(enemy_id)
-                                        break # Only one battle at a time
-                            
-                            input(f"\n{Colors.LIGHT_GRAY}Press Enter to continue...{Colors.END}")
-                        except Exception as e:
-                            print(f"{Colors.RED}Error: {e}{Colors.END}")
-                    else:
-                        print(f"{Colors.RED}Script not found.{Colors.END}")
-                else:
-                    print(f"{Colors.RED}Invalid choice.{Colors.END}")
-            else:
-                print(f"{Colors.RED}Invalid input.{Colors.END}")
-
     def _gather_materials(self):
         """Gather materials based on current area's difficulty and theme."""
         if not self.player:
@@ -4584,37 +4066,40 @@ class Game:
 
         area_data = self.areas_data.get(self.current_area, {})
         difficulty = area_data.get('difficulty', 1)
-
+        
         # Define material pools by difficulty tier
         # Tier 1: Basic materials (difficulty 1-2)
         tier1_materials = [
-            "Herb", "Spring Water", "Leather", "Leather Strip", "Hardwood",
-            "Stone Block", "Coal", "Iron Ore", "Goblin Ear", "Wolf Fang",
-            "Bone Fragment"
+            "Herb", "Spring Water", "Leather", "Leather Strip", 
+            "Hardwood", "Stone Block", "Coal", "Iron Ore",
+            "Goblin Ear", "Wolf Fang", "Bone Fragment"
         ]
-
+        
         # Tier 2: Uncommon materials (difficulty 3)
         tier2_materials = [
-            "Mana Herb", "Gold Nugget", "Steel Ingot", "Orc Tooth",
-            "Serpent Tail", "Crystal Shard", "Venom Sac", "Swamp Scale",
-            "Ancient Relic", "Wind Elemental Essence", "Demon Blood"
+            "Mana Herb", "Gold Nugget", "Steel Ingot",
+            "Orc Tooth", "Serpent Tail", "Crystal Shard",
+            "Venom Sac", "Swamp Scale", "Ancient Relic",
+            "Wind Elemental Essence", "Demon Blood"
         ]
-
+        
         # Tier 3: Rare materials (difficulty 4)
         tier3_materials = [
-            "Dark Crystal", "Ice Crystal", "Void Crystal", "Shadow Essence",
-            "Fire Essence", "Ice Essence", "Starlight Shard",
-            "Eternal Essence", "Poison Crystal", "Lightning Crystal"
+            "Dark Crystal", "Ice Crystal", "Void Crystal",
+            "Shadow Essence", "Fire Essence", "Ice Essence",
+            "Starlight Shard", "Eternal Essence",
+            "Poison Crystal", "Lightning Crystal"
         ]
-
+        
         # Tier 4: Legendary materials (difficulty 5-6)
         tier4_materials = [
-            "Dragon Scale", "Dragon Bone", "Phoenix Feather", "Fire Gem",
-            "Soul Fragment", "Demon Heart", "Golem Core",
-            "Storm Elemental Core", "Zephyr's Scale", "Wind Dragon's Heart",
+            "Dragon Scale", "Dragon Bone", "Phoenix Feather",
+            "Fire Gem", "Soul Fragment", "Demon Heart",
+            "Golem Core", "Storm Elemental Core",
+            "Zephyr's Scale", "Wind Dragon's Heart",
             "Eternal Feather", "Dragon Heart", "Void Heart"
         ]
-
+        
         # Select materials based on difficulty
         available_materials = []
         if difficulty <= 2:
@@ -4633,41 +4118,39 @@ class Game:
             available_materials = tier3_materials + tier4_materials
             if random.random() < 0.2:  # 20% chance for tier 2
                 available_materials.extend(tier2_materials)
-
+        
         # Filter to only materials that actually exist in items_data
-        valid_materials = [
-            m for m in available_materials if m in self.items_data
-        ]
-
+        valid_materials = [m for m in available_materials if m in self.items_data]
+        
         if not valid_materials:
             return
-
+        
         # Gather 1-3 random materials
         num_materials = random.randint(1, 3)
         gathered = {}
-
+        
         for _ in range(num_materials):
             material = random.choice(valid_materials)
             quantity = random.randint(1, 3)
             gathered[material] = gathered.get(material, 0) + quantity
-
+        
         # Add gathered materials to inventory
         found_text = []
         for material, qty in gathered.items():
             for _ in range(qty):
                 self.player.inventory.append(material)
-
+            
             # Get material info for display
             item_data = self.items_data.get(material, {})
             rarity = item_data.get('rarity', 'common')
             color = get_rarity_color(rarity)
             found_text.append(f"{color}{qty}x {material}{Colors.END}")
-
+        
         # Display gathered materials
         print(f"\n{Colors.YELLOW}You found materials:{Colors.END}")
         for text in found_text:
             print(f"  - {text}")
-
+        
         # Update mission progress for collected materials
         for material in gathered.keys():
             self.update_mission_progress('collect', material)
@@ -4679,48 +4162,36 @@ class Game:
             return
 
         if not self.crafting_data or not self.crafting_data.get('recipes'):
-            print(f"{Colors.RED}No crafting recipes available.{Colors.END}")
+            print("No crafting recipes available.")
             return
+
+        print(f"\n{Colors.MAGENTA}{Colors.BOLD}=== ALCHEMY WORKSHOP ==={Colors.END}")
+        print("Welcome to the Alchemy Workshop! Here you can craft potions, elixirs, and items.")
+        print(f"\nYour gold: {Colors.GOLD}{self.player.gold}{Colors.END}")
+
+        # Display available materials from inventory
+        self._display_crafting_materials()
 
         while True:
             clear_screen()
-            print(f"{Colors.CYAN}=" * 60 + f"{Colors.END}")
-            print(
-                f"             {Colors.BOLD}{Colors.YELLOW}ALCHEMY WORKSHOP{Colors.END}"
-            )
-            print(f"       {Colors.GOLD}Gold: {self.player.gold}{Colors.END}")
-            print(f"{Colors.CYAN}=" * 60 + f"{Colors.END}\n")
+            print(f"\n{Colors.BOLD}=== ALCHEMY WORKSHOP ==={Colors.END}")
+            print("Categories: [P]otions, [E]lixirs, [E]ntchantments, [U]tility, [A]ll")
+            print("[C]raft Item, [M]aterials, [B]ack to Menu")
 
-            print(
-                f" {Colors.WHITE}Master Alchemist: 'What shall we brew today?'{Colors.END}\n"
-            )
-
-            print(f" {Colors.CYAN}{Colors.BOLD}--- CATEGORIES ---{Colors.END}")
-            print(
-                f"  {Colors.WHITE}P.{Colors.END} Potions       {Colors.WHITE}E.{Colors.END} Elixirs"
-            )
-            print(
-                f"  {Colors.WHITE}N.{Colors.END} Enchantments  {Colors.WHITE}U.{Colors.END} Utility"
-            )
-            print(
-                f"  {Colors.WHITE}A.{Colors.END} All Recipes   {Colors.WHITE}M.{Colors.END} Materials"
-            )
-            print(
-                f"\n  {Colors.WHITE}C.{Colors.END} {Colors.GREEN}Craft Item{Colors.END}    {Colors.WHITE}B.{Colors.END} Back"
-            )
-            print()
-
-            choice = ask(
-                f"{Colors.BOLD}Select an option: {Colors.END}").upper()
+            choice = ask("\nChoose an option: ").strip().upper()
 
             if choice == 'B' or not choice:
                 break
             elif choice == 'P':
                 self._display_recipes_by_category('Potions')
             elif choice == 'E':
-                self._display_recipes_by_category('Elixirs')
-            elif choice == 'N':
-                self._display_recipes_by_category('Enchantments')
+                # Ask which type of E (Elixirs or Enchantments)
+                print("E - Elixirs, N - Enchantments")
+                sub = ask("Choose (E/N): ").strip().upper()
+                if sub == 'E':
+                    self._display_recipes_by_category('Elixirs')
+                elif sub == 'N':
+                    self._display_recipes_by_category('Enchantments')
             elif choice == 'U':
                 self._display_recipes_by_category('Utility')
             elif choice == 'A':
@@ -4728,12 +4199,9 @@ class Game:
             elif choice == 'C':
                 self._craft_item()
             elif choice == 'M':
-                clear_screen()
                 self._display_crafting_materials()
-                ask("\nPress Enter to return...")
             else:
-                print(f"{Colors.RED}Invalid choice.{Colors.END}")
-                time.sleep(1)
+                print("Invalid choice.")
 
     def _display_crafting_materials(self):
         """Display materials available in player's inventory"""
@@ -4758,9 +4226,7 @@ class Game:
 
         if not material_counts:
             print("No crafting materials in your inventory.")
-            print(
-                "Materials can be found as drops from enemies or purchased from shops."
-            )
+            print("Materials can be found as drops from enemies or purchased from shops.")
             return
 
         print(f"{'Material':<25} {'Quantity':<10}")
@@ -4774,8 +4240,10 @@ class Game:
             return
 
         recipes = self.crafting_data.get('recipes', {})
-        category_recipes = [(rid, rdata) for rid, rdata in recipes.items()
-                            if rdata.get('category') == category]
+        category_recipes = [
+            (rid, rdata) for rid, rdata in recipes.items()
+            if rdata.get('category') == category
+        ]
 
         if not category_recipes:
             print(f"\nNo recipes found in category: {category}")
@@ -4814,8 +4282,7 @@ class Game:
                 rarity = rdata.get('rarity', 'common')
                 rarity_color = get_rarity_color(rarity)
                 print(
-                    f"{start + i}. {rarity_color}{name}{Colors.END} ({category})"
-                )
+                    f"{start + i}. {rarity_color}{name}{Colors.END} ({category})")
 
             total_pages = (len(recipe_list) + page_size - 1) // page_size
             print(f"\nPage {current_page + 1}/{total_pages}")
@@ -4860,9 +4327,7 @@ class Game:
             rarity_color = get_rarity_color(rarity)
             print(f"{i}. {rarity_color}{name}{Colors.END}")
 
-        choice = ask(
-            f"\nChoose recipe (1-{len(recipe_names)}) or press Enter to cancel: "
-        ).strip()
+        choice = ask(f"\nChoose recipe (1-{len(recipe_names)}) or press Enter to cancel: ").strip()
 
         if not choice:
             return
@@ -4882,9 +4347,7 @@ class Game:
         # Check skill requirement
         skill_req = recipe.get('skill_requirement', 1)
         if self.player.level < skill_req:
-            print(
-                f"\n{Colors.RED}You need at least level {skill_req} to craft this item.{Colors.END}"
-            )
+            print(f"\n{Colors.RED}You need at least level {skill_req} to craft this item.{Colors.END}")
             return
 
         # Get materials required
@@ -4895,8 +4358,7 @@ class Game:
         for material, quantity in materials_needed.items():
             in_inventory = self.player.inventory.count(material)
             if in_inventory < quantity:
-                missing_materials.append(
-                    f"{material} (need {quantity}, have {in_inventory})")
+                missing_materials.append(f"{material} (need {quantity}, have {in_inventory})")
 
         if missing_materials:
             print(f"\n{Colors.RED}Missing materials:{Colors.END}")
@@ -4909,9 +4371,7 @@ class Game:
         output_items = recipe.get('output', {})
         print(f"\n{Colors.BOLD}=== CRAFT CONFIRMATION ==={Colors.END}")
         print(f"Recipe: {recipe.get('name')}")
-        print(
-            f"Output: {', '.join(f'{qty}x {item}' for item, qty in output_items.items())}"
-        )
+        print(f"Output: {', '.join(f'{qty}x {item}' for item, qty in output_items.items())}")
         print("\nMaterials to consume:")
         for material, quantity in materials_needed.items():
             print(f"  - {quantity}x {material}")
@@ -4932,9 +4392,7 @@ class Game:
                 self.player.inventory.append(item)
                 self.update_mission_progress('collect', item)
 
-        print(
-            f"\n{Colors.GREEN}Successfully crafted {recipe.get('name')}!{Colors.END}"
-        )
+        print(f"\n{Colors.GREEN}Successfully crafted {recipe.get('name')}!{Colors.END}")
         for item, quantity in output_items.items():
             print(f"  Received: {quantity}x {item}")
 
