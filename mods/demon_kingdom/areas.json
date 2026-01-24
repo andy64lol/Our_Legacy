@@ -1,0 +1,36 @@
+{
+    "demon_gate": {
+        "name": "Demon Gate",
+        "description": "A gateway to the Demon Kingdom, wreathed in eternal flames",
+        "difficulty": 4,
+        "connections": ["hellfire_plains", "starting_village"],
+        "possible_enemies": ["shadow_imp", "demon_warrior", "demon_mage"],
+        "possible_bosses": [],
+        "shops": ["infernal_trade"],
+        "can_rest": true,
+        "rest_cost": 50
+    },
+    "hellfire_plains": {
+        "name": "Hellfire Plains",
+        "description": "A burning wasteland where demons roam freely",
+        "difficulty": 5,
+        "connections": ["demon_gate", "infernal_citadel"],
+        "possible_enemies": ["demon_warrior", "hellhound", "infernal_golem"],
+        "possible_bosses": [],
+        "shops": [],
+        "can_rest": false,
+        "rest_cost": 0
+    },
+    "infernal_citadel": {
+        "name": "Infernal Citadel",
+        "description": "The fortress of the Demon Lord, guarded by the strongest demons",
+        "difficulty": 6,
+        "connections": ["hellfire_plains"],
+        "possible_enemies": ["infernal_golem", "soul_reaver", "demon_mage"],
+        "possible_bosses": ["demon_lord"],
+        "shops": [],
+        "can_rest": false,
+        "rest_cost": 0
+    }
+}
+
