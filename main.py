@@ -1220,20 +1220,124 @@ class Game:
             print(f"{Colors.BOLD}=== MAIN MENU ==={Colors.END}")
             print("1. New Game")
             print("2. Load Game")
-            print("3. Quit")
+            print("3. Settings")
+            print("4. Mods")
+            print("5. Quit")
             print()
 
-            choice = ask("Choose an option (1-3): ")
+            choice = ask("Choose an option (1-5): ")
             if choice == "1":
                 return "new_game"
             elif choice == "2":
                 return "load_game"
             elif choice == "3":
+                self.settings_welcome()
+            elif choice == "4":
+                self.mods_welcome()
+            elif choice == "5":
                 print("Thank you for playing Our Legacy!")
                 clear_screen()
                 sys.exit(0)
             else:
-                print("Invalid choice. Please enter 1, 2, or 3.")
+                print("Invalid choice. Please enter 1, 2, 3, 4, or 5.")
+
+    def settings_welcome(self):
+        """Settings menu available from welcome screen"""
+        while True:
+            clear_screen()
+            print(f"\n{Colors.BOLD}=== SETTINGS ==={Colors.END}")
+
+            # Get current settings
+            mods_enabled = self.mod_manager.settings.get("mods_enabled", True)
+
+            print(f"\n1. Mod System: {'{Colors.GREEN}Enabled{Colors.END}' if mods_enabled else '{Colors.RED}Disabled{Colors.END}'}")
+            print("2. Back to Main Menu")
+
+            choice = ask("\nChoose an option: ").strip()
+
+            if choice == "1":
+                # Toggle mods system
+                self.mod_manager.toggle_mods_system()
+                if self.mod_manager.settings.get("mods_enabled", True):
+                    print(f"{Colors.GREEN}Mod system enabled!{Colors.END}")
+                else:
+                    print(f"{Colors.RED}Mod system disabled!{Colors.END}")
+                print(f"{Colors.YELLOW}Note: Changes take effect on game restart.{Colors.END}")
+                ask("\nPress Enter to continue...")
+            elif choice == "2" or not choice:
+                break
+            else:
+                print("Invalid choice.")
+
+    def mods_welcome(self):
+        """Mods menu available from welcome screen"""
+        while True:
+            clear_screen()
+            print(f"\n{Colors.BOLD}=== MODS ==={Colors.END}")
+
+            # Refresh mod list
+            self.mod_manager.discover_mods()
+            mods_list = self.mod_manager.get_mod_list()
+
+            if not mods_list:
+                print("\n{Colors.YELLOW}No mods found.{Colors.END}")
+                print("Place mods in the 'mods/' directory to use them.")
+                ask("\nPress Enter to go back...")
+                break
+
+            # Mod system status
+            mods_system_enabled = self.mod_manager.settings.get("mods_enabled", True)
+            status_color = Colors.GREEN if mods_system_enabled else Colors.RED
+            status_text = "Enabled" if mods_system_enabled else "Disabled"
+            print(f"\nMod System Status: {status_color}{status_text}{Colors.END}")
+
+            print(f"\n{Colors.CYAN}Installed Mods ({len(mods_list)}):{Colors.END}")
+
+            for i, mod in enumerate(mods_list, 1):
+                name = mod.get('name', mod.get('folder_name', 'Unknown'))
+                description = mod.get('description', '')
+                author = mod.get('author', 'Unknown')
+                version = mod.get('version', '1.0')
+                enabled = mod.get('enabled', False)
+
+                status = f"{Colors.GREEN}[ENABLED]{Colors.END}" if enabled else f"{Colors.RED}[DISABLED]{Colors.END}"
+                print(f"\n{i}. {Colors.BOLD}{name}{Colors.END} {status}")
+                print(f"   Version: {version}")
+                print(f"   Author: {author}")
+                if description:
+                    # Truncate long descriptions
+                    desc = description[:100] + "..." if len(description) > 100 else description
+                    print(f"   {desc}")
+
+            print(f"\n{Colors.YELLOW}Options:{Colors.END}")
+            print(f"1-{len(mods_list)}. Toggle Mod")
+            print("R. Refresh Mod List")
+            print("B. Back to Main Menu")
+
+            choice = ask("\nChoose an option: ").strip().upper()
+
+            if choice == 'B' or not choice:
+                break
+            elif choice == 'R':
+                # Refresh mods
+                self.mod_manager.discover_mods()
+                print("Mod list refreshed!")
+                time.sleep(0.5)
+            elif choice.isdigit():
+                idx = int(choice) - 1
+                if 0 <= idx < len(mods_list):
+                    mod = mods_list[idx]
+                    folder_name = mod.get('folder_name')
+                    if isinstance(folder_name, str):
+                        self.mod_manager.toggle_mod(folder_name)
+                        print(f"{Colors.YELLOW}Note: Changes take effect on game restart.{Colors.END}")
+                        ask("\nPress Enter to continue...")
+                else:
+                    print("Invalid mod number.")
+                    time.sleep(1)
+            else:
+                print("Invalid choice.")
+                time.sleep(1)
 
     def display_available_classes(self):
         """Display all available character classes from classes.json"""
