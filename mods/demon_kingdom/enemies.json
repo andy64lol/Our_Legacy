@@ -1,0 +1,63 @@
+{
+    "demon_warrior": {
+        "name": "Demon Warrior",
+        "hp": 150,
+        "attack": 25,
+        "defense": 15,
+        "speed": 12,
+        "experience_reward": 75,
+        "gold_reward": 50,
+        "loot_table": ["Demon Blood", "Infernal Sword", "Leather"]
+    },
+    "shadow_imp": {
+        "name": "Shadow Imp",
+        "hp": 80,
+        "attack": 18,
+        "defense": 8,
+        "speed": 20,
+        "experience_reward": 40,
+        "gold_reward": 25,
+        "loot_table": ["Shadow Essence", "Coal"]
+    },
+    "hellhound": {
+        "name": "Hellhound",
+        "hp": 200,
+        "attack": 30,
+        "defense": 12,
+        "speed": 18,
+        "experience_reward": 100,
+        "gold_reward": 75,
+        "loot_table": ["Fire Essence", "Demon Heart", "Leather"]
+    },
+    "infernal_golem": {
+        "name": "Infernal Golem",
+        "hp": 400,
+        "attack": 40,
+        "defense": 35,
+        "speed": 5,
+        "experience_reward": 200,
+        "gold_reward": 150,
+        "loot_table": ["Golem Core", "Stone Block", "Steel Ingot"]
+    },
+    "demon_mage": {
+        "name": "Demon Mage",
+        "hp": 120,
+        "attack": 45,
+        "defense": 10,
+        "speed": 15,
+        "experience_reward": 120,
+        "gold_reward": 80,
+        "loot_table": ["Void Crystal", "Demon Blood", "Mana Herb"]
+    },
+    "soul_reaver": {
+        "name": "Soul Reaver",
+        "hp": 250,
+        "attack": 55,
+        "defense": 20,
+        "speed": 22,
+        "experience_reward": 180,
+        "gold_reward": 120,
+        "loot_table": ["Soul Fragment", "Shadow Essence", "Void Crystal"]
+    }
+}
+
