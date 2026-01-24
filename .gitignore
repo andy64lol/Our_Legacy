@@ -25,3 +25,4 @@ scripts/activities.json
 .zencoder/
 .zenflow/
 .replit
+.env
