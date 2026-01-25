@@ -1,16 +1,34 @@
 const GITHUB_API = "https://api.github.com";
 
-async function getFileSha(owner, repo, path, headers) {
-  const res = await fetch(
-    `${GITHUB_API}/repos/${owner}/${repo}/contents/${path}`,
-    { headers }
-  );
+async function githubFetch(url, options) {
+  const r = await fetch(url, options);
+  const data = await r.json();
+  if (!r.ok) throw { status: r.status, data };
+  return data;
+}
 
-  if (res.status === 200) {
-    const data = await res.json();
-    return data.sha;
+async function directoryExists(owner, repo, dir, headers) {
+  try {
+    await githubFetch(
+      `${GITHUB_API}/repos/${owner}/${repo}/contents/${dir}`,
+      { headers }
+    );
+    return true;
+  } catch {
+    return false;
   }
-  return null;
+}
+
+async function getFileSha(owner, repo, path, headers) {
+  try {
+    const data = await githubFetch(
+      `${GITHUB_API}/repos/${owner}/${repo}/contents/${path}`,
+      { headers }
+    );
+    return data.sha;
+  } catch {
+    return null;
+  }
 }
 
 export default async function handler(req, res) {
@@ -19,23 +37,23 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { content, remote_path, message } = req.body;
+    const { dir_name, files } = req.body;
 
-    if (!content || !remote_path) {
+    if (!dir_name || !files || typeof files !== "object") {
       return res.status(400).json({
-        error: "content and remote_path required"
+        error: "dir_name and files object required"
+      });
+    }
+
+    if (!files["mod.json"]) {
+      return res.status(400).json({
+        error: "Directory must contain mod.json"
       });
     }
 
     const token = process.env.GITHUB_REST_API;
-    const username = process.env.GITHUB_USERNAME;
+    const owner = process.env.GITHUB_USERNAME;
     const repo = process.env.GITHUB_REPOSITORY;
-
-    if (!token || !username || !repo) {
-      return res.status(500).json({
-        error: "Missing GitHub env vars"
-      });
-    }
 
     const headers = {
       Authorization: `Bearer ${token}`,
@@ -43,41 +61,51 @@ export default async function handler(req, res) {
       "X-GitHub-Api-Version": "2022-11-28"
     };
 
-    // If not base64, encode
-    const encoded =
-      /^[A-Za-z0-9+/=]+$/.test(content)
-        ? content
-        : Buffer.from(content).toString("base64");
+    const baseDir = `mods/${dir_name}`;
 
-    const sha = await getFileSha(username, repo, remote_path, headers);
+    // 🚫 reject if directory exists
+    if (await directoryExists(owner, repo, baseDir, headers)) {
+      return res.status(409).json({
+        error: "Mod directory already exists"
+      });
+    }
 
-    const payload = {
-      message: message || `Upload ${remote_path}`,
-      content: encoded,
-      ...(sha && { sha })
-    };
+    const uploaded = [];
 
-    const r = await fetch(
-      `${GITHUB_API}/repos/${username}/${repo}/contents/${remote_path}`,
-      {
-        method: "PUT",
-        headers,
-        body: JSON.stringify(payload)
-      }
-    );
+    for (const [relativePath, content] of Object.entries(files)) {
+      const fullPath = `${baseDir}/${relativePath}`;
 
-    const data = await r.json();
+      const encoded =
+        /^[A-Za-z0-9+/=]+$/.test(content)
+          ? content
+          : Buffer.from(content).toString("base64");
 
-    if (!r.ok) {
-      return res.status(r.status).json({ error: data });
+      const payload = {
+        message: `Add mod ${dir_name}`,
+        content: encoded
+      };
+
+      await githubFetch(
+        `${GITHUB_API}/repos/${owner}/${repo}/contents/${fullPath}`,
+        {
+          method: "PUT",
+          headers,
+          body: JSON.stringify(payload)
+        }
+      );
+
+      uploaded.push(fullPath);
     }
 
     return res.status(200).json({
       success: true,
-      url: data.content.html_url
+      directory: baseDir,
+      files: uploaded
     });
 
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    return res.status(err.status || 500).json({
+      error: err.data || err.message
+    });
   }
 }
