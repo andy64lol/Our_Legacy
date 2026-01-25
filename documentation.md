@@ -7,7 +7,7 @@ This guide covers how to modify every aspect of the Our Legacy RPG game. All gam
 ## Table of Contents
 1. [File Overview](#file-overview)
 2. [Modifying Data (JSON)](#modifying-data)
-3. [Scripting API (JavaScript)](#scripting-api)
+3. [Mod Downloader CLI](#mod-downloader-cli)
 4. [Tips & Best Practices](#tips--best-practices)
 
 ---
@@ -39,25 +39,29 @@ Configure HP thresholds for phase transitions and special abilities. Note that b
 
 ---
 
-## Scripting API
+## Mod Downloader CLI
 
-The game now supports a JavaScript-based scripting system located in the `scripts/` directory. This allows you to hook into game events and automate actions.
+The mod downloader (`mod_downloading.py`) is a Python CLI tool for browsing and downloading mods from the GitHub repository.
 
-### How it Works
-1. Scripts are placed in the `scripts/` folder.
-2. `scripts/scripts.json` defines which scripts are active.
-3. `main.py` synchronizes game state to `scripts/activities.json`.
-4. The JavaScript engine executes scripts, and they communicate back to the game by updating the activities log.
+### Features
+- **Paginated Display**: Shows 10 mods per page with navigation
+- **Colored Output**: Cyan titles, yellow mod numbers, white names, green success messages, red errors
+- **Screen Clearing**: Clears terminal after each action
+- **Navigation Commands**:
+  - `n` or `next` - Go to next page
+  - `p` or `prev` - Go to previous page
+  - `#` (number) - Select and download a mod
+  - `q` or `quit` - Exit the application
 
-### API Reference
-For a full list of functions available to scripts (including `player`, `enemy`, `battle`, `map`, and `events`), please refer to the [Scripting API Documentation](new_scripting.md).
+### Usage
+```bash
+python3 mod_downloading.py
+```
 
-### Example Script
-See `scripts/example.js` for a comprehensive demonstration of:
-- Importing the API.
-- Printing to the console.
-- Modifying player stats and inventory.
-- Listening for and emitting events.
+### Configuration
+The downloader connects to: `https://github.com/andy64lol/Our_Legacy_Mods`
+- Mods are stored in the `mods/` branch
+- Downloaded mods are saved to the local `mods/` directory
 
 ---
 
