@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 Our Legacy Launcher - Fancy Text UI
+Runs all scripts directly from the same directory.
 """
 
 import os
@@ -15,21 +16,14 @@ def clear():
     os.system("clear" if os.name != "nt" else "cls")
 
 def run_main():
-    script_path = os.path.join(os.path.dirname(__file__), "main.py")
-    subprocess.run([sys.executable, script_path])
+    subprocess.run([sys.executable, "main.py"])
 
 def run_storyland():
-    script_path = os.path.join(os.path.dirname(__file__), "storyland.py")
-    subprocess.run([sys.executable, script_path])
+    subprocess.run([sys.executable, "storyland.py"])
 
 def run_storywrite():
-    mod_path = input("Enter path to your mod directory: ").strip()
-    if not os.path.exists(mod_path):
-        print(f"Mod path '{mod_path}' does not exist!")
-        input("Press Enter to return to menu...")
-        return
-    script_path = os.path.join(os.path.dirname(__file__), "storywrite.py")
-    subprocess.run([sys.executable, script_path, mod_path])
+    # Just execute storywrite.py directly
+    subprocess.run(["python3", "storywrite.py"])
 
 def show_credits():
     print(BLUE + "===============================================")
