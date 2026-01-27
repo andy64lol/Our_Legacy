@@ -539,7 +539,7 @@ class Character:
         self.character_class = character_class
         self.uuid = player_uuid or str(uuid.uuid4())
         # Rank system based on level
-        self.rank = "Novice"
+        self.rank = "F tier adventurer"
         self.level = 1
         self.experience = 0
         self.experience_to_next = 100
@@ -699,18 +699,28 @@ class Character:
 
     def _update_rank(self):
         """Simple rank tiers based on level"""
-        if self.level >= 30:
-            self.rank = "Legend"
+        if self.level >= 100:
+            self.rank = "SSR tier adventurer"
+        elif self.level >= 90:
+            self.rank = "SR tier adventurer"
+        elif self.level >= 80:
+            self.rank = "SSS tier adventurer"
+        elif self.level >= 70:
+            self.rank = "SS tier adventurer"
+        elif self.level >= 50:
+            self.rank = "S tier adventurer"
+        elif self.level >= 30:
+            self.rank = "A tier adventurer"
         elif self.level >= 20:
-            self.rank = "Champion"
+            self.rank = "B tier adventurer"
         elif self.level >= 15:
-            self.rank = "Elite"
+            self.rank = "C tier adventurer"
         elif self.level >= 10:
-            self.rank = "Veteran"
+            self.rank = "D tier adventurer"
         elif self.level >= 5:
-            self.rank = "Adept"
+            self.rank = "E tier adventurer"
         else:
-            self.rank = "Novice"
+            self.rank = "F tier adventurer"
 
     def display_stats(self):
         """Display character statistics"""

@@ -52,8 +52,7 @@ Materials are found by defeating enemies or exploring specific areas:
 ## Installation & Setup
 
 ### Prerequisites
-- **Python 3.6+**
-- **Node.js** (Required for the Scripting API)
+- **Python 3.9+**
 
 ### Quick Start
 ```bash
@@ -76,17 +75,13 @@ python3 main.py
 
 ```
 Our_Legacy/
+├── launcher.py             # Unified launcher for all
+├── storyland.py            # The place where you download mods
+├── storywrite.py           # Where you submit mods
 ├── main.py                 # Core game engine (Unified Python script)
 ├── README.md               # Game overview and quick start guide
 ├── documentation.md        # Comprehensive modding and mechanics guide
-├── new_scripting.md        # JavaScript Scripting API reference
 ├── package.json            # Node.js project configuration
-├── scripts/                # Scripting System directory
-│   ├── scripting_API.js    # The bridge between JS and the Python engine
-│   ├── activities.json     # Live game state data for scripts
-│   ├── scripts.json        # Registry of active JS scripts
-│   ├── main.js             # Core scripting logic
-│   └── example.js          # Reference implementation for modders
 ├── data/                   # Game Content (Modular JSON)
 │   ├── classes.json        # Player character class definitions
 │   ├── items.json          # Equipment, weapons, and consumables
@@ -98,7 +93,9 @@ Our_Legacy/
 │   ├── spells.json         # Magic system and weapon requirements
 │   ├── effects.json        # Status effect definitions
 │   ├── config.json         # Global game engine configuration
+│   ├── dialogues.json      # Dialogues for bosses
 │   └── saves/              # Player save files (.json)
+├── mods/                   # installed mods
 └── LICENSE                 # Project license
 ```
 

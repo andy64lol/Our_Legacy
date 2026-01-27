@@ -1,4 +1,5 @@
 const GITHUB_API = "https://api.github.com";
+const PROFANITY_WORDS_URL = "https://raw.githubusercontent.com/zautumnz/profane-words/refs/heads/master/words.json";
 
 async function githubFetch(url, options) {
   const r = await fetch(url, options);
@@ -31,6 +32,36 @@ async function getFileSha(owner, repo, path, headers) {
   }
 }
 
+async function fetchProfanityWords() {
+  try {
+    const response = await fetch(PROFANITY_WORDS_URL);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch profanity words: ${response.status}`);
+    }
+    const words = await response.json();
+    return words;
+  } catch (error) {
+    console.error('Error fetching profanity words:', error);
+    return [];
+  }
+}
+
+function containsProfanity(text, profanityWords) {
+  if (!text || typeof text !== 'string') return false;
+  
+  const lowerText = text.toLowerCase();
+  for (const word of profanityWords) {
+    if (typeof word === 'string' && word.trim()) {
+      const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(`\\b${escapedWord}\\b`, 'i');
+      if (regex.test(text)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "POST only" });
@@ -51,6 +82,55 @@ export default async function handler(req, res) {
       });
     }
 
+    // 获取不雅词汇列表
+    const profanityWords = await fetchProfanityWords();
+    if (profanityWords.length === 0) {
+      return res.status(500).json({
+        error: "Failed to load profanity filter list"
+      });
+    }
+
+    // 检查目录名是否包含不雅词汇
+    if (containsProfanity(dir_name, profanityWords)) {
+      return res.status(400).json({
+        error: "Directory name contains prohibited content"
+      });
+    }
+
+    // 检查文件名是否包含不雅词汇
+    for (const filename of Object.keys(files)) {
+      // 检查完整路径
+      if (containsProfanity(filename, profanityWords)) {
+        return res.status(400).json({
+          error: `Filename "${filename}" contains prohibited content`
+        });
+      }
+      
+      // 检查路径的各个部分
+      const pathParts = filename.split('/');
+      for (const part of pathParts) {
+        if (containsProfanity(part, profanityWords)) {
+          return res.status(400).json({
+            error: `Filename part "${part}" contains prohibited content`
+          });
+        }
+      }
+    }
+
+    // 检查文件内容是否包含不雅词汇
+    for (const [filename, content] of Object.entries(files)) {
+      if (typeof content !== 'string') continue;
+      
+      // 如果不是base64编码的内容，直接检查
+      if (!/^[A-Za-z0-9+/=]+$/.test(content)) {
+        if (containsProfanity(content, profanityWords)) {
+          return res.status(400).json({
+            error: `File "${filename}" content contains prohibited content`
+          });
+        }
+      }
+    }
+
     const token = process.env.GITHUB_REST_API;
     const owner = process.env.GITHUB_USERNAME;
     const repo = process.env.GITHUB_REPOSITORY;
@@ -63,7 +143,7 @@ export default async function handler(req, res) {
 
     const baseDir = `mods/${dir_name}`;
 
-    // 🚫 reject if directory exists
+    // 🚫 如果目录已存在，拒绝请求
     if (await directoryExists(owner, repo, baseDir, headers)) {
       return res.status(409).json({
         error: "Mod directory already exists"
@@ -105,7 +185,7 @@ export default async function handler(req, res) {
 
   } catch (err) {
     return res.status(err.status || 500).json({
-      error: err.data || err.message
+      error: err.data?.message || err.message || "Internal server error"
     });
   }
 }
