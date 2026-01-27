@@ -412,7 +412,6 @@
       "type":"weapon",
       "description":"A blade forged in sorrow, dealing extra damage to undead",
       "attack_bonus":100,
-      "undead_damage_bonus":15,
       "price":160,
       "rarity":"rare",
       "requirements":{
@@ -1314,7 +1313,6 @@
       "attack_bonus":95,
       "magic_weapon":true,
       "mp_bonus":35,
-      "undead_damage_bonus":20,
       "price":200,
       "rarity":"rare",
       "requirements":{
@@ -1338,8 +1336,7 @@
       "type":"accessory",
       "description":"A crown made of ancient bone, boosting necromantic abilities",
       "mp_bonus":30,
-      "attack_bonus":4,
-      "undead_damage_bonus":15,
+      "attack_bonus":45,
       "price":175,
       "rarity":"rare",
       "requirements":{
@@ -1435,9 +1432,8 @@
    "Crown of Malachar":{
       "type":"accessory",
       "description":"The crown of the Lich King, radiating necrotic power",
-      "attack_bonus":10,
       "mp_bonus":40,
-      "undead_damage_bonus":30,
+      "attack_bonus":30,
       "hp_bonus":50,
       "price":350,
       "rarity":"legendary",
@@ -2178,7 +2174,7 @@
       "type":"accessory",
       "description":"A necklace made from the bones of fallen enemies, enhancing dark magic.",
       "mp_bonus":30,
-      "undead_damage_bonus":15,
+      "attack_bonus":15,
       "price":180,
       "rarity":"rare",
       "requirements":{
@@ -2433,6 +2429,16 @@
       "requirements": {
          "level": 5,
          "class": "Rogue"
+      }
+   },
+   "Bandit's Chain":{
+      "type": "accessory",
+      "description": "A chain worn by bandits, enhancing agility and stealth.",
+      "speed_bonus": 15,
+      "price": 150,
+      "rarity": "uncommon",
+      "requirements": {
+         "level": 1
       }
    }
 }

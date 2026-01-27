@@ -14,6 +14,21 @@
     "unlock_level": 1,
     "prerequisites": []
   },
+  "capture_bandits":{
+    "name": "Bandit Capture",
+    "description": "Capture 3 bandits in the Dark Forest to bring them to justice.",
+    "type": "kill",
+    "target": "bandit",
+    "target_count": 3,
+    "reward": {
+      "experience": 60,
+      "gold": 40,
+      "items": ["Bandit's Chain", "Rusty Sword"]
+    },
+    "area": "starting_village",
+    "unlock_level": 1,
+    "prerequisites": []
+  },
   "forest_cleaning": {
     "name": "Wolf Problem",
     "description": "The villagers are worried about wolves attacking travelers. Clear out 5 wolves from the forest.",
