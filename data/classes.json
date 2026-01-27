@@ -108,5 +108,178 @@
       "Mana Potion"
     ],
     "starting_gold": 300
+  },
+  "Paladin": {
+    "description": "Holy warrior who combines martial prowess with divine magic to smite enemies and protect allies",
+    "base_stats": {
+      "hp": 110,
+      "mp": 50,
+      "attack": 13,
+      "defense": 14,
+      "speed": 7
+    },
+    "level_up_bonuses": {
+      "hp": 18,
+      "mp": 5,
+      "attack": 2,
+      "defense": 3,
+      "speed": 1
+    },
+    "starting_items": [
+      "Paladin's Sword",
+      "Holy Shield",
+      "Sacred Armor",
+      "Health Potion",
+      "Mana Potion"
+    ],
+    "starting_gold": 150,
+    "abilities": [
+      {
+        "name": "Holy Strike",
+        "description": "Deal extra damage to undead and demons",
+        "type": "damage",
+        "power": 1.5,
+        "mp_cost": 10
+      },
+      {
+        "name": "Divine Shield",
+        "description": "Create a protective barrier that blocks damage",
+        "type": "buff",
+        "duration": 2,
+        "mp_cost": 15
+      },
+      {
+        "name": "Lay on Hands",
+        "description": "Heal a target for a large amount",
+        "type": "heal",
+        "power": 1.0,
+        "mp_cost": 25
+      }
+    ]
+  },
+  "Druid": {
+    "description": "Nature's guardian who can shapeshift into animals and command the power of the earth",
+    "base_stats": {
+      "hp": 90,
+      "mp": 70,
+      "attack": 11,
+      "defense": 9,
+      "speed": 11
+    },
+    "level_up_bonuses": {
+      "hp": 16,
+      "mp": 12,
+      "attack": 2,
+      "defense": 2,
+      "speed": 2
+    },
+    "starting_items": [
+      "Druidic Staff",
+      "Nature's Robe",
+      "Herb Bundle",
+      "Mana Potion",
+      "Health Potion"
+    ],
+    "starting_gold": 120,
+    "abilities": [
+      {
+        "name": "Bear Form",
+        "description": "Transform into a bear, gaining HP and defense",
+        "type": "buff",
+        "duration": 5,
+        "hp_bonus": 30,
+        "defense_bonus": 5,
+        "speed_penalty": 3,
+        "mp_cost": 20
+      },
+      {
+        "name": "Wolf Form",
+        "description": "Transform into a wolf, gaining speed and attack",
+        "type": "buff",
+        "duration": 5,
+        "attack_bonus": 5,
+        "speed_bonus": 8,
+        "mp_cost": 20
+      },
+      {
+        "name": "Nature's Healing",
+        "description": "Heal over time",
+        "type": "hot",
+        "power": 5,
+        "duration": 5,
+        "mp_cost": 15
+      },
+      {
+        "name": "Entangle",
+        "description": "Root enemies in place with vines",
+        "type": "debuff",
+        "duration": 3,
+        "mp_cost": 12
+      }
+    ]
+  },
+  "Priest": {
+    "description": "Devoted healer who channels divine energy to mend wounds and protect the faithful",
+    "base_stats": {
+      "hp": 75,
+      "mp": 90,
+      "attack": 8,
+      "defense": 8,
+      "speed": 9
+    },
+    "level_up_bonuses": {
+      "hp": 12,
+      "mp": 18,
+      "attack": 1,
+      "defense": 2,
+      "speed": 1
+    },
+    "starting_items": [
+      "Priest's Staff",
+      "Devout's Robe",
+      "Sacred Water",
+      "Mana Potion",
+      "Health Potion",
+      "Resurrection Scroll"
+    ],
+    "starting_gold": 150,
+    "abilities": [
+      {
+        "name": "Greater Heal",
+        "description": "Restore a large amount of HP",
+        "type": "heal",
+        "power": 1.2,
+        "mp_cost": 20
+      },
+      {
+        "name": "Blessing",
+        "description": "Grant bonuses to attack and defense",
+        "type": "buff",
+        "duration": 5,
+        "attack_bonus": 3,
+        "defense_bonus": 3,
+        "mp_cost": 15
+      },
+      {
+        "name": "Holy Nova",
+        "description": "Deal damage to all enemies in range",
+        "type": "aoe_damage",
+        "power": 0.8,
+        "mp_cost": 25
+      },
+      {
+        "name": "Resurrect",
+        "description": "Revive a fallen party member",
+        "type": "revive",
+        "mp_cost": 50,
+        "cooldown": 1
+      },
+      {
+        "name": "Purify",
+        "description": "Remove all debuffs from target",
+        "type": "cleanse",
+        "mp_cost": 15
+      }
+    ]
   }
 }

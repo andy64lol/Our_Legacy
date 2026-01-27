@@ -1,0 +1,240 @@
+{
+  "weekly_challenges": {
+    "current_week": 1,
+    "start_date": "2024-01-01",
+    "challenges": [
+      {
+        "id": "slay_50_enemies",
+        "name": "Monster Hunter",
+        "description": "Defeat 50 enemies in combat",
+        "type": "kill_count",
+        "target": 50,
+        "reward": {
+          "experience": 5000,
+          "gold": 500,
+          "items": ["Mystery Box"],
+          "title": "Monster Hunter"
+        },
+        "progress": 0,
+        "completed": false
+      },
+      {
+        "id": "collect_30_ores",
+        "name": "Master Miner",
+        "description": "Collect 30 ores from any area",
+        "type": "collect",
+        "target_item": "Iron Ore",
+        "target": 30,
+        "reward": {
+          "experience": 3000,
+          "gold": 300,
+          "items": ["Steel Ingot", "Gold Nugget"],
+          "title": "Master Miner"
+        },
+        "progress": 0,
+        "completed": false
+      },
+      {
+        "id": "complete_5_missions",
+        "name": "Quest Champion",
+        "description": "Complete 5 missions",
+        "type": "mission_count",
+        "target": 5,
+        "reward": {
+          "experience": 4000,
+          "gold": 400,
+          "items": ["Treasure Chest"],
+          "title": "Quest Champion"
+        },
+        "progress": 0,
+        "completed": false
+      },
+      {
+        "id": "defeat_boss",
+        "name": "Boss Slayer",
+        "description": "Defeat any boss",
+        "type": "boss_kill",
+        "target": 1,
+        "reward": {
+          "experience": 10000,
+          "gold": 1000,
+          "items": ["Boss Relic", "Rare Gem"],
+          "title": "Boss Slayer"
+        },
+        "progress": 0,
+        "completed": false
+      },
+      {
+        "id": "craft_20_items",
+        "name": "Master Crafter",
+        "description": "Craft 20 items at the Alchemy Workshop",
+        "type": "craft_count",
+        "target": 20,
+        "reward": {
+          "experience": 3500,
+          "gold": 350,
+          "items": ["Crafting Material Pack"],
+          "title": "Master Crafter"
+        },
+        "progress": 0,
+        "completed": false
+      },
+      {
+        "id": "earn_5000_gold",
+        "name": "Wealthy Adventurer",
+        "description": "Earn 5000 gold through any means",
+        "type": "gold_earn",
+        "target": 5000,
+        "reward": {
+          "experience": 2500,
+          "gold": 500,
+          "items": ["Fortune Charm"],
+          "title": "Wealthy Adventurer"
+        },
+        "progress": 0,
+        "completed": false
+      },
+      {
+        "id": "explore_10_areas",
+        "name": "World Explorer",
+        "description": "Discover and visit 10 different areas",
+        "type": "explore",
+        "target": 10,
+        "reward": {
+          "experience": 4500,
+          "gold": 450,
+          "items": ["Explorer's Map"],
+          "title": "World Explorer"
+        },
+        "progress": 0,
+        "completed": false
+      },
+      {
+        "id": "reach_level_20",
+        "name": "Rising Star",
+        "description": "Reach level 20",
+        "type": "level",
+        "target": 20,
+        "reward": {
+          "experience": 8000,
+          "gold": 800,
+          "items": ["Experience Elixir", "Legendary Weapon Box"],
+          "title": "Rising Star"
+        },
+        "progress": 0,
+        "completed": false
+      },
+      {
+        "id": "hire_3_companions",
+        "name": "Party Leader",
+        "description": "Hire 3 different companions",
+        "type": "companion_hire",
+        "target": 3,
+        "reward": {
+          "experience": 3000,
+          "gold": 300,
+          "items": ["Companion Bonding Kit"],
+          "title": "Party Leader"
+        },
+        "progress": 0,
+        "completed": false
+      },
+      {
+        "id": "complete_dungeon_5",
+        "name": "Dungeon Delver",
+        "description": "Complete 5 dungeons",
+        "type": "dungeon_complete",
+        "target": 5,
+        "reward": {
+          "experience": 6000,
+          "gold": 600,
+          "items": ["Dungeon Key"],
+          "title": "Dungeon Delver"
+        },
+        "progress": 0,
+        "completed": false
+      }
+    ],
+    "bonus_challenge": {
+      "id": "weekly_elite_boss",
+      "name": "Elite Hunter",
+      "description": "Defeat the Elite Boss that spawns this week",
+      "type": "elite_boss",
+      "target": 1,
+      "reward": {
+        "experience": 15000,
+        "gold": 2000,
+        "items": ["Elite Boss Relic", "Epic Gem", "Legendary Chest"],
+        "title": "Elite Hunter",
+        "exclusive_item": "Elite Hunter's Cape"
+      },
+      "progress": 0,
+      "completed": false,
+      "elite_boss": {
+        "name": "Void Abomination",
+        "hp": 500,
+        "attack": 45,
+        "defense": 25,
+        "speed": 18,
+        "description": "A creature from beyond the void that has emerged into our world",
+        "special_abilities": [
+          {
+            "name": "Void Blast",
+            "description": "Deals massive void damage",
+            "damage": 60,
+            "mp_cost": 30,
+            "cooldown": 3
+          },
+          {
+            "name": "Reality Tear",
+            "description": "Creates a tear in reality that damages over time",
+            "damage": 10,
+            "duration": 5,
+            "mp_cost": 25,
+            "cooldown": 4
+          }
+        ],
+        "unique_loot": [
+          "Void Essence",
+          "Reality Fragment",
+          "Abomination's Heart"
+        ]
+      }
+    }
+  },
+  "titles": {
+    "default_titles": [
+      "Novice Adventurer",
+      "Skilled Warrior",
+      "Expert Slayer",
+      "Master Champion",
+      "Legendary Hero"
+    ],
+    "challenge_titles": {
+      "slay_50_enemies": "Monster Hunter",
+      "collect_30_ores": "Master Miner",
+      "complete_5_missions": "Quest Champion",
+      "defeat_boss": "Boss Slayer",
+      "craft_20_items": "Master Crafter",
+      "earn_5000_gold": "Wealthy Adventurer",
+      "explore_10_areas": "World Explorer",
+      "reach_level_20": "Rising Star",
+      "hire_3_companions": "Party Leader",
+      "complete_dungeon_5": "Dungeon Delver"
+    }
+  },
+  "rewards_multiplier": {
+    "bronze": 1.0,
+    "silver": 1.5,
+    "gold": 2.0,
+    "platinum": 3.0
+  },
+  "leaderboard_categories": [
+    "kills",
+    "exploration",
+    "crafting",
+    "wealth",
+    "dungeons"
+  ]
+}
+

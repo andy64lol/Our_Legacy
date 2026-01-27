@@ -1,0 +1,843 @@
+{
+  "dungeon_templates": {
+    "temple": {
+      "name": "Ancient Temple",
+      "description": "An ancient temple filled with puzzles and guardians",
+      "difficulty_range": [3, 7],
+      "challenge_count_range": [4, 8],
+      "has_boss_chance": 0.7,
+      "room_types": [
+        "question",
+        "spawn_mobs",
+        "selection",
+        "trap"
+      ],
+      "themes": [
+        {
+          "name": "Temple of Wisdom",
+          "decorations": ["ancient scrolls", "stone statues", "glowing runes"],
+          "ambient_text": "Ancient wisdom fills this sacred chamber"
+        },
+        {
+          "name": "Forgotten Sanctum",
+          "decorations": ["crumbling pillars", "dusty altars", "faded tapestries"],
+          "ambient_text": "Time has forgotten this place, but its guardians have not"
+        }
+      ]
+    },
+    "forest": {
+      "name": "Mystic Forest",
+      "description": "A forest realm where nature and magic intertwine",
+      "difficulty_range": [3, 6],
+      "challenge_count_range": [4, 7],
+      "has_boss_chance": 0.6,
+      "room_types": [
+        "question",
+        "spawn_mobs",
+        "trap",
+        "selection"
+      ],
+      "themes": [
+        {
+          "name": "Bamboo Grove",
+          "decorations": ["towering bamboo", "moss-covered stones", "flowing stream"],
+          "ambient_text": "The bamboo sways, concealing ancient secrets"
+        },
+        {
+          "name": "Sacred Grove",
+          "decorations": ["ancient trees", "circle of stones", "glowing mushrooms"],
+          "ambient_text": "Nature's magic flows through every leaf"
+        }
+      ]
+    },
+    "lake": {
+      "name": "Mystic Lake Depths",
+      "description": "Underwater caverns filled with aquatic wonders and dangers",
+      "difficulty_range": [3, 6],
+      "challenge_count_range": [4, 7],
+      "has_boss_chance": 0.6,
+      "room_types": [
+        "spawn_mobs",
+        "question",
+        "trap",
+        "selection"
+      ],
+      "themes": [
+        {
+          "name": "Crystal Cavern",
+          "decorations": ["crystal formations", "bioluminescent plants", "underwater crystals"],
+          "ambient_text": "The water glows with mystical energy"
+        },
+        {
+          "name": "Dragon's Lair",
+          "decorations": ["ancient dragon bones", "massive pearls", "coral arches"],
+          "ambient_text": "The ancient dragon's resting place whispers of power"
+        }
+      ]
+    },
+    "mountain": {
+      "name": "Mountain Peaks",
+      "description": "Treacherous mountain passages filled with elemental dangers",
+      "difficulty_range": [4, 8],
+      "challenge_count_range": [5, 9],
+      "has_boss_chance": 0.75,
+      "room_types": [
+        "spawn_mobs",
+        "trap",
+        "question",
+        "selection"
+      ],
+      "themes": [
+        {
+          "name": "Thunder Peaks",
+          "decorations": ["lightning-scarred rocks", "storm clouds", "crystal spires"],
+          "ambient_text": "Lightning crackles through the air"
+        },
+        {
+          "name": "Frozen Summit",
+          "decorations": ["ice formations", "snow drifts", "frozen waterfalls"],
+          "ambient_text": "Eternal winter grips this frozen realm"
+        }
+      ]
+    },
+    "palace": {
+      "name": "Royal Palace",
+      "description": "Magnificent palace chambers with imperial guardians",
+      "difficulty_range": [4, 7],
+      "challenge_count_range": [5, 8],
+      "has_boss_chance": 0.7,
+      "room_types": [
+        "question",
+        "selection",
+        "spawn_mobs",
+        "trap"
+      ],
+      "themes": [
+        {
+          "name": "Crystal Hall",
+          "decorations": ["crystal chandeliers", "mirrored walls", "golden statues"],
+          "ambient_text": "Crystal light dances across the polished floor"
+        },
+        {
+          "name": "Imperial Throne Room",
+          "decorations": ["throne", "imperial guards", "precious tapestries"],
+          "ambient_text": "The emperor's presence still lingers"
+        }
+      ]
+    },
+    "sky": {
+      "name": "Floating Isles",
+      "description": "Sky islands connected by bridges of light",
+      "difficulty_range": [4, 8],
+      "challenge_count_range": [5, 8],
+      "has_boss_chance": 0.7,
+      "room_types": [
+        "question",
+        "spawn_mobs",
+        "selection",
+        "trap"
+      ],
+      "themes": [
+        {
+          "name": "Paradise Gardens",
+          "decorations": ["floating flowers", "rainbow bridges", "cloud platforms"],
+          "ambient_text": "Colors bloom in the eternal twilight"
+        },
+        {
+          "name": "Celestial Bridge",
+          "decorations": ["light bridges", "starry void", "floating crystals"],
+          "ambient_text": "Stars shine beneath your feet"
+        }
+      ]
+    },
+    "battlefield": {
+      "name": "Ancient Battlefield",
+      "description": "Eternal battlegrounds haunted by fallen warriors",
+      "difficulty_range": [4, 8],
+      "challenge_count_range": [5, 9],
+      "has_boss_chance": 0.8,
+      "room_types": [
+        "spawn_mobs",
+        "trap",
+        "question",
+        "selection"
+      ],
+      "themes": [
+        {
+          "name": "Field of Swords",
+          "decorations": ["scattered weapons", "broken shields", "grave markers"],
+          "ambient_text": "The spirits of warriors still fight their eternal war"
+        },
+        {
+          "name": "Warlord's Camp",
+          "decorations": ["war tents", "banner poles", "campfires"],
+          "ambient_text": "Echoes of battle cries fill the air"
+        }
+      ]
+    },
+    "city": {
+      "name": "Abandoned City",
+      "description": "Ruined city streets teeming with dangers",
+      "difficulty_range": [5, 8],
+      "challenge_count_range": [5, 9],
+      "has_boss_chance": 0.75,
+      "room_types": [
+        "spawn_mobs",
+        "question",
+        "selection",
+        "trap"
+      ],
+      "themes": [
+        {
+          "name": "Shadow Streets",
+          "decorations": ["collapsed buildings", "overgrown streets", "flickering shadows"],
+          "ambient_text": "Darkness pools in every corner"
+        },
+        {
+          "name": "Forbidden District",
+          "decorations": ["sealed doors", "barred windows", "forbidden sigils"],
+          "ambient_text": "This district was sealed for a reason"
+        }
+      ]
+    },
+    "sanctum": {
+      "name": "Sanctum of Enlightenment",
+      "description": "The ultimate test for worthy heroes",
+      "difficulty_range": [5, 9],
+      "challenge_count_range": [6, 10],
+      "has_boss_chance": 0.85,
+      "room_types": [
+        "question",
+        "selection",
+        "spawn_mobs",
+        "trap"
+      ],
+      "themes": [
+        {
+          "name": "Chamber of Trials",
+          "decorations": ["ancient training equipment", "master's portraits", "sacred texts"],
+          "ambient_text": "Only the worthy may pass through here"
+        },
+        {
+          "name": "Hall of Masters",
+          "decorations": ["master's thrones", "legendary weapons", "honor rolls"],
+          "ambient_text": "The spirits of masters watch your progress"
+        }
+      ]
+    },
+    "summit": {
+      "name": "Peak of Immortals",
+      "description": "The highest challenge for the strongest heroes",
+      "difficulty_range": [6, 10],
+      "challenge_count_range": [7, 12],
+      "has_boss_chance": 0.9,
+      "room_types": [
+        "spawn_mobs",
+        "question",
+        "selection",
+        "trap"
+      ],
+      "themes": [
+        {
+          "name": "Peak Sanctuary",
+          "decorations": ["altar", "starlight", "wind sculptures"],
+          "ambient_text": "The wind carries whispers of the immortals"
+        },
+        {
+          "name": "Eternal Training Grounds",
+          "decorations": ["training dummies", "meditation circles", "ancient spires"],
+          "ambient_text": "Training never ends at these heights"
+        }
+      ]
+    },
+    "shadow": {
+      "name": "Shadow Realm",
+      "description": "A dimension of darkness and danger",
+      "difficulty_range": [5, 9],
+      "challenge_count_range": [6, 10],
+      "has_boss_chance": 0.85,
+      "room_types": [
+        "spawn_mobs",
+        "question",
+        "trap",
+        "selection"
+      ],
+      "themes": [
+        {
+          "name": "Realm of Nightmares",
+          "decorations": ["shadow creatures", "nightmare visions", "dark portals"],
+          "ambient_text": "Your worst fears take form in this realm"
+        },
+        {
+          "name": "Void Corridors",
+          "decorations": ["floating rocks", "void energy", "dark matter"],
+          "ambient_text": "Reality itself bends in the void"
+        }
+      ]
+    },
+    "void": {
+      "name": "Void Gateway",
+      "description": "The boundary between worlds grows thin",
+      "difficulty_range": [6, 10],
+      "challenge_count_range": [7, 12],
+      "has_boss_chance": 0.9,
+      "room_types": [
+        "spawn_mobs",
+        "question",
+        "selection",
+        "trap"
+      ],
+      "themes": [
+        {
+          "name": "Dimensional Rift",
+          "decorations": ["tearing space", "floating memories", "reality fragments"],
+          "ambient_text": "Space itself tears around you"
+        },
+        {
+          "name": "Chaos Dimension",
+          "decorations": ["chaotic energy", "swirling colors", "unstable ground"],
+          "ambient_text": "Order has no meaning here"
+        }
+      ]
+    },
+    "cosmic": {
+      "name": "The True Void",
+      "description": "Beyond all dimensions",
+      "difficulty_range": [7, 10],
+      "challenge_count_range": [8, 15],
+      "has_boss_chance": 0.95,
+      "room_types": [
+        "spawn_mobs",
+        "question",
+        "selection",
+        "trap"
+      ],
+      "themes": [
+        {
+          "name": "Abyss of Nothing",
+          "decorations": ["absolute darkness", "floating singularities", "cosmic dust"],
+          "ambient_text": "Nothing exists here but the void"
+        },
+        {
+          "name": "Cosmic Horror Realm",
+          "decorations": ["eldritch entities", "cosmic ruins", "unreality"],
+          "ambient_text": "Ancient horrors watch from beyond"
+        }
+      ]
+    },
+    "heaven": {
+      "name": "Celestial Realm",
+      "description": "The realm of the gods",
+      "difficulty_range": [6, 10],
+      "challenge_count_range": [7, 12],
+      "has_boss_chance": 0.9,
+      "room_types": [
+        "question",
+        "spawn_mobs",
+        "selection",
+        "trap"
+      ],
+      "themes": [
+        {
+          "name": "Divine Gardens",
+          "decorations": ["divine flowers", "light fountains", "angelic statues"],
+          "ambient_text": "Divine light warms your soul"
+        },
+        {
+          "name": "Heavenly Throne Room",
+          "decorations": ["divine throne", "angelic choir", "sacred light"],
+          "ambient_text": "The gods themselves watch your journey"
+        }
+      ]
+    },
+    "divine": {
+      "name": "Supreme Realm",
+      "description": "The ultimate destination",
+      "difficulty_range": [8, 10],
+      "challenge_count_range": [10, 15],
+      "has_boss_chance": 1.0,
+      "room_types": [
+        "question",
+        "spawn_mobs",
+        "selection",
+        "trap"
+      ],
+      "themes": [
+        {
+          "name": "Realm of Creation",
+          "decorations": ["primeval energy", "creation sparks", "universal law"],
+          "ambient_text": "The universe itself was born here"
+        },
+        {
+          "name": "Eternal Throne",
+          "decorations": ["throne of all", "cosmic power", "divine presence"],
+          "ambient_text": "The supreme being awaits"
+        }
+      ]
+    },
+    "treasure": {
+      "name": "Hidden Treasury",
+      "description": "Vaults of unimaginable wealth",
+      "difficulty_range": [4, 8],
+      "challenge_count_range": [5, 9],
+      "has_boss_chance": 0.8,
+      "room_types": [
+        "trap",
+        "selection",
+        "question",
+        "spawn_mobs"
+      ],
+      "themes": [
+        {
+          "name": "Golden Vault",
+          "decorations": ["gold piles", "gemstone walls", "treasure chests"],
+          "ambient_text": "Wealth beyond imagination surrounds you"
+        },
+        {
+          "name": "Crystal Treasury",
+          "decorations": ["crystal formations", "priceless artifacts", "light refraction"],
+          "ambient_text": "Each crystal holds infinite value"
+        }
+      ]
+    }
+  },
+  "challenge_templates": {
+    "question": {
+      "name": "Riddle Challenge",
+      "description": "Solve riddles to proceed",
+      "types": [
+        {
+          "id": "riddle_ancient",
+          "question": "I speak without a mouth and hear without ears. I have no body, but I come alive with wind. What am I?",
+          "answer": "echo",
+          "hints": [
+            "It's a sound-related phenomenon",
+            "It repeats what you say",
+            "It needs a space to form"
+          ],
+          "time_limit": 60,
+          "failure_damage": 15,
+          "success_reward": {"gold": 50, "experience": 100}
+        },
+        {
+          "id": "riddle_treasure",
+          "question": "The more you take, the more you leave behind. What am I?",
+          "answer": "footsteps",
+          "hints": [
+            "You create these when walking",
+            "They mark your path",
+            "They disappear over time"
+          ],
+          "time_limit": 60,
+          "failure_damage": 15,
+          "success_reward": {"gold": 50, "experience": 100}
+        },
+        {
+          "id": "riddle_mystery",
+          "question": "I have cities, but no houses. I have mountains, but no trees. I have water, but no fish. What am I?",
+          "answer": "map",
+          "hints": [
+            "It's something you can hold",
+            "It shows places",
+            "It has pictures of geography"
+          ],
+          "time_limit": 60,
+          "failure_damage": 15,
+          "success_reward": {"gold": 50, "experience": 100}
+        },
+        {
+          "id": "riddle_time",
+          "question": "What has keys but no locks, space but no room, and you can enter but can't go inside?",
+          "answer": "keyboard",
+          "hints": [
+            "You use this every day",
+            "It has letters and symbols",
+            "It's used for input"
+          ],
+          "time_limit": 60,
+          "failure_damage": 15,
+          "success_reward": {"gold": 50, "experience": 100}
+        },
+        {
+          "id": "riddle_shadow",
+          "question": "What walks on four legs in the morning, two legs at noon, and three legs in the evening?",
+          "answer": "human",
+          "hints": [
+            "It's a living being",
+            "Think about life stages",
+            "It represents the cycle of life"
+          ],
+          "time_limit": 60,
+          "failure_damage": 15,
+          "success_reward": {"gold": 50, "experience": 100}
+        },
+        {
+          "id": "riddle_philosophy",
+          "question": "To be, or not to be: that is the question. What is the answer?",
+          "answer": "be",
+          "hints": [
+            "It's a simple word",
+            "The opposite of 'not to'",
+            "It's about existence"
+          ],
+          "time_limit": 60,
+          "failure_damage": 15,
+          "success_reward": {"gold": 50, "experience": 100}
+        },
+        {
+          "id": "riddle_element",
+          "question": "I am always hungry, I must always be fed. The finger I lick will soon turn red. What am I?",
+          "answer": "fire",
+          "hints": [
+            "It's a natural element",
+            "It needs oxygen",
+            "It can be dangerous"
+          ],
+          "time_limit": 60,
+          "failure_damage": 15,
+          "success_reward": {"gold": 50, "experience": 100}
+        },
+        {
+          "id": "riddle_life",
+          "question": "The person who makes it has no need of it; the person who buys it has no use for it. The person who uses it can neither see nor feel it. What is it?",
+          "answer": "coffin",
+          "hints": [
+            "It's related to death",
+            "It's a container",
+            "It's made of wood"
+          ],
+          "time_limit": 60,
+          "failure_damage": 15,
+          "success_reward": {"gold": 50, "experience": 100}
+        }
+      ]
+    },
+    "spawn_mobs": {
+      "name": "Battle Challenge",
+      "description": "Fight through waves of enemies",
+      "flee_possible": false,
+      "wave_config": {
+        "wave_count_range": [2, 4],
+        "enemies_per_wave_range": [2, 4],
+        "enemy_types": [
+          {
+            "type": "basic",
+            "name": "Dungeon Crawler",
+            "hp_multiplier": 0.8,
+            "attack_multiplier": 0.8
+          },
+          {
+            "type": "elite",
+            "name": "Elite Guardian",
+            "hp_multiplier": 1.2,
+            "attack_multiplier": 1.1
+          },
+          {
+            "type": "special",
+            "name": "Dungeon Specialist",
+            "hp_multiplier": 1.0,
+            "attack_multiplier": 1.0
+          }
+        ]
+      },
+      "failure_damage": 25,
+      "success_reward": {"gold": 100, "experience": 200}
+    },
+    "selection": {
+      "name": "Choice Challenge",
+      "description": "Make the right choice to proceed",
+      "types": [
+        {
+          "id": "path_selection",
+          "question": "You come to a fork in the road. One path leads to certain doom, the other to potential glory. Which do you choose?",
+          "options": [
+            {"text": "Left path", "correct": true, "reason": "Fortune favors the bold!"},
+            {"text": "Right path", "correct": false, "reason": "Cowardice leads to stagnation."},
+            {"text": "Stay put", "correct": false, "reason": "Indecision is its own punishment."}
+          ],
+          "time_limit": 30,
+          "failure_damage": 10,
+          "success_reward": {"gold": 75, "experience": 150}
+        },
+        {
+          "id": "chest_selection",
+          "question": "Three chests appear before you. One contains treasure, one contains a trap, one is empty. Which do you open?",
+          "options": [
+            {"text": "Golden Chest", "correct": false, "reason": "All that glitters is not gold."},
+            {"text": "Silver Chest", "correct": true, "reason": "Silver brings fortune!"},
+            {"text": "Bronze Chest", "correct": false, "reason": "The humble path reveals true value."}
+          ],
+          "time_limit": 30,
+          "failure_damage": 20,
+          "success_reward": {"gold": 150, "experience": 200}
+        },
+        {
+          "id": "ally_selection",
+          "question": "You encounter three travelers. One claims to be a guide, one seeks the same goal, one hides dark intentions. Which do you trust?",
+          "options": [
+            {"text": "The Guide", "correct": false, "reason": "Many claim to lead astray."},
+            {"text": "The Seeker", "correct": true, "reason": "Shared purpose builds trust!"},
+            {"text": "Trust None", "correct": false, "reason": "Solitude has its own perils."}
+          ],
+          "time_limit": 30,
+          "failure_damage": 10,
+          "success_reward": {"gold": 75, "experience": 150}
+        },
+        {
+          "id": "puzzle_selection",
+          "question": "Ancient runes glow before you. They form a phrase. Which word completes it? 'Darkness comes before the ___'?",
+          "options": [
+            {"text": "Light", "correct": true, "reason": "The eternal cycle completes!"},
+            {"text": "Night", "correct": false, "reason": "The darkness IS the night."},
+            {"text": "Shadow", "correct": false, "reason": "Shadows follow darkness."}
+          ],
+          "time_limit": 30,
+          "failure_damage": 15,
+          "success_reward": {"gold": 100, "experience": 175}
+        },
+        {
+          "id": "moral_selection",
+          "question": "A dying merchant offers you his fortune, but asks you to avenge his death. Do you:",
+          "options": [
+            {"text": "Take the gold", "correct": false, "reason": "Greed has its price."},
+            {"text": "Promise vengeance", "correct": true, "reason": "Honor demands action!"},
+            {"text": "Refuse both", "correct": false, "reason": "Neutrality is its own choice."}
+          ],
+          "time_limit": 30,
+          "failure_damage": 15,
+          "success_reward": {"gold": 100, "experience": 175}
+        }
+      ]
+    },
+    "trap": {
+      "name": "Trap Challenge",
+      "description": "Test your luck and skill",
+      "mechanic": "roll_d20",
+      "success_threshold": 10,
+      "difficulty_modifiers": {
+        "easy": {"threshold": 8, "failure_damage_multiplier": 0.5},
+        "normal": {"threshold": 10, "failure_damage_multiplier": 1.0},
+        "hard": {"threshold": 12, "failure_damage_multiplier": 1.5}
+      },
+      "types": [
+        {
+          "id": "arrow_trap",
+          "name": "Arrow Trap",
+          "description": "Darts shoot from the walls! Roll to dodge!",
+          "base_damage": 20,
+          "difficulty": "normal"
+        },
+        {
+          "id": "pit_trap",
+          "name": "Pit Trap",
+          "description": "The floor gives way beneath you! Roll to catch the edge!",
+          "base_damage": 25,
+          "difficulty": "normal"
+        },
+        {
+          "id": "crusher_trap",
+          "name": "Crusher Trap",
+          "description": "Massive walls close in! Roll to find the gap!",
+          "base_damage": 30,
+          "difficulty": "hard"
+        },
+        {
+          "id": "poison_trap",
+          "name": "Poison Gas Trap",
+          "description": "Deadly gas fills the room! Roll to hold your breath!",
+          "base_damage": 15,
+          "difficulty": "easy"
+        },
+        {
+          "id": "fire_trap",
+          "name": "Fire Trap",
+          "description": "Flames erupt from the floor! Roll to find safety!",
+          "base_damage": 25,
+          "difficulty": "normal"
+        },
+        {
+          "id": "lightning_trap",
+          "name": "Lightning Trap",
+          "description": "Lightning strikes from above! Roll to avoid the bolts!",
+          "base_damage": 25,
+          "difficulty": "normal"
+        },
+        {
+          "id": "blade_trap",
+          "name": "Swinging Blade Trap",
+          "description": "Giant blades swing through the corridor! Roll to time your move!",
+          "base_damage": 30,
+          "difficulty": "hard"
+        },
+        {
+          "id": "illusion_trap",
+          "name": "Illusion Trap",
+          "description": "Reality warps around you! Roll to maintain your senses!",
+          "base_damage": 10,
+          "difficulty": "easy"
+        }
+      ],
+      "failure_damage_base": 20,
+      "success_reward": {"gold": 50, "experience": 100}
+    }
+  },
+  "boss_templates": {
+    "temple": {
+      "name": "Eternal Guardian",
+      "hp_multiplier": 1.5,
+      "attack_multiplier": 1.3,
+      "special_abilities": [
+        {
+          "name": "Divine Strike",
+          "description": "A powerful holy attack",
+          "damage": 40,
+          "cooldown": 3
+        },
+        {
+          "name": "Time Warp",
+          "description": "Reverses a portion of damage",
+          "effect": "heal",
+          "amount": 50,
+          "cooldown": 5
+        }
+      ]
+    },
+    "forest": {
+      "name": "Forest Ancient",
+      "hp_multiplier": 1.4,
+      "attack_multiplier": 1.2,
+      "special_abilities": [
+        {
+          "name": "Nature's Wrath",
+          "description": "Summons vines to entangle",
+          "damage": 35,
+          "effect": "root",
+          "cooldown": 3
+        }
+      ]
+    },
+    "lake": {
+      "name": "Dragon Turtle King",
+      "hp_multiplier": 1.6,
+      "attack_multiplier": 1.2,
+      "special_abilities": [
+        {
+          "name": "Tidal Wave",
+          "description": "Massive water damage",
+          "damage": 45,
+          "cooldown": 4
+        }
+      ]
+    },
+    "mountain": {
+      "name": "Thunder Lord",
+      "hp_multiplier": 1.5,
+      "attack_multiplier": 1.4,
+      "special_abilities": [
+        {
+          "name": "Lightning Storm",
+          "description": "Chain lightning attacks",
+          "damage": 50,
+          "cooldown": 3
+        }
+      ]
+    },
+    "palace": {
+      "name": "Imperial Guardian",
+      "hp_multiplier": 1.5,
+      "attack_multiplier": 1.3,
+      "special_abilities": [
+        {
+          "name": "Imperial Decree",
+          "description": "Reduces player stats",
+          "effect": "debuff",
+          "cooldown": 4
+        }
+      ]
+    },
+    "city": {
+      "name": "Shadow Overlord",
+      "hp_multiplier": 1.6,
+      "attack_multiplier": 1.4,
+      "special_abilities": [
+        {
+          "name": "Shadow Meld",
+          "description": "Becomes invulnerable",
+          "effect": "invulnerable",
+          "cooldown": 5
+        }
+      ]
+    },
+    "treasure": {
+      "name": "Golden Dragon",
+      "hp_multiplier": 1.4,
+      "attack_multiplier": 1.5,
+      "special_abilities": [
+        {
+          "name": "Gold Breath",
+          "description": "Turns enemies to gold",
+          "effect": "stun",
+          "cooldown": 4
+        }
+      ]
+    }
+  },
+  "chest_templates": {
+    "small": {
+      "name": "Small Chest",
+      "gold_range": [50, 150],
+      "item_count_range": [1, 2],
+      "item_rarity": ["common", "uncommon"],
+      "experience": 100
+    },
+    "medium": {
+      "name": "Medium Chest",
+      "gold_range": [150, 400],
+      "item_count_range": [2, 3],
+      "item_rarity": ["uncommon", "rare"],
+      "experience": 250
+    },
+    "large": {
+      "name": "Large Chest",
+      "gold_range": [400, 800],
+      "item_count_range": [3, 5],
+      "item_rarity": ["rare", "epic"],
+      "experience": 500
+    },
+    "boss": {
+      "name": "Boss Chest",
+      "gold_range": [1000, 2000],
+      "item_count_range": [4, 6],
+      "item_rarity": ["epic", "legendary"],
+      "guaranteed_legendary": true,
+      "experience": 1000
+    },
+    "legendary": {
+      "name": "Legendary Chest",
+      "gold_range": [2000, 5000],
+      "item_count_range": [5, 8],
+      "item_rarity": ["legendary"],
+      "guaranteed_legendary": 2,
+      "experience": 2000
+    }
+  },
+  "dungeon_generation_rules": {
+    "difficulty_scaling": {
+      "base_difficulty": 1,
+      "difficulty_per_challenge": 0.5,
+      "boss_difficulty_bonus": 2
+    },
+    "reward_scaling": {
+      "base_gold": 100,
+      "gold_per_difficulty": 50,
+      "base_experience": 200,
+      "experience_per_difficulty": 100
+    },
+    "random_seed_options": {
+      "include_time_seed": true,
+      "include_player_level": true,
+      "include_area_difficulty": true
+    }
+  }
+}
+
