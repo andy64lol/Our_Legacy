@@ -62,6 +62,21 @@ function containsProfanity(text, profanityWords) {
   return false;
 }
 
+function isJsonFile(filename) {
+  if (!filename || typeof filename !== 'string') return false;
+  return filename.toLowerCase().endsWith('.json');
+}
+
+function validateFileExtension(filename) {
+  if (!isJsonFile(filename)) {
+    return {
+      valid: false,
+      error: `File "${filename}" is not a JSON file. Only .json files are allowed.`
+    };
+  }
+  return { valid: true };
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "POST only" });
@@ -80,6 +95,16 @@ export default async function handler(req, res) {
       return res.status(400).json({
         error: "Directory must contain mod.json"
       });
+    }
+
+    // 检查所有文件是否都是JSON文件
+    for (const filename of Object.keys(files)) {
+      const validation = validateFileExtension(filename);
+      if (!validation.valid) {
+        return res.status(400).json({
+          error: validation.error
+        });
+      }
     }
 
     // 获取不雅词汇列表
@@ -127,6 +152,19 @@ export default async function handler(req, res) {
           return res.status(400).json({
             error: `File "${filename}" content contains prohibited content`
           });
+        }
+      } else {
+        // 如果是base64编码的内容，先解码再检查
+        try {
+          const decodedContent = Buffer.from(content, 'base64').toString('utf-8');
+          if (containsProfanity(decodedContent, profanityWords)) {
+            return res.status(400).json({
+              error: `File "${filename}" content contains prohibited content`
+            });
+          }
+        } catch (decodeError) {
+          // 如果解码失败，跳过内容检查
+          console.error(`Failed to decode base64 content for file ${filename}:`, decodeError);
         }
       }
     }
