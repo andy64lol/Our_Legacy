@@ -64,6 +64,10 @@
     "unlock_conditions": {
       "level": 8,
       "missions_required": ["crystal_guardian", "troll_slayer"]
+    },
+    "dialogues": {
+      "on_start_battle": "dragon.boss.start",
+      "on_defeat": "dragon.boss.defeat"
     }
   },
   "troll_king": {

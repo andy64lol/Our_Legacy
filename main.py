@@ -1056,7 +1056,7 @@ class Enemy:
 class Boss(Enemy):
     """Boss enemy class with phases and special abilities"""
 
-    def __init__(self, boss_data: Dict):
+    def __init__(self, boss_data: Dict, dialogues_data: Optional[Dict[str, Any]] = None):
         super().__init__(boss_data)
         self.description = boss_data.get("description", "A powerful foe.")
         self.special_abilities = boss_data.get("special_abilities", [])
@@ -1065,6 +1065,18 @@ class Boss(Enemy):
         self.mp = 100
         self.max_mp = 100
         self.cooldowns = {}
+        self.dialogues_data = dialogues_data or {}
+        self.boss_dialogues = boss_data.get("dialogues", {})
+
+    def get_dialogue(self, dialogue_key: str) -> Optional[str]:
+        """Get a dialogue string by key, looking up the reference in dialogues_data"""
+        # Get the dialogue reference key from boss data
+        dialogue_ref = self.boss_dialogues.get(dialogue_key)
+        if not dialogue_ref:
+            return None
+        
+        # Look up the actual dialogue text from dialogues_data
+        return self.dialogues_data.get(dialogue_ref)
 
     def take_damage(self, damage: int) -> int:
         actual_damage = super().take_damage(damage)
@@ -1102,6 +1114,7 @@ class Game:
         self.spells_data: Dict[str, Any] = {}
         self.effects_data: Dict[str, Any] = {}
         self.companions_data: Dict[str, Any] = {}
+        self.dialogues_data: Dict[str, Any] = {}
         self.mission_progress: Dict[str, Any] = {
         }  # mission_id -> {current_count, target_count, completed, type}
         self.completed_missions: List[str] = []
@@ -1147,6 +1160,13 @@ class Game:
                     self.crafting_data = json.load(f)
             except FileNotFoundError:
                 self.crafting_data = {}
+            
+            # Load dialogues data
+            try:
+                with open('data/dialogues.json', 'r') as f:
+                    self.dialogues_data = json.load(f)
+            except FileNotFoundError:
+                self.dialogues_data = {}
             
             # Load mod data after base game data
             self._load_mod_data()
@@ -1630,10 +1650,14 @@ class Game:
 
                 boss_data = self.bosses_data.get(boss_name)
                 if boss_data:
-                    boss = Boss(boss_data)
+                    boss = Boss(boss_data, self.dialogues_data)
                     print(
                         f"\n{Colors.RED}{Colors.BOLD}Challenge accepted!{Colors.END}"
                     )
+                    # Print start dialogue if available
+                    start_dialogue = boss.get_dialogue("on_start_battle")
+                    if start_dialogue:
+                        print(f"\n{Colors.CYAN}{boss.name}:{Colors.END} {start_dialogue}")
                     self.battle(boss)
             else:
                 print("Invalid choice.")
