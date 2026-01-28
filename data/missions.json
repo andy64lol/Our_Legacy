@@ -25,7 +25,7 @@
       "gold": 40,
       "items": ["Bandit's Chain", "Rusty Sword"]
     },
-    "area": "starting_village",
+    "area": "forest_path",
     "unlock_level": 1,
     "prerequisites": []
   },
