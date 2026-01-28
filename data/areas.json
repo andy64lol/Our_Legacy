@@ -25,7 +25,7 @@
   "deep_woods": {
     "name": "Deep Woods",
     "description": "The heart of the forest where ancient magic still lingers. Dangerous creatures prowl these shadows.",
-    "possible_enemies": ["goblin", "orc", "dark_mage", "wolf"],
+    "possible_enemies": ["goblin", "orc", "dark_mage", "wolf","Bandit"],
     "possible_bosses": ["orc_chieftain"],
     "shops": [],
     "missions_available": false,
