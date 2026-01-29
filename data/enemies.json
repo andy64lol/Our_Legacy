@@ -357,5 +357,85 @@
     "speed": 40,
     "gold_reward": 50,
     "loot_table": ["Ninja's Shuriken","Ninjato"]
+  },
+  "undead_knight": {
+    "name": "Undead Knight",
+    "hp": 85,
+    "attack": 20,
+    "defense": 12,
+    "speed": 6,
+    "experience_reward": 70,
+    "gold_reward": 40,
+    "loot_table": ["Holy Relic", "Divine Essence", "Paladin's Sword"]
+  },
+  "demon": {
+    "name": "Demon",
+    "hp": 95,
+    "attack": 22,
+    "defense": 8,
+    "speed": 14,
+    "experience_reward": 75,
+    "gold_reward": 45,
+    "loot_table": ["Holy Relic", "Divine Essence", "Sacred Armor"]
+  },
+  "corrupted_priest": {
+    "name": "Corrupted Priest",
+    "hp": 70,
+    "attack": 18,
+    "defense": 10,
+    "speed": 11,
+    "experience_reward": 60,
+    "gold_reward": 35,
+    "loot_table": ["Divine Essence", "Sacred Water", "Priest's Staff"]
+  },
+  "forest_guardian": {
+    "name": "Forest Guardian",
+    "hp": 65,
+    "attack": 15,
+    "defense": 9,
+    "speed": 13,
+    "experience_reward": 55,
+    "gold_reward": 32,
+    "loot_table": ["Herb Bundle", "Nature Stone", "Druidic Staff"]
+  },
+  "corrupted_treant": {
+    "name": "Corrupted Treant",
+    "hp": 110,
+    "attack": 19,
+    "defense": 11,
+    "speed": 4,
+    "experience_reward": 80,
+    "gold_reward": 50,
+    "loot_table": ["Nature Stone", "Herb Bundle", "Druid's Spear"]
+  },
+  "nature_wraith": {
+    "name": "Nature Wraith",
+    "hp": 75,
+    "attack": 17,
+    "defense": 7,
+    "speed": 16,
+    "experience_reward": 65,
+    "gold_reward": 38,
+    "loot_table": ["Nature Stone", "Beast Form Amulet"]
+  },
+  "zealot": {
+    "name": "Zealot",
+    "hp": 80,
+    "attack": 21,
+    "defense": 9,
+    "speed": 12,
+    "experience_reward": 70,
+    "gold_reward": 42,
+    "loot_table": ["Divine Focus", "Sacred Water", "Holy Wand"]
+  },
+  "shadow_priest": {
+    "name": "Shadow Priest",
+    "hp": 85,
+    "attack": 16,
+    "defense": 11,
+    "speed": 10,
+    "experience_reward": 72,
+    "gold_reward": 44,
+    "loot_table": ["Divine Focus", "Sacred Armor", "Holy Vestment"]
   }
 }

@@ -7,7 +7,7 @@
 ## Features
 
 ### Core Gameplay
-- **Character Classes**: Choose from **Warrior**, **Mage**, **Rogue**, **Hunter**, or the new **Bard** class.
+- **Character Classes**: Choose from **Warrior**, **Mage**, **Rogue**, **Hunter**, **Bard**, **Paladin**, **Druid**, or **Priest** classes.
 - **Exploration**: 7 diverse areas including the Starting Village, Dark Forest, Ancient Ruins, and more.
 - **Alchemy & Crafting**: Collect materials from monsters and the environment to brew potent potions or forge powerful equipment.
 - **Grinding System**: Level up through combat, gaining stats and unlocking new equipment.
@@ -30,6 +30,9 @@
 | **Rogue** | Agile assassin | High Speed & Crit | Steel Dagger, Leather Armor |
 | **Hunter** | Experienced tracker | High Attack & Aim | Hunter's Bow, Hunting Knife |
 | **Bard** | Master of melodies | High Speed & Support | Enchanting Lute, Colourful Robe |
+| **Paladin** | Holy warrior | High Defense & Holy Power | Paladin's Sword, Holy Shield |
+| **Druid** | Nature guardian | High MP & Shapeshift | Druidic Staff, Nature's Robe |
+| **Priest** | Devoted healer | High MP & Healing | Priest's Staff, Devout's Robe |
 
 ## Alchemy & Crafting
 

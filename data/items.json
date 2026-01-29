@@ -2440,5 +2440,192 @@
       "requirements": {
          "level": 1
       }
+   },
+   "Paladin's Sword":{
+      "type": "weapon",
+      "description": "A holy blade blessed by ancient priests, radiating divine light",
+      "attack_bonus": 85,
+      "defense_bonus": 5,
+      "price": 150,
+      "rarity": "rare",
+      "requirements": {
+         "level": 2,
+         "class": "Paladin"
+      }
+   },
+   "Holy Shield":{
+      "type": "armor",
+      "description": "A sacred shield infused with protective magic",
+      "defense_bonus": 12,
+      "hp_bonus": 20,
+      "price": 120,
+      "rarity": "uncommon",
+      "requirements": {
+         "level": 1,
+         "class": "Paladin"
+      }
+   },
+   "Sacred Armor":{
+      "type": "armor",
+      "description": "Divine plate armor that shimmers with holy light",
+      "defense_bonus": 16,
+      "price": 180,
+      "rarity": "rare",
+      "requirements": {
+         "level": 3,
+         "class": "Paladin"
+      }
+   },
+   "Divine Hammer":{
+      "type": "weapon",
+      "description": "A massive hammer blessed by the gods, dealing holy damage",
+      "attack_bonus": 110,
+      "defense_bonus": 8,
+      "price": 250,
+      "rarity": "rare",
+      "requirements": {
+         "level": 4,
+         "class": "Paladin"
+      }
+   },
+   "Holy Relic":{
+      "type": "material",
+      "description": "A sacred relic crackling with divine energy",
+      "price": 100,
+      "rarity": "rare"
+   },
+   "Divine Essence":{
+      "type": "material",
+      "description": "Pure essence of divine power extracted from holy artifacts",
+      "price": 150,
+      "rarity": "rare"
+   },
+   "Druidic Staff":{
+      "type": "weapon",
+      "description": "A gnarled staff carved from ancient wood, pulsing with nature's power",
+      "attack_bonus": 75,
+      "mp_bonus": 15,
+      "price": 140,
+      "rarity": "uncommon",
+      "requirements": {
+         "level": 2,
+         "class": "Druid"
+      }
+   },
+   "Nature's Robe":{
+      "type": "armor",
+      "description": "Robes woven from living vines and leaves, constantly regenerating",
+      "defense_bonus": 10,
+      "hp_bonus": 15,
+      "price": 110,
+      "rarity": "uncommon",
+      "requirements": {
+         "level": 1,
+         "class": "Druid"
+      }
+   },
+   "Druid's Spear":{
+      "type": "weapon",
+      "description": "A spear of thorned wood infused with nature magic",
+      "attack_bonus": 95,
+      "defense_bonus": 4,
+      "price": 200,
+      "rarity": "rare",
+      "requirements": {
+         "level": 4,
+         "class": "Druid"
+      }
+   },
+   "Beast Form Amulet":{
+      "type": "accessory",
+      "description": "An amulet that enhances shapeshifting abilities",
+      "hp_bonus": 25,
+      "speed_bonus": 5,
+      "price": 180,
+      "rarity": "rare",
+      "requirements": {
+         "level": 3,
+         "class": "Druid"
+      }
+   },
+   "Herb Bundle":{
+      "type": "material",
+      "description": "A collection of rare herbs gathered from enchanted forests",
+      "price": 60,
+      "rarity": "uncommon"
+   },
+   "Nature Stone":{
+      "type": "material",
+      "description": "A crystalline stone infused with the essence of nature",
+      "price": 80,
+      "rarity": "rare"
+   },
+   "Priest's Staff":{
+      "type": "weapon",
+      "description": "A sacred staff topped with a glowing crystal, channeling divine healing",
+      "attack_bonus": 65,
+      "mp_bonus": 25,
+      "price": 160,
+      "rarity": "uncommon",
+      "requirements": {
+         "level": 2,
+         "class": "Priest"
+      }
+   },
+   "Devout's Robe":{
+      "type": "armor",
+      "description": "Holy robes worn by priests, blessed with protective magic",
+      "defense_bonus": 9,
+      "mp_bonus": 20,
+      "price": 130,
+      "rarity": "uncommon",
+      "requirements": {
+         "level": 1,
+         "class": "Priest"
+      }
+   },
+   "Holy Wand":{
+      "type": "weapon",
+      "description": "An ornate wand that amplifies divine magic",
+      "attack_bonus": 80,
+      "mp_bonus": 30,
+      "price": 210,
+      "rarity": "rare",
+      "requirements": {
+         "level": 4,
+         "class": "Priest"
+      }
+   },
+   "Sacred Water":{
+      "type": "material",
+      "description": "Pure water blessed by holy rituals, emitting a soft glow",
+      "price": 75,
+      "rarity": "uncommon"
+   },
+   "Resurrection Scroll":{
+      "type": "consumable",
+      "description": "A sacred scroll capable of reviving a fallen ally with full health",
+      "effect": "resurrect",
+      "value": 100,
+      "price": 500,
+      "rarity": "rare"
+   },
+   "Holy Vestment":{
+      "type": "armor",
+      "description": "Sacred vestments that glow with inner light, granting protection and wisdom",
+      "defense_bonus": 14,
+      "mp_bonus": 25,
+      "price": 200,
+      "rarity": "rare",
+      "requirements": {
+         "level": 3,
+         "class": "Priest"
+      }
+   },
+   "Divine Focus":{
+      "type": "material",
+      "description": "A crystallized focal point of divine power used in powerful rituals",
+      "price": 120,
+      "rarity": "rare"
    }
 }
