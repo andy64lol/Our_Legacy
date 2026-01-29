@@ -30,6 +30,9 @@ This comprehensive guide covers the complete structure of Our Legacy RPG, includ
 - **dialogues.json** - NPC and boss dialogue text
 - **dungeons.json** - Dungeon definitions and challenges
 - **weekly_challenges.json** - Recurring challenges
+- **housing.json** - Housing items for home building ⭐ NEW
+- **dungeons.json** - Dungeon definitions and challenges
+- **weekly_challenges.json** - Recurring challenges
 
 ### Mod Data (`mods/` directory)
 Mods can override or extend any base game data files. Each mod folder can contain:
@@ -1001,6 +1004,70 @@ Create `mods/MyMod/items.json`:
 - Challenges from mods are appended to the base challenge list
 - Challenge IDs must be unique across all loaded mods and base game
 - Progress tracking is automatically initialized for new challenges
+
+---
+
+### 10. HOUSING.JSON
+
+**Purpose**: Define housing items that players can purchase and place in their home at "Your Land".
+
+**Parameters**:
+```json
+{
+  "housing_item_id": {
+    "name": "string",                          // Display name in Housing Shop
+    "description": "string",                   // Item description/flavor text
+    "price": number,                           // Cost in gold to purchase
+    "comfort_points": number                   // Comfort value for home tier
+  }
+}
+```
+
+**Housing Item Guidelines**:
+- **Price Range**: 30-20000+ gold (scales with comfort and rarity)
+- **Comfort Points**: 5-1000+ points (typically 1 point per 10-15 gold)
+- **Home Tiers** (based on total comfort):
+  - COMMON (0-99): Basic shelter with minimal comfort
+  - UNCOMMON (100-199): Modest home with decent accommodations
+  - RARE (200-499): Well-decorated home with many comforts
+  - EPIC (500-999): Luxurious estate with exceptional amenities
+  - LEGENDARY (1000+): Grand mansion fit for royalty
+
+**Example**:
+```json
+{
+  "small_tent": {
+    "name": "Small tent",
+    "description": "A basic makeshift tent that provides minimal shelter.",
+    "price": 50,
+    "comfort_points": 10
+  },
+  "crystal_greenhouse": {
+    "name": "Crystal greenhouse",
+    "description": "A greenhouse made of crystal, perfect for cultivating rare and exotic plants.",
+    "price": 900,
+    "comfort_points": 45
+  },
+  "imperial_palace": {
+    "name": "Imperial palace with jade walls and diamond encrusted furnishings",
+    "description": "An extraordinary imperial palace adorned with jade walls and lavish diamond-encrusted furnishings, representing the pinnacle of opulence.",
+    "price": 20000,
+    "comfort_points": 1000
+  }
+}
+```
+
+**Purchasing Housing**:
+- Players can purchase multiple copies of the same item (comfort stacks)
+- Housing items appear in Housing Shop in "Your Land" area
+- Purchased items contribute to overall home comfort rating
+- Items can be removed from home (refunding comfort points)
+
+**Mod Merging Behavior**:
+- Mods can add new housing items
+- All items from base game and enabled mods appear in Housing Shop
+- No ID conflicts (mod items coexist with base items)
+- Items from all sources contribute equally to comfort
 
 ---
 
