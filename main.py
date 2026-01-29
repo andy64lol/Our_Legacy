@@ -1319,15 +1319,15 @@ class Game:
             )
             print()
 
-            print(f"{Colors.BOLD}=== MAIN MENU ==={Colors.END}")
-            print("1. New Game")
-            print("2. Load Game")
-            print("3. Settings")
-            print("4. Mods")
-            print("5. Quit")
+            print(f"{Colors.BOLD}{Colors.CYAN}=== MAIN MENU ==={Colors.END}")
+            print(f"{Colors.CYAN}1.{Colors.END} New Game")
+            print(f"{Colors.CYAN}2.{Colors.END} Load Game")
+            print(f"{Colors.CYAN}3.{Colors.END} Settings")
+            print(f"{Colors.CYAN}4.{Colors.END} Mods")
+            print(f"{Colors.CYAN}5.{Colors.END} Quit")
             print()
 
-            choice = ask("Choose an option (1-5): ")
+            choice = ask(f"{Colors.CYAN}Choose an option (1-5): {Colors.END}")
             if choice == "1":
                 return "new_game"
             elif choice == "2":
@@ -1573,36 +1573,36 @@ class Game:
         area_data = self.areas_data.get(self.current_area, {})
         print(f"{Colors.CYAN}Location: {area_data.get('name', self.current_area)}{Colors.END}")
         
-        print(f"{Colors.BLUE}1.{Colors.END} Explore")
-        print(f"{Colors.BLUE}2.{Colors.END} View Character")
-        print(f"{Colors.BLUE}3.{Colors.END} Travel")
-        print(f"{Colors.BLUE}4.{Colors.END} Inventory")
-        print(f"{Colors.BLUE}5.{Colors.END} Missions")
-        print(f"{Colors.BLUE}6.{Colors.END} Fight Boss")
-        print(f"{Colors.BLUE}7.{Colors.END} Tavern")
-        print(f"{Colors.BLUE}8.{Colors.END} Shop")
-        print(f"{Colors.BLUE}9.{Colors.END} Alchemy")
-        print(f"{Colors.BLUE}10.{Colors.END} Elite Market")
-        print(f"{Colors.BLUE}11.{Colors.END} Rest")
-        print(f"{Colors.BLUE}12.{Colors.END} Companions")
-        print(f"{Colors.BLUE}13.{Colors.END} Dungeons")
-        print(f"{Colors.BLUE}14.{Colors.END} Challenges")
+        print(f"{Colors.CYAN}1.{Colors.END} Explore")
+        print(f"{Colors.CYAN}2.{Colors.END} View Character")
+        print(f"{Colors.CYAN}3.{Colors.END} Travel")
+        print(f"{Colors.CYAN}4.{Colors.END} Inventory")
+        print(f"{Colors.CYAN}5.{Colors.END} Missions")
+        print(f"{Colors.CYAN}6.{Colors.END} Fight Boss")
+        print(f"{Colors.CYAN}7.{Colors.END} Tavern")
+        print(f"{Colors.CYAN}8.{Colors.END} Shop")
+        print(f"{Colors.CYAN}9.{Colors.END} Alchemy")
+        print(f"{Colors.CYAN}10.{Colors.END} Elite Market")
+        print(f"{Colors.CYAN}11.{Colors.END} Rest")
+        print(f"{Colors.CYAN}12.{Colors.END} Companions")
+        print(f"{Colors.CYAN}13.{Colors.END} Dungeons")
+        print(f"{Colors.CYAN}14.{Colors.END} Challenges")
         
         # Show Build Home option only in your_land
         if self.current_area == "your_land":
             print(f"{Colors.GOLD}15.{Colors.END} Build Home")
-            print(f"{Colors.BLUE}16.{Colors.END} Save Game")
-            print(f"{Colors.BLUE}17.{Colors.END} Load Game")
-            print(f"{Colors.BLUE}18.{Colors.END} Claim Rewards")
-            print(f"{Colors.BLUE}19.{Colors.END} Quit")
-            choice = ask(f"{Colors.BLUE}Choose an option (1-19): {Colors.END}", allow_empty=False)
+            print(f"{Colors.CYAN}16.{Colors.END} Save Game")
+            print(f"{Colors.CYAN}17.{Colors.END} Load Game")
+            print(f"{Colors.CYAN}18.{Colors.END} Claim Rewards")
+            print(f"{Colors.CYAN}19.{Colors.END} Quit")
+            choice = ask(f"{Colors.CYAN}Choose an option (1-19): {Colors.END}", allow_empty=False)
             menu_max = "19"
         else:
-            print(f"{Colors.BLUE}15.{Colors.END} Save Game")
-            print(f"{Colors.BLUE}16.{Colors.END} Load Game")
-            print(f"{Colors.BLUE}17.{Colors.END} Claim Rewards")
-            print(f"{Colors.BLUE}18.{Colors.END} Quit")
-            choice = ask(f"{Colors.BLUE}Choose an option (1-18): {Colors.END}", allow_empty=False)
+            print(f"{Colors.CYAN}15.{Colors.END} Save Game")
+            print(f"{Colors.CYAN}16.{Colors.END} Load Game")
+            print(f"{Colors.CYAN}17.{Colors.END} Claim Rewards")
+            print(f"{Colors.CYAN}18.{Colors.END} Quit")
+            choice = ask(f"{Colors.CYAN}Choose an option (1-18): {Colors.END}", allow_empty=False)
             menu_max = "18"
 
         # Normalize textual shortcuts to numbers for backward compatibility
@@ -3157,11 +3157,11 @@ class Game:
             print("No character created yet.")
             return
 
-        print(f"\n{Colors.BOLD}=== HOUSING SHOP ==={Colors.END}")
-        print("Welcome to the Housing Shop! Build your dream home with these items.")
+        print(f"\n{Colors.BOLD}{Colors.CYAN}=== HOUSING SHOP ==={Colors.END}")
+        print(f"{Colors.YELLOW}Welcome to the Housing Shop! Build your dream home with these items.{Colors.END}")
         print(f"\nYour gold: {Colors.GOLD}{self.player.gold}{Colors.END}")
         print(f"Comfort Points: {Colors.CYAN}{self.player.comfort_points}{Colors.END}")
-        print(f"Items owned: {len(self.player.housing_owned)}")
+        print(f"Items owned: {Colors.MAGENTA}{len(self.player.housing_owned)}{Colors.END}")
 
         # Get all housing items
         housing_items = list(self.housing_data.items())
@@ -3182,7 +3182,7 @@ class Game:
                 break
 
             print(
-                f"\n--- Page {current_page + 1} of {(len(housing_items) + page_size - 1) // page_size} ---"
+                f"\n{Colors.CYAN}--- Page {current_page + 1} of {(len(housing_items) + page_size - 1) // page_size} ---{Colors.END}"
             )
             for i, (item_id, item_data) in enumerate(page_items, 1):
                 name = item_data.get("name", item_id)
@@ -3193,19 +3193,20 @@ class Game:
                 
                 # Color price based on affordability
                 price_color = Colors.GREEN if self.player.gold >= price else Colors.RED
-                comfort_color = Colors.CYAN
+                # Color owned indicator
+                owned_color = Colors.GREEN if owned == "✓" else Colors.RED
 
-                print(f"\n{i}. [{owned}] {Colors.BOLD}{name}{Colors.END}")
+                print(f"\n{Colors.CYAN}{i}.{Colors.END} [{owned_color}{owned}{Colors.END}] {Colors.BOLD}{Colors.YELLOW}{name}{Colors.END}")
                 print(f"   {desc}")
-                print(f"   Price: {price_color}{price} gold{Colors.END} | Comfort: {comfort_color}+{comfort}{Colors.END}")
+                print(f"   Price: {price_color}{price} gold{Colors.END} | Comfort: {Colors.CYAN}+{comfort}{Colors.END}")
 
             print(f"\n{Colors.YELLOW}Options:{Colors.END}")
-            print(f"1-{len(page_items)}. Buy/Add Housing Item")
+            print(f"{Colors.CYAN}1-{len(page_items)}.{Colors.END} Buy/Add Housing Item")
             if len(housing_items) > page_size:
-                print("N. Next Page")
-                print("P. Previous Page")
-            print("B. Build/View Home")
-            print("Enter. Leave Shop")
+                print(f"{Colors.CYAN}N.{Colors.END} Next Page")
+                print(f"{Colors.CYAN}P.{Colors.END} Previous Page")
+            print(f"{Colors.GOLD}B.{Colors.END} Build/View Home")
+            print(f"{Colors.CYAN}Enter.{Colors.END} Leave Shop")
 
             choice = ask("\nChoose action: ").strip().upper()
 
@@ -3230,7 +3231,7 @@ class Game:
                     # Check if already owned
                     if item_id in self.player.housing_owned:
                         # Option to buy another copy or view details
-                        confirm = ask(f"\nYou already own this. Buy another copy for {price} gold? (y/n): ").strip().lower()
+                        confirm = ask(f"\n{Colors.YELLOW}You already own this. Buy another copy for {Colors.GOLD}{price} gold{Colors.YELLOW}? (y/n): {Colors.END}").strip().lower()
                         if confirm != 'y':
                             continue
                     
@@ -3239,12 +3240,12 @@ class Game:
                         self.player.gold -= price
                         self.player.housing_owned.append(item_id)
                         self.player.comfort_points += comfort
-                        print(f"\n{Colors.GREEN}Purchased {name}!{Colors.END}")
-                        print(f"Comfort points: +{comfort} (Total: {self.player.comfort_points})")
+                        print(f"\n{Colors.GREEN}✓ Purchased {Colors.BOLD}{name}{Colors.END}{Colors.GREEN}!{Colors.END}")
+                        print(f"{Colors.CYAN}Comfort points: +{comfort} (Total: {self.player.comfort_points}){Colors.END}")
                     else:
-                        print(f"\n{Colors.RED}Not enough gold! Need {price}, have {self.player.gold}.{Colors.END}")
+                        print(f"\n{Colors.RED}✗ Not enough gold! Need {Colors.BOLD}{price}{Colors.END}{Colors.RED}, have {self.player.gold}.{Colors.END}")
                 else:
-                    print("Invalid selection.")
+                    print(f"{Colors.RED}Invalid selection.{Colors.END}")
 
     def build_home(self):
         """Build and customize your home with housing items"""
