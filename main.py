@@ -1185,6 +1185,13 @@ class Game:
             except FileNotFoundError:
                 self.dialogues_data = {}
             
+            # Load dungeons data
+            try:
+                with open('data/dungeons.json', 'r') as f:
+                    self.dungeons_data = json.load(f)
+            except FileNotFoundError:
+                self.dungeons_data = {}
+            
             # Load mod data after base game data
             self._load_mod_data()
         except FileNotFoundError as e:
@@ -1216,7 +1223,9 @@ class Game:
             ('classes.json', 'classes_data'),
             ('spells.json', 'spells_data'),
             ('effects.json', 'effects_data'),
-            ('crafting.json', 'crafting_data')
+            ('crafting.json', 'crafting_data'),
+            ('dungeons.json', 'dungeons_data'),
+            ('dialogues.json', 'dialogues_data')
         ]
         
         for file_name, attr_name in mod_data_types:
@@ -1224,7 +1233,25 @@ class Game:
             if mod_data:
                 # Merge mod data into base data
                 base_data = getattr(self, attr_name)
-                base_data.update(mod_data)
+                
+                # Special handling for dungeons: merge nested structures
+                if file_name == 'dungeons.json':
+                    if 'dungeons' in mod_data:
+                        if 'dungeons' not in base_data:
+                            base_data['dungeons'] = []
+                        base_data['dungeons'].extend(mod_data['dungeons'])
+                    if 'challenge_templates' in mod_data:
+                        if 'challenge_templates' not in base_data:
+                            base_data['challenge_templates'] = {}
+                        base_data['challenge_templates'].update(mod_data['challenge_templates'])
+                    if 'chest_templates' in mod_data:
+                        if 'chest_templates' not in base_data:
+                            base_data['chest_templates'] = {}
+                        base_data['chest_templates'].update(mod_data['chest_templates'])
+                else:
+                    # Standard merge for other data types
+                    base_data.update(mod_data)
+                
                 print(f"  Loaded {len(mod_data)} entries from mods for {file_name}")
         
         print(f"{Colors.GREEN}Mod loading complete!{Colors.END}")
