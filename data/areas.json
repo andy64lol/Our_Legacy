@@ -6,8 +6,19 @@
     "possible_bosses": [],
     "shops": ["general_store"],
     "missions_available": true,
-    "connections": ["forest_path", "ancient_ruins", "tavern"],
+    "connections": ["forest_path", "ancient_ruins", "tavern", "your_land"],
     "rest_cost": 5,
+    "can_rest": true
+  },
+  "your_land":{
+    "name": "Your Land",
+    "description": "A personal plot of land where you can build and customize your home. The possibilities are endless.",
+    "possible_enemies": [],
+    "possible_bosses": [],
+    "shops": ["housing_shop"],
+    "missions_available": false,
+    "connections": ["starting_village"],
+    "rest_cost": 0,
     "can_rest": true
   },
   "forest_path": {

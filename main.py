@@ -612,6 +612,10 @@ class Character:
         # Track killed bosses for cooldown: {boss_name: timestamp_str}
         self.bosses_killed: Dict[str, str] = {}
 
+        # Housing system: track owned housing items and comfort points
+        self.housing_owned: List[str] = []  # List of housing item IDs owned
+        self.comfort_points: int = 0  # Total comfort points from housing
+
         # Sync legacy equipment slots with new system for compatibility
         self._sync_equipment_slots()
 
@@ -1132,6 +1136,7 @@ class Game:
         self.market_api: Optional[MarketAPI] = None
         self.crafting_data: Dict[str, Any] = {}
         self.weekly_challenges_data: Dict[str, Any] = {}
+        self.housing_data: Dict[str, Any] = {}  # Housing items data
 
         # Challenge tracking
         self.challenge_progress: Dict[str, int] = {}  # challenge_id -> progress count
@@ -1207,6 +1212,13 @@ class Game:
             except FileNotFoundError:
                 self.weekly_challenges_data = {}
             
+            # Load housing data
+            try:
+                with open('data/housing.json', 'r') as f:
+                    self.housing_data = json.load(f)
+            except FileNotFoundError:
+                self.housing_data = {}
+            
             # Load mod data after base game data
             self._load_mod_data()
         except FileNotFoundError as e:
@@ -1241,7 +1253,8 @@ class Game:
             ('crafting.json', 'crafting_data'),
             ('dungeons.json', 'dungeons_data'),
             ('dialogues.json', 'dialogues_data'),
-            ('weekly_challenges.json', 'weekly_challenges_data')
+            ('weekly_challenges.json', 'weekly_challenges_data'),
+            ('housing.json', 'housing_data')
         ]
         
         for file_name, attr_name in mod_data_types:
@@ -1555,6 +1568,11 @@ class Game:
             self.update_challenge_progress('level_reach', self.player.level)
 
         print(f"\n{Colors.BOLD}=== MAIN MENU ==={Colors.END}")
+        
+        # Show current location
+        area_data = self.areas_data.get(self.current_area, {})
+        print(f"{Colors.CYAN}Location: {area_data.get('name', self.current_area)}{Colors.END}")
+        
         print(f"{Colors.BLUE}1.{Colors.END} Explore")
         print(f"{Colors.BLUE}2.{Colors.END} View Character")
         print(f"{Colors.BLUE}3.{Colors.END} Travel")
@@ -1569,11 +1587,23 @@ class Game:
         print(f"{Colors.BLUE}12.{Colors.END} Companions")
         print(f"{Colors.BLUE}13.{Colors.END} Dungeons")
         print(f"{Colors.BLUE}14.{Colors.END} Challenges")
-        print(f"{Colors.BLUE}15.{Colors.END} Save Game")
-        print(f"{Colors.BLUE}16.{Colors.END} Load Game")
-        print(f"{Colors.BLUE}17.{Colors.END} Claim Rewards")
-        print(f"{Colors.BLUE}18.{Colors.END} Quit")
-        choice = ask(f"{Colors.BLUE}Choose an option (1-18): {Colors.END}", allow_empty=False)
+        
+        # Show Build Home option only in your_land
+        if self.current_area == "your_land":
+            print(f"{Colors.GOLD}15.{Colors.END} Build Home")
+            print(f"{Colors.BLUE}16.{Colors.END} Save Game")
+            print(f"{Colors.BLUE}17.{Colors.END} Load Game")
+            print(f"{Colors.BLUE}18.{Colors.END} Claim Rewards")
+            print(f"{Colors.BLUE}19.{Colors.END} Quit")
+            choice = ask(f"{Colors.BLUE}Choose an option (1-19): {Colors.END}", allow_empty=False)
+            menu_max = "19"
+        else:
+            print(f"{Colors.BLUE}15.{Colors.END} Save Game")
+            print(f"{Colors.BLUE}16.{Colors.END} Load Game")
+            print(f"{Colors.BLUE}17.{Colors.END} Claim Rewards")
+            print(f"{Colors.BLUE}18.{Colors.END} Quit")
+            choice = ask(f"{Colors.BLUE}Choose an option (1-18): {Colors.END}", allow_empty=False)
+            menu_max = "18"
 
         # Normalize textual shortcuts to numbers for backward compatibility
         shortcut_map = {
@@ -1602,14 +1632,19 @@ class Game:
             'r': '11',
             'companions': '12',
             'comp': '12',
-            'save': '13',
-            'load': '14',
-            'l': '14',
-            'claim': '15',
-            'c': '15',
-            'quit': '16',
-            'q': '16'
+            'build': '15' if self.current_area == "your_land" else None,
+            'home': '15' if self.current_area == "your_land" else None,
+            'save': '15' if self.current_area != "your_land" else '16',
+            'load': '16' if self.current_area != "your_land" else '17',
+            'l': '16' if self.current_area != "your_land" else '17',
+            'claim': '17' if self.current_area != "your_land" else '18',
+            'c': '17' if self.current_area != "your_land" else '18',
+            'quit': '18' if self.current_area != "your_land" else '19',
+            'q': '18' if self.current_area != "your_land" else '19'
         }
+        
+        # Remove None values from shortcut map
+        shortcut_map = {k: v for k, v in shortcut_map.items() if v is not None}
 
         normalized = choice.strip().lower()
         if normalized in shortcut_map:
@@ -1659,16 +1694,40 @@ class Game:
         elif choice == "14":
             self.view_challenges()
 
+        elif choice == "15" and self.current_area == "your_land":
+            # Build Home option only in your_land
+            self.build_home()
+        
         elif choice == "15":
+            # Save Game (when not in your_land)
             self.save_game()
 
+        elif choice == "16" and self.current_area == "your_land":
+            # Save Game (when in your_land)
+            self.save_game()
+            
         elif choice == "16":
+            # Load Game (when not in your_land)
             self.load_game()
 
+        elif choice == "17" and self.current_area == "your_land":
+            # Load Game (when in your_land)
+            self.load_game()
+            
         elif choice == "17":
+            # Claim Rewards (when not in your_land)
             self.claim_rewards()
 
+        elif choice == "18" and self.current_area == "your_land":
+            # Claim Rewards (when in your_land)
+            self.claim_rewards()
+            
         elif choice == "18":
+            # Quit (when not in your_land)
+            self.quit_game()
+
+        elif choice == "19" and self.current_area == "your_land":
+            # Quit (when in your_land)
             self.quit_game()
             
         else:
@@ -2996,6 +3055,11 @@ class Game:
             )
             return
 
+        # Check if this is a housing shop (available in your_land)
+        if "housing_shop" in area_shops:
+            self.visit_housing_shop()
+            return
+
         # Simple logic: combine all items from all shops in this area
         # In this game, shops are mostly identifiers, but we can filter items by their 'shop_type' or similar
         # For now, let's filter items_data to only show relevant items for the current area
@@ -3086,6 +3150,258 @@ class Game:
             elif choice.lower() == 's':
                 # Sell flow
                 self.shop_sell()
+
+    def visit_housing_shop(self):
+        """Visit the housing shop in your_land to buy housing items"""
+        if not self.player:
+            print("No character created yet.")
+            return
+
+        print(f"\n{Colors.BOLD}=== HOUSING SHOP ==={Colors.END}")
+        print("Welcome to the Housing Shop! Build your dream home with these items.")
+        print(f"\nYour gold: {Colors.GOLD}{self.player.gold}{Colors.END}")
+        print(f"Comfort Points: {Colors.CYAN}{self.player.comfort_points}{Colors.END}")
+        print(f"Items owned: {len(self.player.housing_owned)}")
+
+        # Get all housing items
+        housing_items = list(self.housing_data.items())
+        if not housing_items:
+            print("No housing items available.")
+            return
+
+        page_size = 8
+        current_page = 0
+
+        while True:
+            start = current_page * page_size
+            end = start + page_size
+            page_items = housing_items[start:end]
+
+            if not page_items:
+                print("No more items.")
+                break
+
+            print(
+                f"\n--- Page {current_page + 1} of {(len(housing_items) + page_size - 1) // page_size} ---"
+            )
+            for i, (item_id, item_data) in enumerate(page_items, 1):
+                name = item_data.get("name", item_id)
+                price = item_data.get("price", 0)
+                comfort = item_data.get("comfort_points", 0)
+                desc = item_data.get("description", "")
+                owned = "✓" if item_id in self.player.housing_owned else " "
+                
+                # Color price based on affordability
+                price_color = Colors.GREEN if self.player.gold >= price else Colors.RED
+                comfort_color = Colors.CYAN
+
+                print(f"\n{i}. [{owned}] {Colors.BOLD}{name}{Colors.END}")
+                print(f"   {desc}")
+                print(f"   Price: {price_color}{price} gold{Colors.END} | Comfort: {comfort_color}+{comfort}{Colors.END}")
+
+            print(f"\n{Colors.YELLOW}Options:{Colors.END}")
+            print(f"1-{len(page_items)}. Buy/Add Housing Item")
+            if len(housing_items) > page_size:
+                print("N. Next Page")
+                print("P. Previous Page")
+            print("B. Build/View Home")
+            print("Enter. Leave Shop")
+
+            choice = ask("\nChoose action: ").strip().upper()
+
+            if not choice:
+                break
+            elif choice == 'N' and len(housing_items) > page_size:
+                if end < len(housing_items):
+                    current_page += 1
+            elif choice == 'P' and len(housing_items) > page_size:
+                if current_page > 0:
+                    current_page -= 1
+            elif choice == 'B':
+                self.build_home()
+            elif choice.isdigit():
+                item_idx = int(choice) - 1
+                if 0 <= item_idx < len(page_items):
+                    item_id, item_data = page_items[item_idx]
+                    name = item_data.get("name", item_id)
+                    price = item_data.get("price", 0)
+                    comfort = item_data.get("comfort_points", 0)
+                    
+                    # Check if already owned
+                    if item_id in self.player.housing_owned:
+                        # Option to buy another copy or view details
+                        confirm = ask(f"\nYou already own this. Buy another copy for {price} gold? (y/n): ").strip().lower()
+                        if confirm != 'y':
+                            continue
+                    
+                    # Check if can afford
+                    if self.player.gold >= price:
+                        self.player.gold -= price
+                        self.player.housing_owned.append(item_id)
+                        self.player.comfort_points += comfort
+                        print(f"\n{Colors.GREEN}Purchased {name}!{Colors.END}")
+                        print(f"Comfort points: +{comfort} (Total: {self.player.comfort_points})")
+                    else:
+                        print(f"\n{Colors.RED}Not enough gold! Need {price}, have {self.player.gold}.{Colors.END}")
+                else:
+                    print("Invalid selection.")
+
+    def build_home(self):
+        """Build and customize your home with housing items"""
+        if not self.player:
+            return
+
+        print(f"\n{Colors.BOLD}=== BUILD YOUR HOME ==={Colors.END}")
+        print(f"Comfort Points: {Colors.CYAN}{self.player.comfort_points}{Colors.END}")
+        print(f"Housing Items Owned: {len(self.player.housing_owned)}")
+
+        if not self.player.housing_owned:
+            print("\n{Colors.YELLOW}You don't own any housing items yet!")
+            print("Visit the Housing Shop to purchase items for your home.{Colors.END}")
+            return
+
+        print("\nYour Housing Items:")
+        print("-" * 60)
+
+        # Display items with their comfort values
+        items_by_name = {}
+        for item_id in self.player.housing_owned:
+            item_data = self.housing_data.get(item_id, {})
+            name = item_data.get("name", item_id)
+            comfort = item_data.get("comfort_points", 0)
+            
+            if name not in items_by_name:
+                items_by_name[name] = {"count": 0, "comfort": comfort, "id": item_id}
+            items_by_name[name]["count"] += 1
+
+        for i, (name, info) in enumerate(items_by_name.items(), 1):
+            comfort_bar = "█" * min(info["comfort"] // 10, 10)
+            print(f"{i}. {name} (x{info['count']})")
+            print(f"   Comfort: {Colors.CYAN}{comfort_bar} {info['comfort']}{Colors.END}")
+
+        print("\n" + "-" * 60)
+        print(f"\n{Colors.BOLD}Home Status:{Colors.END}")
+        print(f"Total Comfort Points: {Colors.CYAN}{self.player.comfort_points}{Colors.END}")
+        
+        # Display comfort point ranges/bonuses
+        if self.player.comfort_points >= 1000:
+            tier = "LEGENDARY"
+            tier_color = Colors.GOLD
+        elif self.player.comfort_points >= 500:
+            tier = "EPIC"
+            tier_color = Colors.MAGENTA
+        elif self.player.comfort_points >= 200:
+            tier = "RARE"
+            tier_color = Colors.BLUE
+        elif self.player.comfort_points >= 100:
+            tier = "UNCOMMON"
+            tier_color = Colors.CYAN
+        else:
+            tier = "COMMON"
+            tier_color = Colors.WHITE
+
+        print(f"Home Tier: {tier_color}{tier}{Colors.END}")
+        
+        # Display benefits/description based on tier
+        comfort_benefits = {
+            "COMMON": "Basic shelter with minimal comfort",
+            "UNCOMMON": "A modest home with decent accommodations",
+            "RARE": "A well-decorated home with many comforts",
+            "EPIC": "A luxurious estate with exceptional amenities",
+            "LEGENDARY": "A grand mansion fit for royalty"
+        }
+        
+        print(f"Status: {comfort_benefits.get(tier, 'Unknown')}")
+        
+        # Ask for actions
+        print("\n{Colors.YELLOW}Options:{Colors.END}")
+        print("1. View detailed home status")
+        print("2. Remove an item")
+        print("3. Return to Housing Shop")
+        print("4. Return to Main Menu")
+
+        choice = ask("\nChoose action (1-4): ").strip()
+
+        if choice == '1':
+            self.view_home_status()
+        elif choice == '2':
+            self.remove_housing_item()
+        elif choice == '3':
+            self.visit_shop()
+        # else: return to main menu
+
+    def view_home_status(self):
+        """View detailed home status and statistics"""
+        if not self.player:
+            return
+
+        print(f"\n{Colors.BOLD}=== HOME DETAILS ==={Colors.END}")
+        print(f"\nComfort Points: {Colors.CYAN}{self.player.comfort_points}{Colors.END}")
+        print(f"Total Items: {len(self.player.housing_owned)}")
+        print(f"Unique Items: {len(set(self.player.housing_owned))}")
+
+        # Calculate comfort distribution
+        print(f"\n{Colors.BOLD}Item Breakdown:{Colors.END}")
+        item_comforts = {}
+        for item_id in self.player.housing_owned:
+            item_data = self.housing_data.get(item_id, {})
+            name = item_data.get("name", item_id)
+            comfort = item_data.get("comfort_points", 0)
+            
+            if name not in item_comforts:
+                item_comforts[name] = {"count": 0, "total_comfort": 0}
+            item_comforts[name]["count"] += 1
+            item_comforts[name]["total_comfort"] += comfort
+
+        # Sort by total comfort contribution
+        sorted_items = sorted(item_comforts.items(), key=lambda x: x[1]["total_comfort"], reverse=True)
+        
+        total_displayed = 0
+        for name, info in sorted_items[:10]:  # Show top 10
+            print(f"  {name}: x{info['count']} = +{info['total_comfort']} comfort")
+            total_displayed += 1
+
+        if len(sorted_items) > 10:
+            remaining_comfort = sum(info["total_comfort"] for _, info in sorted_items[10:])
+            print(f"  ... and {len(sorted_items) - 10} more items (+{remaining_comfort} comfort)")
+
+        ask("\nPress Enter to continue...")
+
+    def remove_housing_item(self):
+        """Remove a housing item from your home"""
+        if not self.player or not self.player.housing_owned:
+            print("No items to remove.")
+            return
+
+        print(f"\n{Colors.BOLD}=== REMOVE ITEM ==={Colors.END}")
+        
+        # Get unique items
+        unique_items = {}
+        for item_id in self.player.housing_owned:
+            item_data = self.housing_data.get(item_id, {})
+            name = item_data.get("name", item_id)
+            if name not in unique_items:
+                unique_items[name] = {"id": item_id, "count": 0, "comfort": item_data.get("comfort_points", 0)}
+            unique_items[name]["count"] += 1
+
+        items_list = list(unique_items.items())
+        for i, (name, info) in enumerate(items_list, 1):
+            print(f"{i}. {name} (x{info['count']}) - Comfort: +{info['comfort']}")
+
+        choice = ask(f"\nSelect item to remove (1-{len(items_list)}) or press Enter to cancel: ").strip()
+        
+        if choice and choice.isdigit():
+            idx = int(choice) - 1
+            if 0 <= idx < len(items_list):
+                name, info = items_list[idx]
+                item_id = info["id"]
+                
+                # Remove one instance
+                self.player.housing_owned.remove(item_id)
+                self.player.comfort_points -= info["comfort"]
+                
+                print(f"\n{Colors.YELLOW}Removed {name}. Lost {info['comfort']} comfort points.{Colors.END}")
+                print(f"Comfort Points: {Colors.CYAN}{self.player.comfort_points}{Colors.END}")
 
     def visit_tavern(self):
         """Visit the tavern to hire companions."""
@@ -3618,7 +3934,9 @@ class Game:
                 },
                 "class_data": self.player.class_data,
                 "rank": self.player.rank,
-                "active_buffs": self.player.active_buffs
+                "active_buffs": self.player.active_buffs,
+                "housing_owned": self.player.housing_owned if hasattr(self.player, 'housing_owned') else [],
+                "comfort_points": self.player.comfort_points if hasattr(self.player, 'comfort_points') else 0
             },
             "current_area": self.current_area,
             "mission_progress": self.mission_progress,
@@ -3703,6 +4021,10 @@ class Game:
 
                     # NEW: Load companions with backward compatibility
                     self.player.companions = player_data.get("companions", [])
+                    
+                    # NEW: Load housing data with backward compatibility
+                    self.player.housing_owned = player_data.get("housing_owned", [])
+                    self.player.comfort_points = player_data.get("comfort_points", 0)
 
                     # NEW: Enhanced equipment loading with validation
                     self._load_equipment_data(player_data, save_version)

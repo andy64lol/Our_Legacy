@@ -36,15 +36,41 @@ Copy any of these files from `data/` and modify them:
 - `spells.json` - Add spells
 - `crafting.json` - Add recipes
 - `weekly_challenges.json` - Add weekly challenges
+- `housing.json` - Add housing items ⭐ NEW
 
 ### Step 4: Test Your Mod
 Start the game: `python3 main.py`
 
 ---
 
-## Common Templates
+### Add Housing Items
 
-### Add a New Boss
+**File**: `mods/YourModName/housing.json`
+
+```json
+{
+  "item_id": {
+    "name": "Item Display Name",
+    "description": "Description shown in shop",
+    "price": 500,
+    "comfort_points": 25
+  },
+  "another_item": {
+    "name": "Another Housing Item",
+    "description": "This adds to player's home",
+    "price": 1000,
+    "comfort_points": 50
+  }
+}
+```
+
+**Tips**:
+- Price range: 50-5000g (or more for unique items)
+- Comfort points: 5-250 (scales with price, roughly 1 point per 10g)
+- Use lowercase IDs with underscores: `my_custom_house`
+- Players can purchase multiple copies to stack comfort
+
+---
 
 **File**: `mods/YourModName/bosses.json`
 
