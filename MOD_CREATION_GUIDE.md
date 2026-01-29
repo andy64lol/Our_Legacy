@@ -35,6 +35,7 @@ Copy any of these files from `data/` and modify them:
 - `companions.json` - Add companions
 - `spells.json` - Add spells
 - `crafting.json` - Add recipes
+- `weekly_challenges.json` - Add weekly challenges
 
 ### Step 4: Test Your Mod
 Start the game: `python3 main.py`
@@ -333,6 +334,85 @@ Start the game: `python3 main.py`
   }
 }
 ```
+
+---
+
+### Add Weekly Challenges
+
+**File**: `mods/YourModName/weekly_challenges.json`
+
+```json
+{
+  "challenges": [
+    {
+      "id": "kill_100",
+      "name": "Ultimate Slayer",
+      "description": "Defeat 100 enemies",
+      "type": "kill_count",
+      "target": 100,
+      "reward_exp": 25000,
+      "reward_gold": 10000,
+      "reward_items": ["legendary_weapon_mod"],
+      "icon": "💀",
+      "difficulty": "hard"
+    },
+    {
+      "id": "reach_level_50",
+      "name": "Half Century",
+      "description": "Reach level 50",
+      "type": "level_reach",
+      "target": 50,
+      "reward_exp": 50000,
+      "reward_gold": 25000,
+      "icon": "🎯",
+      "difficulty": "very_hard"
+    },
+    {
+      "id": "boss_five",
+      "name": "Boss Mastery",
+      "description": "Defeat 5 bosses",
+      "type": "boss_kill",
+      "target": 5,
+      "reward_exp": 30000,
+      "reward_gold": 15000,
+      "reward_items": ["boss_trophy"],
+      "icon": "👑",
+      "difficulty": "hard"
+    },
+    {
+      "id": "dungeon_ten",
+      "name": "Dungeon Master",
+      "description": "Complete 10 dungeons",
+      "type": "dungeon_complete",
+      "target": 10,
+      "reward_exp": 40000,
+      "reward_gold": 20000,
+      "reward_items": ["dungeon_key"],
+      "icon": "🗝️",
+      "difficulty": "very_hard"
+    }
+  ]
+}
+```
+
+**Challenge Types Available**:
+- `kill_count` - Track number of enemies defeated
+- `mission_count` - Track completed missions
+- `level_reach` - Track character level
+- `boss_kill` - Track bosses defeated
+- `dungeon_complete` - Track completed dungeons
+
+**All Parameters Explained**:
+- `id` *(required)* - Unique identifier for the challenge
+- `name` *(required)* - Display name shown to player
+- `description` *(required)* - What player must do
+- `type` *(required)* - One of the challenge types above
+- `target` *(required)* - Number to reach for completion
+- `reward_exp` *(required)* - Experience gained on completion
+- `reward_gold` *(required)* - Gold gained on completion
+- `reward_items` *(optional)* - Array of item IDs to receive
+- `icon` *(optional)* - Emoji or symbol for display
+- `difficulty` *(optional)* - "easy", "medium", "hard", "very_hard"
 
 ---
 

@@ -918,6 +918,92 @@ Create `mods/MyMod/items.json`:
 
 ---
 
+### 9. WEEKLY_CHALLENGES.JSON
+
+**Purpose**: Define recurring weekly challenges that players can complete for rewards.
+
+**Structure**: Weekly challenges are organized as an array within a "challenges" object.
+
+**Parameters**:
+```json
+{
+  "challenges": [
+    {
+      "id": "string",                          // Unique challenge identifier
+      "name": "string",                        // Display name
+      "description": "string",                 // Challenge objective description
+      "type": "string",                        // Challenge type (see below)
+      "target": number,                        // Number to reach for completion
+      "reward_exp": number,                    // Experience points reward
+      "reward_gold": number,                   // Gold reward,
+      "reward_items": ["item_id"] (optional),  // Item rewards on completion
+      "icon": "string" (optional),             // Icon/emoji for display
+      "difficulty": "string" (optional)        // Difficulty tier (easy/medium/hard)
+    }
+  ]
+}
+```
+
+**Challenge Types**:
+| Type | Description | Tracking | Example |
+|------|-------------|----------|---------|
+| `kill_count` | Defeat a certain number of enemies | Auto-tracked on kill | "Defeat 10 enemies" |
+| `mission_count` | Complete a number of missions | Auto-tracked on mission completion | "Complete 3 missions" |
+| `level_reach` | Reach a specific character level | Auto-tracked on level up | "Reach level 10" |
+| `boss_kill` | Defeat a certain number of bosses | Auto-tracked on boss defeat | "Defeat 1 boss" |
+| `dungeon_complete` | Complete a number of dungeons | Auto-tracked on dungeon completion | "Complete 1 dungeon" |
+
+**Example**:
+```json
+{
+  "challenges": [
+    {
+      "id": "kill_10",
+      "name": "Monster Hunter",
+      "description": "Defeat 10 enemies",
+      "type": "kill_count",
+      "target": 10,
+      "reward_exp": 2000,
+      "reward_gold": 500,
+      "icon": "⚔️",
+      "difficulty": "easy"
+    },
+    {
+      "id": "level_20",
+      "name": "Power Leveler",
+      "description": "Reach level 20",
+      "type": "level_reach",
+      "target": 20,
+      "reward_exp": 10000,
+      "reward_gold": 5000,
+      "reward_items": ["rare_scroll"],
+      "icon": "📈",
+      "difficulty": "hard"
+    },
+    {
+      "id": "dungeon_master",
+      "name": "Dungeon Explorer",
+      "description": "Complete 5 dungeons",
+      "type": "dungeon_complete",
+      "target": 5,
+      "reward_exp": 15000,
+      "reward_gold": 7500,
+      "reward_items": ["legendary_key", "treasure_map"],
+      "icon": "🏰",
+      "difficulty": "hard"
+    }
+  ]
+}
+```
+
+**Mod Merging Behavior**: 
+- Mods can add new challenges to the base game challenges
+- Challenges from mods are appended to the base challenge list
+- Challenge IDs must be unique across all loaded mods and base game
+- Progress tracking is automatically initialized for new challenges
+
+---
+
 ## Tips & Best Practices
 
 1. **JSON Validation**: Always validate JSON files before loading - invalid JSON will crash the game

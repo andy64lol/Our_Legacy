@@ -1131,6 +1131,11 @@ class Game:
         self.completed_missions: List[str] = []
         self.market_api: Optional[MarketAPI] = None
         self.crafting_data: Dict[str, Any] = {}
+        self.weekly_challenges_data: Dict[str, Any] = {}
+
+        # Challenge tracking
+        self.challenge_progress: Dict[str, int] = {}  # challenge_id -> progress count
+        self.completed_challenges: List[str] = []
 
         # Dungeon state tracking
         self.current_dungeon: Optional[Dict[str, Any]] = None
@@ -1192,6 +1197,16 @@ class Game:
             except FileNotFoundError:
                 self.dungeons_data = {}
             
+            # Load weekly challenges data
+            try:
+                with open('data/weekly_challenges.json', 'r') as f:
+                    self.weekly_challenges_data = json.load(f)
+                # Initialize challenge progress
+                for challenge in self.weekly_challenges_data.get('challenges', []):
+                    self.challenge_progress[challenge['id']] = 0
+            except FileNotFoundError:
+                self.weekly_challenges_data = {}
+            
             # Load mod data after base game data
             self._load_mod_data()
         except FileNotFoundError as e:
@@ -1225,7 +1240,8 @@ class Game:
             ('effects.json', 'effects_data'),
             ('crafting.json', 'crafting_data'),
             ('dungeons.json', 'dungeons_data'),
-            ('dialogues.json', 'dialogues_data')
+            ('dialogues.json', 'dialogues_data'),
+            ('weekly_challenges.json', 'weekly_challenges_data')
         ]
         
         for file_name, attr_name in mod_data_types:
@@ -1248,6 +1264,15 @@ class Game:
                         if 'chest_templates' not in base_data:
                             base_data['chest_templates'] = {}
                         base_data['chest_templates'].update(mod_data['chest_templates'])
+                # Special handling for weekly_challenges: merge nested challenge arrays
+                elif file_name == 'weekly_challenges.json':
+                    if 'challenges' in mod_data:
+                        if 'challenges' not in base_data:
+                            base_data['challenges'] = []
+                        base_data['challenges'].extend(mod_data['challenges'])
+                        # Initialize progress tracking for new challenges
+                        for challenge in mod_data['challenges']:
+                            self.challenge_progress[challenge['id']] = 0
                 else:
                     # Standard merge for other data types
                     base_data.update(mod_data)
@@ -1524,6 +1549,10 @@ class Game:
         """Display main menu"""
         # Continuous mission check on every main menu return
         self.update_mission_progress('check', '')
+        
+        # Check level-based challenges
+        if self.player:
+            self.update_challenge_progress('level_reach', self.player.level)
 
         print(f"\n{Colors.BOLD}=== MAIN MENU ==={Colors.END}")
         print(f"{Colors.BLUE}1.{Colors.END} Explore")
@@ -1539,11 +1568,12 @@ class Game:
         print(f"{Colors.BLUE}11.{Colors.END} Rest")
         print(f"{Colors.BLUE}12.{Colors.END} Companions")
         print(f"{Colors.BLUE}13.{Colors.END} Dungeons")
-        print(f"{Colors.BLUE}14.{Colors.END} Save Game")
-        print(f"{Colors.BLUE}15.{Colors.END} Load Game")
-        print(f"{Colors.BLUE}16.{Colors.END} Claim Rewards")
-        print(f"{Colors.BLUE}17.{Colors.END} Quit")
-        choice = ask(f"{Colors.BLUE}Choose an option (1-17): {Colors.END}", allow_empty=False)
+        print(f"{Colors.BLUE}14.{Colors.END} Challenges")
+        print(f"{Colors.BLUE}15.{Colors.END} Save Game")
+        print(f"{Colors.BLUE}16.{Colors.END} Load Game")
+        print(f"{Colors.BLUE}17.{Colors.END} Claim Rewards")
+        print(f"{Colors.BLUE}18.{Colors.END} Quit")
+        choice = ask(f"{Colors.BLUE}Choose an option (1-18): {Colors.END}", allow_empty=False)
 
         # Normalize textual shortcuts to numbers for backward compatibility
         shortcut_map = {
@@ -1627,15 +1657,18 @@ class Game:
             self.visit_dungeons()
 
         elif choice == "14":
-            self.save_game()
+            self.view_challenges()
 
         elif choice == "15":
-            self.load_game()
+            self.save_game()
 
         elif choice == "16":
-            self.claim_rewards()
+            self.load_game()
 
         elif choice == "17":
+            self.claim_rewards()
+
+        elif choice == "18":
             self.quit_game()
             
         else:
@@ -1763,6 +1796,61 @@ class Game:
         else:
             print("You explore the area but find no enemies.")
 
+    def update_challenge_progress(self, challenge_type: str, value: int = 1):
+        """Update challenge progress and check for completions"""
+        if not self.player:
+            return
+        
+        for challenge in self.weekly_challenges_data.get('challenges', []):
+            if challenge['id'] in self.completed_challenges:
+                continue
+            
+            if challenge['type'] == challenge_type:
+                self.challenge_progress[challenge['id']] += value
+                
+                # Check if challenge is completed
+                if self.challenge_progress[challenge['id']] >= challenge['target']:
+                    self.complete_challenge(challenge)
+
+    def complete_challenge(self, challenge: Dict[str, Any]):
+        """Complete a challenge and award rewards"""
+        if not self.player:
+            return
+        
+        challenge_id = challenge['id']
+        self.completed_challenges.append(challenge_id)
+        
+        reward_exp = challenge.get('reward_exp', 0)
+        reward_gold = challenge.get('reward_gold', 0)
+        
+        self.player.gain_experience(reward_exp)
+        self.player.gold += reward_gold
+        
+        print(f"\n{Colors.CYAN}{Colors.BOLD}✓ Challenge Completed: {challenge['name']}!{Colors.END}")
+        print(f"  Reward: {reward_exp} EXP + {reward_gold} Gold")
+
+    def view_challenges(self):
+        """Display challenge status to player"""
+        if not self.player:
+            return
+
+        
+        print(f"\n{Colors.CYAN}{Colors.BOLD}=== WEEKLY CHALLENGES ==={Colors.END}")
+        
+        for challenge in self.weekly_challenges_data.get('challenges', []):
+            challenge_id = challenge['id']
+            is_completed = challenge_id in self.completed_challenges
+            progress = self.challenge_progress.get(challenge_id, 0)
+            target = challenge['target']
+            
+            status = "✓" if is_completed else f"{progress}/{target}"
+            completed_text = f"{Colors.GREEN}COMPLETED{Colors.END}" if is_completed else status
+            
+            print(f"\n{Colors.BOLD}{challenge['name']}{Colors.END}")
+            print(f"  {challenge['description']}")
+            print(f"  Status: {completed_text}")
+            print(f"  Reward: {challenge['reward_exp']} EXP + {challenge['reward_gold']} Gold")
+
     def battle(self, enemy: Enemy):
         """Handle turn-based battle"""
         if not self.player:
@@ -1856,6 +1944,9 @@ class Game:
 
             # Update mission progress for kill
             self.update_mission_progress('kill', enemy.name)
+            
+            # Update challenge progress for kills
+            self.update_challenge_progress('kill_count')
 
             # Loot drop
             if enemy.loot_table and random.random(
@@ -4542,6 +4633,9 @@ class Game:
         duration = end_time - start_time
 
         print(f"Completion time: {duration.seconds // 60}m {duration.seconds % 60}s")
+        
+        # Update challenge for dungeon completion
+        self.update_challenge_progress('dungeon_complete')
 
         # Clear dungeon state
         self.current_dungeon = None
