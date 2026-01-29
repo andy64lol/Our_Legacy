@@ -75,29 +75,101 @@ python3 main.py
 
 ```
 Our_Legacy/
-├── launcher.py             # Unified launcher for all
-├── storyland.py            # The place where you download mods
-├── storywrite.py           # Where you submit mods
-├── main.py                 # Core game engine (Unified Python script)
-├── README.md               # Game overview and quick start guide
-├── documentation.md        # Comprehensive modding and mechanics guide
-├── package.json            # Node.js project configuration
-├── data/                   # Game Content (Modular JSON)
-│   ├── classes.json        # Player character class definitions
-│   ├── items.json          # Equipment, weapons, and consumables
-│   ├── crafting.json       # Alchemy recipes and material types
-│   ├── areas.json          # World map, shops, and connections
+├── launcher.py             # Unified launcher for all tools
+├── storyland.py            # Download and manage mods from GitHub
+├── storywrite.py           # Submit mods to the community
+├── main.py                 # Core game engine (Python 3.9+)
+├── README.md               # Quick start guide and overview
+├── documentation.md        # Complete modding guide with parameters & examples
+├── package.json            # Node.js project configuration (for scripting)
+├── data/                   # Base Game Content (JSON)
+│   ├── classes.json        # Player character classes and progression
+│   ├── items.json          # Weapons, armor, consumables, accessories
+│   ├── crafting.json       # Alchemy recipes and material categories
+│   ├── areas.json          # World locations, shops, connections
 │   ├── enemies.json        # Regular combat encounters
-│   ├── bosses.json         # Boss mechanics and phase definitions
-│   ├── missions.json       # Quest objectives and rewards
-│   ├── spells.json         # Magic system and weapon requirements
-│   ├── effects.json        # Status effect definitions
-│   ├── config.json         # Global game engine configuration
-│   ├── dialogues.json      # Dialogues for bosses
+│   ├── bosses.json         # Boss mechanics with multi-phase support
+│   ├── missions.json       # Quests with objectives and rewards
+│   ├── spells.json         # Magic spells and abilities
+│   ├── effects.json        # Status effects and buffs
+│   ├── companions.json     # Hireable companion definitions
+│   ├── dialogues.json      # NPC and boss dialogue text
+│   ├── dungeons.json       # Procedural dungeons with challenges
+│   ├── weekly_challenges.json  # Recurring challenges
 │   └── saves/              # Player save files (.json)
-├── mods/                   # installed mods
+├── mods/                   # Installed mods (downloaded and custom)
+│   └── The Ether/          # Example mod structure
+│       ├── mod.json        # Mod metadata
+│       ├── bosses.json     # New bosses
+│       ├── areas.json      # New areas
+│       ├── enemies.json    # New enemies
+│       ├── items.json      # New items
+│       ├── dungeons.json   # New dungeons
+│       ├── dialogues.json  # New dialogue text
+│       └── ...other files
+├── api/                    # API modules for marketplace
+│   ├── market.js
+│   ├── ping.js
+│   ├── upload_test.js
+│   └── data/
 └── LICENSE                 # Project license
 ```
+
+## Mod System
+
+### Creating a Mod
+1. Create a folder in `mods/` with your mod name
+2. Create `mod.json` with metadata:
+```json
+{
+  "name": "Your Mod Name",
+  "version": "1.0.0",
+  "author": "Your Name",
+  "description": "What your mod adds",
+  "enabled": true
+}
+```
+3. Add any data files you want to modify:
+   - `bosses.json` - New or override bosses
+   - `areas.json` - New areas or area changes
+   - `items.json` - New items
+   - `dungeons.json` - New dungeons
+   - `dialogues.json` - Dialogue text
+   - Any other data files from `data/`
+
+### How Mods Load
+- Base game data loads first from `data/`
+- Enabled mods load sequentially, merging data
+- Arrays (dungeons) are extended with new entries
+- Objects (items, bosses) are updated/overridden
+- Mod data takes precedence over base data for same IDs
+
+---
+
+## Data File Overview
+
+### Core Data Files
+| File | Purpose | Contains |
+|------|---------|----------|
+| **classes.json** | Character classes | Warrior, Mage, Rogue, Hunter, Bard |
+| **items.json** | Equipment & consumables | Weapons, armor, potions, materials |
+| **enemies.json** | Regular encounters | Goblin, Orc, Skeleton, etc. |
+| **bosses.json** | Boss battles | Multi-phase encounters with abilities |
+| **areas.json** | World locations | Starting Village, Dungeons, Towns |
+| **missions.json** | Quests | Main story and side quests |
+| **spells.json** | Magic abilities | Spells for different classes |
+| **effects.json** | Status effects | Buffs, debuffs, conditions |
+| **companions.json** | Party members | Hireable companions with abilities |
+| **crafting.json** | Alchemy system | Recipes and material categories |
+| **dialogues.json** | Text dialogue | Boss speeches and NPC dialogue |
+| **dungeons.json** | Procedural dungeons | Dungeon definitions and challenges |
+
+### Parameter Reference
+For complete parameter documentation, see [documentation.md](documentation.md):
+- **All JSON parameters** with type information
+- **Complete examples** for each file type
+- **Mod creation guide** with step-by-step instructions
+- **Best practices** for mod development
 
 ---
 **Forge your destiny and leave behind a legend that will never be forgotten!**
