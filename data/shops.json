@@ -1,0 +1,44 @@
+{
+  "general_store": {
+    "name": "General Store",
+    "welcome_message": "Welcome to the General Store! We have all your basic needs covered.",
+    "items": [
+      "Health Potion",
+      "Mana Potion",
+      "Large Health Potion",
+      "Iron Sword",
+      "Steel Dagger",
+      "Leather Armor",
+      "Wooden Shield",
+      "Herb"
+    ],
+    "max_buy": 10
+  },
+  "equipment_shop": {
+    "name": "Equipment Shop",
+    "welcome_message": "Welcome to the Equipment Shop! Gear up for your adventures!",
+    "items": [
+      "Iron Sword",
+      "Steel Dagger",
+      "Leather Armor",
+      "Chain Mail",
+      "Wooden Shield",
+      "Buckler Shield",
+      "Leather Helm",
+      "Hunter's Bow",
+      "Light Crossbow"
+    ],
+    "max_buy": 1
+  },
+  "tavern_keeper": {
+    "name": "Tavern",
+    "welcome_message": "Welcome to the Tavern! Care for a drink or some supplies?",
+    "items": [
+      "Health Potion",
+      "Mana Potion",
+      "Large Health Potion",
+      "Frost Potion"
+    ],
+    "max_buy": 5
+  }
+}

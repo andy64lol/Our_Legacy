@@ -8,8 +8,7 @@
       "growth_time": 3,
       "harvest_amount": 3,
       "sell_price": 15,
-      "rarity": "common",
-      "icon": "🌾"
+      "rarity": "common"
     },
     "corn": {
       "name": "Corn",
@@ -17,8 +16,7 @@
       "growth_time": 4,
       "harvest_amount": 2,
       "sell_price": 20,
-      "rarity": "common",
-      "icon": "🌽"
+      "rarity": "common"
     },
     "tomato": {
       "name": "Tomato",
@@ -26,8 +24,7 @@
       "growth_time": 5,
       "harvest_amount": 4,
       "sell_price": 25,
-      "rarity": "uncommon",
-      "icon": "🍅"
+      "rarity": "uncommon"
     },
     "potato": {
       "name": "Potato",
@@ -35,8 +32,7 @@
       "growth_time": 6,
       "harvest_amount": 5,
       "sell_price": 18,
-      "rarity": "common",
-      "icon": "🥔"
+      "rarity": "common"
     },
     "carrot": {
       "name": "Carrot",
@@ -44,8 +40,7 @@
       "growth_time": 4,
       "harvest_amount": 3,
       "sell_price": 22,
-      "rarity": "common",
-      "icon": "🥕"
+      "rarity": "common"
     },
     "apple": {
       "name": "Apple",
@@ -53,8 +48,7 @@
       "growth_time": 7,
       "harvest_amount": 6,
       "sell_price": 30,
-      "rarity": "uncommon",
-      "icon": "🍎"
+      "rarity": "uncommon"
     },
     "grape": {
       "name": "Grape",
@@ -62,8 +56,7 @@
       "growth_time": 8,
       "harvest_amount": 8,
       "sell_price": 35,
-      "rarity": "uncommon",
-      "icon": "🍇"
+      "rarity": "uncommon"
     },
     "strawberry": {
       "name": "Strawberry",
@@ -71,8 +64,7 @@
       "growth_time": 5,
       "harvest_amount": 4,
       "sell_price": 40,
-      "rarity": "rare",
-      "icon": "🍓"
+      "rarity": "rare"
     },
     "lettuce": {
       "name": "Lettuce",
@@ -80,8 +72,7 @@
       "growth_time": 3,
       "harvest_amount": 2,
       "sell_price": 16,
-      "rarity": "common",
-      "icon": "🥬"
+      "rarity": "common"
     },
     "dragon_fruit": {
       "name": "Dragon Fruit",
@@ -89,8 +80,7 @@
       "growth_time": 12,
       "harvest_amount": 3,
       "sell_price": 80,
-      "rarity": "epic",
-      "icon": "🐉"
+      "rarity": "epic"
     }
   },
   "foods": {
@@ -100,8 +90,7 @@
       "effect": "heal",
       "value": 30,
       "sell_price": 25,
-      "rarity": "common",
-      "icon": "🍞"
+      "rarity": "common"
     },
     "salad": {
       "name": "Salad",
@@ -109,8 +98,7 @@
       "effect": "heal",
       "value": 25,
       "sell_price": 30,
-      "rarity": "common",
-      "icon": "🥗"
+      "rarity": "common"
     },
     "corn_soup": {
       "name": "Corn Soup",
@@ -118,8 +106,7 @@
       "effect": "heal",
       "value": 40,
       "sell_price": 35,
-      "rarity": "uncommon",
-      "icon": "🍲"
+      "rarity": "uncommon"
     },
     "apple_pie": {
       "name": "Apple Pie",
@@ -127,8 +114,7 @@
       "effect": "heal",
       "value": 50,
       "sell_price": 45,
-      "rarity": "uncommon",
-      "icon": "🥧"
+      "rarity": "uncommon"
     },
     "fruit_smoothie": {
       "name": "Fruit Smoothie",
@@ -136,8 +122,7 @@
       "effect": "heal",
       "value": 35,
       "sell_price": 40,
-      "rarity": "uncommon",
-      "icon": "🥤"
+      "rarity": "uncommon"
     },
     "dragon_fruit_juice": {
       "name": "Dragon Fruit Juice",
@@ -145,8 +130,7 @@
       "effect": "heal",
       "value": 100,
       "sell_price": 120,
-      "rarity": "epic",
-      "icon": "🧃"
+      "rarity": "epic"
     }
   }
 }

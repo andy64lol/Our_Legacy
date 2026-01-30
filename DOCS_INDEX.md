@@ -103,6 +103,10 @@ Welcome to Our Legacy! This is your complete guide to understanding, playing, an
 | **crafting.json** | Alchemy system | documentation.md | Adding recipes |
 | **spells.json** | Magic abilities | documentation.md | Creating spells |
 | **companions.json** | Party members | documentation.md | Adding companions |
+| **housing.json** | Home building items | documentation.md | Creating housing items |
+| **effects.json** | Status effects | documentation.md | Creating buffs/debuffs |
+| **farming.json** | Crop definitions | documentation.md | Adding farm crops |
+| **weekly_challenges.json** | Recurring challenges | documentation.md | Creating challenges |
 
 ---
 
@@ -157,10 +161,10 @@ Welcome to Our Legacy! This is your complete guide to understanding, playing, an
 
 | Aspect | Coverage |
 |--------|----------|
-| Data Files | 11/11 files documented ✅ |
+| Data Files | 15/15 files documented ✅ |
 | Parameters | All parameters listed ✅ |
 | Examples | Examples for each file type ✅ |
-| Templates | 7 complete templates ✅ |
+| Templates | 9 complete templates ✅ |
 | Mod System | Fully explained ✅ |
 | Best Practices | Complete guide ✅ |
 | Troubleshooting | Common issues covered ✅ |

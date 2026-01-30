@@ -71,7 +71,7 @@ python3 main.py
 - **Travel**: Move between connected world areas.
 - **Missions**: Track and accept quests.
 - **Tavern**: Hire and manage your party members.
-- **Shop**: Trade gold for gear and items.
+- **Shop**: Browse multiple specialized shops in each area, each with unique items and purchase limits.
 - **Save/Load**: Persist your progress to JSON save files.
 
 ## File Structure
@@ -90,6 +90,7 @@ Our_Legacy/
 │   ├── items.json          # Weapons, armor, consumables, accessories
 │   ├── crafting.json       # Alchemy recipes and material categories
 │   ├── areas.json          # World locations, shops, connections
+│   ├── shops.json          # Shop definitions with items and limits
 │   ├── enemies.json        # Regular combat encounters
 │   ├── bosses.json         # Boss mechanics with multi-phase support
 │   ├── missions.json       # Quests with objectives and rewards
