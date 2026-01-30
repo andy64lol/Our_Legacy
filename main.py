@@ -1255,6 +1255,13 @@ class Game:
             except FileNotFoundError:
                 self.housing_data = {}
             
+            # Load shops data
+            try:
+                with open('data/shops.json', 'r') as f:
+                    self.shops_data = json.load(f)
+            except FileNotFoundError:
+                self.shops_data = {}
+            
             # Load farming data
             try:
                 with open('data/farming.json', 'r') as f:
@@ -1297,7 +1304,8 @@ class Game:
             ('dungeons.json', 'dungeons_data'),
             ('dialogues.json', 'dialogues_data'),
             ('weekly_challenges.json', 'weekly_challenges_data'),
-            ('housing.json', 'housing_data')
+            ('housing.json', 'housing_data'),
+            ('shops.json', 'shops_data')
         ]
         
         for file_name, attr_name in mod_data_types:
@@ -3128,96 +3136,63 @@ class Game:
             self.visit_housing_shop()
             return
 
-        # Simple logic: combine all items from all shops in this area
-        # In this game, shops are mostly identifiers, but we can filter items by their 'shop_type' or similar
-        # For now, let's filter items_data to only show relevant items for the current area
-        # Most areas have specific shop IDs like "general_store", "equipment_shop"
+        # Filter out housing_shop from shop list
+        regular_shops = [s for s in area_shops if s != "housing_shop"]
 
-        print(
-            f"\n{Colors.BOLD}=== SHOP ({', '.join(area_shops)}) ==={Colors.END}"
-        )
-        print("Welcome to the shop! What would you like to buy?")
-        print(f"\nYour gold: {Colors.GOLD}{self.player.gold}{Colors.END}")
-
-        # Filter items based on the shop types available in the area
-        shop_items = {}
-        for item_name, item_data in self.items_data.items():
-            # Skip materials and items already in inventory
-            if item_data.get(
-                    "type"
-            ) == "material" or item_name in self.player.inventory:
-                continue
-
-            # Check if item belongs to any shop in the current area
-            # If item has no shop_tags, it might be a general item
-            item_shops = item_data.get("shops", ["general_store"])
-            if any(s in area_shops for s in item_shops):
-                shop_items[item_name] = item_data
-
-        if not shop_items:
-            print("No items available for purchase here.")
+        if not regular_shops:
+            print("No shops available here.")
             return
 
-        # Paginate items (10 per page)
-        items_list = list(shop_items.items())
-        page_size = 10
-        current_page = 0
+        # If multiple shops, let player choose
+        if len(regular_shops) > 1:
+            print(f"\n{Colors.BOLD}=== SHOPS IN {area_data.get('name', self.current_area).upper()} ==={Colors.END}")
+            print(f"Your gold: {Colors.GOLD}{self.player.gold}{Colors.END}\n")
+            for i, shop_id in enumerate(regular_shops, 1):
+                shop_data = self.shops_data.get(shop_id, {})
+                shop_name = shop_data.get("name", shop_id.replace("_", " ").title())
+                print(f"{i}. {shop_name}")
+            
+            print("\n0. Leave")
+            choice = ask("Which shop would you like to visit? ")
+            
+            if choice == "0" or not choice.isdigit():
+                return
+            
+            shop_idx = int(choice) - 1
+            if 0 <= shop_idx < len(regular_shops):
+                selected_shop = regular_shops[shop_idx]
+            else:
+                print("Invalid choice.")
+                return
+        else:
+            selected_shop = regular_shops[0]
 
-        while True:
-            start = current_page * page_size
-            end = start + page_size
-            page_items = items_list[start:end]
+        # Now visit the selected shop
+        self.visit_specific_shop(selected_shop)
 
-            if not page_items:
-                print("No more items.")
-                break
+    def visit_specific_shop(self, shop_id):
+        """Visit a specific shop by ID"""
 
-            print(
-                f"\n--- Page {current_page + 1} of {(len(items_list) + page_size - 1) // page_size} ---"
-            )
-            for i, (item_name, item_data) in enumerate(page_items, 1):
-                price = item_data.get("price", "?")
-                rarity = item_data.get("rarity", "unknown")
-                desc = item_data.get("description", "")
-                print(
-                    f"{i}. {item_name} ({rarity}) - {Colors.GOLD}{price} gold{Colors.END}"
-                )
-                print(f"   {desc}")
+        if not self.player:
+            print("No character created yet.")
+            return
 
-            print("Shortcuts: N-next, P-prev, Enter-leave")
-            choice = ask(
-                f"\nBuy item (1-{len(page_items)}), [N]ext page, [P]rev page, [S]ell, or press Enter to leave: "
-            )
+        shop_data = self.shops_data.get(shop_id, {})
+        if not shop_data:
+            print(f"Shop {shop_id} not found.")
+            return
 
-            if not choice:
-                break
-            elif choice.lower() == 'n':
-                if end < len(items_list):
-                    current_page += 1
-                else:
-                    print("No more pages.")
-            elif choice.lower() == 'p':
-                if current_page > 0:
-                    current_page -= 1
-                else:
-                    print("Already on first page.")
-            elif choice.isdigit():
-                item_idx = int(choice) - 1
-                if 0 <= item_idx < len(page_items):
-                    item_name, item_data = page_items[item_idx]
-                    price = item_data.get("price", 0)
-                    if self.player.gold >= price:
-                        self.player.gold -= price
-                        self.player.inventory.append(item_name)
-                        print(f"Purchased {item_name} for {price} gold!")
-                        self.update_mission_progress('collect', item_name)
-                    else:
-                        print("Not enough gold!")
-                else:
-                    print("Invalid choice.")
-            elif choice.lower() == 's':
-                # Sell flow
-                self.shop_sell()
+        welcome_msg = shop_data.get("welcome_message", f"Welcome to {shop_id}!")
+        items = shop_data.get("items", [])
+        max_buy = shop_data.get("max_buy", 99)
+
+        shop_items = {}
+        for item_name in items:
+            if item_name in self.items_data:
+                shop_items[item_name] = {
+                    "data": self.items_data[item_name],
+                    "max_buy": max_buy
+                }
 
     def visit_housing_shop(self):
         """Visit the housing shop in your_land to buy housing items"""

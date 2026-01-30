@@ -23,6 +23,7 @@ This comprehensive guide covers the complete structure of Our Legacy RPG, includ
 - **enemies.json** - Regular enemies and encounter data
 - **bosses.json** - Boss encounters with multi-phase mechanics
 - **areas.json** - World locations, connections, and shops
+- **shops.json** - Shop definitions with items and purchase limits ⭐ NEW
 - **missions.json** - Quests and objectives
 - **spells.json** - Magic spells and abilities
 - **effects.json** - Status effects and buffs
@@ -31,8 +32,7 @@ This comprehensive guide covers the complete structure of Our Legacy RPG, includ
 - **dungeons.json** - Dungeon definitions and challenges
 - **weekly_challenges.json** - Recurring challenges
 - **housing.json** - Housing items for home building ⭐ NEW
-- **dungeons.json** - Dungeon definitions and challenges
-- **weekly_challenges.json** - Recurring challenges
+- **farming.json** - Crop definitions for farming system ⭐ NEW
 
 ### Mod Data (`mods/` directory)
 Mods can override or extend any base game data files. Each mod folder can contain:
@@ -1007,7 +1007,43 @@ Create `mods/MyMod/items.json`:
 
 ---
 
-### 10. HOUSING.JSON
+### 10. SHOPS.JSON ⭐ NEW
+
+**Purpose**: Define shops available in different areas, including their welcome messages, available items, and purchase limits.
+
+**Parameters**:
+```json
+{
+  "shop_id": {
+    "name": "string",                          // Display name for the shop
+    "welcome_message": "string",               // Greeting message shown when entering shop
+    "items": ["item_id1", "item_id2"],         // Array of item IDs available for purchase
+    "max_buy": number                          // Maximum quantity of each item a player can own (default: 99)
+  }
+}
+```
+
+**Example**:
+```json
+{
+  "general_store": {
+    "name": "General Store",
+    "welcome_message": "Welcome to the General Store! We have all your basic needs covered.",
+    "items": ["Health Potion", "Iron Sword", "Leather Armor"],
+    "max_buy": 10
+  }
+}
+```
+
+**Notes**:
+- Shop IDs must match those referenced in `areas.json`
+- Items must exist in `items.json`
+- `max_buy` limits apply per item type (e.g., player can own up to 10 Health Potions)
+- Housing shop is handled separately and not defined here
+
+---
+
+### 11. HOUSING.JSON
 
 **Purpose**: Define housing items that players can purchase and place in their home at "Your Land".
 
@@ -1018,7 +1054,9 @@ Create `mods/MyMod/items.json`:
     "name": "string",                          // Display name in Housing Shop
     "description": "string",                   // Item description/flavor text
     "price": number,                           // Cost in gold to purchase
-    "comfort_points": number                   // Comfort value for home tier
+    "comfort_points": number,                  // Comfort value for home tier
+    "rarity": "common|uncommon|rare|epic|legendary",  // Item rarity tier
+    "type": "house|fencing|decoration|garden|farming|training_place|storage|crafting"  // Item category
   }
 }
 ```
@@ -1068,6 +1106,79 @@ Create `mods/MyMod/items.json`:
 - All items from base game and enabled mods appear in Housing Shop
 - No ID conflicts (mod items coexist with base items)
 - Items from all sources contribute equally to comfort
+
+---
+
+### 11. FARMING.JSON
+
+**Purpose**: Define crops and fruits that players can plant and harvest in their farm.
+
+**Parameters**:
+```json
+{
+  "version": "1.0",
+  "description": "Farming crops and fruits for Our Legacy farming system",
+  "crops": {
+    "crop_id": {
+      "name": "string",                    // Display name
+      "description": "string",             // Flavor text description
+      "growth_time": number,               // Days to mature (1-30)
+      "harvest_amount": number,            // Items harvested per plant (1-10)
+      "sell_price": number,                // Gold value per harvested item
+      "rarity": "common|uncommon|rare|epic|legendary",  // Visual rarity indicator
+      "icon": "emoji"                      // Unicode emoji for display
+    }
+  }
+}
+```
+
+**Example**:
+```json
+{
+  "version": "1.0",
+  "description": "Farming crops and fruits for Our Legacy farming system",
+  "crops": {
+    "wheat": {
+      "name": "Wheat",
+      "description": "A common grain crop, takes 3 days to mature",
+      "growth_time": 3,
+      "harvest_amount": 3,
+      "sell_price": 15,
+      "rarity": "common",
+      "icon": "🌾"
+    },
+    "golden_apple": {
+      "name": "Golden Apple",
+      "description": "A rare magical fruit that grows on enchanted trees",
+      "growth_time": 14,
+      "harvest_amount": 1,
+      "sell_price": 500,
+      "rarity": "legendary",
+      "icon": "🍎"
+    }
+  }
+}
+```
+
+**Crop Guidelines**:
+- **growth_time**: 1-7 days for common crops, 8-14 for rare, 15+ for legendary
+- **harvest_amount**: 1-3 for rare items, 4-6 for common, 7+ for abundant crops
+- **sell_price**: Balance based on growth time and rarity (faster/more common = cheaper)
+- **rarity**: Affects visual display and perceived value
+- **icon**: Use relevant food/nature emojis
+
+**Farming Mechanics**:
+- Players plant crops in their farm (requires farm building)
+- Crops take growth_time days to mature
+- Harvest yields harvest_amount items per plant
+- Items can be sold for sell_price gold each
+- No watering or maintenance required (simplified system)
+
+**Mod Merging Behavior**:
+- Mods can add new crops to the crops object
+- New crop IDs are added alongside existing ones
+- No conflicts if IDs are unique
+- All crops from base game and mods appear in farming
 
 ---
 

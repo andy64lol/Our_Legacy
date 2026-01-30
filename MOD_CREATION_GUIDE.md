@@ -37,6 +37,7 @@ Copy any of these files from `data/` and modify them:
 - `crafting.json` - Add recipes
 - `weekly_challenges.json` - Add weekly challenges
 - `housing.json` - Add housing items ⭐ NEW
+- `farming.json` - Add farm crops ⭐ NEW
 
 ### Step 4: Test Your Mod
 Start the game: `python3 main.py`
@@ -69,6 +70,46 @@ Start the game: `python3 main.py`
 - Comfort points: 5-250 (scales with price, roughly 1 point per 10g)
 - Use lowercase IDs with underscores: `my_custom_house`
 - Players can purchase multiple copies to stack comfort
+
+---
+
+### Add Farm Crops
+
+**File**: `mods/YourModName/farming.json`
+
+```json
+{
+  "version": "1.0",
+  "description": "My custom farming crops",
+  "crops": {
+    "my_crop": {
+      "name": "My Special Crop",
+      "description": "A unique crop I created",
+      "growth_time": 5,
+      "harvest_amount": 3,
+      "sell_price": 50,
+      "rarity": "rare",
+      "icon": "🌱"
+    },
+    "magical_fruit": {
+      "name": "Magical Fruit",
+      "description": "Grows on enchanted trees",
+      "growth_time": 10,
+      "harvest_amount": 1,
+      "sell_price": 200,
+      "rarity": "epic",
+      "icon": "🍇"
+    }
+  }
+}
+```
+
+**Tips**:
+- Growth time: 1-7 days for common, 8-14 for rare, 15+ for legendary
+- Harvest amount: 1-3 for rare items, 4-6 for common crops
+- Sell price: Balance with growth time (longer = more valuable)
+- Rarity affects visual display: common, uncommon, rare, epic, legendary
+- Use relevant emojis for icons: 🌾 🌽 🍅 🥔 etc.
 
 ---
 
