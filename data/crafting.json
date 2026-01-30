@@ -435,6 +435,95 @@
       "skill_requirement": 6,
       "craft_time": 4,
       "rarity": "rare"
+    },
+    "bread": {
+      "name": "Bread",
+      "description": "A basic staple food made from wheat",
+      "category": "Consumables",
+      "output": {
+        "Bread": 1
+      },
+      "materials": {
+        "Wheat": 2
+      },
+      "skill_requirement": 1,
+      "craft_time": 1,
+      "rarity": "common"
+    },
+    "salad": {
+      "name": "Salad",
+      "description": "Fresh vegetables mixed together",
+      "category": "Consumables",
+      "output": {
+        "Salad": 1
+      },
+      "materials": {
+        "Lettuce": 1,
+        "Tomato": 1,
+        "Carrot": 1
+      },
+      "skill_requirement": 1,
+      "craft_time": 1,
+      "rarity": "common"
+    },
+    "corn_soup": {
+      "name": "Corn Soup",
+      "description": "A warm and comforting soup made with corn",
+      "category": "Consumables",
+      "output": {
+        "Corn Soup": 1
+      },
+      "materials": {
+        "Corn": 2,
+        "Potato": 1
+      },
+      "skill_requirement": 2,
+      "craft_time": 2,
+      "rarity": "uncommon"
+    },
+    "apple_pie": {
+      "name": "Apple Pie",
+      "description": "A delicious baked treat with apples",
+      "category": "Consumables",
+      "output": {
+        "Apple Pie": 1
+      },
+      "materials": {
+        "Apple": 2,
+        "Wheat": 1
+      },
+      "skill_requirement": 2,
+      "craft_time": 2,
+      "rarity": "uncommon"
+    },
+    "fruit_smoothie": {
+      "name": "Fruit Smoothie",
+      "description": "A refreshing blend of berries and fruit",
+      "category": "Consumables",
+      "output": {
+        "Fruit Smoothie": 1
+      },
+      "materials": {
+        "Strawberry": 2,
+        "Grape": 1
+      },
+      "skill_requirement": 2,
+      "craft_time": 1,
+      "rarity": "uncommon"
+    },
+    "dragon_fruit_juice": {
+      "name": "Dragon Fruit Juice",
+      "description": "A magical and potent juice made from dragon fruit",
+      "category": "Consumables",
+      "output": {
+        "Dragon Fruit Juice": 1
+      },
+      "materials": {
+        "Dragon Fruit": 1
+      },
+      "skill_requirement": 5,
+      "craft_time": 3,
+      "rarity": "epic"
     }
   },
   "material_categories": {
@@ -444,7 +533,8 @@
     "monster_parts": ["Goblin Ear", "Orc Tooth", "Bone Fragment", "Wolf Fang", "Venom Sac", "Serpent Tail", "Swamp Scale", "Troll Hide"],
     "magical": ["Phoenix Feather", "Dragon Scale", "Ancient Relic", "Eternal Essence", "Soul Fragment", "Shadow Essence", "Fire Essence", "Ice Essence"],
     "leather": ["Leather", "Leather Strip"],
-    "wood": ["Hardwood", "Stone Block"]
+    "wood": ["Hardwood", "Stone Block"],
+    "crops": ["Wheat", "Corn", "Tomato", "Potato", "Carrot", "Apple", "Grape", "Strawberry", "Lettuce", "Dragon Fruit"]
   }
 }
 

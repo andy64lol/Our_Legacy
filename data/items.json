@@ -2627,5 +2627,13 @@
       "description": "A crystallized focal point of divine power used in powerful rituals",
       "price": 120,
       "rarity": "rare"
+   },
+   "Bread":{
+      "type": "consumable",
+      "description": "A fresh loaf of bread, perfect for nourishment and healing",
+      "effect": "heal",
+      "value": 10,
+      "price": 20,
+      "rarity": "common"
    }
 }
