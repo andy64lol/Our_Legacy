@@ -194,6 +194,7 @@ class Colors:
     PURPLE = '\033[95m'
     DARK_GRAY = '\033[90m'
     LIGHT_GRAY = '\033[37m'
+    GRAY = '\033[90m'  # Alias for DARK_GRAY
 
     # Rarity colors for items
     COMMON = '\033[37m'  # White
@@ -615,6 +616,33 @@ class Character:
         # Housing system: track owned housing items and comfort points
         self.housing_owned: List[str] = []  # List of housing item IDs owned
         self.comfort_points: int = 0  # Total comfort points from housing
+
+        # Building slots: what's placed in each slot (None if empty)
+        # Key format: "house_1", "house_2", "house_3", etc.
+        self.building_slots: Dict[str, Optional[str]] = {
+            "house_1": None,
+            "house_2": None,
+            "house_3": None,
+            "decoration_1": None,
+            "decoration_2": None,
+            "decoration_3": None,
+            "decoration_4": None,
+            "decoration_5": None,
+            "decoration_6": None,
+            "decoration_7": None,
+            "decoration_8": None,
+            "decoration_9": None,
+            "decoration_10": None,
+            "fencing_1": None,
+            "garden_1": None,
+            "garden_2": None,
+            "garden_3": None,
+            "farm_1": None,
+            "farm_2": None,
+            "training_place_1": None,
+            "training_place_2": None,
+            "training_place_3": None,
+        }
 
         # Sync legacy equipment slots with new system for compatibility
         self._sync_equipment_slots()
@@ -1588,15 +1616,16 @@ class Game:
         print(f"{Colors.CYAN}13.{Colors.END} Dungeons")
         print(f"{Colors.CYAN}14.{Colors.END} Challenges")
         
-        # Show Build Home option only in your_land
+        # Show Build options only in your_land
         if self.current_area == "your_land":
             print(f"{Colors.GOLD}15.{Colors.END} Build Home")
-            print(f"{Colors.CYAN}16.{Colors.END} Save Game")
-            print(f"{Colors.CYAN}17.{Colors.END} Load Game")
-            print(f"{Colors.CYAN}18.{Colors.END} Claim Rewards")
-            print(f"{Colors.CYAN}19.{Colors.END} Quit")
-            choice = ask(f"{Colors.CYAN}Choose an option (1-19): {Colors.END}", allow_empty=False)
-            menu_max = "19"
+            print(f"{Colors.GOLD}16.{Colors.END} Build Land")
+            print(f"{Colors.CYAN}17.{Colors.END} Save Game")
+            print(f"{Colors.CYAN}18.{Colors.END} Load Game")
+            print(f"{Colors.CYAN}19.{Colors.END} Claim Rewards")
+            print(f"{Colors.CYAN}20.{Colors.END} Quit")
+            choice = ask(f"{Colors.CYAN}Choose an option (1-20): {Colors.END}", allow_empty=False)
+            menu_max = "20"
         else:
             print(f"{Colors.CYAN}15.{Colors.END} Save Game")
             print(f"{Colors.CYAN}16.{Colors.END} Load Game")
@@ -1632,15 +1661,16 @@ class Game:
             'r': '11',
             'companions': '12',
             'comp': '12',
-            'build': '15' if self.current_area == "your_land" else None,
-            'home': '15' if self.current_area == "your_land" else None,
-            'save': '15' if self.current_area != "your_land" else '16',
-            'load': '16' if self.current_area != "your_land" else '17',
-            'l': '16' if self.current_area != "your_land" else '17',
-            'claim': '17' if self.current_area != "your_land" else '18',
-            'c': '17' if self.current_area != "your_land" else '18',
-            'quit': '18' if self.current_area != "your_land" else '19',
-            'q': '18' if self.current_area != "your_land" else '19'
+            'build_home': '15' if self.current_area == "your_land" else None,
+            'build_land': '16' if self.current_area == "your_land" else None,
+            'land': '16' if self.current_area == "your_land" else None,
+            'save': '17' if self.current_area == "your_land" else '15',
+            'load': '18' if self.current_area == "your_land" else '16',
+            'l': '18' if self.current_area == "your_land" else '16',
+            'claim': '19' if self.current_area == "your_land" else '17',
+            'c': '19' if self.current_area == "your_land" else '17',
+            'quit': '20' if self.current_area == "your_land" else '18',
+            'q': '20' if self.current_area == "your_land" else '18'
         }
         
         # Remove None values from shortcut map
@@ -1698,11 +1728,15 @@ class Game:
             # Build Home option only in your_land
             self.build_home()
         
+        elif choice == "16" and self.current_area == "your_land":
+            # Build Land option only in your_land
+            self.build_land()
+        
         elif choice == "15":
             # Save Game (when not in your_land)
             self.save_game()
 
-        elif choice == "16" and self.current_area == "your_land":
+        elif choice == "17" and self.current_area == "your_land":
             # Save Game (when in your_land)
             self.save_game()
             
@@ -1710,7 +1744,7 @@ class Game:
             # Load Game (when not in your_land)
             self.load_game()
 
-        elif choice == "17" and self.current_area == "your_land":
+        elif choice == "18" and self.current_area == "your_land":
             # Load Game (when in your_land)
             self.load_game()
             
@@ -1718,7 +1752,7 @@ class Game:
             # Claim Rewards (when not in your_land)
             self.claim_rewards()
 
-        elif choice == "18" and self.current_area == "your_land":
+        elif choice == "19" and self.current_area == "your_land":
             # Claim Rewards (when in your_land)
             self.claim_rewards()
             
@@ -1726,7 +1760,7 @@ class Game:
             # Quit (when not in your_land)
             self.quit_game()
 
-        elif choice == "19" and self.current_area == "your_land":
+        elif choice == "20" and self.current_area == "your_land":
             # Quit (when in your_land)
             self.quit_game()
             
@@ -3404,6 +3438,214 @@ class Game:
                 print(f"\n{Colors.YELLOW}Removed {name}. Lost {info['comfort']} comfort points.{Colors.END}")
                 print(f"Comfort Points: {Colors.CYAN}{self.player.comfort_points}{Colors.END}")
 
+    def build_land(self):
+        """Build and manage buildings on your land"""
+        if not self.player:
+            print("No character created yet.")
+            return
+
+        while True:
+            clear_screen()
+            print(f"\n{Colors.BOLD}{Colors.CYAN}=== BUILD YOUR LAND ==={Colors.END}")
+            print(f"{Colors.YELLOW}Manage your buildings and customize your property{Colors.END}\n")
+            
+            # Display building categories
+            building_types = {
+                "house": {"label": "House", "slots": 3, "max_owned": 0},
+                "decoration": {"label": "Decoration", "slots": 10, "max_owned": 0},
+                "fencing": {"label": "Fencing", "slots": 1, "max_owned": 0},
+                "garden": {"label": "Garden", "slots": 3, "max_owned": 0},
+                "farm": {"label": "Farm", "slots": 2, "max_owned": 0},
+                "farming": {"label": "Farming", "slots": 2, "max_owned": 0},
+                "training_place": {"label": "Training Place", "slots": 3, "max_owned": 0},
+            }
+            
+            # Count occupied slots and available items for each type
+            placed_items = {b_type: 0 for b_type in building_types}
+            available_items = {b_type: [] for b_type in building_types}
+            
+            for slot_name, item_id in self.player.building_slots.items():
+                if item_id:
+                    # Extract type from slot name (e.g., "house_1" -> "house")
+                    b_type = slot_name.rsplit('_', 1)[0]
+                    if b_type in placed_items:
+                        placed_items[b_type] += 1
+            
+            # Get available items from inventory
+            for item_id in self.player.housing_owned:
+                item_data = self.housing_data.get(item_id, {})
+                item_type = item_data.get("type", "decoration")
+                available_items[item_type].append({"id": item_id, "data": item_data})
+            
+            # Display building slots
+            menu_idx = 1
+            print(f"{Colors.BOLD}Building Slots:{Colors.END}\n")
+            
+            for b_type, info in building_types.items():
+                placed = placed_items.get(b_type, 0)
+                max_slots = info["slots"]
+                status_color = Colors.GREEN if placed > 0 else Colors.DARK_GRAY
+                
+                print(f"{Colors.CYAN}{menu_idx}.{Colors.END} {Colors.BOLD}{info['label']}{Colors.END} [{status_color}{placed}/{max_slots}{Colors.END}]")
+                menu_idx += 1
+            
+            print(f"\n{Colors.CYAN}Q.{Colors.END} Quit")
+            choice = ask(f"\n{Colors.CYAN}Choose a building type to manage: {Colors.END}").strip().upper()
+            
+            if choice == 'Q':
+                break
+            
+            if choice.isdigit():
+                idx = int(choice) - 1
+                types_list = list(building_types.keys())
+                if 0 <= idx < len(types_list):
+                    self.manage_building_slots(types_list[idx], building_types[types_list[idx]], available_items[types_list[idx]])
+
+    def manage_building_slots(self, b_type: str, b_info: Dict, available_items: List[Dict]):
+        """Manage slots for a specific building type"""
+        if not self.player:
+            print("No character created yet.")
+            return
+            
+        while True:
+            clear_screen()
+            print(f"\n{Colors.BOLD}{Colors.CYAN}=== {b_info['label'].upper()} SLOTS ==={Colors.END}")
+            print(f"{Colors.YELLOW}Manage your {b_info['label'].lower()} placements{Colors.END}\n")
+            
+            max_slots = b_info["slots"]
+            
+            # Display all slots for this type
+            print(f"{Colors.BOLD}Slots:{Colors.END}")
+            slot_list = []
+            for i in range(1, max_slots + 1):
+                slot_name = f"{b_type}_{i}"
+                item_id = self.player.building_slots.get(slot_name)
+                
+                if item_id:
+                    item_data = self.housing_data.get(item_id, {})
+                    item_name = item_data.get("name", item_id)
+                    item_price = item_data.get("price", 0)
+                    swap_cost = int(item_price * 0.1)
+                    print(f"{Colors.CYAN}{i}.{Colors.END} [{Colors.GREEN}✓{Colors.END}] {Colors.BOLD}{Colors.YELLOW}{item_name}{Colors.END}")
+                    print(f"   Swap cost: {Colors.GOLD}{swap_cost} gold{Colors.END} (10% of {item_price})")
+                else:
+                    print(f"{Colors.CYAN}{i}.{Colors.END} [{Colors.DARK_GRAY}-{Colors.END}] {Colors.DARK_GRAY}Empty{Colors.END}")
+                
+                slot_list.append(slot_name)
+            
+            print(f"\n{Colors.YELLOW}Available items in inventory: {len(available_items)}{Colors.END}")
+            
+            for idx, item in enumerate(available_items[:3], 1):  # Show first 3 available
+                item_name = item["data"].get("name", item["id"])
+                item_comfort = item["data"].get("comfort_points", 0)
+                print(f"  • {Colors.BOLD}{item_name}{Colors.END} (+{Colors.CYAN}{item_comfort}{Colors.END} comfort)")
+            
+            if len(available_items) > 3:
+                print(f"  • {Colors.DARK_GRAY}... and {len(available_items) - 3} more items{Colors.END}")
+            
+            print(f"\n{Colors.CYAN}1-{max_slots}.{Colors.END} Manage slot")
+            print(f"{Colors.CYAN}B.{Colors.END} Back to land menu")
+            
+            choice = ask(f"\n{Colors.CYAN}Choose action: {Colors.END}").strip().upper()
+            
+            if choice == 'B':
+                break
+            elif choice.isdigit():
+                slot_idx = int(choice) - 1
+                if 0 <= slot_idx < len(slot_list):
+                    self.manage_slot(slot_list[slot_idx], available_items)
+
+    def manage_slot(self, slot_name: str, available_items: List[Dict]):
+        """Manage a specific building slot"""
+        if not self.player:
+            print("No character created yet.")
+            return
+            
+        current_item = self.player.building_slots.get(slot_name)
+        
+        while True:
+            clear_screen()
+            print(f"\n{Colors.BOLD}{Colors.CYAN}=== MANAGE {slot_name.upper()} ==={Colors.END}")
+            
+            if current_item:
+                current_data = self.housing_data.get(current_item, {})
+                current_name = current_data.get("name", current_item)
+                current_price = current_data.get("price", 0)
+                swap_cost = int(current_price * 0.1)
+                
+                print(f"{Colors.BOLD}Current item:{Colors.END} {Colors.YELLOW}{current_name}{Colors.END}")
+                print(f"Swap cost: {Colors.GOLD}{swap_cost} gold{Colors.END}\n")
+            else:
+                print(f"{Colors.GRAY}Current item: Empty{Colors.END}\n")
+            
+            print(f"{Colors.BOLD}Available items to place:{Colors.END}\n")
+            
+            for idx, item in enumerate(available_items, 1):
+                item_id = item["id"]
+                item_data = item["data"]
+                item_name = item_data.get("name", item_id)
+                item_comfort = item_data.get("comfort_points", 0)
+                item_price = item_data.get("price", 0)
+                swap_cost = int(item_price * 0.1)
+                
+                print(f"{Colors.CYAN}{idx}.{Colors.END} {Colors.BOLD}{Colors.YELLOW}{item_name}{Colors.END}")
+                print(f"   Comfort: {Colors.CYAN}+{item_comfort}{Colors.END} | Swap cost: {Colors.GOLD}{swap_cost}g{Colors.END}")
+            
+            print(f"\n{Colors.CYAN}C.{Colors.END} Clear this slot")
+            print(f"{Colors.CYAN}B.{Colors.END} Back")
+            
+            choice = ask(f"\n{Colors.CYAN}Select item to place or action: {Colors.END}").strip().upper()
+            
+            if choice == 'B':
+                break
+            elif choice == 'C':
+                if current_item:
+                    self.player.building_slots[slot_name] = None
+                    print(f"\n{Colors.GREEN}✓ Slot cleared!{Colors.END}")
+                    input("Press Enter to continue...")
+                    break
+                else:
+                    print(f"\n{Colors.YELLOW}Slot is already empty.{Colors.END}")
+                    input("Press Enter to continue...")
+            elif choice.isdigit():
+                item_idx = int(choice) - 1
+                if 0 <= item_idx < len(available_items):
+                    selected_item = available_items[item_idx]
+                    
+                    # Calculate cost
+                    if current_item:
+                        current_price = self.housing_data.get(current_item, {}).get("price", 0)
+                        swap_cost = int(current_price * 0.1)
+                    else:
+                        swap_cost = 0
+                    
+                    # Check if player can afford
+                    if self.player.gold >= swap_cost:
+                        if swap_cost > 0:
+                            self.player.gold -= swap_cost
+                            print(f"\n{Colors.GREEN}✓ Paid {Colors.GOLD}{swap_cost} gold{Colors.GREEN} to swap.{Colors.END}")
+                        
+                        old_item = current_item
+                        self.player.building_slots[slot_name] = selected_item["id"]
+                        
+                        # Update comfort points
+                        if old_item:
+                            old_comfort = self.housing_data.get(old_item, {}).get("comfort_points", 0)
+                            self.player.comfort_points -= old_comfort
+                        
+                        new_comfort = selected_item["data"].get("comfort_points", 0)
+                        self.player.comfort_points += new_comfort
+                        
+                        item_name = selected_item["data"].get("name", selected_item["id"])
+                        print(f"{Colors.GREEN}✓ Placed {Colors.BOLD}{item_name}{Colors.END}{Colors.GREEN} in {slot_name}!{Colors.END}")
+                        print(f"Total comfort: {Colors.CYAN}{self.player.comfort_points}{Colors.END}")
+                        input("Press Enter to continue...")
+                        break
+                    else:
+                        needed = swap_cost - self.player.gold
+                        print(f"\n{Colors.RED}✗ Not enough gold! Need {needed} more.{Colors.END}")
+                        input("Press Enter to continue...")
+
     def visit_tavern(self):
         """Visit the tavern to hire companions."""
         if not self.player:
@@ -3937,7 +4179,8 @@ class Game:
                 "rank": self.player.rank,
                 "active_buffs": self.player.active_buffs,
                 "housing_owned": self.player.housing_owned if hasattr(self.player, 'housing_owned') else [],
-                "comfort_points": self.player.comfort_points if hasattr(self.player, 'comfort_points') else 0
+                "comfort_points": self.player.comfort_points if hasattr(self.player, 'comfort_points') else 0,
+                "building_slots": self.player.building_slots if hasattr(self.player, 'building_slots') else {}
             },
             "current_area": self.current_area,
             "mission_progress": self.mission_progress,
@@ -4026,6 +4269,7 @@ class Game:
                     # NEW: Load housing data with backward compatibility
                     self.player.housing_owned = player_data.get("housing_owned", [])
                     self.player.comfort_points = player_data.get("comfort_points", 0)
+                    self.player.building_slots = player_data.get("building_slots", {})
 
                     # NEW: Enhanced equipment loading with validation
                     self._load_equipment_data(player_data, save_version)
