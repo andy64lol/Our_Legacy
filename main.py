@@ -644,6 +644,13 @@ class Character:
             "training_place_3": None,
         }
 
+        # Farming system: track planted crops and their growth time
+        # Format: {farm_slot_id: [{"crop": "wheat", "days_left": 3}, ...]}
+        self.farm_plots: Dict[str, List[Dict[str, Any]]] = {
+            "farm_1": [],
+            "farm_2": [],
+        }
+
         # Sync legacy equipment slots with new system for compatibility
         self._sync_equipment_slots()
 
@@ -1165,6 +1172,7 @@ class Game:
         self.crafting_data: Dict[str, Any] = {}
         self.weekly_challenges_data: Dict[str, Any] = {}
         self.housing_data: Dict[str, Any] = {}  # Housing items data
+        self.farming_data: Dict[str, Any] = {}  # Farming crops and foods data
 
         # Challenge tracking
         self.challenge_progress: Dict[str, int] = {}  # challenge_id -> progress count
@@ -1246,6 +1254,13 @@ class Game:
                     self.housing_data = json.load(f)
             except FileNotFoundError:
                 self.housing_data = {}
+            
+            # Load farming data
+            try:
+                with open('data/farming.json', 'r') as f:
+                    self.farming_data = json.load(f)
+            except FileNotFoundError:
+                self.farming_data = {}
             
             # Load mod data after base game data
             self._load_mod_data()
@@ -1620,12 +1635,13 @@ class Game:
         if self.current_area == "your_land":
             print(f"{Colors.GOLD}15.{Colors.END} Build Home")
             print(f"{Colors.GOLD}16.{Colors.END} Build Land")
-            print(f"{Colors.CYAN}17.{Colors.END} Save Game")
-            print(f"{Colors.CYAN}18.{Colors.END} Load Game")
-            print(f"{Colors.CYAN}19.{Colors.END} Claim Rewards")
-            print(f"{Colors.CYAN}20.{Colors.END} Quit")
-            choice = ask(f"{Colors.CYAN}Choose an option (1-20): {Colors.END}", allow_empty=False)
-            menu_max = "20"
+            print(f"{Colors.GOLD}17.{Colors.END} Farm")
+            print(f"{Colors.CYAN}18.{Colors.END} Save Game")
+            print(f"{Colors.CYAN}19.{Colors.END} Load Game")
+            print(f"{Colors.CYAN}20.{Colors.END} Claim Rewards")
+            print(f"{Colors.CYAN}21.{Colors.END} Quit")
+            choice = ask(f"{Colors.CYAN}Choose an option (1-21): {Colors.END}", allow_empty=False)
+            menu_max = "21"
         else:
             print(f"{Colors.CYAN}15.{Colors.END} Save Game")
             print(f"{Colors.CYAN}16.{Colors.END} Load Game")
@@ -1664,13 +1680,14 @@ class Game:
             'build_home': '15' if self.current_area == "your_land" else None,
             'build_land': '16' if self.current_area == "your_land" else None,
             'land': '16' if self.current_area == "your_land" else None,
-            'save': '17' if self.current_area == "your_land" else '15',
-            'load': '18' if self.current_area == "your_land" else '16',
-            'l': '18' if self.current_area == "your_land" else '16',
-            'claim': '19' if self.current_area == "your_land" else '17',
-            'c': '19' if self.current_area == "your_land" else '17',
-            'quit': '20' if self.current_area == "your_land" else '18',
-            'q': '20' if self.current_area == "your_land" else '18'
+            'farm': '17' if self.current_area == "your_land" else None,
+            'save': '18' if self.current_area == "your_land" else '15',
+            'load': '19' if self.current_area == "your_land" else '16',
+            'l': '19' if self.current_area == "your_land" else '16',
+            'claim': '20' if self.current_area == "your_land" else '17',
+            'c': '20' if self.current_area == "your_land" else '17',
+            'quit': '21' if self.current_area == "your_land" else '18',
+            'q': '21' if self.current_area == "your_land" else '18'
         }
         
         # Remove None values from shortcut map
@@ -1732,11 +1749,15 @@ class Game:
             # Build Land option only in your_land
             self.build_land()
         
+        elif choice == "17" and self.current_area == "your_land":
+            # Farm option only in your_land
+            self.farm()
+        
         elif choice == "15":
             # Save Game (when not in your_land)
             self.save_game()
 
-        elif choice == "17" and self.current_area == "your_land":
+        elif choice == "18" and self.current_area == "your_land":
             # Save Game (when in your_land)
             self.save_game()
             
@@ -1744,7 +1765,7 @@ class Game:
             # Load Game (when not in your_land)
             self.load_game()
 
-        elif choice == "18" and self.current_area == "your_land":
+        elif choice == "19" and self.current_area == "your_land":
             # Load Game (when in your_land)
             self.load_game()
             
@@ -1752,7 +1773,7 @@ class Game:
             # Claim Rewards (when not in your_land)
             self.claim_rewards()
 
-        elif choice == "19" and self.current_area == "your_land":
+        elif choice == "20" and self.current_area == "your_land":
             # Claim Rewards (when in your_land)
             self.claim_rewards()
             
@@ -1760,7 +1781,7 @@ class Game:
             # Quit (when not in your_land)
             self.quit_game()
 
-        elif choice == "20" and self.current_area == "your_land":
+        elif choice == "21" and self.current_area == "your_land":
             # Quit (when in your_land)
             self.quit_game()
             
@@ -3646,6 +3667,256 @@ class Game:
                         print(f"\n{Colors.RED}✗ Not enough gold! Need {needed} more.{Colors.END}")
                         input("Press Enter to continue...")
 
+    def farm(self):
+        """Farm crops on your land"""
+        if not self.player:
+            print("No character created yet.")
+            return
+
+        # Check if player has any farm buildings
+        has_farm = any(self.player.building_slots.get(f"farm_{i}") is not None for i in range(1, 3))
+        
+        if not has_farm:
+            print(f"\n{Colors.YELLOW}You need to build a farm first! Use the 'Build Land' option.{Colors.END}")
+            input("Press Enter to continue...")
+            return
+
+        while True:
+            clear_screen()
+            print(f"\n{Colors.BOLD}{Colors.CYAN}=== FARMING ==={Colors.END}")
+            print(f"{Colors.YELLOW}Tend to your crops and harvest your bounty{Colors.END}\n")
+
+            # Show available crops to plant
+            crops_data = self.farming_data.get("crops", {})
+            
+            print(f"{Colors.BOLD}Available Crops to Plant:{Colors.END}\n")
+            crops_list = list(crops_data.items())
+            for idx, (crop_id, crop_data) in enumerate(crops_list, 1):
+                name = crop_data.get("name", crop_id)
+                description = crop_data.get("description", "")
+                growth_time = crop_data.get("growth_time", 0)
+                harvest = crop_data.get("harvest_amount", 0)
+                print(f"{Colors.CYAN}{idx}.{Colors.END} {Colors.BOLD}{name}{Colors.END}")
+                print(f"   {description}")
+                print(f"   Growth: {Colors.YELLOW}{growth_time} days{Colors.END} | Harvest: {Colors.GREEN}+{harvest}{Colors.END}\n")
+
+            print(f"{Colors.BOLD}Farm Status:{Colors.END}\n")
+            
+            # Show farm plot status
+            for farm_idx in range(1, 3):
+                farm_slot = f"farm_{farm_idx}"
+                has_building = self.player.building_slots.get(farm_slot) is not None
+                
+                if has_building:
+                    print(f"{Colors.GOLD}Farm Plot {farm_idx}:{Colors.END} {Colors.GREEN}✓ Active{Colors.END}")
+                    plots = self.player.farm_plots.get(farm_slot, [])
+                    if plots:
+                        for plant_idx, plant in enumerate(plots, 1):
+                            crop_name = self.farming_data.get("crops", {}).get(plant.get("crop"), {}).get("name", plant.get("crop"))
+                            days_left = plant.get("days_left", 0)
+                            if days_left > 0:
+                                print(f"  {plant_idx}. {crop_name} - {Colors.YELLOW}{days_left} days{Colors.END} until ready")
+                            else:
+                                print(f"  {plant_idx}. {crop_name} - {Colors.GREEN}Ready to harvest!{Colors.END}")
+                    else:
+                        print(f"  {Colors.GRAY}Empty - Ready to plant{Colors.END}")
+                else:
+                    print(f"Farm Plot {farm_idx}: {Colors.DARK_GRAY}Not built{Colors.END}")
+                print()
+
+            print(f"{Colors.CYAN}1-{len(crops_list)}.{Colors.END} Plant a crop")
+            print(f"{Colors.CYAN}H.{Colors.END} Harvest crops")
+            print(f"{Colors.CYAN}V.{Colors.END} View inventory")
+            print(f"{Colors.CYAN}B.{Colors.END} Back")
+            
+            choice = ask(f"\n{Colors.CYAN}Choose action: {Colors.END}").strip().upper()
+            
+            if choice == 'B':
+                break
+            elif choice == 'H':
+                self.harvest_crops()
+            elif choice == 'V':
+                self.view_farming_inventory()
+            elif choice.isdigit():
+                crop_idx = int(choice) - 1
+                if 0 <= crop_idx < len(crops_list):
+                    self.plant_crop(crops_list[crop_idx])
+
+    def plant_crop(self, crop_tuple):
+        """Plant a specific crop in an available farm plot"""
+        if not self.player:
+            return
+
+        crop_id, crop_data = crop_tuple
+        crop_name = crop_data.get("name", crop_id)
+        growth_time = crop_data.get("growth_time", 0)
+
+        # Select which farm to plant in
+        clear_screen()
+        print(f"\n{Colors.BOLD}{Colors.CYAN}=== PLANT {crop_name.upper()} ==={Colors.END}\n")
+        print(f"Select which farm plot to use:\n")
+
+        farm_choices = []
+        for farm_idx in range(1, 3):
+            farm_slot = f"farm_{farm_idx}"
+            has_building = self.player.building_slots.get(farm_slot) is not None
+            
+            if has_building:
+                plots = self.player.farm_plots.get(farm_slot, [])
+                plant_count = len(plots)
+                max_plots = 3  # Can have multiple plants per farm
+                
+                print(f"{len(farm_choices) + 1}. Farm Plot {farm_idx} - {Colors.GREEN}{plant_count}/3 plants{Colors.END}")
+                farm_choices.append(farm_slot)
+
+        if not farm_choices:
+            print(f"{Colors.YELLOW}No active farms available!{Colors.END}")
+            input("Press Enter to continue...")
+            return
+
+        choice = ask(f"\nChoose farm (1-{len(farm_choices)}) or press Enter to cancel: ").strip()
+        
+        if choice and choice.isdigit():
+            farm_choice_idx = int(choice) - 1
+            if 0 <= farm_choice_idx < len(farm_choices):
+                farm_slot = farm_choices[farm_choice_idx]
+                
+                # Add plant to farm
+                if farm_slot not in self.player.farm_plots:
+                    self.player.farm_plots[farm_slot] = []
+                
+                if len(self.player.farm_plots[farm_slot]) < 3:
+                    self.player.farm_plots[farm_slot].append({
+                        "crop": crop_id,
+                        "days_left": growth_time
+                    })
+                    print(f"\n{Colors.GREEN}✓ Planted {crop_name} in {farm_slot}!{Colors.END}")
+                    print(f"It will be ready to harvest in {Colors.YELLOW}{growth_time} days{Colors.END}")
+                else:
+                    print(f"\n{Colors.YELLOW}This farm plot is full! (3/3 plants){Colors.END}")
+                
+                input("Press Enter to continue...")
+
+    def harvest_crops(self):
+        """Harvest ready crops from farm plots"""
+        if not self.player:
+            return
+
+        clear_screen()
+        print(f"\n{Colors.BOLD}{Colors.CYAN}=== HARVEST CROPS ==={Colors.END}\n")
+
+        harvested = False
+        for farm_idx in range(1, 3):
+            farm_slot = f"farm_{farm_idx}"
+            plots = self.player.farm_plots.get(farm_slot, [])
+            
+            if not plots:
+                continue
+
+            crops_to_remove = []
+            for plant_idx, plant in enumerate(plots):
+                crop_id = plant.get("crop")
+                days_left = plant.get("days_left", 0)
+                
+                if days_left <= 0:
+                    crop_data = self.farming_data.get("crops", {}).get(crop_id, {})
+                    crop_name = crop_data.get("name", crop_id)
+                    harvest_amount = crop_data.get("harvest_amount", 1)
+                    
+                    # Add crops to inventory
+                    for _ in range(harvest_amount):
+                        self.player.inventory.append(crop_name)
+                    
+                    print(f"{Colors.GREEN}✓ Harvested {Colors.BOLD}{harvest_amount}x {crop_name}{Colors.END}{Colors.GREEN} from {farm_slot}!{Colors.END}")
+                    crops_to_remove.append(plant_idx)
+                    harvested = True
+
+            # Remove harvested crops (in reverse to maintain indices)
+            for idx in reversed(crops_to_remove):
+                plots.pop(idx)
+
+        if not harvested:
+            print(f"{Colors.YELLOW}No crops are ready to harvest yet.{Colors.END}")
+        
+        input("Press Enter to continue...")
+
+    def view_farming_inventory(self):
+        """View crops in inventory"""
+        if not self.player:
+            return
+
+        clear_screen()
+        print(f"\n{Colors.BOLD}{Colors.CYAN}=== FARMING INVENTORY ==={Colors.END}\n")
+
+        crops_data = self.farming_data.get("crops", {})
+        crop_names = {crop_data.get("name"): crop_id for crop_id, crop_data in crops_data.items()}
+
+        # Count crops in inventory
+        crop_counts = {}
+        for item in self.player.inventory:
+            if item in crop_names:
+                crop_counts[item] = crop_counts.get(item, 0) + 1
+
+        if crop_counts:
+            print(f"{Colors.BOLD}Crops in Inventory:{Colors.END}\n")
+            for crop_name, count in crop_counts.items():
+                crop_id = crop_names[crop_name]
+                crop_data = crops_data.get(crop_id, {})
+                sell_price = crop_data.get("sell_price", 0)
+                
+                print(f"{Colors.GREEN}✓{Colors.END} {Colors.BOLD}{crop_name}{Colors.END} x{count}")
+                print(f"  Sell price: {Colors.GOLD}{sell_price}g{Colors.END} each | Total: {Colors.GOLD}{sell_price * count}g{Colors.END}\n")
+
+            print(f"{Colors.CYAN}S.{Colors.END} Sell crops")
+            print(f"{Colors.CYAN}C.{Colors.END} Cook crops (alchemy)")
+            print(f"{Colors.CYAN}B.{Colors.END} Back")
+            
+            choice = ask(f"\n{Colors.CYAN}Choose action: {Colors.END}").strip().upper()
+            
+            if choice == 'S':
+                self.sell_crops()
+            elif choice == 'C':
+                self.visit_alchemy()  # Reuse existing alchemy system
+        else:
+            print(f"{Colors.YELLOW}You have no crops in your inventory yet.{Colors.END}")
+            input("Press Enter to continue...")
+
+    def sell_crops(self):
+        """Sell crops for gold"""
+        if not self.player:
+            return
+
+        clear_screen()
+        print(f"\n{Colors.BOLD}{Colors.CYAN}=== SELL CROPS ==={Colors.END}\n")
+
+        crops_data = self.farming_data.get("crops", {})
+        crop_names = {crop_data.get("name"): crop_id for crop_id, crop_data in crops_data.items()}
+
+        # Count crops
+        crop_counts = {}
+        for item in self.player.inventory:
+            if item in crop_names:
+                crop_counts[item] = crop_counts.get(item, 0) + 1
+
+        total_gold = 0
+        for crop_name, count in crop_counts.items():
+            crop_id = crop_names[crop_name]
+            crop_data = crops_data.get(crop_id, {})
+            sell_price = crop_data.get("sell_price", 0)
+            subtotal = sell_price * count
+            total_gold += subtotal
+            
+            print(f"{crop_name} x{count}: {Colors.GOLD}{subtotal}g{Colors.END}")
+            
+            # Remove from inventory
+            for _ in range(count):
+                self.player.inventory.remove(crop_name)
+
+        self.player.gold += total_gold
+        print(f"\n{Colors.GREEN}✓ Sold all crops for {Colors.GOLD}{total_gold} gold{Colors.END}{Colors.GREEN}!{Colors.END}")
+        print(f"Total gold: {Colors.GOLD}{self.player.gold}{Colors.END}")
+        input("Press Enter to continue...")
+
     def visit_tavern(self):
         """Visit the tavern to hire companions."""
         if not self.player:
@@ -4180,7 +4451,8 @@ class Game:
                 "active_buffs": self.player.active_buffs,
                 "housing_owned": self.player.housing_owned if hasattr(self.player, 'housing_owned') else [],
                 "comfort_points": self.player.comfort_points if hasattr(self.player, 'comfort_points') else 0,
-                "building_slots": self.player.building_slots if hasattr(self.player, 'building_slots') else {}
+                "building_slots": self.player.building_slots if hasattr(self.player, 'building_slots') else {},
+                "farm_plots": self.player.farm_plots if hasattr(self.player, 'farm_plots') else {}
             },
             "current_area": self.current_area,
             "mission_progress": self.mission_progress,
@@ -4270,6 +4542,7 @@ class Game:
                     self.player.housing_owned = player_data.get("housing_owned", [])
                     self.player.comfort_points = player_data.get("comfort_points", 0)
                     self.player.building_slots = player_data.get("building_slots", {})
+                    self.player.farm_plots = player_data.get("farm_plots", {"farm_1": [], "farm_2": []})
 
                     # NEW: Enhanced equipment loading with validation
                     self._load_equipment_data(player_data, save_version)
