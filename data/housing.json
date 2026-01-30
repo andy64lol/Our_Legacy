@@ -299,5 +299,26 @@
         "price": 2000,
         "comfort_points": 100,
         "type": "decoration"
+    },
+    "basic_training_dummy":{
+        "name": "Basic Training Dummy",
+        "description": "A simple wooden dummy for basic combat training exercises.",
+        "price": 300,
+        "comfort_points": 5,
+        "type": "training_place"
+    },
+    "stone_training_area":{
+        "name": "Stone Training Area",
+        "description": "A designated stone area for various training activities and exercises.",
+        "price": 800,
+        "comfort_points": 15,
+        "type": "training_place"
+    },
+    "advanced_gymnasium":{
+        "name": "Advanced Gymnasium",
+        "description": "A comprehensive training facility with various equipment for intense physical conditioning.",
+        "price": 1500,
+        "comfort_points": 25,
+        "type": "training_place"
     }
 }

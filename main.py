@@ -1633,15 +1633,16 @@ class Game:
         
         # Show Build options only in your_land
         if self.current_area == "your_land":
-            print(f"{Colors.GOLD}15.{Colors.END} Build Home")
-            print(f"{Colors.GOLD}16.{Colors.END} Build Land")
+            print(f"{Colors.GOLD}15.{Colors.END} Furnish Home")
+            print(f"{Colors.GOLD}16.{Colors.END} Build Structures")
             print(f"{Colors.GOLD}17.{Colors.END} Farm")
-            print(f"{Colors.CYAN}18.{Colors.END} Save Game")
-            print(f"{Colors.CYAN}19.{Colors.END} Load Game")
-            print(f"{Colors.CYAN}20.{Colors.END} Claim Rewards")
-            print(f"{Colors.CYAN}21.{Colors.END} Quit")
-            choice = ask(f"{Colors.CYAN}Choose an option (1-21): {Colors.END}", allow_empty=False)
-            menu_max = "21"
+            print(f"{Colors.GOLD}18.{Colors.END} Training")
+            print(f"{Colors.CYAN}19.{Colors.END} Save Game")
+            print(f"{Colors.CYAN}20.{Colors.END} Load Game")
+            print(f"{Colors.CYAN}21.{Colors.END} Claim Rewards")
+            print(f"{Colors.CYAN}22.{Colors.END} Quit")
+            choice = ask(f"{Colors.CYAN}Choose an option (1-22): {Colors.END}", allow_empty=False)
+            menu_max = "22"
         else:
             print(f"{Colors.CYAN}15.{Colors.END} Save Game")
             print(f"{Colors.CYAN}16.{Colors.END} Load Game")
@@ -1678,16 +1679,20 @@ class Game:
             'companions': '12',
             'comp': '12',
             'build_home': '15' if self.current_area == "your_land" else None,
+            'furnish_home': '15' if self.current_area == "your_land" else None,
             'build_land': '16' if self.current_area == "your_land" else None,
+            'build_structures': '16' if self.current_area == "your_land" else None,
             'land': '16' if self.current_area == "your_land" else None,
             'farm': '17' if self.current_area == "your_land" else None,
-            'save': '18' if self.current_area == "your_land" else '15',
-            'load': '19' if self.current_area == "your_land" else '16',
-            'l': '19' if self.current_area == "your_land" else '16',
-            'claim': '20' if self.current_area == "your_land" else '17',
-            'c': '20' if self.current_area == "your_land" else '17',
-            'quit': '21' if self.current_area == "your_land" else '18',
-            'q': '21' if self.current_area == "your_land" else '18'
+            'training': '18' if self.current_area == "your_land" else None,
+            'train': '18' if self.current_area == "your_land" else None,
+            'save': '19' if self.current_area == "your_land" else '15',
+            'load': '20' if self.current_area == "your_land" else '16',
+            'l': '20' if self.current_area == "your_land" else '16',
+            'claim': '21' if self.current_area == "your_land" else '17',
+            'c': '21' if self.current_area == "your_land" else '17',
+            'quit': '22' if self.current_area == "your_land" else '18',
+            'q': '22' if self.current_area == "your_land" else '18'
         }
         
         # Remove None values from shortcut map
@@ -1742,22 +1747,26 @@ class Game:
             self.view_challenges()
 
         elif choice == "15" and self.current_area == "your_land":
-            # Build Home option only in your_land
+            # Furnish Home option only in your_land
             self.build_home()
         
         elif choice == "16" and self.current_area == "your_land":
-            # Build Land option only in your_land
+            # Build Structures option only in your_land
             self.build_land()
         
         elif choice == "17" and self.current_area == "your_land":
             # Farm option only in your_land
             self.farm()
         
+        elif choice == "18" and self.current_area == "your_land":
+            # Training option only in your_land
+            self.training()
+        
         elif choice == "15":
             # Save Game (when not in your_land)
             self.save_game()
 
-        elif choice == "18" and self.current_area == "your_land":
+        elif choice == "19" and self.current_area == "your_land":
             # Save Game (when in your_land)
             self.save_game()
             
@@ -1765,7 +1774,7 @@ class Game:
             # Load Game (when not in your_land)
             self.load_game()
 
-        elif choice == "19" and self.current_area == "your_land":
+        elif choice == "20" and self.current_area == "your_land":
             # Load Game (when in your_land)
             self.load_game()
             
@@ -1773,12 +1782,16 @@ class Game:
             # Claim Rewards (when not in your_land)
             self.claim_rewards()
 
-        elif choice == "20" and self.current_area == "your_land":
+        elif choice == "21" and self.current_area == "your_land":
             # Claim Rewards (when in your_land)
             self.claim_rewards()
             
         elif choice == "18":
             # Quit (when not in your_land)
+            self.quit_game()
+
+        elif choice == "22" and self.current_area == "your_land":
+            # Quit (when in your_land)
             self.quit_game()
 
         elif choice == "21" and self.current_area == "your_land":
@@ -3260,7 +3273,7 @@ class Game:
             if len(housing_items) > page_size:
                 print(f"{Colors.CYAN}N.{Colors.END} Next Page")
                 print(f"{Colors.CYAN}P.{Colors.END} Previous Page")
-            print(f"{Colors.GOLD}B.{Colors.END} Build/View Home")
+            print(f"{Colors.GOLD}B.{Colors.END} Furnish/View Home")
             print(f"{Colors.CYAN}Enter.{Colors.END} Leave Shop")
 
             choice = ask("\nChoose action: ").strip().upper()
@@ -3303,17 +3316,17 @@ class Game:
                     print(f"{Colors.RED}Invalid selection.{Colors.END}")
 
     def build_home(self):
-        """Build and customize your home with housing items"""
+        """Furnish and customize your home with housing items"""
         if not self.player:
             return
 
-        print(f"\n{Colors.BOLD}=== BUILD YOUR HOME ==={Colors.END}")
+        print(f"\n{Colors.BOLD}=== FURNISH YOUR HOME ==={Colors.END}")
         print(f"Comfort Points: {Colors.CYAN}{self.player.comfort_points}{Colors.END}")
         print(f"Housing Items Owned: {len(self.player.housing_owned)}")
 
         if not self.player.housing_owned:
-            print("\n{Colors.YELLOW}You don't own any housing items yet!")
-            print("Visit the Housing Shop to purchase items for your home.{Colors.END}")
+            print("\n{Colors.YELLOW}You don't own any housing items yet!{Colors.END}")
+            print("{Colors.YELLOW}Visit the Housing Shop to purchase items for your home.{Colors.END}")
             return
 
         print("\nYour Housing Items:")
@@ -3460,14 +3473,14 @@ class Game:
                 print(f"Comfort Points: {Colors.CYAN}{self.player.comfort_points}{Colors.END}")
 
     def build_land(self):
-        """Build and manage buildings on your land"""
+        """Build and manage structures on your land"""
         if not self.player:
             print("No character created yet.")
             return
 
         while True:
             clear_screen()
-            print(f"\n{Colors.BOLD}{Colors.CYAN}=== BUILD YOUR LAND ==={Colors.END}")
+            print(f"\n{Colors.BOLD}{Colors.CYAN}=== BUILD STRUCTURES ==={Colors.END}")
             print(f"{Colors.YELLOW}Manage your buildings and customize your property{Colors.END}\n")
             
             # Display building categories
@@ -3677,7 +3690,7 @@ class Game:
         has_farm = any(self.player.building_slots.get(f"farm_{i}") is not None for i in range(1, 3))
         
         if not has_farm:
-            print(f"\n{Colors.YELLOW}You need to build a farm first! Use the 'Build Land' option.{Colors.END}")
+            print(f"\n{Colors.YELLOW}You need to build a farm first! Use the 'Build Structures' option.{Colors.END}")
             input("Press Enter to continue...")
             return
 
@@ -3916,6 +3929,110 @@ class Game:
         print(f"\n{Colors.GREEN}✓ Sold all crops for {Colors.GOLD}{total_gold} gold{Colors.END}{Colors.GREEN}!{Colors.END}")
         print(f"Total gold: {Colors.GOLD}{self.player.gold}{Colors.END}")
         input("Press Enter to continue...")
+
+    def training(self):
+        """Training system for improving stats using training_place buildings"""
+        if not self.player:
+            print("No character created yet.")
+            return
+
+        # Check if player has any training_place buildings
+        has_training_place = any(self.player.building_slots.get(f"training_place_{i}") is not None for i in range(1, 4))
+        
+        if not has_training_place:
+            print(f"\n{Colors.YELLOW}You need to build a Training Place first! Use the 'Build Structures' option.{Colors.END}")
+            input("Press Enter to continue...")
+            return
+
+        import random
+
+        while True:
+            clear_screen()
+            print(f"\n{Colors.BOLD}{Colors.CYAN}=== TRAINING GROUND ==={Colors.END}")
+            print(f"{Colors.YELLOW}Train to improve your stats! Each training session affects all your stats.{Colors.END}\n")
+            
+            print(f"{Colors.BOLD}Current Stats:{Colors.END}")
+            print(f"HP: {Colors.RED}{self.player.max_hp}{Colors.END} | MP: {Colors.BLUE}{self.player.max_mp}{Colors.END}")
+            print(f"Attack: {Colors.RED}{self.player.attack}{Colors.END} | Defense: {Colors.GREEN}{self.player.defense}{Colors.END} | Speed: {Colors.YELLOW}{self.player.speed}{Colors.END}\n")
+            
+            print(f"{Colors.BOLD}Training Types:{Colors.END}\n")
+            print(f"{Colors.CYAN}1.{Colors.END} Morning Training (1d4)")
+            print(f"   {Colors.GREEN}4: +4%{Colors.END} | {Colors.YELLOW}3: +2%{Colors.END} | {Colors.RED}1-2: -1%{Colors.END}")
+            print()
+            print(f"{Colors.CYAN}2.{Colors.END} Calm Training (1d6)")
+            print(f"   {Colors.GREEN}6: +13%{Colors.END} | {Colors.GREEN}5: +10%{Colors.END} | {Colors.YELLOW}4: +7%{Colors.END} | {Colors.YELLOW}3: +1%{Colors.END} | {Colors.RED}1-2: -3%{Colors.END}")
+            print()
+            print(f"{Colors.CYAN}3.{Colors.END} Normal Training (1d8)")
+            print(f"   {Colors.GREEN}5-8: +10%{Colors.END} | {Colors.RED}1-3: -7%{Colors.END}")
+            print()
+            print(f"{Colors.CYAN}4.{Colors.END} Intense Training (1d20)")
+            print(f"   {Colors.GREEN}16-20: +20%{Colors.END} | {Colors.GREEN}11-15: +15%{Colors.END} | {Colors.YELLOW}10: +10%{Colors.END} | {Colors.RED}5-9: -10%{Colors.END} | {Colors.RED}1-4: -20%{Colors.END}")
+            print()
+            print(f"{Colors.CYAN}B.{Colors.END} Back")
+            
+            choice = ask(f"\n{Colors.CYAN}Choose training type: {Colors.END}").strip().upper()
+            
+            if choice == 'B':
+                break
+            
+            if choice in ['1', '2', '3', '4']:
+                training_types = {
+                    '1': ('Morning Training', 4, lambda roll: 4 if roll == 4 else 2 if roll == 3 else -1),
+                    '2': ('Calm Training', 6, lambda roll: 13 if roll == 6 else 10 if roll == 5 else 7 if roll == 4 else 1 if roll == 3 else -3),
+                    '3': ('Normal Training', 8, lambda roll: 10 if roll >= 4 else -7),
+                    '4': ('Intense Training', 20, lambda roll: 20 if roll >= 16 else 15 if roll >= 11 else 10 if roll == 10 else -10 if roll >= 5 else -20)
+                }
+                
+                name, dice_sides, calc_bonus = training_types[choice]
+                
+                # Roll the dice
+                roll = random.randint(1, dice_sides)
+                bonus_percent = calc_bonus(roll)
+                
+                print(f"\n{Colors.BOLD}{Colors.CYAN}=== {name.upper()} ==={Colors.END}")
+                print(f"You rolled a {Colors.YELLOW}{roll}{Colors.END} on a d{dice_sides}!")
+                
+                if bonus_percent > 0:
+                    print(f"{Colors.GREEN}Success!{Colors.END} All stats increase by {Colors.GREEN}+{bonus_percent}%{Colors.END}")
+                elif bonus_percent < 0:
+                    print(f"{Colors.RED}Training failed!{Colors.END} All stats decrease by {Colors.RED}{abs(bonus_percent)}%{Colors.END}")
+                else:
+                    print(f"{Colors.YELLOW}No change in stats.{Colors.END}")
+                
+                # Calculate stat changes
+                old_stats = {
+                    'max_hp': self.player.max_hp,
+                    'max_mp': self.player.max_mp,
+                    'attack': self.player.attack,
+                    'defense': self.player.defense,
+                    'speed': self.player.speed
+                }
+                
+                # Apply percentage changes
+                if bonus_percent != 0:
+                    percent_multiplier = 1 + (bonus_percent / 100)
+                    
+                    self.player.max_hp = max(1, int(self.player.max_hp * percent_multiplier))
+                    self.player.max_mp = max(1, int(self.player.max_mp * percent_multiplier))
+                    self.player.attack = max(1, int(self.player.attack * percent_multiplier))
+                    self.player.defense = max(1, int(self.player.defense * percent_multiplier))
+                    self.player.speed = max(1, int(self.player.speed * percent_multiplier))
+                    
+                    # Ensure current HP/MP don't exceed new maxes
+                    self.player.hp = min(self.player.hp, self.player.max_hp)
+                    self.player.mp = min(self.player.mp, self.player.max_mp)
+                
+                print(f"\n{Colors.BOLD}Stat Changes:{Colors.END}")
+                print(f"HP: {Colors.RED}{old_stats['max_hp']} → {self.player.max_hp}{Colors.END}")
+                print(f"MP: {Colors.BLUE}{old_stats['max_mp']} → {self.player.max_mp}{Colors.END}")
+                print(f"Attack: {Colors.RED}{old_stats['attack']} → {self.player.attack}{Colors.END}")
+                print(f"Defense: {Colors.GREEN}{old_stats['defense']} → {self.player.defense}{Colors.END}")
+                print(f"Speed: {Colors.YELLOW}{old_stats['speed']} → {self.player.speed}{Colors.END}")
+                
+                input(f"\nPress Enter to continue...")
+            else:
+                print(f"{Colors.RED}Invalid choice.{Colors.END}")
+                time.sleep(1)
 
     def visit_tavern(self):
         """Visit the tavern to hire companions."""
