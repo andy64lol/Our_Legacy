@@ -2604,9 +2604,9 @@
    },
    "Resurrection Scroll":{
       "type": "consumable",
-      "description": "A sacred scroll capable of reviving a fallen ally with full health",
-      "effect": "resurrect",
-      "value": 100,
+      "description": "A legendary scroll that heals for an immense amount of HP",
+      "effect": "heal",
+      "value": 99999999,
       "price": 500,
       "rarity": "rare"
    },
