@@ -33,6 +33,7 @@ This comprehensive guide covers the complete structure of Our Legacy RPG, includ
 - **weekly_challenges.json** - Recurring challenges
 - **housing.json** - Housing items for home building ⭐ NEW
 - **farming.json** - Crop definitions for farming system ⭐ NEW
+- **cutscenes.json** - Interactive story sequences ⭐ NEW
 
 ### Mod Data (`mods/` directory)
 Mods can override or extend any base game data files. Each mod folder can contain:
@@ -1064,6 +1065,10 @@ Create `mods/MyMod/items.json`:
 **Housing Item Guidelines**:
 - **Price Range**: 30-20000+ gold (scales with comfort and rarity)
 - **Comfort Points**: 5-1000+ points (typically 1 point per 10-15 gold)
+- **Training Effectiveness** (for `training_place` type items):
+  - Rarity multipliers: common (1.0x), uncommon (1.2x), rare (1.4x), epic (1.6x), legendary (1.8x)
+  - Comfort bonus: +0.1x multiplier per 10 comfort points
+  - Higher quality training facilities = better stat gains from training
 - **Home Tiers** (based on total comfort):
   - COMMON (0-99): Basic shelter with minimal comfort
   - UNCOMMON (100-199): Modest home with decent accommodations
@@ -1179,6 +1184,90 @@ Create `mods/MyMod/items.json`:
 - New crop IDs are added alongside existing ones
 - No conflicts if IDs are unique
 - All crops from base game and mods appear in farming
+
+---
+
+### 13. CUTSCENES.JSON ⭐ NEW
+
+**Purpose**: Define interactive story sequences that play during key game events.
+
+**Parameters**:
+```json
+{
+  "cutscene_id": {
+    "id": "string",                          // Unique identifier (matches reference)
+    "iterable": boolean,                      // Whether cutscene can replay (default: false)
+    "content": {                             // Recursive content structure
+      "text": "string",                       // Dialogue/text to display
+      "wait": number,                         // Seconds to wait before continuing
+      "choice": {                             // Optional: player choice branch
+        "option_key": {                       // Choice option identifier
+          "text": "string",                   // Choice prompt text
+          "wait": number,                     // Wait time for this choice
+          "choice": {                         // Nested choices (recursive)
+            // ... more nested content
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+**Content Structure**:
+- **text**: The narrative text displayed to the player
+- **wait**: Time in seconds to pause before proceeding (allows reading time)
+- **choice**: Optional branching dialogue with player choices
+- **Recursive**: Choices can contain more text, wait, and nested choices
+- **Termination**: Cutscenes end when no more content exists
+
+**Integration Points**:
+- **Areas**: Use `"first_time_enter_cutscene": "cutscene_id"` to trigger on first area visit
+- **Missions**: Use `"accept_cutscene": "cutscene_id"` to trigger when accepting a mission
+- **Iterable**: `false` = plays once per game, `true` = can replay on revisit
+
+**Example**:
+```json
+{
+  "welcome_cutscene": {
+    "id": "welcome_cutscene",
+    "iterable": false,
+    "content": {
+      "text": "Welcome to Our Legacy, adventurer! Your journey begins now.",
+      "wait": 3,
+      "choice": {
+        "continue": {
+          "text": "Are you ready to embark on this epic adventure?",
+          "wait": 2,
+          "choice": {
+            "yes": {
+              "text": "Excellent! Let the legend begin...",
+              "wait": 2
+            },
+            "no": {
+              "text": "I don't care lol. Just begin!",
+              "wait": 2
+            }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+**Notes**:
+- Cutscenes pause normal gameplay until completed
+- Player choices affect narrative flow but not game mechanics
+- Use meaningful wait times (2-4 seconds) for reading
+- Keep text concise and engaging
+- Test cutscene flow thoroughly before release
+
+**Mod Merging Behavior**:
+- Mods can add new cutscenes to the base game
+- Cutscene IDs must be unique across all loaded content
+- New cutscenes are added alongside existing ones
+- References in areas/missions work with mod cutscenes
 
 ---
 
