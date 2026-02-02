@@ -12,7 +12,8 @@
     },
     "area": "forest_path",
     "unlock_level": 1,
-    "prerequisites": []
+    "prerequisites": [],
+    "accept_cutscene": "mission_accept_tutorial"
   },
   "capture_bandits":{
     "name": "Bandit Capture",

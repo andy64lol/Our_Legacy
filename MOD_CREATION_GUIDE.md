@@ -38,6 +38,7 @@ Copy any of these files from `data/` and modify them:
 - `weekly_challenges.json` - Add weekly challenges
 - `housing.json` - Add housing items ⭐ NEW
 - `farming.json` - Add farm crops ⭐ NEW
+- `cutscenes.json` - Add cutscenes ⭐ NEW
 
 ### Step 4: Test Your Mod
 Start the game: `python3 main.py`
@@ -54,13 +55,17 @@ Start the game: `python3 main.py`
     "name": "Item Display Name",
     "description": "Description shown in shop",
     "price": 500,
-    "comfort_points": 25
+    "comfort_points": 25,
+    "rarity": "common",
+    "type": "house"
   },
-  "another_item": {
-    "name": "Another Housing Item",
-    "description": "This adds to player's home",
+  "training_facility": {
+    "name": "Training Facility",
+    "description": "A place to train and improve stats",
     "price": 1000,
-    "comfort_points": 50
+    "comfort_points": 15,
+    "rarity": "rare",
+    "type": "training_place"
   }
 }
 ```
@@ -68,6 +73,13 @@ Start the game: `python3 main.py`
 **Tips**:
 - Price range: 50-5000g (or more for unique items)
 - Comfort points: 5-250 (scales with price, roughly 1 point per 10g)
+- **Training Effectiveness**: `training_place` buildings improve training results based on rarity and comfort points
+  - Common: 1.0x multiplier
+  - Uncommon: 1.2x multiplier  
+  - Rare: 1.4x multiplier
+  - Epic: 1.6x multiplier
+  - Legendary: 1.8x multiplier
+  - +0.1x per 10 comfort points
 - Use lowercase IDs with underscores: `my_custom_house`
 - Players can purchase multiple copies to stack comfort
 
@@ -483,6 +495,106 @@ Start the game: `python3 main.py`
 
 ---
 
+### Add Cutscenes
+
+**File**: `mods/YourModName/cutscenes.json`
+
+```json
+{
+  "your_cutscene": {
+    "id": "your_cutscene",
+    "iterable": false,
+    "content": {
+      "text": "Welcome to this mysterious place...",
+      "wait": 3,
+      "choice": {
+        "investigate": {
+          "text": "Do you wish to investigate further?",
+          "wait": 2,
+          "choice": {
+            "yes": {
+              "text": "You discover ancient secrets!",
+              "wait": 3
+            },
+            "no": {
+              "text": "You decide to leave it be.",
+              "wait": 2
+            }
+          }
+        },
+        "leave": {
+          "text": "Perhaps it's best to leave.",
+          "wait": 2
+        }
+      }
+    }
+  },
+  "boss_encounter": {
+    "id": "boss_encounter",
+    "iterable": true,
+    "content": {
+      "text": "A powerful enemy appears before you!",
+      "wait": 2,
+      "choice": {
+        "fight": {
+          "text": "You steel yourself for battle.",
+          "wait": 1
+        },
+        "flee": {
+          "text": "Discretion is the better part of valor.",
+          "wait": 1
+        }
+      }
+    }
+  }
+}
+```
+
+**Cutscene Parameters**:
+- `id` *(required)* - Unique identifier for the cutscene
+- `iterable` *(optional)* - If `true`, cutscene plays every time the event triggers. If `false` (default), plays only once
+- `content` *(required)* - The cutscene content structure
+
+**Content Structure**:
+- `text` *(required)* - The dialogue/text to display
+- `wait` *(optional)* - Seconds to wait before continuing (can be skipped with Enter)
+- `choice` *(optional)* - Object with choice options, each containing more content
+
+**Triggering Cutscenes**:
+Add cutscene references to other data files:
+
+**Areas** (`areas.json`):
+```json
+{
+  "your_area": {
+    "name": "Your Area",
+    "first_time_enter_cutscene": "your_cutscene",
+    // ... other area data
+  }
+}
+```
+
+**Missions** (`missions.json`):
+```json
+{
+  "your_mission": {
+    "name": "Your Mission",
+    "accept_cutscene": "mission_start_cutscene",
+    "complete_cutscene": "mission_end_cutscene",
+    // ... other mission data
+  }
+}
+```
+
+**Tips**:
+- Use `iterable: true` for recurring events (boss fights, spell casts)
+- Use `iterable: false` for one-time events (first area visits, story moments)
+- Choices can be nested infinitely deep
+- Wait times are in seconds and can be skipped by pressing Enter
+- Keep text concise for better player experience
+
+---
+
 ## Parameter Quick Reference
 
 ### Boss Parameters
@@ -517,6 +629,20 @@ Start the game: `python3 main.py`
 - 3: Intermediate
 - 4: Advanced
 - 5: Legendary
+
+### Cutscene Parameters
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| id | string | Unique identifier for the cutscene |
+| iterable | boolean | If true, plays every time; if false (default), plays only once |
+| content | object | The cutscene content structure |
+
+### Content Structure
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| text | string | Dialogue/text to display |
+| wait | number | Seconds to wait (skippable with Enter) |
+| choice | object | Choice options with nested content |
 
 ### Ability Effects
 - `damage` - Deals damage

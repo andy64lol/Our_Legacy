@@ -15,7 +15,7 @@
     "description": "A personal plot of land where you can build and customize your home. The possibilities are endless.",
     "possible_enemies": [],
     "possible_bosses": [],
-    "shops": ["housing_shop"],
+    "shops": [],
     "missions_available": false,
     "connections": ["starting_village"],
     "rest_cost": 0,
@@ -31,7 +31,8 @@
     "connections": ["starting_village", "deep_woods"],
     "difficulty": 1,
     "rest_cost": 7,
-    "can_rest": true
+    "can_rest": true,
+    "first_time_enter_cutscene": "first_area_enter"
   },
   "deep_woods": {
     "name": "Deep Woods",
