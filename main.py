@@ -6004,11 +6004,16 @@ class Game:
         difficulty = room.get('difficulty', 1)
         enemy_count = random.randint(1, max(1, int(difficulty)))
 
-        # Get enemies from current area or fallback
+        # Get enemies from current area or fallback with valid enemy checks
         area_enemies = self.areas_data.get(self.current_area,
                                            {}).get('possible_enemies', [])
         if not area_enemies:
-            area_enemies = ['goblin', 'orc', 'skeleton']  # Fallback
+            # Only use fallback enemies that actually exist in enemies_data
+            fallback_enemies = ['goblin', 'orc', 'skeleton']
+            area_enemies = [e for e in fallback_enemies if e in self.enemies_data]
+            # If still no valid enemies, use all available enemies from enemies_data
+            if not area_enemies:
+                area_enemies = list(self.enemies_data.keys())[:5]  # Use first 5 enemies as last resort
 
         enemies = []
         for _ in range(enemy_count):
@@ -6026,6 +6031,12 @@ class Game:
 
                 enemy = Enemy(scaled_data)
                 enemies.append(enemy)
+
+        # Handle case where no valid enemies were found
+        if not enemies:
+            print(f"{Colors.YELLOW}No enemies found! You proceed safely.{Colors.END}")
+            self.advance_room()
+            return
 
         print(f"You encounter {len(enemies)} enemy(ies)!")
 
@@ -6110,8 +6121,14 @@ class Game:
                     items_found.append(item['name'])
                     self.player.inventory.append(item['name'])
                     self.update_mission_progress('collect', item['name'])
+            else:
+                # No legendary items available, add bonus gold instead
+                bonus_gold = 100 * count
+                self.player.gold += bonus_gold
+                print(
+                    f"{Colors.YELLOW}No legendary items found! Added {bonus_gold} bonus gold instead.{Colors.END}")
 
-        # Generate random items
+        # Generate random items - with safety checks for empty item lists
         for _ in range(item_count - len(items_found)):
             rarity = random.choice(item_rarities)
             possible_items = [
@@ -6124,6 +6141,12 @@ class Game:
                 items_found.append(item['name'])
                 self.player.inventory.append(item['name'])
                 self.update_mission_progress('collect', item['name'])
+            else:
+                # No items of this rarity, add bonus gold instead
+                bonus_gold = random.randint(25, 75)
+                self.player.gold += bonus_gold
+                print(
+                    f"{Colors.DARK_GRAY}No items of {rarity} rarity found. Added {bonus_gold} gold instead.{Colors.END}")
 
         if items_found:
             print(f"{Colors.YELLOW}Items found:{Colors.END}")
@@ -6366,7 +6389,31 @@ class Game:
             else:
                 self.dungeon_death()
         else:
-            print("Boss data not found. You proceed safely.")
+            # Boss not found - try to find a suitable replacement or generate a generic boss
+            print(f"{Colors.YELLOW}Boss data not found. A powerful enemy appears!{Colors.END}")
+            
+            # Try to use dungeon completion rewards as a "boss substitute"
+            dungeon = self.current_dungeon
+            if dungeon:
+                completion_reward = dungeon.get('completion_reward', {})
+                exp_reward = completion_reward.get('experience', 500) // 2  # Half reward
+                gold_reward = completion_reward.get('gold', 300) // 2
+                
+                if self.player:
+                    self.player.gain_experience(exp_reward)
+                    self.player.gold += gold_reward
+                    
+                    print(f"You defeated the mysterious guardian!")
+                    print(f"Gained {Colors.MAGENTA}{exp_reward} experience{Colors.END}")
+                    print(f"Gained {Colors.GOLD}{gold_reward} gold{Colors.END}")
+                    
+                    # Give a random item from completion reward if available
+                    items = completion_reward.get('items', [])
+                    if items:
+                        loot = random.choice(items)
+                        self.player.inventory.append(loot)
+                        print(f"{Colors.YELLOW}Special item: {loot}!{Colors.END}")
+            
             self.complete_dungeon()
 
     def advance_room(self):
