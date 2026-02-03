@@ -19,7 +19,8 @@ import io
 # Default settings
 DEFAULT_SETTINGS = {
     "mods_enabled": True,
-    "disabled_mods": []
+    "disabled_mods": [],
+    "overwrite_save_by_uuid": False
 }
 
 
@@ -1148,6 +1149,61 @@ class Boss(Enemy):
                 break
 
 
+class LanguageManager:
+    """Manages language loading and translation"""
+
+    def __init__(self):
+        self.config: Dict[str, Any] = {}
+        self.translations: Dict[str, str] = {}
+        self.current_language = "en"
+        self.load_config()
+        self.load_translations()
+
+    def load_config(self):
+        """Load language configuration"""
+        try:
+            with open('data/languages/config.json', 'r') as f:
+                self.config = json.load(f)
+                self.current_language = self.config.get('default_language', 'en')
+        except (FileNotFoundError, json.JSONDecodeError):
+            # Fallback defaults
+            self.config = {
+                "default_language": "en",
+                "available_languages": {"en": "English"},
+                "fallback_language": "en",
+                "overwrite_save_files": True
+            }
+
+    def load_translations(self):
+        """Load translation strings for current language"""
+        try:
+            lang_file = f'data/languages/{self.current_language}.json'
+            with open(lang_file, 'r') as f:
+                self.translations = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError):
+            # Fallback to English if current language fails
+            if self.current_language != 'en':
+                try:
+                    with open('data/languages/en.json', 'r') as f:
+                        self.translations = json.load(f)
+                except (FileNotFoundError, json.JSONDecodeError):
+                    self.translations = {}
+
+    def get(self, key: str, **kwargs) -> str:
+        """Get translated string, with optional formatting"""
+        text = self.translations.get(key, key)
+        if kwargs:
+            try:
+                text = text.format(**kwargs)
+            except (KeyError, ValueError):
+                pass  # Return text as-is if formatting fails
+        return text
+
+    def should_overwrite_saves(self) -> bool:
+        """Check if save files should be overwritten"""
+        return self.config.get('overwrite_save_files', True)
+
+
 class Game:
     """Main game class"""
 
@@ -1189,6 +1245,9 @@ class Game:
 
         # Initialize ModManager
         self.mod_manager = ModManager()
+
+        # Initialize Language Manager
+        self.lang = LanguageManager()
 
         # Load game data
         self.load_game_data()
@@ -1418,18 +1477,18 @@ class Game:
             print("       Text-Based CLI Fantasy RPG")
             print("=" * 60)
             print(f"{Colors.END}")
-            print("Welcome, adventurer! Your legacy awaits...")
+            print(self.lang.get("welcome_message"))
             print(
                 "Choose your path wisely, for every decision shapes your destiny."
             )
             print()
 
-            print(f"{Colors.BOLD}{Colors.CYAN}=== MAIN MENU ==={Colors.END}")
-            print(f"{Colors.CYAN}1.{Colors.END} New Game")
-            print(f"{Colors.CYAN}2.{Colors.END} Load Game")
-            print(f"{Colors.CYAN}3.{Colors.END} Settings")
-            print(f"{Colors.CYAN}4.{Colors.END} Mods")
-            print(f"{Colors.CYAN}5.{Colors.END} Quit")
+            print(f"{Colors.BOLD}{Colors.CYAN}=== {self.lang.get('main_menu')} ==={Colors.END}")
+            print(f"{Colors.CYAN}1.{Colors.END} {self.lang.get('new_game')}")
+            print(f"{Colors.CYAN}2.{Colors.END} {self.lang.get('load_game')}")
+            print(f"{Colors.CYAN}3.{Colors.END} {self.lang.get('settings')}")
+            print(f"{Colors.CYAN}4.{Colors.END} {self.lang.get('mods')}")
+            print(f"{Colors.CYAN}5.{Colors.END} {self.lang.get('quit')}")
             print()
 
             choice = ask(f"{Colors.CYAN}Choose an option (1-5): {Colors.END}")
@@ -1446,7 +1505,7 @@ class Game:
                 clear_screen()
                 sys.exit(0)
             else:
-                print("Invalid choice. Please enter 1, 2, 3, 4, or 5.")
+                print(self.lang.get("invalid_choice"))
 
     def settings_welcome(self):
         """Settings menu available from welcome screen"""
@@ -1611,10 +1670,10 @@ class Game:
 
     def create_character(self):
         """Create a new character"""
-        print(f"{Colors.BOLD}Character Creation{Colors.END}")
+        print(f"{Colors.BOLD}{self.lang.get('character_creation')}{Colors.END}")
         print("-" * 30)
 
-        name = ask("Enter your character's name: ")
+        name = ask(self.lang.get("enter_name"))
         if not name:
             name = "Hero"
 
@@ -1623,10 +1682,8 @@ class Game:
 
         character_class = self.select_class()
 
-        self.player = Character(name, character_class, self.classes_data)
-        print(
-            f"\n{Colors.GREEN}Welcome, {name} the {character_class}!{Colors.END}"
-        )
+self.player = Character(name, character_class, self.classes_data)
+        print(self.lang.get("welcome_adventurer", name=name, char_class=character_class))
 
         # Give starting items based on class data
         self.give_starting_items(character_class)
@@ -1667,49 +1724,49 @@ class Game:
         """Display main menu"""
         # Continuous mission check on every main menu return
         self.update_mission_progress('check', '')
-        
+
         # Check level-based challenges
         if self.player:
             self.update_challenge_progress('level_reach', self.player.level)
 
-        print(f"\n{Colors.BOLD}=== MAIN MENU ==={Colors.END}")
-        
+        print(f"\n{Colors.BOLD}=== {self.lang.get('main_menu')} ==={Colors.END}")
+
         # Show current location
         area_data = self.areas_data.get(self.current_area, {})
-        print(f"{Colors.CYAN}Location: {area_data.get('name', self.current_area)}{Colors.END}")
-        
-        print(f"{Colors.CYAN}1.{Colors.END} Explore")
-        print(f"{Colors.CYAN}2.{Colors.END} View Character")
-        print(f"{Colors.CYAN}3.{Colors.END} Travel")
-        print(f"{Colors.CYAN}4.{Colors.END} Inventory")
-        print(f"{Colors.CYAN}5.{Colors.END} Missions")
-        print(f"{Colors.CYAN}6.{Colors.END} Fight Boss")
-        print(f"{Colors.CYAN}7.{Colors.END} Tavern")
-        print(f"{Colors.CYAN}8.{Colors.END} Shop")
-        print(f"{Colors.CYAN}9.{Colors.END} Alchemy")
-        print(f"{Colors.CYAN}10.{Colors.END} Elite Market")
-        print(f"{Colors.CYAN}11.{Colors.END} Rest")
-        print(f"{Colors.CYAN}12.{Colors.END} Companions")
-        print(f"{Colors.CYAN}13.{Colors.END} Dungeons")
-        print(f"{Colors.CYAN}14.{Colors.END} Challenges")
-        
+        print(self.lang.get("current_location", area=area_data.get('name', self.current_area)))
+
+        print(f"{Colors.CYAN}1.{Colors.END} {self.lang.get('explore')}")
+        print(f"{Colors.CYAN}2.{Colors.END} {self.lang.get('view_character')}")
+        print(f"{Colors.CYAN}3.{Colors.END} {self.lang.get('travel')}")
+        print(f"{Colors.CYAN}4.{Colors.END} {self.lang.get('inventory')}")
+        print(f"{Colors.CYAN}5.{Colors.END} {self.lang.get('missions')}")
+        print(f"{Colors.CYAN}6.{Colors.END} {self.lang.get('fight_boss')}")
+        print(f"{Colors.CYAN}7.{Colors.END} {self.lang.get('tavern')}")
+        print(f"{Colors.CYAN}8.{Colors.END} {self.lang.get('shop')}")
+        print(f"{Colors.CYAN}9.{Colors.END} {self.lang.get('alchemy')}")
+        print(f"{Colors.CYAN}10.{Colors.END} {self.lang.get('elite_market')}")
+        print(f"{Colors.CYAN}11.{Colors.END} {self.lang.get('rest')}")
+        print(f"{Colors.CYAN}12.{Colors.END} {self.lang.get('companions')}")
+        print(f"{Colors.CYAN}13.{Colors.END} {self.lang.get('dungeons')}")
+        print(f"{Colors.CYAN}14.{Colors.END} {self.lang.get('challenges')}")
+
         # Show Build options only in your_land
         if self.current_area == "your_land":
             print(f"{Colors.GOLD}15.{Colors.END} Furnish Home")
             print(f"{Colors.GOLD}16.{Colors.END} Build Structures")
             print(f"{Colors.GOLD}17.{Colors.END} Farm")
             print(f"{Colors.GOLD}18.{Colors.END} Training")
-            print(f"{Colors.CYAN}19.{Colors.END} Save Game")
-            print(f"{Colors.CYAN}20.{Colors.END} Load Game")
-            print(f"{Colors.CYAN}21.{Colors.END} Claim Rewards")
-            print(f"{Colors.CYAN}22.{Colors.END} Quit")
+            print(f"{Colors.CYAN}19.{Colors.END} {self.lang.get('save_game')}")
+            print(f"{Colors.CYAN}20.{Colors.END} {self.lang.get('load_game')}")
+            print(f"{Colors.CYAN}21.{Colors.END} {self.lang.get('claim_rewards')}")
+            print(f"{Colors.CYAN}22.{Colors.END} {self.lang.get('quit')}")
             choice = ask(f"{Colors.CYAN}Choose an option (1-22): {Colors.END}", allow_empty=False)
             menu_max = "22"
         else:
-            print(f"{Colors.CYAN}15.{Colors.END} Save Game")
-            print(f"{Colors.CYAN}16.{Colors.END} Load Game")
-            print(f"{Colors.CYAN}17.{Colors.END} Claim Rewards")
-            print(f"{Colors.CYAN}18.{Colors.END} Quit")
+            print(f"{Colors.CYAN}15.{Colors.END} {self.lang.get('save_game')}")
+            print(f"{Colors.CYAN}16.{Colors.END} {self.lang.get('load_game')}")
+            print(f"{Colors.CYAN}17.{Colors.END} {self.lang.get('claim_rewards')}")
+            print(f"{Colors.CYAN}18.{Colors.END} {self.lang.get('quit')}")
             choice = ask(f"{Colors.CYAN}Choose an option (1-18): {Colors.END}", allow_empty=False)
             menu_max = "18"
 
@@ -4823,11 +4880,31 @@ class Game:
         saves_dir = "data/saves"
         os.makedirs(saves_dir, exist_ok=True)
 
-        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         safe_prefix = filename_prefix or ""
         # sanitize prefix to avoid accidental path chars
         safe_prefix = safe_prefix.replace('/', '_')
-        filename = f"{saves_dir}/{safe_prefix}{self.player.name}_{self.player.uuid[:8]}_save_{timestamp}_{self.player.character_class}_{self.player.level}.json"
+
+        # Check if overwrite by UUID is enabled
+        overwrite_by_uuid = self.mod_manager.settings.get("overwrite_save_by_uuid", False)
+        if overwrite_by_uuid and not filename_prefix:
+            # Find existing save file with same UUID
+            existing_save = None
+            for f in os.listdir(saves_dir):
+                if f.endswith('.json') and f"{self.player.uuid[:8]}" in f and not f.startswith('err_save'):
+                    existing_save = f
+                    break
+
+            if existing_save:
+                filename = os.path.join(saves_dir, existing_save)
+            else:
+                # No existing save found, create new one with timestamp
+                timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                filename = f"{saves_dir}/{safe_prefix}{self.player.name}_{self.player.uuid[:8]}_save_{timestamp}_{self.player.character_class}_{self.player.level}.json"
+        else:
+            # Default behavior: create new save with timestamp
+            timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+            filename = f"{saves_dir}/{safe_prefix}{self.player.name}_{self.player.uuid[:8]}_save_{timestamp}_{self.player.character_class}_{self.player.level}.json"
+
         with open(filename, 'w') as f:
             json.dump(save_data, f, indent=2)
 
