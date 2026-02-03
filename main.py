@@ -110,7 +110,9 @@ class ModManager:
                             merged_data[new_key] = value
 
                 except (json.JSONDecodeError, IOError) as e:
-                    print(f"Warning: Failed to load {data_type} from mod {mod_name}: {e}")
+                    print(
+                        f"Warning: Failed to load {data_type} from mod {mod_name}: {e}"
+                    )
 
         return merged_data
 
@@ -122,13 +124,20 @@ class ModManager:
 
         for name, mod in self.mods.items():
             mods_list.append({
-                'folder_name': name,
-                'name': mod.get('name', name),
-                'description': mod.get('description', ''),
-                'author': mod.get('author', 'Unknown'),
-                'version': mod.get('version', '1.0'),
-                'enabled': name in enabled and self.settings.get("mods_enabled", True),
-                'mod_path': mod.get('mod_path', '')
+                'folder_name':
+                name,
+                'name':
+                mod.get('name', name),
+                'description':
+                mod.get('description', ''),
+                'author':
+                mod.get('author', 'Unknown'),
+                'version':
+                mod.get('version', '1.0'),
+                'enabled':
+                name in enabled and self.settings.get("mods_enabled", True),
+                'mod_path':
+                mod.get('mod_path', '')
             })
 
         return mods_list
@@ -149,11 +158,13 @@ class ModManager:
 
     def toggle_mods_system(self):
         """Toggle the entire mods system on/off"""
-        self.settings["mods_enabled"] = not self.settings.get("mods_enabled", True)
+        self.settings["mods_enabled"] = not self.settings.get(
+            "mods_enabled", True)
         status = "enabled" if self.settings["mods_enabled"] else "disabled"
         print(f"Mod system {status}!")
         self.save_settings()
         return self.settings["mods_enabled"]
+
 
 # Optional HTTP library for market API
 try:
@@ -413,6 +424,7 @@ game_api = None
 MARKET_API_URL = "https://our-legacy.vercel.app/api/market"
 MARKET_COOLDOWN_MINUTES = 10
 
+
 class MarketAPI:
     """API for accessing the Elite Market with 10-minute cooldown"""
 
@@ -428,7 +440,9 @@ class MarketAPI:
         elapsed = datetime.now() - self.last_fetch
         return elapsed < timedelta(minutes=self.cooldown_minutes)
 
-    def fetch_market_data(self, force_refresh: bool = False) -> Optional[Dict[str, Any]]:
+    def fetch_market_data(self,
+                          force_refresh: bool = False
+                          ) -> Optional[Dict[str, Any]]:
         """Fetch market data from the API with caching and cooldown"""
         # Check cache validity
         if not force_refresh and self._is_cache_valid():
@@ -437,7 +451,8 @@ class MarketAPI:
 
         # Check cooldown
         if self.last_fetch and not self._is_cache_valid():
-            remaining = timedelta(minutes=self.cooldown_minutes) - (datetime.now() - self.last_fetch)
+            remaining = timedelta(minutes=self.cooldown_minutes) - (
+                datetime.now() - self.last_fetch)
             mins = int(remaining.total_seconds() // 60)
             secs = int(remaining.total_seconds() % 60)
             print(
@@ -445,7 +460,9 @@ class MarketAPI:
             )
             return None
 
-        print(f"{Colors.CYAN}Checking if merchants are in the market...{Colors.END}")
+        print(
+            f"{Colors.CYAN}Checking if merchants are in the market...{Colors.END}"
+        )
 
         # Try to fetch from API using requests
         if REQUESTS_AVAILABLE and requests is not None:
@@ -458,7 +475,9 @@ class MarketAPI:
                     print(f"{Colors.GREEN}Market is open!{Colors.END}")
                     return data
                 else:
-                    print(f"{Colors.RED}Failed to reach to the market: HTTP {response.status_code}{Colors.END}")
+                    print(
+                        f"{Colors.RED}Failed to reach to the market: HTTP {response.status_code}{Colors.END}"
+                    )
             except requests.exceptions.RequestException as e:
                 print(f"{Colors.RED}Network error: {e}{Colors.END}")
         else:
@@ -528,6 +547,7 @@ class MarketAPI:
         if data and data.get('ok'):
             return data.get('itemsByType', {})
         return {}
+
 
 class Character:
     """Player character class"""
@@ -1106,7 +1126,9 @@ class Enemy:
 class Boss(Enemy):
     """Boss enemy class with phases and special abilities"""
 
-    def __init__(self, boss_data: Dict, dialogues_data: Optional[Dict[str, Any]] = None):
+    def __init__(self,
+                 boss_data: Dict,
+                 dialogues_data: Optional[Dict[str, Any]] = None):
         super().__init__(boss_data)
         self.description = boss_data.get("description", "A powerful foe.")
         self.special_abilities = boss_data.get("special_abilities", [])
@@ -1124,7 +1146,7 @@ class Boss(Enemy):
         dialogue_ref = self.boss_dialogues.get(dialogue_key)
         if not dialogue_ref:
             return None
-        
+
         # Look up the actual dialogue text from dialogues_data
         return self.dialogues_data.get(dialogue_ref)
 
@@ -1164,12 +1186,15 @@ class LanguageManager:
         try:
             with open('data/languages/config.json', 'r') as f:
                 self.config = json.load(f)
-                self.current_language = self.config.get('default_language', 'en')
+                self.current_language = self.config.get(
+                    'default_language', 'en')
         except (FileNotFoundError, json.JSONDecodeError):
             # Fallback defaults
             self.config = {
                 "default_language": "en",
-                "available_languages": {"en": "English"},
+                "available_languages": {
+                    "en": "English"
+                },
                 "fallback_language": "en",
                 "overwrite_save_files": True
             }
@@ -1234,7 +1259,8 @@ class Game:
         self.farming_data: Dict[str, Any] = {}  # Farming crops and foods data
 
         # Challenge tracking
-        self.challenge_progress: Dict[str, int] = {}  # challenge_id -> progress count
+        self.challenge_progress: Dict[str, int] = {
+        }  # challenge_id -> progress count
         self.completed_challenges: List[str] = []
 
         # Dungeon state tracking
@@ -1278,66 +1304,67 @@ class Game:
                     self.companions_data = json.load(f)
             except FileNotFoundError:
                 self.companions_data = {}
-            
+
             # Optional crafting data
             try:
                 with open('data/crafting.json', 'r') as f:
                     self.crafting_data = json.load(f)
             except FileNotFoundError:
                 self.crafting_data = {}
-            
+
             # Load dialogues data
             try:
                 with open('data/dialogues.json', 'r') as f:
                     self.dialogues_data = json.load(f)
             except FileNotFoundError:
                 self.dialogues_data = {}
-            
+
             # Load cutscenes data
             try:
                 with open('data/cutscenes.json', 'r') as f:
                     self.cutscenes_data = json.load(f)
             except FileNotFoundError:
                 self.cutscenes_data = {}
-            
+
             # Load dungeons data
             try:
                 with open('data/dungeons.json', 'r') as f:
                     self.dungeons_data = json.load(f)
             except FileNotFoundError:
                 self.dungeons_data = {}
-            
+
             # Load weekly challenges data
             try:
                 with open('data/weekly_challenges.json', 'r') as f:
                     self.weekly_challenges_data = json.load(f)
                 # Initialize challenge progress
-                for challenge in self.weekly_challenges_data.get('challenges', []):
+                for challenge in self.weekly_challenges_data.get(
+                        'challenges', []):
                     self.challenge_progress[challenge['id']] = 0
             except FileNotFoundError:
                 self.weekly_challenges_data = {}
-            
+
             # Load housing data
             try:
                 with open('data/housing.json', 'r') as f:
                     self.housing_data = json.load(f)
             except FileNotFoundError:
                 self.housing_data = {}
-            
+
             # Load shops data
             try:
                 with open('data/shops.json', 'r') as f:
                     self.shops_data = json.load(f)
             except FileNotFoundError:
                 self.shops_data = {}
-            
+
             # Load farming data
             try:
                 with open('data/farming.json', 'r') as f:
                     self.farming_data = json.load(f)
             except FileNotFoundError:
                 self.farming_data = {}
-            
+
             # Load mod data after base game data
             self._load_mod_data()
         except FileNotFoundError as e:
@@ -1349,41 +1376,39 @@ class Game:
         """Load and merge mod data into base game data"""
         # Discover available mods
         self.mod_manager.discover_mods()
-        
+
         # Get enabled mods
         enabled_mods = self.mod_manager.get_enabled_mods()
-        
+
         if not enabled_mods:
             return
-        
+
         print(f"\n{Colors.CYAN}Loading mods...{Colors.END}")
-        
+
         # Load mod data for each data type
-        mod_data_types = [
-            ('areas.json', 'areas_data'),
-            ('enemies.json', 'enemies_data'),
-            ('items.json', 'items_data'),
-            ('missions.json', 'missions_data'),
-            ('bosses.json', 'bosses_data'),
-            ('companions.json', 'companions_data'),
-            ('classes.json', 'classes_data'),
-            ('spells.json', 'spells_data'),
-            ('effects.json', 'effects_data'),
-            ('crafting.json', 'crafting_data'),
-            ('dungeons.json', 'dungeons_data'),
-            ('dialogues.json', 'dialogues_data'),
-            ('cutscenes.json', 'cutscenes_data'),
-            ('weekly_challenges.json', 'weekly_challenges_data'),
-            ('housing.json', 'housing_data'),
-            ('shops.json', 'shops_data')
-        ]
-        
+        mod_data_types = [('areas.json', 'areas_data'),
+                          ('enemies.json', 'enemies_data'),
+                          ('items.json', 'items_data'),
+                          ('missions.json', 'missions_data'),
+                          ('bosses.json', 'bosses_data'),
+                          ('companions.json', 'companions_data'),
+                          ('classes.json', 'classes_data'),
+                          ('spells.json', 'spells_data'),
+                          ('effects.json', 'effects_data'),
+                          ('crafting.json', 'crafting_data'),
+                          ('dungeons.json', 'dungeons_data'),
+                          ('dialogues.json', 'dialogues_data'),
+                          ('cutscenes.json', 'cutscenes_data'),
+                          ('weekly_challenges.json', 'weekly_challenges_data'),
+                          ('housing.json', 'housing_data'),
+                          ('shops.json', 'shops_data')]
+
         for file_name, attr_name in mod_data_types:
             mod_data = self.mod_manager.load_mod_data(file_name)
             if mod_data:
                 # Merge mod data into base data
                 base_data = getattr(self, attr_name)
-                
+
                 # Special handling for dungeons: merge nested structures
                 if file_name == 'dungeons.json':
                     if 'dungeons' in mod_data:
@@ -1393,11 +1418,13 @@ class Game:
                     if 'challenge_templates' in mod_data:
                         if 'challenge_templates' not in base_data:
                             base_data['challenge_templates'] = {}
-                        base_data['challenge_templates'].update(mod_data['challenge_templates'])
+                        base_data['challenge_templates'].update(
+                            mod_data['challenge_templates'])
                     if 'chest_templates' in mod_data:
                         if 'chest_templates' not in base_data:
                             base_data['chest_templates'] = {}
-                        base_data['chest_templates'].update(mod_data['chest_templates'])
+                        base_data['chest_templates'].update(
+                            mod_data['chest_templates'])
                 # Special handling for weekly_challenges: merge nested challenge arrays
                 elif file_name == 'weekly_challenges.json':
                     if 'challenges' in mod_data:
@@ -1410,9 +1437,11 @@ class Game:
                 else:
                     # Standard merge for other data types
                     base_data.update(mod_data)
-                
-                print(f"  Loaded {len(mod_data)} entries from mods for {file_name}")
-        
+
+                print(
+                    f"  Loaded {len(mod_data)} entries from mods for {file_name}"
+                )
+
         print(f"{Colors.GREEN}Mod loading complete!{Colors.END}")
 
     def load_config(self):
@@ -1429,7 +1458,7 @@ class Game:
         if cutscene_id not in self.cutscenes_data:
             print(f"Cutscene {cutscene_id} not found.")
             return
-        
+
         cutscene = self.cutscenes_data[cutscene_id]
         self._play_cutscene_content(cutscene['content'])
 
@@ -1438,7 +1467,7 @@ class Game:
         # Display text
         if 'text' in content:
             print(f"\n{Colors.CYAN}{content['text']}{Colors.END}")
-        
+
         # Wait
         if 'wait' in content:
             wait_time = content['wait']
@@ -1446,7 +1475,7 @@ class Game:
                 print(".", end="", flush=True)
                 time.sleep(1)
             print()
-        
+
         # Handle choices
         if 'choice' in content:
             choices = content['choice']
@@ -1455,7 +1484,7 @@ class Game:
                 choice_keys = list(choices.keys())
                 for i, choice_key in enumerate(choice_keys, 1):
                     print(f"{i}. {choice_key}")
-                
+
                 # Allow skipping with Enter
                 choice = ask("Your choice (or press Enter to skip): ").strip()
                 if choice and choice.isdigit():
@@ -1483,7 +1512,9 @@ class Game:
             )
             print()
 
-            print(f"{Colors.BOLD}{Colors.CYAN}=== {self.lang.get('main_menu')} ==={Colors.END}")
+            print(
+                f"{Colors.BOLD}{Colors.CYAN}=== {self.lang.get('main_menu')} ==={Colors.END}"
+            )
             print(f"{Colors.CYAN}1.{Colors.END} {self.lang.get('new_game')}")
             print(f"{Colors.CYAN}2.{Colors.END} {self.lang.get('load_game')}")
             print(f"{Colors.CYAN}3.{Colors.END} {self.lang.get('settings')}")
@@ -1516,7 +1547,9 @@ class Game:
             # Get current settings
             mods_enabled = self.mod_manager.settings.get("mods_enabled", True)
 
-            print(f"\n1. Mod System: {'{Colors.GREEN}Enabled{Colors.END}' if mods_enabled else '{Colors.RED}Disabled{Colors.END}'}")
+            print(
+                f"\n1. Mod System: {'{Colors.GREEN}Enabled{Colors.END}' if mods_enabled else '{Colors.RED}Disabled{Colors.END}'}"
+            )
             print("2. Back to Main Menu")
 
             choice = ask("\nChoose an option: ").strip()
@@ -1528,7 +1561,9 @@ class Game:
                     print(f"{Colors.GREEN}Mod system enabled!{Colors.END}")
                 else:
                     print(f"{Colors.RED}Mod system disabled!{Colors.END}")
-                print(f"{Colors.YELLOW}Note: Changes take effect on game restart.{Colors.END}")
+                print(
+                    f"{Colors.YELLOW}Note: Changes take effect on game restart.{Colors.END}"
+                )
                 ask("\nPress Enter to continue...")
             elif choice == "2" or not choice:
                 break
@@ -1552,12 +1587,17 @@ class Game:
                 break
 
             # Mod system status
-            mods_system_enabled = self.mod_manager.settings.get("mods_enabled", True)
+            mods_system_enabled = self.mod_manager.settings.get(
+                "mods_enabled", True)
             status_color = Colors.GREEN if mods_system_enabled else Colors.RED
             status_text = "Enabled" if mods_system_enabled else "Disabled"
-            print(f"\nMod System Status: {status_color}{status_text}{Colors.END}")
+            print(
+                f"\nMod System Status: {status_color}{status_text}{Colors.END}"
+            )
 
-            print(f"\n{Colors.CYAN}Installed Mods ({len(mods_list)}):{Colors.END}")
+            print(
+                f"\n{Colors.CYAN}Installed Mods ({len(mods_list)}):{Colors.END}"
+            )
 
             for i, mod in enumerate(mods_list, 1):
                 name = mod.get('name', mod.get('folder_name', 'Unknown'))
@@ -1572,7 +1612,8 @@ class Game:
                 print(f"   Author: {author}")
                 if description:
                     # Truncate long descriptions
-                    desc = description[:100] + "..." if len(description) > 100 else description
+                    desc = description[:100] + "..." if len(
+                        description) > 100 else description
                     print(f"   {desc}")
 
             print(f"\n{Colors.YELLOW}Options:{Colors.END}")
@@ -1596,7 +1637,9 @@ class Game:
                     folder_name = mod.get('folder_name')
                     if isinstance(folder_name, str):
                         self.mod_manager.toggle_mod(folder_name)
-                        print(f"{Colors.YELLOW}Note: Changes take effect on game restart.{Colors.END}")
+                        print(
+                            f"{Colors.YELLOW}Note: Changes take effect on game restart.{Colors.END}"
+                        )
                         ask("\nPress Enter to continue...")
                 else:
                     print("Invalid mod number.")
@@ -1670,7 +1713,8 @@ class Game:
 
     def create_character(self):
         """Create a new character"""
-        print(f"{Colors.BOLD}{self.lang.get('character_creation')}{Colors.END}")
+        print(
+            f"{Colors.BOLD}{self.lang.get('character_creation')}{Colors.END}")
         print("-" * 30)
 
         name = ask(self.lang.get("enter_name"))
@@ -1682,8 +1726,11 @@ class Game:
 
         character_class = self.select_class()
 
-self.player = Character(name, character_class, self.classes_data)
-        print(self.lang.get("welcome_adventurer", name=name, char_class=character_class))
+        self.player = Character(name, character_class, self.classes_data)
+        print(
+            self.lang.get("welcome_adventurer",
+                          name=name,
+                          char_class=character_class))
 
         # Give starting items based on class data
         self.give_starting_items(character_class)
@@ -1729,11 +1776,14 @@ self.player = Character(name, character_class, self.classes_data)
         if self.player:
             self.update_challenge_progress('level_reach', self.player.level)
 
-        print(f"\n{Colors.BOLD}=== {self.lang.get('main_menu')} ==={Colors.END}")
+        print(
+            f"\n{Colors.BOLD}=== {self.lang.get('main_menu')} ==={Colors.END}")
 
         # Show current location
         area_data = self.areas_data.get(self.current_area, {})
-        print(self.lang.get("current_location", area=area_data.get('name', self.current_area)))
+        print(
+            self.lang.get("current_location",
+                          area=area_data.get('name', self.current_area)))
 
         print(f"{Colors.CYAN}1.{Colors.END} {self.lang.get('explore')}")
         print(f"{Colors.CYAN}2.{Colors.END} {self.lang.get('view_character')}")
@@ -1751,6 +1801,7 @@ self.player = Character(name, character_class, self.classes_data)
         print(f"{Colors.CYAN}14.{Colors.END} {self.lang.get('challenges')}")
 
         # Show Build options only in your_land
+        menu_max = "18"
         if self.current_area == "your_land":
             print(f"{Colors.GOLD}15.{Colors.END} Furnish Home")
             print(f"{Colors.GOLD}16.{Colors.END} Build Structures")
@@ -1758,17 +1809,23 @@ self.player = Character(name, character_class, self.classes_data)
             print(f"{Colors.GOLD}18.{Colors.END} Training")
             print(f"{Colors.CYAN}19.{Colors.END} {self.lang.get('save_game')}")
             print(f"{Colors.CYAN}20.{Colors.END} {self.lang.get('load_game')}")
-            print(f"{Colors.CYAN}21.{Colors.END} {self.lang.get('claim_rewards')}")
+            print(
+                f"{Colors.CYAN}21.{Colors.END} {self.lang.get('claim_rewards')}"
+            )
             print(f"{Colors.CYAN}22.{Colors.END} {self.lang.get('quit')}")
-            choice = ask(f"{Colors.CYAN}Choose an option (1-22): {Colors.END}", allow_empty=False)
             menu_max = "22"
+            choice = ask(f"{Colors.CYAN}Choose an option (1-{menu_max}): {Colors.END}",
+                         allow_empty=False)
         else:
             print(f"{Colors.CYAN}15.{Colors.END} {self.lang.get('save_game')}")
             print(f"{Colors.CYAN}16.{Colors.END} {self.lang.get('load_game')}")
-            print(f"{Colors.CYAN}17.{Colors.END} {self.lang.get('claim_rewards')}")
+            print(
+                f"{Colors.CYAN}17.{Colors.END} {self.lang.get('claim_rewards')}"
+            )
             print(f"{Colors.CYAN}18.{Colors.END} {self.lang.get('quit')}")
-            choice = ask(f"{Colors.CYAN}Choose an option (1-18): {Colors.END}", allow_empty=False)
             menu_max = "18"
+            choice = ask(f"{Colors.CYAN}Choose an option (1-{menu_max}): {Colors.END}",
+                         allow_empty=False)
 
         # Normalize textual shortcuts to numbers for backward compatibility
         shortcut_map = {
@@ -1800,7 +1857,8 @@ self.player = Character(name, character_class, self.classes_data)
             'build_home': '15' if self.current_area == "your_land" else None,
             'furnish_home': '15' if self.current_area == "your_land" else None,
             'build_land': '16' if self.current_area == "your_land" else None,
-            'build_structures': '16' if self.current_area == "your_land" else None,
+            'build_structures':
+            '16' if self.current_area == "your_land" else None,
             'land': '16' if self.current_area == "your_land" else None,
             'farm': '17' if self.current_area == "your_land" else None,
             'training': '18' if self.current_area == "your_land" else None,
@@ -1813,7 +1871,7 @@ self.player = Character(name, character_class, self.classes_data)
             'quit': '22' if self.current_area == "your_land" else '18',
             'q': '22' if self.current_area == "your_land" else '18'
         }
-        
+
         # Remove None values from shortcut map
         shortcut_map = {k: v for k, v in shortcut_map.items() if v is not None}
 
@@ -1823,7 +1881,7 @@ self.player = Character(name, character_class, self.classes_data)
 
         if choice == "1":
             self.explore()
-            
+
         elif choice == "2":
             if self.player:
                 self.player.display_stats()
@@ -1831,31 +1889,31 @@ self.player = Character(name, character_class, self.classes_data)
                 print("No character created yet.")
         elif choice == "3":
             self.travel()
-            
+
         elif choice == "4":
             self.view_inventory()
-                       
+
         elif choice == "5":
             self.view_missions()
-            
+
         elif choice == "6":
             self.fight_boss_menu()
-                        
+
         elif choice == "7":
             self.visit_tavern()
-            
+
         elif choice == "8":
             self.visit_shop()
-            
+
         elif choice == "9":
             self.visit_alchemy()
-            
+
         elif choice == "10":
             self.visit_market()
-            
+
         elif choice == "11":
             self.rest()
-            
+
         elif choice == "12":
             self.manage_companions()
 
@@ -1868,19 +1926,19 @@ self.player = Character(name, character_class, self.classes_data)
         elif choice == "15" and self.current_area == "your_land":
             # Furnish Home option only in your_land
             self.build_home()
-        
+
         elif choice == "16" and self.current_area == "your_land":
             # Build Structures option only in your_land
             self.build_structures()
-        
+
         elif choice == "17" and self.current_area == "your_land":
             # Farm option only in your_land
             self.farm()
-        
+
         elif choice == "18" and self.current_area == "your_land":
             # Training option only in your_land
             self.training()
-        
+
         elif choice == "15":
             # Save Game (when not in your_land)
             self.save_game()
@@ -1888,7 +1946,7 @@ self.player = Character(name, character_class, self.classes_data)
         elif choice == "19" and self.current_area == "your_land":
             # Save Game (when in your_land)
             self.save_game()
-            
+
         elif choice == "16":
             # Load Game (when not in your_land)
             self.load_game()
@@ -1896,7 +1954,7 @@ self.player = Character(name, character_class, self.classes_data)
         elif choice == "20" and self.current_area == "your_land":
             # Load Game (when in your_land)
             self.load_game()
-            
+
         elif choice == "17":
             # Claim Rewards (when not in your_land)
             self.claim_rewards()
@@ -1904,7 +1962,7 @@ self.player = Character(name, character_class, self.classes_data)
         elif choice == "21" and self.current_area == "your_land":
             # Claim Rewards (when in your_land)
             self.claim_rewards()
-            
+
         elif choice == "18":
             # Quit (when not in your_land)
             self.quit_game()
@@ -1916,10 +1974,9 @@ self.player = Character(name, character_class, self.classes_data)
         elif choice == "21" and self.current_area == "your_land":
             # Quit (when in your_land)
             self.quit_game()
-            
+
         else:
             print("Invalid choice. Please try again.")
-            
 
     def fight_boss_menu(self):
         """Menu to select and fight a boss in the current area"""
@@ -1984,7 +2041,9 @@ self.player = Character(name, character_class, self.classes_data)
                     # Print start dialogue if available
                     start_dialogue = boss.get_dialogue("on_start_battle")
                     if start_dialogue:
-                        print(f"\n{Colors.CYAN}{boss.name}:{Colors.END} {start_dialogue}")
+                        print(
+                            f"\n{Colors.CYAN}{boss.name}:{Colors.END} {start_dialogue}"
+                        )
                     self.battle(boss)
             else:
                 print("Invalid choice.")
@@ -2046,33 +2105,36 @@ self.player = Character(name, character_class, self.classes_data)
         """Update challenge progress and check for completions"""
         if not self.player:
             return
-        
+
         for challenge in self.weekly_challenges_data.get('challenges', []):
             if challenge['id'] in self.completed_challenges:
                 continue
-            
+
             if challenge['type'] == challenge_type:
                 self.challenge_progress[challenge['id']] += value
-                
+
                 # Check if challenge is completed
-                if self.challenge_progress[challenge['id']] >= challenge['target']:
+                if self.challenge_progress[
+                        challenge['id']] >= challenge['target']:
                     self.complete_challenge(challenge)
 
     def complete_challenge(self, challenge: Dict[str, Any]):
         """Complete a challenge and award rewards"""
         if not self.player:
             return
-        
+
         challenge_id = challenge['id']
         self.completed_challenges.append(challenge_id)
-        
+
         reward_exp = challenge.get('reward_exp', 0)
         reward_gold = challenge.get('reward_gold', 0)
-        
+
         self.player.gain_experience(reward_exp)
         self.player.gold += reward_gold
-        
-        print(f"\n{Colors.CYAN}{Colors.BOLD}✓ Challenge Completed: {challenge['name']}!{Colors.END}")
+
+        print(
+            f"\n{Colors.CYAN}{Colors.BOLD}✓ Challenge Completed: {challenge['name']}!{Colors.END}"
+        )
         print(f"  Reward: {reward_exp} EXP + {reward_gold} Gold")
 
     def view_challenges(self):
@@ -2080,22 +2142,25 @@ self.player = Character(name, character_class, self.classes_data)
         if not self.player:
             return
 
-        
-        print(f"\n{Colors.CYAN}{Colors.BOLD}=== WEEKLY CHALLENGES ==={Colors.END}")
-        
+        print(
+            f"\n{Colors.CYAN}{Colors.BOLD}=== WEEKLY CHALLENGES ==={Colors.END}"
+        )
+
         for challenge in self.weekly_challenges_data.get('challenges', []):
             challenge_id = challenge['id']
             is_completed = challenge_id in self.completed_challenges
             progress = self.challenge_progress.get(challenge_id, 0)
             target = challenge['target']
-            
+
             status = "✓" if is_completed else f"{progress}/{target}"
             completed_text = f"{Colors.GREEN}COMPLETED{Colors.END}" if is_completed else status
-            
+
             print(f"\n{Colors.BOLD}{challenge['name']}{Colors.END}")
             print(f"  {challenge['description']}")
             print(f"  Status: {completed_text}")
-            print(f"  Reward: {challenge['reward_exp']} EXP + {challenge['reward_gold']} Gold")
+            print(
+                f"  Reward: {challenge['reward_exp']} EXP + {challenge['reward_gold']} Gold"
+            )
 
     def battle(self, enemy: Enemy):
         """Handle turn-based battle"""
@@ -2138,7 +2203,7 @@ self.player = Character(name, character_class, self.classes_data)
             player_mp_bar = create_hp_mp_bar(self.player.mp,
                                              self.player.max_mp, 20,
                                              Colors.BLUE)
-            
+
             # Check for boss for special health bar
             if isinstance(enemy, Boss):
                 enemy_hp_bar = create_boss_hp_bar(enemy.hp, enemy.max_hp)
@@ -2190,7 +2255,7 @@ self.player = Character(name, character_class, self.classes_data)
 
             # Update mission progress for kill
             self.update_mission_progress('kill', enemy.name)
-            
+
             # Update challenge progress for kills
             self.update_challenge_progress('kill_count')
 
@@ -3074,12 +3139,12 @@ self.player = Character(name, character_class, self.classes_data)
                     }
 
                 print(f"Mission accepted: {mission.get('name', 'Unknown')}")
-                
+
                 # Check for accept cutscene
                 accept_cutscene = mission.get('accept_cutscene')
                 if accept_cutscene and accept_cutscene in self.cutscenes_data:
                     self.play_cutscene(accept_cutscene)
-                
+
                 time.sleep(1)
             else:
                 print("Error: Mission data not found.")
@@ -3178,12 +3243,12 @@ self.player = Character(name, character_class, self.classes_data)
             print(
                 f"{Colors.YELLOW}You can now claim your rewards from the menu.{Colors.END}"
             )
-            
+
             # Check for complete cutscene
             complete_cutscene = mission.get('complete_cutscene')
             if complete_cutscene and complete_cutscene in self.cutscenes_data:
                 self.play_cutscene(complete_cutscene)
-            
+
             time.sleep(2)
 
     def claim_rewards(self):
@@ -3266,22 +3331,26 @@ self.player = Character(name, character_class, self.classes_data)
 
         # If multiple shops, let player choose
         if len(available_shops) > 1:
-            print(f"\n{Colors.BOLD}=== SHOPS IN {area_data.get('name', self.current_area).upper()} ==={Colors.END}")
+            print(
+                f"\n{Colors.BOLD}=== SHOPS IN {area_data.get('name', self.current_area).upper()} ==={Colors.END}"
+            )
             print(f"Your gold: {Colors.GOLD}{self.player.gold}{Colors.END}\n")
             for i, shop_id in enumerate(available_shops, 1):
                 if shop_id == "housing_shop":
                     shop_name = "Housing Shop"
                 else:
                     shop_data = self.shops_data.get(shop_id, {})
-                    shop_name = shop_data.get("name", shop_id.replace("_", " ").title())
+                    shop_name = shop_data.get(
+                        "name",
+                        shop_id.replace("_", " ").title())
                 print(f"{i}. {shop_name}")
-            
+
             print("\n0. Leave")
             choice = ask("Which shop would you like to visit? ")
-            
+
             if choice == "0" or not choice.isdigit():
                 return
-            
+
             shop_idx = int(choice) - 1
             if 0 <= shop_idx < len(available_shops):
                 selected_shop = available_shops[shop_idx]
@@ -3304,10 +3373,16 @@ self.player = Character(name, character_class, self.classes_data)
             return
 
         print(f"\n{Colors.BOLD}{Colors.CYAN}=== HOUSING SHOP ==={Colors.END}")
-        print(f"{Colors.YELLOW}Welcome to the Housing Shop! Build your dream home with these items.{Colors.END}")
+        print(
+            f"{Colors.YELLOW}Welcome to the Housing Shop! Build your dream home with these items.{Colors.END}"
+        )
         print(f"\nYour gold: {Colors.GOLD}{self.player.gold}{Colors.END}")
-        print(f"Comfort Points: {Colors.CYAN}{self.player.comfort_points}{Colors.END}")
-        print(f"Items owned: {Colors.MAGENTA}{len(self.player.housing_owned)}{Colors.END}")
+        print(
+            f"Comfort Points: {Colors.CYAN}{self.player.comfort_points}{Colors.END}"
+        )
+        print(
+            f"Items owned: {Colors.MAGENTA}{len(self.player.housing_owned)}{Colors.END}"
+        )
 
         # Get all housing items
         housing_items = list(self.housing_data.items())
@@ -3336,18 +3411,24 @@ self.player = Character(name, character_class, self.classes_data)
                 comfort = item_data.get("comfort_points", 0)
                 desc = item_data.get("description", "")
                 owned = "✓" if item_id in self.player.housing_owned else " "
-                
+
                 # Color price based on affordability
                 price_color = Colors.GREEN if self.player.gold >= price else Colors.RED
                 # Color owned indicator
                 owned_color = Colors.GREEN if owned == "✓" else Colors.RED
 
-                print(f"\n{Colors.CYAN}{i}.{Colors.END} [{owned_color}{owned}{Colors.END}] {Colors.BOLD}{Colors.YELLOW}{name}{Colors.END}")
+                print(
+                    f"\n{Colors.CYAN}{i}.{Colors.END} [{owned_color}{owned}{Colors.END}] {Colors.BOLD}{Colors.YELLOW}{name}{Colors.END}"
+                )
                 print(f"   {desc}")
-                print(f"   Price: {price_color}{price} gold{Colors.END} | Comfort: {Colors.CYAN}+{comfort}{Colors.END}")
+                print(
+                    f"   Price: {price_color}{price} gold{Colors.END} | Comfort: {Colors.CYAN}+{comfort}{Colors.END}"
+                )
 
             print(f"\n{Colors.YELLOW}Options:{Colors.END}")
-            print(f"{Colors.CYAN}1-{len(page_items)}.{Colors.END} Buy/Add Housing Item")
+            print(
+                f"{Colors.CYAN}1-{len(page_items)}.{Colors.END} Buy/Add Housing Item"
+            )
             if len(housing_items) > page_size:
                 print(f"{Colors.CYAN}N.{Colors.END} Next Page")
                 print(f"{Colors.CYAN}P.{Colors.END} Previous Page")
@@ -3373,23 +3454,31 @@ self.player = Character(name, character_class, self.classes_data)
                     name = item_data.get("name", item_id)
                     price = item_data.get("price", 0)
                     comfort = item_data.get("comfort_points", 0)
-                    
+
                     # Check if already owned
                     if item_id in self.player.housing_owned:
                         # Option to buy another copy or view details
-                        confirm = ask(f"\n{Colors.YELLOW}You already own this. Buy another copy for {Colors.GOLD}{price} gold{Colors.YELLOW}? (y/n): {Colors.END}").strip().lower()
+                        confirm = ask(
+                            f"\n{Colors.YELLOW}You already own this. Buy another copy for {Colors.GOLD}{price} gold{Colors.YELLOW}? (y/n): {Colors.END}"
+                        ).strip().lower()
                         if confirm != 'y':
                             continue
-                    
+
                     # Check if can afford
                     if self.player.gold >= price:
                         self.player.gold -= price
                         self.player.housing_owned.append(item_id)
                         self.player.comfort_points += comfort
-                        print(f"\n{Colors.GREEN}✓ Purchased {Colors.BOLD}{name}{Colors.END}{Colors.GREEN}!{Colors.END}")
-                        print(f"{Colors.CYAN}Comfort points: +{comfort} (Total: {self.player.comfort_points}){Colors.END}")
+                        print(
+                            f"\n{Colors.GREEN}✓ Purchased {Colors.BOLD}{name}{Colors.END}{Colors.GREEN}!{Colors.END}"
+                        )
+                        print(
+                            f"{Colors.CYAN}Comfort points: +{comfort} (Total: {self.player.comfort_points}){Colors.END}"
+                        )
                     else:
-                        print(f"\n{Colors.RED}✗ Not enough gold! Need {Colors.BOLD}{price}{Colors.END}{Colors.RED}, have {self.player.gold}.{Colors.END}")
+                        print(
+                            f"\n{Colors.RED}✗ Not enough gold! Need {Colors.BOLD}{price}{Colors.END}{Colors.RED}, have {self.player.gold}.{Colors.END}"
+                        )
                 else:
                     print(f"{Colors.RED}Invalid selection.{Colors.END}")
 
@@ -3414,26 +3503,55 @@ self.player = Character(name, character_class, self.classes_data)
             return
 
         if not self.player.housing_owned:
-            print(f"{Colors.YELLOW}You haven't purchased any housing items yet! Visit the Housing Shop first.{Colors.END}")
+            print(
+                f"{Colors.YELLOW}You haven't purchased any housing items yet! Visit the Housing Shop first.{Colors.END}"
+            )
             input("Press Enter to continue...")
             return
 
         while True:
             clear_screen()
-            print(f"\n{Colors.BOLD}{Colors.CYAN}=== BUILD STRUCTURES ==={Colors.END}")
-            print(f"{Colors.YELLOW}Manage your buildings and customize your property{Colors.END}\n")
+            print(
+                f"\n{Colors.BOLD}{Colors.CYAN}=== BUILD STRUCTURES ==={Colors.END}"
+            )
+            print(
+                f"{Colors.YELLOW}Manage your buildings and customize your property{Colors.END}\n"
+            )
 
-            print(f"Comfort Points: {Colors.CYAN}{self.player.comfort_points}{Colors.END}\n")
+            print(
+                f"Comfort Points: {Colors.CYAN}{self.player.comfort_points}{Colors.END}\n"
+            )
 
             # Display building categories
             building_types = {
-                "house": {"label": "House", "slots": 3},
-                "decoration": {"label": "Decoration", "slots": 10},
-                "fencing": {"label": "Fencing", "slots": 1},
-                "garden": {"label": "Garden", "slots": 3},
-                "farm": {"label": "Farm", "slots": 2},
-                "farming": {"label": "Farming", "slots": 2},
-                "training_place": {"label": "Training Place", "slots": 3},
+                "house": {
+                    "label": "House",
+                    "slots": 3
+                },
+                "decoration": {
+                    "label": "Decoration",
+                    "slots": 10
+                },
+                "fencing": {
+                    "label": "Fencing",
+                    "slots": 1
+                },
+                "garden": {
+                    "label": "Garden",
+                    "slots": 3
+                },
+                "farm": {
+                    "label": "Farm",
+                    "slots": 2
+                },
+                "farming": {
+                    "label": "Farming",
+                    "slots": 2
+                },
+                "training_place": {
+                    "label": "Training Place",
+                    "slots": 3
+                },
             }
             for b_type, info in building_types.items():
                 print(f"{Colors.BOLD}{info['label']} Slots:{Colors.END}")
@@ -3442,8 +3560,11 @@ self.player = Character(name, character_class, self.classes_data)
                     item_id = self.player.building_slots.get(slot)
                     if item_id is not None and item_id in self.housing_data:
                         item = self.housing_data[item_id]
-                        rarity_color = get_rarity_color(item.get('rarity', 'common'))
-                        print(f"  {slot}: {rarity_color}{item.get('name', item_id)}{Colors.END}")
+                        rarity_color = get_rarity_color(
+                            item.get('rarity', 'common'))
+                        print(
+                            f"  {slot}: {rarity_color}{item.get('name', item_id)}{Colors.END}"
+                        )
                     else:
                         print(f"  {slot}: {Colors.GRAY}Empty{Colors.END}")
                 print()
@@ -3454,7 +3575,8 @@ self.player = Character(name, character_class, self.classes_data)
             print("3. View detailed home status")
             print("B. Back")
 
-            choice = ask(f"\n{Colors.CYAN}Choose option: {Colors.END}").strip().upper()
+            choice = ask(
+                f"\n{Colors.CYAN}Choose option: {Colors.END}").strip().upper()
 
             if choice == 'B':
                 break
@@ -3474,8 +3596,13 @@ self.player = Character(name, character_class, self.classes_data)
             return
 
         print(f"\n{Colors.BOLD}=== HOME DETAILS ==={Colors.END}")
-        print(f"\nComfort Points: {Colors.CYAN}{self.player.comfort_points}{Colors.END}")
-        placed_items = [item_id for item_id in self.player.building_slots.values() if item_id is not None]
+        print(
+            f"\nComfort Points: {Colors.CYAN}{self.player.comfort_points}{Colors.END}"
+        )
+        placed_items = [
+            item_id for item_id in self.player.building_slots.values()
+            if item_id is not None
+        ]
         print(f"Total Items Placed: {len(placed_items)}")
         print(f"Unique Items Placed: {len(set(placed_items))}")
 
@@ -3486,23 +3613,30 @@ self.player = Character(name, character_class, self.classes_data)
             item_data = self.housing_data.get(item_id, {})
             name = item_data.get("name", item_id)
             comfort = item_data.get("comfort_points", 0)
-            
+
             if name not in item_comforts:
                 item_comforts[name] = {"count": 0, "total_comfort": 0}
             item_comforts[name]["count"] += 1
             item_comforts[name]["total_comfort"] += comfort
 
         # Sort by total comfort contribution
-        sorted_items = sorted(item_comforts.items(), key=lambda x: x[1]["total_comfort"], reverse=True)
-        
+        sorted_items = sorted(item_comforts.items(),
+                              key=lambda x: x[1]["total_comfort"],
+                              reverse=True)
+
         total_displayed = 0
         for name, info in sorted_items[:10]:  # Show top 10
-            print(f"  {name}: x{info['count']} = +{info['total_comfort']} comfort")
+            print(
+                f"  {name}: x{info['count']} = +{info['total_comfort']} comfort"
+            )
             total_displayed += 1
 
         if len(sorted_items) > 10:
-            remaining_comfort = sum(info["total_comfort"] for _, info in sorted_items[10:])
-            print(f"  ... and {len(sorted_items) - 10} more items (+{remaining_comfort} comfort)")
+            remaining_comfort = sum(info["total_comfort"]
+                                    for _, info in sorted_items[10:])
+            print(
+                f"  ... and {len(sorted_items) - 10} more items (+{remaining_comfort} comfort)"
+            )
 
         ask("\nPress Enter to continue...")
 
@@ -3510,7 +3644,10 @@ self.player = Character(name, character_class, self.classes_data)
         """Remove a housing item from a slot"""
         if not self.player:
             return
-        occupied_slots = [slot for slot, item_id in self.player.building_slots.items() if item_id is not None]
+        occupied_slots = [
+            slot for slot, item_id in self.player.building_slots.items()
+            if item_id is not None
+        ]
 
         if not occupied_slots:
             print("No items placed to remove.")
@@ -3522,9 +3659,13 @@ self.player = Character(name, character_class, self.classes_data)
             if item_id in self.housing_data:
                 item = self.housing_data[item_id]
                 rarity_color = get_rarity_color(item.get('rarity', 'common'))
-                print(f"{i}. {slot}: {rarity_color}{item.get('name', item_id)}{Colors.END}")
+                print(
+                    f"{i}. {slot}: {rarity_color}{item.get('name', item_id)}{Colors.END}"
+                )
 
-        choice = ask(f"\nChoose item to remove (1-{len(occupied_slots)}) or press Enter to cancel: ").strip()
+        choice = ask(
+            f"\nChoose item to remove (1-{len(occupied_slots)}) or press Enter to cancel: "
+        ).strip()
 
         if not choice:
             return
@@ -3568,9 +3709,13 @@ self.player = Character(name, character_class, self.classes_data)
             if item_id in self.housing_data:
                 item = self.housing_data[item_id]
                 rarity_color = get_rarity_color(item.get('rarity', 'common'))
-                print(f"{i}. {rarity_color}{item.get('name', item_id)}{Colors.END} ({item.get('type', 'misc')})")
+                print(
+                    f"{i}. {rarity_color}{item.get('name', item_id)}{Colors.END} ({item.get('type', 'misc')})"
+                )
 
-        choice = ask(f"\nChoose item (1-{len(self.player.housing_owned)}) or press Enter to cancel: ").strip()
+        choice = ask(
+            f"\nChoose item (1-{len(self.player.housing_owned)}) or press Enter to cancel: "
+        ).strip()
 
         if not choice:
             return
@@ -3613,7 +3758,10 @@ self.player = Character(name, character_class, self.classes_data)
             available_slots = ['storage_1']
 
         # Filter to slots that are empty
-        empty_slots = [slot for slot in available_slots if self.player.building_slots.get(slot) is None]
+        empty_slots = [
+            slot for slot in available_slots
+            if self.player.building_slots.get(slot) is None
+        ]
 
         if not empty_slots:
             print(f"No available slots for {item_type} items.")
@@ -3623,7 +3771,9 @@ self.player = Character(name, character_class, self.classes_data)
         for i, slot in enumerate(empty_slots, 1):
             print(f"{i}. {slot}")
 
-        slot_choice = ask(f"\nChoose slot (1-{len(empty_slots)}) or press Enter to cancel: ").strip()
+        slot_choice = ask(
+            f"\nChoose slot (1-{len(empty_slots)}) or press Enter to cancel: "
+        ).strip()
 
         if not slot_choice:
             return
@@ -3646,7 +3796,9 @@ self.player = Character(name, character_class, self.classes_data)
         if item:
             self.player.comfort_points += item.get('comfort_points', 0)
 
-        print(f"{Colors.GREEN}Placed {item.get('name', item_id)} in {target_slot}!{Colors.END}")
+        print(
+            f"{Colors.GREEN}Placed {item.get('name', item_id)} in {target_slot}!{Colors.END}"
+        )
         input("Press Enter to continue...")
 
     def build_structures(self):
@@ -3657,108 +3809,168 @@ self.player = Character(name, character_class, self.classes_data)
 
         while True:
             clear_screen()
-            print(f"\n{Colors.BOLD}{Colors.CYAN}=== BUILD STRUCTURES ==={Colors.END}")
-            print(f"{Colors.YELLOW}Manage your buildings and customize your property{Colors.END}\n")
-            
+            print(
+                f"\n{Colors.BOLD}{Colors.CYAN}=== BUILD STRUCTURES ==={Colors.END}"
+            )
+            print(
+                f"{Colors.YELLOW}Manage your buildings and customize your property{Colors.END}\n"
+            )
+
             # Display building categories
             building_types = {
-                "house": {"label": "House", "slots": 3, "max_owned": 0},
-                "decoration": {"label": "Decoration", "slots": 10, "max_owned": 0},
-                "fencing": {"label": "Fencing", "slots": 1, "max_owned": 0},
-                "garden": {"label": "Garden", "slots": 3, "max_owned": 0},
-                "farm": {"label": "Farm", "slots": 2, "max_owned": 0},
-                "farming": {"label": "Farming", "slots": 2, "max_owned": 0},
-                "training_place": {"label": "Training Place", "slots": 3, "max_owned": 0},
+                "house": {
+                    "label": "House",
+                    "slots": 3,
+                    "max_owned": 0
+                },
+                "decoration": {
+                    "label": "Decoration",
+                    "slots": 10,
+                    "max_owned": 0
+                },
+                "fencing": {
+                    "label": "Fencing",
+                    "slots": 1,
+                    "max_owned": 0
+                },
+                "garden": {
+                    "label": "Garden",
+                    "slots": 3,
+                    "max_owned": 0
+                },
+                "farm": {
+                    "label": "Farm",
+                    "slots": 2,
+                    "max_owned": 0
+                },
+                "farming": {
+                    "label": "Farming",
+                    "slots": 2,
+                    "max_owned": 0
+                },
+                "training_place": {
+                    "label": "Training Place",
+                    "slots": 3,
+                    "max_owned": 0
+                },
             }
-            
+
             # Count occupied slots and available items for each type
             placed_items = {b_type: 0 for b_type in building_types}
             available_items = {b_type: [] for b_type in building_types}
-            
+
             for slot_name, item_id in self.player.building_slots.items():
                 if item_id:
                     # Extract type from slot name (e.g., "house_1" -> "house")
                     b_type = slot_name.rsplit('_', 1)[0]
                     if b_type in placed_items:
                         placed_items[b_type] += 1
-            
+
             # Get available items from inventory
             for item_id in self.player.housing_owned:
                 item_data = self.housing_data.get(item_id, {})
                 item_type = item_data.get("type", "decoration")
-                available_items[item_type].append({"id": item_id, "data": item_data})
-            
+                available_items[item_type].append({
+                    "id": item_id,
+                    "data": item_data
+                })
+
             # Display building slots
             menu_idx = 1
             print(f"{Colors.BOLD}Building Slots:{Colors.END}\n")
-            
+
             for b_type, info in building_types.items():
                 placed = placed_items.get(b_type, 0)
                 max_slots = info["slots"]
                 status_color = Colors.GREEN if placed > 0 else Colors.DARK_GRAY
-                
-                print(f"{Colors.CYAN}{menu_idx}.{Colors.END} {Colors.BOLD}{info['label']}{Colors.END} [{status_color}{placed}/{max_slots}{Colors.END}]")
+
+                print(
+                    f"{Colors.CYAN}{menu_idx}.{Colors.END} {Colors.BOLD}{info['label']}{Colors.END} [{status_color}{placed}/{max_slots}{Colors.END}]"
+                )
                 menu_idx += 1
-            
+
             print(f"\n{Colors.CYAN}Q.{Colors.END} Quit")
-            choice = ask(f"\n{Colors.CYAN}Choose a building type to manage: {Colors.END}").strip().upper()
-            
+            choice = ask(
+                f"\n{Colors.CYAN}Choose a building type to manage: {Colors.END}"
+            ).strip().upper()
+
             if choice == 'Q':
                 break
-            
+
             if choice.isdigit():
                 idx = int(choice) - 1
                 types_list = list(building_types.keys())
                 if 0 <= idx < len(types_list):
-                    self.manage_building_slots(types_list[idx], building_types[types_list[idx]], available_items[types_list[idx]])
+                    self.manage_building_slots(
+                        types_list[idx], building_types[types_list[idx]],
+                        available_items[types_list[idx]])
 
-    def manage_building_slots(self, b_type: str, b_info: Dict, available_items: List[Dict]):
+    def manage_building_slots(self, b_type: str, b_info: Dict,
+                              available_items: List[Dict]):
         """Manage slots for a specific building type"""
         if not self.player:
             print("No character created yet.")
             return
-            
+
         while True:
             clear_screen()
-            print(f"\n{Colors.BOLD}{Colors.CYAN}=== {b_info['label'].upper()} SLOTS ==={Colors.END}")
-            print(f"{Colors.YELLOW}Manage your {b_info['label'].lower()} placements{Colors.END}\n")
-            
+            print(
+                f"\n{Colors.BOLD}{Colors.CYAN}=== {b_info['label'].upper()} SLOTS ==={Colors.END}"
+            )
+            print(
+                f"{Colors.YELLOW}Manage your {b_info['label'].lower()} placements{Colors.END}\n"
+            )
+
             max_slots = b_info["slots"]
-            
+
             # Display all slots for this type
             print(f"{Colors.BOLD}Slots:{Colors.END}")
             slot_list = []
             for i in range(1, max_slots + 1):
                 slot_name = f"{b_type}_{i}"
                 item_id = self.player.building_slots.get(slot_name)
-                
+
                 if item_id:
                     item_data = self.housing_data.get(item_id, {})
                     item_name = item_data.get("name", item_id)
                     item_price = item_data.get("price", 0)
                     swap_cost = int(item_price * 0.1)
-                    print(f"{Colors.CYAN}{i}.{Colors.END} [{Colors.GREEN}✓{Colors.END}] {Colors.BOLD}{Colors.YELLOW}{item_name}{Colors.END}")
-                    print(f"   Swap cost: {Colors.GOLD}{swap_cost} gold{Colors.END} (10% of {item_price})")
+                    print(
+                        f"{Colors.CYAN}{i}.{Colors.END} [{Colors.GREEN}✓{Colors.END}] {Colors.BOLD}{Colors.YELLOW}{item_name}{Colors.END}"
+                    )
+                    print(
+                        f"   Swap cost: {Colors.GOLD}{swap_cost} gold{Colors.END} (10% of {item_price})"
+                    )
                 else:
-                    print(f"{Colors.CYAN}{i}.{Colors.END} [{Colors.DARK_GRAY}-{Colors.END}] {Colors.DARK_GRAY}Empty{Colors.END}")
-                
+                    print(
+                        f"{Colors.CYAN}{i}.{Colors.END} [{Colors.DARK_GRAY}-{Colors.END}] {Colors.DARK_GRAY}Empty{Colors.END}"
+                    )
+
                 slot_list.append(slot_name)
-            
-            print(f"\n{Colors.YELLOW}Available items in inventory: {len(available_items)}{Colors.END}")
-            
-            for idx, item in enumerate(available_items[:3], 1):  # Show first 3 available
+
+            print(
+                f"\n{Colors.YELLOW}Available items in inventory: {len(available_items)}{Colors.END}"
+            )
+
+            for idx, item in enumerate(available_items[:3],
+                                       1):  # Show first 3 available
                 item_name = item["data"].get("name", item["id"])
                 item_comfort = item["data"].get("comfort_points", 0)
-                print(f"  • {Colors.BOLD}{item_name}{Colors.END} (+{Colors.CYAN}{item_comfort}{Colors.END} comfort)")
-            
+                print(
+                    f"  • {Colors.BOLD}{item_name}{Colors.END} (+{Colors.CYAN}{item_comfort}{Colors.END} comfort)"
+                )
+
             if len(available_items) > 3:
-                print(f"  • {Colors.DARK_GRAY}... and {len(available_items) - 3} more items{Colors.END}")
-            
+                print(
+                    f"  • {Colors.DARK_GRAY}... and {len(available_items) - 3} more items{Colors.END}"
+                )
+
             print(f"\n{Colors.CYAN}1-{max_slots}.{Colors.END} Manage slot")
             print(f"{Colors.CYAN}B.{Colors.END} Back to land menu")
-            
-            choice = ask(f"\n{Colors.CYAN}Choose action: {Colors.END}").strip().upper()
-            
+
+            choice = ask(
+                f"\n{Colors.CYAN}Choose action: {Colors.END}").strip().upper()
+
             if choice == 'B':
                 break
             elif choice.isdigit():
@@ -3771,26 +3983,31 @@ self.player = Character(name, character_class, self.classes_data)
         if not self.player:
             print("No character created yet.")
             return
-            
+
         current_item = self.player.building_slots.get(slot_name)
-        
+
         while True:
             clear_screen()
-            print(f"\n{Colors.BOLD}{Colors.CYAN}=== MANAGE {slot_name.upper()} ==={Colors.END}")
-            
+            print(
+                f"\n{Colors.BOLD}{Colors.CYAN}=== MANAGE {slot_name.upper()} ==={Colors.END}"
+            )
+
             if current_item:
                 current_data = self.housing_data.get(current_item, {})
                 current_name = current_data.get("name", current_item)
                 current_price = current_data.get("price", 0)
                 swap_cost = int(current_price * 0.1)
-                
-                print(f"{Colors.BOLD}Current item:{Colors.END} {Colors.YELLOW}{current_name}{Colors.END}")
-                print(f"Swap cost: {Colors.GOLD}{swap_cost} gold{Colors.END}\n")
+
+                print(
+                    f"{Colors.BOLD}Current item:{Colors.END} {Colors.YELLOW}{current_name}{Colors.END}"
+                )
+                print(
+                    f"Swap cost: {Colors.GOLD}{swap_cost} gold{Colors.END}\n")
             else:
                 print(f"{Colors.GRAY}Current item: Empty{Colors.END}\n")
-            
+
             print(f"{Colors.BOLD}Available items to place:{Colors.END}\n")
-            
+
             for idx, item in enumerate(available_items, 1):
                 item_id = item["id"]
                 item_data = item["data"]
@@ -3798,15 +4015,21 @@ self.player = Character(name, character_class, self.classes_data)
                 item_comfort = item_data.get("comfort_points", 0)
                 item_price = item_data.get("price", 0)
                 swap_cost = int(item_price * 0.1)
-                
-                print(f"{Colors.CYAN}{idx}.{Colors.END} {Colors.BOLD}{Colors.YELLOW}{item_name}{Colors.END}")
-                print(f"   Comfort: {Colors.CYAN}+{item_comfort}{Colors.END} | Swap cost: {Colors.GOLD}{swap_cost}g{Colors.END}")
-            
+
+                print(
+                    f"{Colors.CYAN}{idx}.{Colors.END} {Colors.BOLD}{Colors.YELLOW}{item_name}{Colors.END}"
+                )
+                print(
+                    f"   Comfort: {Colors.CYAN}+{item_comfort}{Colors.END} | Swap cost: {Colors.GOLD}{swap_cost}g{Colors.END}"
+                )
+
             print(f"\n{Colors.CYAN}C.{Colors.END} Clear this slot")
             print(f"{Colors.CYAN}B.{Colors.END} Back")
-            
-            choice = ask(f"\n{Colors.CYAN}Select item to place or action: {Colors.END}").strip().upper()
-            
+
+            choice = ask(
+                f"\n{Colors.CYAN}Select item to place or action: {Colors.END}"
+            ).strip().upper()
+
             if choice == 'B':
                 break
             elif choice == 'C':
@@ -3816,45 +4039,59 @@ self.player = Character(name, character_class, self.classes_data)
                     input("Press Enter to continue...")
                     break
                 else:
-                    print(f"\n{Colors.YELLOW}Slot is already empty.{Colors.END}")
+                    print(
+                        f"\n{Colors.YELLOW}Slot is already empty.{Colors.END}")
                     input("Press Enter to continue...")
             elif choice.isdigit():
                 item_idx = int(choice) - 1
                 if 0 <= item_idx < len(available_items):
                     selected_item = available_items[item_idx]
-                    
+
                     # Calculate cost
                     if current_item:
-                        current_price = self.housing_data.get(current_item, {}).get("price", 0)
+                        current_price = self.housing_data.get(
+                            current_item, {}).get("price", 0)
                         swap_cost = int(current_price * 0.1)
                     else:
                         swap_cost = 0
-                    
+
                     # Check if player can afford
                     if self.player.gold >= swap_cost:
                         if swap_cost > 0:
                             self.player.gold -= swap_cost
-                            print(f"\n{Colors.GREEN}✓ Paid {Colors.GOLD}{swap_cost} gold{Colors.GREEN} to swap.{Colors.END}")
-                        
+                            print(
+                                f"\n{Colors.GREEN}✓ Paid {Colors.GOLD}{swap_cost} gold{Colors.GREEN} to swap.{Colors.END}"
+                            )
+
                         old_item = current_item
-                        self.player.building_slots[slot_name] = selected_item["id"]
-                        
+                        self.player.building_slots[slot_name] = selected_item[
+                            "id"]
+
                         # Update comfort points
                         if old_item:
-                            old_comfort = self.housing_data.get(old_item, {}).get("comfort_points", 0)
+                            old_comfort = self.housing_data.get(
+                                old_item, {}).get("comfort_points", 0)
                             self.player.comfort_points -= old_comfort
-                        
-                        new_comfort = selected_item["data"].get("comfort_points", 0)
+
+                        new_comfort = selected_item["data"].get(
+                            "comfort_points", 0)
                         self.player.comfort_points += new_comfort
-                        
-                        item_name = selected_item["data"].get("name", selected_item["id"])
-                        print(f"{Colors.GREEN}✓ Placed {Colors.BOLD}{item_name}{Colors.END}{Colors.GREEN} in {slot_name}!{Colors.END}")
-                        print(f"Total comfort: {Colors.CYAN}{self.player.comfort_points}{Colors.END}")
+
+                        item_name = selected_item["data"].get(
+                            "name", selected_item["id"])
+                        print(
+                            f"{Colors.GREEN}✓ Placed {Colors.BOLD}{item_name}{Colors.END}{Colors.GREEN} in {slot_name}!{Colors.END}"
+                        )
+                        print(
+                            f"Total comfort: {Colors.CYAN}{self.player.comfort_points}{Colors.END}"
+                        )
                         input("Press Enter to continue...")
                         break
                     else:
                         needed = swap_cost - self.player.gold
-                        print(f"\n{Colors.RED}✗ Not enough gold! Need {needed} more.{Colors.END}")
+                        print(
+                            f"\n{Colors.RED}✗ Not enough gold! Need {needed} more.{Colors.END}"
+                        )
                         input("Press Enter to continue...")
 
     def farm(self):
@@ -3864,21 +4101,27 @@ self.player = Character(name, character_class, self.classes_data)
             return
 
         # Check if player has any farm buildings
-        has_farm = any(self.player.building_slots.get(f"farm_{i}") is not None for i in range(1, 3))
-        
+        has_farm = any(
+            self.player.building_slots.get(f"farm_{i}") is not None
+            for i in range(1, 3))
+
         if not has_farm:
-            print(f"\n{Colors.YELLOW}You need to build a farm first! Use the 'Build Structures' option.{Colors.END}")
+            print(
+                f"\n{Colors.YELLOW}You need to build a farm first! Use the 'Build Structures' option.{Colors.END}"
+            )
             input("Press Enter to continue...")
             return
 
         while True:
             clear_screen()
             print(f"\n{Colors.BOLD}{Colors.CYAN}=== FARMING ==={Colors.END}")
-            print(f"{Colors.YELLOW}Tend to your crops and harvest your bounty{Colors.END}\n")
+            print(
+                f"{Colors.YELLOW}Tend to your crops and harvest your bounty{Colors.END}\n"
+            )
 
             # Show available crops to plant
             crops_data = self.farming_data.get("crops", {})
-            
+
             print(f"{Colors.BOLD}Available Crops to Plant:{Colors.END}\n")
             crops_list = list(crops_data.items())
             for idx, (crop_id, crop_data) in enumerate(crops_list, 1):
@@ -3886,41 +4129,60 @@ self.player = Character(name, character_class, self.classes_data)
                 description = crop_data.get("description", "")
                 growth_time = crop_data.get("growth_time", 0)
                 harvest = crop_data.get("harvest_amount", 0)
-                print(f"{Colors.CYAN}{idx}.{Colors.END} {Colors.BOLD}{name}{Colors.END}")
+                print(
+                    f"{Colors.CYAN}{idx}.{Colors.END} {Colors.BOLD}{name}{Colors.END}"
+                )
                 print(f"   {description}")
-                print(f"   Growth: {Colors.YELLOW}{growth_time} days{Colors.END} | Harvest: {Colors.GREEN}+{harvest}{Colors.END}\n")
+                print(
+                    f"   Growth: {Colors.YELLOW}{growth_time} days{Colors.END} | Harvest: {Colors.GREEN}+{harvest}{Colors.END}\n"
+                )
 
             print(f"{Colors.BOLD}Farm Status:{Colors.END}\n")
-            
+
             # Show farm plot status
             for farm_idx in range(1, 3):
                 farm_slot = f"farm_{farm_idx}"
-                has_building = self.player.building_slots.get(farm_slot) is not None
-                
+                has_building = self.player.building_slots.get(
+                    farm_slot) is not None
+
                 if has_building:
-                    print(f"{Colors.GOLD}Farm Plot {farm_idx}:{Colors.END} {Colors.GREEN}✓ Active{Colors.END}")
+                    print(
+                        f"{Colors.GOLD}Farm Plot {farm_idx}:{Colors.END} {Colors.GREEN}✓ Active{Colors.END}"
+                    )
                     plots = self.player.farm_plots.get(farm_slot, [])
                     if plots:
                         for plant_idx, plant in enumerate(plots, 1):
-                            crop_name = self.farming_data.get("crops", {}).get(plant.get("crop"), {}).get("name", plant.get("crop"))
+                            crop_name = self.farming_data.get("crops", {}).get(
+                                plant.get("crop"),
+                                {}).get("name", plant.get("crop"))
                             days_left = plant.get("days_left", 0)
                             if days_left > 0:
-                                print(f"  {plant_idx}. {crop_name} - {Colors.YELLOW}{days_left} days{Colors.END} until ready")
+                                print(
+                                    f"  {plant_idx}. {crop_name} - {Colors.YELLOW}{days_left} days{Colors.END} until ready"
+                                )
                             else:
-                                print(f"  {plant_idx}. {crop_name} - {Colors.GREEN}Ready to harvest!{Colors.END}")
+                                print(
+                                    f"  {plant_idx}. {crop_name} - {Colors.GREEN}Ready to harvest!{Colors.END}"
+                                )
                     else:
-                        print(f"  {Colors.GRAY}Empty - Ready to plant{Colors.END}")
+                        print(
+                            f"  {Colors.GRAY}Empty - Ready to plant{Colors.END}"
+                        )
                 else:
-                    print(f"Farm Plot {farm_idx}: {Colors.DARK_GRAY}Not built{Colors.END}")
+                    print(
+                        f"Farm Plot {farm_idx}: {Colors.DARK_GRAY}Not built{Colors.END}"
+                    )
                 print()
 
-            print(f"{Colors.CYAN}1-{len(crops_list)}.{Colors.END} Plant a crop")
+            print(
+                f"{Colors.CYAN}1-{len(crops_list)}.{Colors.END} Plant a crop")
             print(f"{Colors.CYAN}H.{Colors.END} Harvest crops")
             print(f"{Colors.CYAN}V.{Colors.END} View inventory")
             print(f"{Colors.CYAN}B.{Colors.END} Back")
-            
-            choice = ask(f"\n{Colors.CYAN}Choose action: {Colors.END}").strip().upper()
-            
+
+            choice = ask(
+                f"\n{Colors.CYAN}Choose action: {Colors.END}").strip().upper()
+
             if choice == 'B':
                 break
             elif choice == 'H':
@@ -3943,20 +4205,25 @@ self.player = Character(name, character_class, self.classes_data)
 
         # Select which farm to plant in
         clear_screen()
-        print(f"\n{Colors.BOLD}{Colors.CYAN}=== PLANT {crop_name.upper()} ==={Colors.END}\n")
-        print(f"Select which farm plot to use:\n")
+        print(
+            f"\n{Colors.BOLD}{Colors.CYAN}=== PLANT {crop_name.upper()} ==={Colors.END}\n"
+        )
+        print("Select which farm plot to use:\n")
 
         farm_choices = []
         for farm_idx in range(1, 3):
             farm_slot = f"farm_{farm_idx}"
-            has_building = self.player.building_slots.get(farm_slot) is not None
-            
+            has_building = self.player.building_slots.get(
+                farm_slot) is not None
+
             if has_building:
                 plots = self.player.farm_plots.get(farm_slot, [])
                 plant_count = len(plots)
-                max_plots = 3  # Can have multiple plants per farm
-                
-                print(f"{len(farm_choices) + 1}. Farm Plot {farm_idx} - {Colors.GREEN}{plant_count}/3 plants{Colors.END}")
+                max_plots = self.farming_data.get("max_plots_per_farm", 3)
+
+                print(
+                    f"{len(farm_choices) + 1}. Farm Plot {farm_idx} - {Colors.GREEN}{plant_count}/{max_plots} plants{Colors.END}"
+                )
                 farm_choices.append(farm_slot)
 
         if not farm_choices:
@@ -3964,27 +4231,38 @@ self.player = Character(name, character_class, self.classes_data)
             input("Press Enter to continue...")
             return
 
-        choice = ask(f"\nChoose farm (1-{len(farm_choices)}) or press Enter to cancel: ").strip()
-        
+        choice = ask(
+            f"\nChoose farm (1-{len(farm_choices)}) or press Enter to cancel: "
+        ).strip()
+
         if choice and choice.isdigit():
             farm_choice_idx = int(choice) - 1
             if 0 <= farm_choice_idx < len(farm_choices):
                 farm_slot = farm_choices[farm_choice_idx]
-                
+
                 # Add plant to farm
                 if farm_slot not in self.player.farm_plots:
                     self.player.farm_plots[farm_slot] = []
-                
-                if len(self.player.farm_plots[farm_slot]) < 3:
+
+                max_plots = self.farming_data.get("max_plots_per_farm", 3)
+                if len(self.player.farm_plots[farm_slot]) < max_plots:
                     self.player.farm_plots[farm_slot].append({
-                        "crop": crop_id,
-                        "days_left": growth_time
+                        "crop":
+                        crop_id,
+                        "days_left":
+                        growth_time
                     })
-                    print(f"\n{Colors.GREEN}✓ Planted {crop_name} in {farm_slot}!{Colors.END}")
-                    print(f"It will be ready to harvest in {Colors.YELLOW}{growth_time} days{Colors.END}")
+                    print(
+                        f"\n{Colors.GREEN}✓ Planted {crop_name} in {farm_slot}!{Colors.END}"
+                    )
+                    print(
+                        f"It will be ready to harvest in {Colors.YELLOW}{growth_time} days{Colors.END}"
+                    )
                 else:
-                    print(f"\n{Colors.YELLOW}This farm plot is full! (3/3 plants){Colors.END}")
-                
+                    print(
+                        f"\n{Colors.YELLOW}This farm plot is full! ({max_plots}/{max_plots} plants){Colors.END}"
+                    )
+
                 input("Press Enter to continue...")
 
     def harvest_crops(self):
@@ -3993,13 +4271,14 @@ self.player = Character(name, character_class, self.classes_data)
             return
 
         clear_screen()
-        print(f"\n{Colors.BOLD}{Colors.CYAN}=== HARVEST CROPS ==={Colors.END}\n")
+        print(
+            f"\n{Colors.BOLD}{Colors.CYAN}=== HARVEST CROPS ==={Colors.END}\n")
 
         harvested = False
         for farm_idx in range(1, 3):
             farm_slot = f"farm_{farm_idx}"
             plots = self.player.farm_plots.get(farm_slot, [])
-            
+
             if not plots:
                 continue
 
@@ -4007,17 +4286,20 @@ self.player = Character(name, character_class, self.classes_data)
             for plant_idx, plant in enumerate(plots):
                 crop_id = plant.get("crop")
                 days_left = plant.get("days_left", 0)
-                
+
                 if days_left <= 0:
-                    crop_data = self.farming_data.get("crops", {}).get(crop_id, {})
+                    crop_data = self.farming_data.get("crops",
+                                                      {}).get(crop_id, {})
                     crop_name = crop_data.get("name", crop_id)
                     harvest_amount = crop_data.get("harvest_amount", 1)
-                    
+
                     # Add crops to inventory
                     for _ in range(harvest_amount):
                         self.player.inventory.append(crop_name)
-                    
-                    print(f"{Colors.GREEN}✓ Harvested {Colors.BOLD}{harvest_amount}x {crop_name}{Colors.END}{Colors.GREEN} from {farm_slot}!{Colors.END}")
+
+                    print(
+                        f"{Colors.GREEN}✓ Harvested {Colors.BOLD}{harvest_amount}x {crop_name}{Colors.END}{Colors.GREEN} from {farm_slot}!{Colors.END}"
+                    )
                     crops_to_remove.append(plant_idx)
                     harvested = True
 
@@ -4026,8 +4308,10 @@ self.player = Character(name, character_class, self.classes_data)
                 plots.pop(idx)
 
         if not harvested:
-            print(f"{Colors.YELLOW}No crops are ready to harvest yet.{Colors.END}")
-        
+            print(
+                f"{Colors.YELLOW}No crops are ready to harvest yet.{Colors.END}"
+            )
+
         input("Press Enter to continue...")
 
     def view_farming_inventory(self):
@@ -4036,10 +4320,15 @@ self.player = Character(name, character_class, self.classes_data)
             return
 
         clear_screen()
-        print(f"\n{Colors.BOLD}{Colors.CYAN}=== FARMING INVENTORY ==={Colors.END}\n")
+        print(
+            f"\n{Colors.BOLD}{Colors.CYAN}=== FARMING INVENTORY ==={Colors.END}\n"
+        )
 
         crops_data = self.farming_data.get("crops", {})
-        crop_names = {crop_data.get("name"): crop_id for crop_id, crop_data in crops_data.items()}
+        crop_names = {
+            crop_data.get("name"): crop_id
+            for crop_id, crop_data in crops_data.items()
+        }
 
         # Count crops in inventory
         crop_counts = {}
@@ -4053,22 +4342,29 @@ self.player = Character(name, character_class, self.classes_data)
                 crop_id = crop_names[crop_name]
                 crop_data = crops_data.get(crop_id, {})
                 sell_price = crop_data.get("sell_price", 0)
-                
-                print(f"{Colors.GREEN}✓{Colors.END} {Colors.BOLD}{crop_name}{Colors.END} x{count}")
-                print(f"  Sell price: {Colors.GOLD}{sell_price}g{Colors.END} each | Total: {Colors.GOLD}{sell_price * count}g{Colors.END}\n")
+
+                print(
+                    f"{Colors.GREEN}✓{Colors.END} {Colors.BOLD}{crop_name}{Colors.END} x{count}"
+                )
+                print(
+                    f"  Sell price: {Colors.GOLD}{sell_price}g{Colors.END} each | Total: {Colors.GOLD}{sell_price * count}g{Colors.END}\n"
+                )
 
             print(f"{Colors.CYAN}S.{Colors.END} Sell crops")
             print(f"{Colors.CYAN}C.{Colors.END} Cook crops (alchemy)")
             print(f"{Colors.CYAN}B.{Colors.END} Back")
-            
-            choice = ask(f"\n{Colors.CYAN}Choose action: {Colors.END}").strip().upper()
-            
+
+            choice = ask(
+                f"\n{Colors.CYAN}Choose action: {Colors.END}").strip().upper()
+
             if choice == 'S':
                 self.sell_crops()
             elif choice == 'C':
                 self.visit_alchemy()  # Reuse existing alchemy system
         else:
-            print(f"{Colors.YELLOW}You have no crops in your inventory yet.{Colors.END}")
+            print(
+                f"{Colors.YELLOW}You have no crops in your inventory yet.{Colors.END}"
+            )
             input("Press Enter to continue...")
 
     def sell_crops(self):
@@ -4080,7 +4376,10 @@ self.player = Character(name, character_class, self.classes_data)
         print(f"\n{Colors.BOLD}{Colors.CYAN}=== SELL CROPS ==={Colors.END}\n")
 
         crops_data = self.farming_data.get("crops", {})
-        crop_names = {crop_data.get("name"): crop_id for crop_id, crop_data in crops_data.items()}
+        crop_names = {
+            crop_data.get("name"): crop_id
+            for crop_id, crop_data in crops_data.items()
+        }
 
         # Count crops
         crop_counts = {}
@@ -4095,15 +4394,18 @@ self.player = Character(name, character_class, self.classes_data)
             sell_price = crop_data.get("sell_price", 0)
             subtotal = sell_price * count
             total_gold += subtotal
-            
-            print(f"{crop_name} x{count}: {Colors.GOLD}{subtotal}g{Colors.END}")
-            
+
+            print(
+                f"{crop_name} x{count}: {Colors.GOLD}{subtotal}g{Colors.END}")
+
             # Remove from inventory
             for _ in range(count):
                 self.player.inventory.remove(crop_name)
 
         self.player.gold += total_gold
-        print(f"\n{Colors.GREEN}✓ Sold all crops for {Colors.GOLD}{total_gold} gold{Colors.END}{Colors.GREEN}!{Colors.END}")
+        print(
+            f"\n{Colors.GREEN}✓ Sold all crops for {Colors.GOLD}{total_gold} gold{Colors.END}{Colors.GREEN}!{Colors.END}"
+        )
         print(f"Total gold: {Colors.GOLD}{self.player.gold}{Colors.END}")
         input("Press Enter to continue...")
 
@@ -4114,10 +4416,14 @@ self.player = Character(name, character_class, self.classes_data)
             return
 
         # Check if player has any training_place buildings
-        has_training_place = any(self.player.building_slots.get(f"training_place_{i}") is not None for i in range(1, 4))
-        
+        has_training_place = any(
+            self.player.building_slots.get(f"training_place_{i}") is not None
+            for i in range(1, 4))
+
         if not has_training_place:
-            print(f"\n{Colors.YELLOW}You need to build a Training Place first! Use the 'Build Structures' option.{Colors.END}")
+            print(
+                f"\n{Colors.YELLOW}You need to build a Training Place first! Use the 'Build Structures' option.{Colors.END}"
+            )
             input("Press Enter to continue...")
             return
 
@@ -4128,70 +4434,101 @@ self.player = Character(name, character_class, self.classes_data)
 
         while True:
             clear_screen()
-            print(f"\n{Colors.BOLD}{Colors.CYAN}=== TRAINING GROUND ==={Colors.END}")
-            print(f"{Colors.YELLOW}Train to improve your stats! Each training session affects all your stats.{Colors.END}\n")
-            
+            print(
+                f"\n{Colors.BOLD}{Colors.CYAN}=== TRAINING GROUND ==={Colors.END}"
+            )
+            print(
+                f"{Colors.YELLOW}Train to improve your stats! Each training session affects all your stats.{Colors.END}\n"
+            )
+
             # Show training facility info
             self._display_training_facilities()
-            
+
             print(f"{Colors.BOLD}Current Stats:{Colors.END}")
-            print(f"HP: {Colors.RED}{self.player.max_hp}{Colors.END} | MP: {Colors.BLUE}{self.player.max_mp}{Colors.END}")
-            print(f"Attack: {Colors.RED}{self.player.attack}{Colors.END} | Defense: {Colors.GREEN}{self.player.defense}{Colors.END} | Speed: {Colors.YELLOW}{self.player.speed}{Colors.END}\n")
-            
+            print(
+                f"HP: {Colors.RED}{self.player.max_hp}{Colors.END} | MP: {Colors.BLUE}{self.player.max_mp}{Colors.END}"
+            )
+            print(
+                f"Attack: {Colors.RED}{self.player.attack}{Colors.END} | Defense: {Colors.GREEN}{self.player.defense}{Colors.END} | Speed: {Colors.YELLOW}{self.player.speed}{Colors.END}\n"
+            )
+
             print(f"{Colors.BOLD}Training Types:{Colors.END}\n")
             print(f"{Colors.CYAN}1.{Colors.END} Morning Training (1d4)")
-            print(f"   {Colors.GREEN}4: +4%{Colors.END} | {Colors.YELLOW}3: +2%{Colors.END} | {Colors.RED}1-2: -1%{Colors.END}")
+            print(
+                f"   {Colors.GREEN}4: +4%{Colors.END} | {Colors.YELLOW}3: +2%{Colors.END} | {Colors.RED}1-2: -1%{Colors.END}"
+            )
             print()
             print(f"{Colors.CYAN}2.{Colors.END} Calm Training (1d6)")
-            print(f"   {Colors.GREEN}6: +13%{Colors.END} | {Colors.GREEN}5: +10%{Colors.END} | {Colors.YELLOW}4: +7%{Colors.END} | {Colors.YELLOW}3: +1%{Colors.END} | {Colors.RED}1-2: -3%{Colors.END}")
+            print(
+                f"   {Colors.GREEN}6: +13%{Colors.END} | {Colors.GREEN}5: +10%{Colors.END} | {Colors.YELLOW}4: +7%{Colors.END} | {Colors.YELLOW}3: +1%{Colors.END} | {Colors.RED}1-2: -3%{Colors.END}"
+            )
             print()
             print(f"{Colors.CYAN}3.{Colors.END} Normal Training (1d8)")
-            print(f"   {Colors.GREEN}5-8: +10%{Colors.END} | {Colors.RED}1-3: -7%{Colors.END}")
+            print(
+                f"   {Colors.GREEN}5-8: +10%{Colors.END} | {Colors.RED}1-3: -7%{Colors.END}"
+            )
             print()
             print(f"{Colors.CYAN}4.{Colors.END} Intense Training (1d20)")
-            print(f"   {Colors.GREEN}16-20: +20%{Colors.END} | {Colors.GREEN}11-15: +15%{Colors.END} | {Colors.YELLOW}10: +10%{Colors.END} | {Colors.RED}5-9: -10%{Colors.END} | {Colors.RED}1-4: -20%{Colors.END}")
+            print(
+                f"   {Colors.GREEN}16-20: +20%{Colors.END} | {Colors.GREEN}11-15: +15%{Colors.END} | {Colors.YELLOW}10: +10%{Colors.END} | {Colors.RED}5-9: -10%{Colors.END} | {Colors.RED}1-4: -20%{Colors.END}"
+            )
             print()
             print(f"{Colors.CYAN}B.{Colors.END} Back")
-            
-            choice = ask(f"\n{Colors.CYAN}Choose training type: {Colors.END}").strip().upper()
-            
+
+            choice = ask(f"\n{Colors.CYAN}Choose training type: {Colors.END}"
+                         ).strip().upper()
+
             if choice == 'B':
                 break
-            
+
             if choice in ['1', '2', '3', '4']:
                 training_types = {
-                    '1': ('Morning Training', 4, lambda roll: 4 if roll == 4 else 2 if roll == 3 else -1),
-                    '2': ('Calm Training', 6, lambda roll: 13 if roll == 6 else 10 if roll == 5 else 7 if roll == 4 else 1 if roll == 3 else -3),
-                    '3': ('Normal Training', 8, lambda roll: 10 if roll >= 4 else -7),
-                    '4': ('Intense Training', 20, lambda roll: 20 if roll >= 16 else 15 if roll >= 11 else 10 if roll == 10 else -10 if roll >= 5 else -20)
+                    '1': ('Morning Training', 4, lambda roll: 4
+                          if roll == 4 else 2 if roll == 3 else -1),
+                    '2': ('Calm Training', 6, lambda roll: 13
+                          if roll == 6 else 10 if roll == 5 else 7
+                          if roll == 4 else 1 if roll == 3 else -3),
+                    '3': ('Normal Training', 8, lambda roll: 10
+                          if roll >= 4 else -7),
+                    '4': ('Intense Training', 20, lambda roll: 20
+                          if roll >= 16 else 15 if roll >= 11 else 10
+                          if roll == 10 else -10 if roll >= 5 else -20)
                 }
-                
+
                 name, dice_sides, calc_bonus = training_types[choice]
-                
+
                 # Roll the dice
                 roll = random.randint(1, dice_sides)
                 base_bonus_percent = calc_bonus(roll)
-                
+
                 # Apply training facility bonus
                 final_bonus_percent = base_bonus_percent * training_bonus
-                
-                print(f"\n{Colors.BOLD}{Colors.CYAN}=== {name.upper()} ==={Colors.END}")
-                print(f"You rolled a {Colors.YELLOW}{roll}{Colors.END} on a d{dice_sides}!")
-                
+
+                print(
+                    f"\n{Colors.BOLD}{Colors.CYAN}=== {name.upper()} ==={Colors.END}"
+                )
+                print(
+                    f"You rolled a {Colors.YELLOW}{roll}{Colors.END} on a d{dice_sides}!"
+                )
+
                 if training_bonus > 1.0:
                     bonus_description = f" (x{training_bonus:.1f} from facilities)"
                 elif training_bonus < 1.0:
                     bonus_description = f" (x{training_bonus:.1f} from poor facilities)"
                 else:
                     bonus_description = ""
-                
+
                 if final_bonus_percent > 0:
-                    print(f"{Colors.GREEN}Success!{Colors.END} All stats increase by {Colors.GREEN}+{final_bonus_percent:.1f}%{Colors.END}{bonus_description}")
+                    print(
+                        f"{Colors.GREEN}Success!{Colors.END} All stats increase by {Colors.GREEN}+{final_bonus_percent:.1f}%{Colors.END}{bonus_description}"
+                    )
                 elif final_bonus_percent < 0:
-                    print(f"{Colors.RED}Training failed!{Colors.END} All stats decrease by {Colors.RED}{abs(final_bonus_percent):.1f}%{Colors.END}{bonus_description}")
+                    print(
+                        f"{Colors.RED}Training failed!{Colors.END} All stats decrease by {Colors.RED}{abs(final_bonus_percent):.1f}%{Colors.END}{bonus_description}"
+                    )
                 else:
                     print(f"{Colors.YELLOW}No change in stats.{Colors.END}")
-                
+
                 # Calculate stat changes
                 old_stats = {
                     'max_hp': self.player.max_hp,
@@ -4200,29 +4537,44 @@ self.player = Character(name, character_class, self.classes_data)
                     'defense': self.player.defense,
                     'speed': self.player.speed
                 }
-                
+
                 # Apply percentage changes
                 if final_bonus_percent != 0:
                     percent_multiplier = 1 + (final_bonus_percent / 100)
-                    
-                    self.player.max_hp = max(1, int(self.player.max_hp * percent_multiplier))
-                    self.player.max_mp = max(1, int(self.player.max_mp * percent_multiplier))
-                    self.player.attack = max(1, int(self.player.attack * percent_multiplier))
-                    self.player.defense = max(1, int(self.player.defense * percent_multiplier))
-                    self.player.speed = max(1, int(self.player.speed * percent_multiplier))
-                    
+
+                    self.player.max_hp = max(
+                        1, int(self.player.max_hp * percent_multiplier))
+                    self.player.max_mp = max(
+                        1, int(self.player.max_mp * percent_multiplier))
+                    self.player.attack = max(
+                        1, int(self.player.attack * percent_multiplier))
+                    self.player.defense = max(
+                        1, int(self.player.defense * percent_multiplier))
+                    self.player.speed = max(
+                        1, int(self.player.speed * percent_multiplier))
+
                     # Ensure current HP/MP don't exceed new maxes
                     self.player.hp = min(self.player.hp, self.player.max_hp)
                     self.player.mp = min(self.player.mp, self.player.max_mp)
-                
+
                 print(f"\n{Colors.BOLD}Stat Changes:{Colors.END}")
-                print(f"HP: {Colors.RED}{old_stats['max_hp']} → {self.player.max_hp}{Colors.END}")
-                print(f"MP: {Colors.BLUE}{old_stats['max_mp']} → {self.player.max_mp}{Colors.END}")
-                print(f"Attack: {Colors.RED}{old_stats['attack']} → {self.player.attack}{Colors.END}")
-                print(f"Defense: {Colors.GREEN}{old_stats['defense']} → {self.player.defense}{Colors.END}")
-                print(f"Speed: {Colors.YELLOW}{old_stats['speed']} → {self.player.speed}{Colors.END}")
-                
-                input(f"\nPress Enter to continue...")
+                print(
+                    f"HP: {Colors.RED}{old_stats['max_hp']} → {self.player.max_hp}{Colors.END}"
+                )
+                print(
+                    f"MP: {Colors.BLUE}{old_stats['max_mp']} → {self.player.max_mp}{Colors.END}"
+                )
+                print(
+                    f"Attack: {Colors.RED}{old_stats['attack']} → {self.player.attack}{Colors.END}"
+                )
+                print(
+                    f"Defense: {Colors.GREEN}{old_stats['defense']} → {self.player.defense}{Colors.END}"
+                )
+                print(
+                    f"Speed: {Colors.YELLOW}{old_stats['speed']} → {self.player.speed}{Colors.END}"
+                )
+
+                input("\nPress Enter to continue...")
             else:
                 print(f"{Colors.RED}Invalid choice.{Colors.END}")
                 time.sleep(1)
@@ -4231,7 +4583,7 @@ self.player = Character(name, character_class, self.classes_data)
         """Calculate training effectiveness multiplier based on training facilities"""
         if not self.player:
             return 1.0
-        
+
         total_comfort = 0
         facility_count = 0
         rarity_multipliers = {
@@ -4241,55 +4593,55 @@ self.player = Character(name, character_class, self.classes_data)
             'epic': 1.6,
             'legendary': 1.8
         }
-        
+
         # Check all training_place slots
         for i in range(1, 4):
             slot = f"training_place_{i}"
             building_id = self.player.building_slots.get(slot)
-            
+
             if building_id and building_id in self.housing_data:
                 building = self.housing_data[building_id]
                 comfort = building.get('comfort_points', 0)
                 rarity = building.get('rarity', 'common')
-                
+
                 # Apply rarity multiplier to comfort points
                 rarity_mult = rarity_multipliers.get(rarity, 1.0)
                 effective_comfort = comfort * rarity_mult
-                
+
                 total_comfort += effective_comfort
                 facility_count += 1
-        
+
         if facility_count == 0:
             return 1.0
-        
+
         # Calculate average effective comfort
         avg_comfort = total_comfort / facility_count
-        
+
         # Convert comfort to training multiplier
         # Base multiplier of 1.0, +0.1 per 10 comfort points
         base_multiplier = 1.0
         comfort_bonus = avg_comfort / 10 * 0.1
-        
+
         return base_multiplier + comfort_bonus
 
     def _display_training_facilities(self):
         """Display information about the player's training facilities"""
         if not self.player:
             return
-        
+
         print(f"{Colors.BOLD}Training Facilities:{Colors.END}")
-        
+
         facilities = []
         for i in range(1, 4):
             slot = f"training_place_{i}"
             building_id = self.player.building_slots.get(slot)
-            
+
             if building_id and building_id in self.housing_data:
                 building = self.housing_data[building_id]
                 name = building.get('name', building_id)
                 rarity = building.get('rarity', 'common')
                 comfort = building.get('comfort_points', 0)
-                
+
                 # Color code by rarity
                 rarity_colors = {
                     'common': Colors.GRAY,
@@ -4298,24 +4650,31 @@ self.player = Character(name, character_class, self.classes_data)
                     'epic': Colors.MAGENTA,
                     'legendary': Colors.GOLD
                 }
-                
+
                 color = rarity_colors.get(rarity, Colors.WHITE)
-                facilities.append(f"{color}{name} ({rarity}, {comfort} comfort){Colors.END}")
-        
+                facilities.append(
+                    f"{color}{name} ({rarity}, {comfort} comfort){Colors.END}")
+
         if facilities:
             for facility in facilities:
                 print(f"  • {facility}")
-            
+
             effectiveness = self._calculate_training_effectiveness()
             if effectiveness > 1.0:
-                print(f"  {Colors.GREEN}Training Effectiveness: x{effectiveness:.1f} (better facilities = better results){Colors.END}")
+                print(
+                    f"  {Colors.GREEN}Training Effectiveness: x{effectiveness:.1f} (better facilities = better results){Colors.END}"
+                )
             elif effectiveness < 1.0:
-                print(f"  {Colors.YELLOW}Training Effectiveness: x{effectiveness:.1f} (upgrade facilities for better results){Colors.END}")
+                print(
+                    f"  {Colors.YELLOW}Training Effectiveness: x{effectiveness:.1f} (upgrade facilities for better results){Colors.END}"
+                )
             else:
-                print(f"  {Colors.GRAY}Training Effectiveness: x{effectiveness:.1f}{Colors.END}")
+                print(
+                    f"  {Colors.GRAY}Training Effectiveness: x{effectiveness:.1f}{Colors.END}"
+                )
         else:
             print(f"  {Colors.YELLOW}No training facilities built{Colors.END}")
-        
+
         print()
 
     def visit_tavern(self):
@@ -4416,7 +4775,8 @@ self.player = Character(name, character_class, self.classes_data)
             print("Market API not available.")
             return
 
-        print(f"\n{Colors.MAGENTA}{Colors.BOLD}=== ELITE MARKET ==={Colors.END}")
+        print(
+            f"\n{Colors.MAGENTA}{Colors.BOLD}=== ELITE MARKET ==={Colors.END}")
         print("Welcome to the Elite Market! All items sold at 50% OFF!")
         if self.player:
             print(f"\nYour gold: {Colors.GOLD}{self.player.gold}{Colors.END}")
@@ -4426,14 +4786,22 @@ self.player = Character(name, character_class, self.classes_data)
         if remaining and remaining.total_seconds() > 0:
             mins = int(remaining.total_seconds() // 60)
             secs = int(remaining.total_seconds() % 60)
-            print(f"\n{Colors.YELLOW}Market cooldown: {mins}m {secs}s remaining{Colors.END}")
+            print(
+                f"\n{Colors.YELLOW}Market cooldown: {mins}m {secs}s remaining{Colors.END}"
+            )
 
         # Fetch market data
         market_data = self.market_api.fetch_market_data()
         if not market_data or not market_data.get('ok'):
-            print(f"\n{Colors.RED}{Colors.BOLD}Market is currently closed!{Colors.END}")
-            print(f"{Colors.YELLOW}Merchants have travelled to another distant far place!{Colors.END}")
-            print(f"{Colors.YELLOW}Please wait until the merchants arrive!{Colors.END}")
+            print(
+                f"\n{Colors.RED}{Colors.BOLD}Market is currently closed!{Colors.END}"
+            )
+            print(
+                f"{Colors.YELLOW}Merchants have travelled to another distant far place!{Colors.END}"
+            )
+            print(
+                f"{Colors.YELLOW}Please wait until the merchants arrive!{Colors.END}"
+            )
             return
 
         items = self.market_api.get_all_items()
@@ -4451,14 +4819,17 @@ self.player = Character(name, character_class, self.classes_data)
         print("  5. By Max Price")
         print("  R. Refresh market (forces new fetch)")
 
-        choice = ask("\nChoose filter (1-5, R) or press Enter to browse all: ").strip().upper()
+        choice = ask("\nChoose filter (1-5, R) or press Enter to browse all: "
+                     ).strip().upper()
 
         filtered_items = items
 
         if choice == '1' or not choice:
             pass  # All items
         elif choice == '2':
-            print("\nItem types: weapon, armor, consumable, accessory, material, offhand")
+            print(
+                "\nItem types: weapon, armor, consumable, accessory, material, offhand"
+            )
             item_type = ask("Enter type: ").strip().lower()
             filtered_items = self.market_api.filter_items(item_type=item_type)
         elif choice == '3':
@@ -4472,7 +4843,8 @@ self.player = Character(name, character_class, self.classes_data)
         elif choice == '5':
             try:
                 max_price = int(ask("Enter max price: ").strip())
-                filtered_items = self.market_api.filter_items(max_price=max_price)
+                filtered_items = self.market_api.filter_items(
+                    max_price=max_price)
             except ValueError:
                 print("Invalid price, showing all items.")
         elif choice == 'R':
@@ -4486,7 +4858,8 @@ self.player = Character(name, character_class, self.classes_data)
             return
 
         # Sort by market price by default
-        filtered_items = sorted(filtered_items, key=lambda x: x.get('marketPrice', 0))
+        filtered_items = sorted(filtered_items,
+                                key=lambda x: x.get('marketPrice', 0))
 
         # Paginate and display items
         page_size = 8
@@ -4511,7 +4884,8 @@ self.player = Character(name, character_class, self.classes_data)
                 rarity = item.get('rarity', 'common')
                 original_price = item.get('originalPrice', 0)
                 market_price = item.get('marketPrice', 0)
-                desc = item.get('description', '')[:60]  # Truncate long descriptions
+                desc = item.get('description',
+                                '')[:60]  # Truncate long descriptions
                 reqs = item.get('requirements')
                 class_req = reqs.get('class') if reqs else None
                 level_req = reqs.get('level', 1) if reqs else 1
@@ -4522,9 +4896,13 @@ self.player = Character(name, character_class, self.classes_data)
 
                 print(f"\n{i}. {rarity_color}{name}{Colors.END} ({item_type})")
                 print(f"   {Colors.DARK_GRAY}{desc}{Colors.END}")
-                print(f"   {rarity_color}{rarity.title()}{Colors.END} | Level {level_req}" +
-                      (f" | {Colors.CYAN}{class_req}{Colors.END}" if class_req else ""))
-                print(f"   {price_color}{market_price}{Colors.END} gold (was {original_price})")
+                print(
+                    f"   {rarity_color}{rarity.title()}{Colors.END} | Level {level_req}"
+                    + (f" | {Colors.CYAN}{class_req}{Colors.END}"
+                       if class_req else ""))
+                print(
+                    f"   {price_color}{market_price}{Colors.END} gold (was {original_price})"
+                )
 
             print(f"\n{Colors.YELLOW}Options:{Colors.END}")
             print(f"1-{len(page_items)}. Buy Item")
@@ -4554,17 +4932,30 @@ self.player = Character(name, character_class, self.classes_data)
                 sub_choice = ask("Choose filter: ").strip()
                 if sub_choice == '1':
                     item_type = ask("Enter type: ").strip().lower()
-                    filtered_items = [it for it in filtered_items if it.get('type', '').lower() == item_type]
+                    filtered_items = [
+                        it for it in filtered_items
+                        if it.get('type', '').lower() == item_type
+                    ]
                 elif sub_choice == '2':
                     rarity = ask("Enter rarity: ").strip().lower()
-                    filtered_items = [it for it in filtered_items if it.get('rarity', '').lower() == rarity]
+                    filtered_items = [
+                        it for it in filtered_items
+                        if it.get('rarity', '').lower() == rarity
+                    ]
                 elif sub_choice == '3':
                     class_req = ask("Enter class: ").strip()
-                    filtered_items = [it for it in filtered_items if (it.get('requirements') or {}).get('class', '').lower() == class_req.lower()]
+                    filtered_items = [
+                        it for it in filtered_items
+                        if (it.get('requirements') or {}
+                            ).get('class', '').lower() == class_req.lower()
+                    ]
                 elif sub_choice == '4':
                     try:
                         max_price = int(ask("Enter max price: ").strip())
-                        filtered_items = [it for it in filtered_items if it.get('marketPrice', 0) <= max_price]
+                        filtered_items = [
+                            it for it in filtered_items
+                            if it.get('marketPrice', 0) <= max_price
+                        ]
                     except ValueError:
                         pass
                 current_page = 0
@@ -4578,10 +4969,14 @@ self.player = Character(name, character_class, self.classes_data)
                     if self.player.gold >= market_price:
                         self.player.gold -= market_price
                         self.player.inventory.append(name)
-                        print(f"\n{Colors.GREEN}Purchased {name} for {market_price} gold!{Colors.END}")
+                        print(
+                            f"\n{Colors.GREEN}Purchased {name} for {market_price} gold!{Colors.END}"
+                        )
                         self.update_mission_progress('collect', name)
                     else:
-                        print(f"\n{Colors.RED}Not enough gold! Need {market_price}, have {self.player.gold}.{Colors.END}")
+                        print(
+                            f"\n{Colors.RED}Not enough gold! Need {market_price}, have {self.player.gold}.{Colors.END}"
+                        )
                 else:
                     print("Invalid selection.")
 
@@ -4710,7 +5105,7 @@ self.player = Character(name, character_class, self.classes_data)
                 print(
                     f"Traveling to {self.areas_data.get(new_area, {}).get('name', new_area)}..."
                 )
-                
+
                 # Check for area cutscene
                 area_data = self.areas_data.get(new_area, {})
                 cutscene_id = area_data.get('first_time_enter_cutscene')
@@ -4721,7 +5116,7 @@ self.player = Character(name, character_class, self.classes_data)
                         self.play_cutscene(cutscene_id)
                         if not is_iterable:
                             self.visited_areas.add(new_area)
-                
+
                 # small chance encounter on travel
                 if random.random() < 0.3:
                     self.random_encounter()
@@ -4836,23 +5231,40 @@ self.player = Character(name, character_class, self.classes_data)
 
         save_data = {
             "player": {
-                "name": self.player.name,
-                "uuid": self.player.uuid,
-                "character_class": self.player.character_class,
-                "level": self.player.level,
-                "experience": self.player.experience,
-                "experience_to_next": self.player.experience_to_next,
-                "max_hp": self.player.max_hp,
-                "hp": self.player.hp,
-                "max_mp": self.player.max_mp,
-                "mp": self.player.mp,
-                "attack": self.player.attack,
-                "defense": self.player.defense,
-                "speed": self.player.speed,
-                "inventory": self.player.inventory,
-                "gold": self.player.gold,
-                "equipment": self.player.equipment,
-                "companions": self.player.companions,
+                "name":
+                self.player.name,
+                "uuid":
+                self.player.uuid,
+                "character_class":
+                self.player.character_class,
+                "level":
+                self.player.level,
+                "experience":
+                self.player.experience,
+                "experience_to_next":
+                self.player.experience_to_next,
+                "max_hp":
+                self.player.max_hp,
+                "hp":
+                self.player.hp,
+                "max_mp":
+                self.player.max_mp,
+                "mp":
+                self.player.mp,
+                "attack":
+                self.player.attack,
+                "defense":
+                self.player.defense,
+                "speed":
+                self.player.speed,
+                "inventory":
+                self.player.inventory,
+                "gold":
+                self.player.gold,
+                "equipment":
+                self.player.equipment,
+                "companions":
+                self.player.companions,
                 "base_stats": {
                     "base_max_hp": self.player.base_max_hp,
                     "base_max_mp": self.player.base_max_mp,
@@ -4860,13 +5272,24 @@ self.player = Character(name, character_class, self.classes_data)
                     "base_defense": self.player.base_defense,
                     "base_speed": self.player.base_speed
                 },
-                "class_data": self.player.class_data,
-                "rank": self.player.rank,
-                "active_buffs": self.player.active_buffs,
-                "housing_owned": self.player.housing_owned if hasattr(self.player, 'housing_owned') else [],
-                "comfort_points": self.player.comfort_points if hasattr(self.player, 'comfort_points') else 0,
-                "building_slots": self.player.building_slots if hasattr(self.player, 'building_slots') else {},
-                "farm_plots": self.player.farm_plots if hasattr(self.player, 'farm_plots') else {}
+                "class_data":
+                self.player.class_data,
+                "rank":
+                self.player.rank,
+                "active_buffs":
+                self.player.active_buffs,
+                "housing_owned":
+                self.player.housing_owned
+                if hasattr(self.player, 'housing_owned') else [],
+                "comfort_points":
+                self.player.comfort_points
+                if hasattr(self.player, 'comfort_points') else 0,
+                "building_slots":
+                self.player.building_slots
+                if hasattr(self.player, 'building_slots') else {},
+                "farm_plots":
+                self.player.farm_plots
+                if hasattr(self.player, 'farm_plots') else {}
             },
             "current_area": self.current_area,
             "visited_areas": list(self.visited_areas),
@@ -4885,12 +5308,16 @@ self.player = Character(name, character_class, self.classes_data)
         safe_prefix = safe_prefix.replace('/', '_')
 
         # Check if overwrite by UUID is enabled
-        overwrite_by_uuid = self.mod_manager.settings.get("overwrite_save_by_uuid", False)
+        overwrite_by_uuid = self.mod_manager.settings.get(
+            "overwrite_save_by_uuid", False)
         if overwrite_by_uuid and not filename_prefix:
             # Find existing save file with same UUID
             existing_save = None
             for f in os.listdir(saves_dir):
-                if f.endswith('.json') and f"{self.player.uuid[:8]}" in f and not f.startswith('err_save'):
+                if f.endswith(
+                        '.json'
+                ) and f"{self.player.uuid[:8]}" in f and not f.startswith(
+                        'err_save'):
                     existing_save = f
                     break
 
@@ -4972,18 +5399,26 @@ self.player = Character(name, character_class, self.classes_data)
 
                     # NEW: Load companions with backward compatibility
                     self.player.companions = player_data.get("companions", [])
-                    
+
                     # NEW: Load housing data with backward compatibility
-                    self.player.housing_owned = player_data.get("housing_owned", [])
-                    self.player.comfort_points = player_data.get("comfort_points", 0)
-                    self.player.building_slots = player_data.get("building_slots", {})
-                    self.player.farm_plots = player_data.get("farm_plots", {"farm_1": [], "farm_2": []})
+                    self.player.housing_owned = player_data.get(
+                        "housing_owned", [])
+                    self.player.comfort_points = player_data.get(
+                        "comfort_points", 0)
+                    self.player.building_slots = player_data.get(
+                        "building_slots", {})
+                    self.player.farm_plots = player_data.get(
+                        "farm_plots", {
+                            "farm_1": [],
+                            "farm_2": []
+                        })
 
                     # NEW: Enhanced equipment loading with validation
                     self._load_equipment_data(player_data, save_version)
 
                     self.current_area = save_data["current_area"]
-                    self.visited_areas = set(save_data.get("visited_areas", []))
+                    self.visited_areas = set(save_data.get(
+                        "visited_areas", []))
 
                     # Mission system load with backward compatibility
                     self.mission_progress = save_data.get(
@@ -5232,40 +5667,37 @@ self.player = Character(name, character_class, self.classes_data)
 
         area_data = self.areas_data.get(self.current_area, {})
         difficulty = area_data.get('difficulty', 1)
-        
+
         # Define material pools by difficulty tier
         # Tier 1: Basic materials (difficulty 1-2)
         tier1_materials = [
-            "Herb", "Spring Water", "Leather", "Leather Strip", 
-            "Hardwood", "Stone Block", "Coal", "Iron Ore",
-            "Goblin Ear", "Wolf Fang", "Bone Fragment"
+            "Herb", "Spring Water", "Leather", "Leather Strip", "Hardwood",
+            "Stone Block", "Coal", "Iron Ore", "Goblin Ear", "Wolf Fang",
+            "Bone Fragment"
         ]
-        
+
         # Tier 2: Uncommon materials (difficulty 3)
         tier2_materials = [
-            "Mana Herb", "Gold Nugget", "Steel Ingot",
-            "Orc Tooth", "Serpent Tail", "Crystal Shard",
-            "Venom Sac", "Swamp Scale", "Ancient Relic",
-            "Wind Elemental Essence", "Demon Blood"
+            "Mana Herb", "Gold Nugget", "Steel Ingot", "Orc Tooth",
+            "Serpent Tail", "Crystal Shard", "Venom Sac", "Swamp Scale",
+            "Ancient Relic", "Wind Elemental Essence", "Demon Blood"
         ]
-        
+
         # Tier 3: Rare materials (difficulty 4)
         tier3_materials = [
-            "Dark Crystal", "Ice Crystal", "Void Crystal",
-            "Shadow Essence", "Fire Essence", "Ice Essence",
-            "Starlight Shard", "Eternal Essence",
-            "Poison Crystal", "Lightning Crystal"
+            "Dark Crystal", "Ice Crystal", "Void Crystal", "Shadow Essence",
+            "Fire Essence", "Ice Essence", "Starlight Shard",
+            "Eternal Essence", "Poison Crystal", "Lightning Crystal"
         ]
-        
+
         # Tier 4: Legendary materials (difficulty 5-6)
         tier4_materials = [
-            "Dragon Scale", "Dragon Bone", "Phoenix Feather",
-            "Fire Gem", "Soul Fragment", "Demon Heart",
-            "Golem Core", "Storm Elemental Core",
-            "Zephyr's Scale", "Wind Dragon's Heart",
+            "Dragon Scale", "Dragon Bone", "Phoenix Feather", "Fire Gem",
+            "Soul Fragment", "Demon Heart", "Golem Core",
+            "Storm Elemental Core", "Zephyr's Scale", "Wind Dragon's Heart",
             "Eternal Feather", "Dragon Heart", "Void Heart"
         ]
-        
+
         # Select materials based on difficulty
         available_materials = []
         if difficulty <= 2:
@@ -5284,39 +5716,41 @@ self.player = Character(name, character_class, self.classes_data)
             available_materials = tier3_materials + tier4_materials
             if random.random() < 0.2:  # 20% chance for tier 2
                 available_materials.extend(tier2_materials)
-        
+
         # Filter to only materials that actually exist in items_data
-        valid_materials = [m for m in available_materials if m in self.items_data]
-        
+        valid_materials = [
+            m for m in available_materials if m in self.items_data
+        ]
+
         if not valid_materials:
             return
-        
+
         # Gather 1-3 random materials
         num_materials = random.randint(1, 3)
         gathered = {}
-        
+
         for _ in range(num_materials):
             material = random.choice(valid_materials)
             quantity = random.randint(1, 3)
             gathered[material] = gathered.get(material, 0) + quantity
-        
+
         # Add gathered materials to inventory
         found_text = []
         for material, qty in gathered.items():
             for _ in range(qty):
                 self.player.inventory.append(material)
-            
+
             # Get material info for display
             item_data = self.items_data.get(material, {})
             rarity = item_data.get('rarity', 'common')
             color = get_rarity_color(rarity)
             found_text.append(f"{color}{qty}x {material}{Colors.END}")
-        
+
         # Display gathered materials
         print(f"\n{Colors.YELLOW}You found materials:{Colors.END}")
         for text in found_text:
             print(f"  - {text}")
-        
+
         # Update mission progress for collected materials
         for material in gathered.keys():
             self.update_mission_progress('collect', material)
@@ -5332,8 +5766,12 @@ self.player = Character(name, character_class, self.classes_data)
 
         # Check if player is in a dungeon
         if self.current_dungeon:
-            print(f"\n{Colors.YELLOW}You are currently in: {self.current_dungeon['name']}{Colors.END}")
-            print(f"Progress: Room {self.dungeon_progress + 1}/{len(self.dungeon_rooms)}")
+            print(
+                f"\n{Colors.YELLOW}You are currently in: {self.current_dungeon['name']}{Colors.END}"
+            )
+            print(
+                f"Progress: Room {self.dungeon_progress + 1}/{len(self.dungeon_rooms)}"
+            )
 
             choice = ask("Continue dungeon (C) or Exit (E)? ").strip().upper()
             if choice == 'C':
@@ -5361,11 +5799,14 @@ self.player = Character(name, character_class, self.classes_data)
 
             status = f"{Colors.GREEN}Available{Colors.END}" if level_ok else f"{Colors.RED}Level {min_level}+ required{Colors.END}"
 
-            print(f"{i}. {Colors.BOLD}{name}{Colors.END} (Difficulty {difficulty[0]}-{difficulty[1]}, {rooms} rooms)")
+            print(
+                f"{i}. {Colors.BOLD}{name}{Colors.END} (Difficulty {difficulty[0]}-{difficulty[1]}, {rooms} rooms)"
+            )
             print(f"   {desc}")
             print(f"   Status: {status}")
 
-        choice = ask(f"\nChoose dungeon (1-{len(dungeons)}) or press Enter to cancel: ")
+        choice = ask(
+            f"\nChoose dungeon (1-{len(dungeons)}) or press Enter to cancel: ")
         if choice and choice.isdigit():
             idx = int(choice) - 1
             if 0 <= idx < len(dungeons):
@@ -5374,13 +5815,17 @@ self.player = Character(name, character_class, self.classes_data)
                 if self.player.level >= min_level:
                     self.enter_dungeon(dungeon)
                 else:
-                    print(f"You need to be at least level {min_level} to enter this dungeon.")
+                    print(
+                        f"You need to be at least level {min_level} to enter this dungeon."
+                    )
             else:
                 print("Invalid choice.")
 
     def enter_dungeon(self, dungeon: Dict[str, Any]):
         """Enter a dungeon and generate rooms"""
-        print(f"\n{Colors.MAGENTA}{Colors.BOLD}Entering {dungeon['name']}!{Colors.END}")
+        print(
+            f"\n{Colors.MAGENTA}{Colors.BOLD}Entering {dungeon['name']}!{Colors.END}"
+        )
         print(dungeon['description'])
 
         # Set dungeon state
@@ -5424,7 +5869,8 @@ self.player = Character(name, character_class, self.classes_data)
             room_data = {
                 'type': room_type,
                 'room_number': i + 1,
-                'difficulty': dungeon['difficulty'][0] + (i * 0.5)  # Scale difficulty
+                'difficulty':
+                dungeon['difficulty'][0] + (i * 0.5)  # Scale difficulty
             }
 
             self.dungeon_rooms.append(room_data)
@@ -5443,7 +5889,9 @@ self.player = Character(name, character_class, self.classes_data)
         # Get current room
         room = self.dungeon_rooms[self.dungeon_progress]
 
-        print(f"\n{Colors.CYAN}{Colors.BOLD}=== Room {room['room_number']} ==={Colors.END}")
+        print(
+            f"\n{Colors.CYAN}{Colors.BOLD}=== Room {room['room_number']} ==={Colors.END}"
+        )
 
         # Handle room based on type
         room_type = room['type']
@@ -5484,7 +5932,9 @@ self.player = Character(name, character_class, self.classes_data)
 
         # Show hints if available
         if question_data.get('hints'):
-            print(f"\n{Colors.DARK_GRAY}Hints available (type 'hint' to see them){Colors.END}")
+            print(
+                f"\n{Colors.DARK_GRAY}Hints available (type 'hint' to see them){Colors.END}"
+            )
 
         time_limit = question_data.get('time_limit', 60)
         start_time = time.time()
@@ -5524,11 +5974,17 @@ self.player = Character(name, character_class, self.classes_data)
                 print(f"{Colors.RED}Incorrect.{Colors.END}")
 
                 # Show close matches
-                close = difflib.get_close_matches(answer, [correct_answer], n=1, cutoff=0.6)
+                close = difflib.get_close_matches(answer, [correct_answer],
+                                                  n=1,
+                                                  cutoff=0.6)
                 if close:
-                    print(f"{Colors.YELLOW}Close, but not quite right.{Colors.END}")
+                    print(
+                        f"{Colors.YELLOW}Close, but not quite right.{Colors.END}"
+                    )
                 else:
-                    print(f"{Colors.YELLOW}Try again or ask for a hint.{Colors.END}")
+                    print(
+                        f"{Colors.YELLOW}Try again or ask for a hint.{Colors.END}"
+                    )
 
         # Failed - take damage
         damage = question_data.get('failure_damage', 15)
@@ -5549,7 +6005,8 @@ self.player = Character(name, character_class, self.classes_data)
         enemy_count = random.randint(1, max(1, int(difficulty)))
 
         # Get enemies from current area or fallback
-        area_enemies = self.areas_data.get(self.current_area, {}).get('possible_enemies', [])
+        area_enemies = self.areas_data.get(self.current_area,
+                                           {}).get('possible_enemies', [])
         if not area_enemies:
             area_enemies = ['goblin', 'orc', 'skeleton']  # Fallback
 
@@ -5560,9 +6017,12 @@ self.player = Character(name, character_class, self.classes_data)
             if enemy_data:
                 # Scale enemy stats by difficulty
                 scaled_data = enemy_data.copy()
-                scaled_data['hp'] = int(scaled_data['hp'] * (0.8 + difficulty * 0.2))
-                scaled_data['attack'] = int(scaled_data['attack'] * (0.8 + difficulty * 0.2))
-                scaled_data['defense'] = int(scaled_data['defense'] * (0.8 + difficulty * 0.2))
+                scaled_data['hp'] = int(scaled_data['hp'] *
+                                        (0.8 + difficulty * 0.2))
+                scaled_data['attack'] = int(scaled_data['attack'] *
+                                            (0.8 + difficulty * 0.2))
+                scaled_data['defense'] = int(scaled_data['defense'] *
+                                             (0.8 + difficulty * 0.2))
 
                 enemy = Enemy(scaled_data)
                 enemies.append(enemy)
@@ -5577,7 +6037,9 @@ self.player = Character(name, character_class, self.classes_data)
                 break
 
             if len(enemies) > 1:
-                print(f"\n{Colors.RED}Enemy {i+1} of {len(enemies)}:{Colors.END}")
+                print(
+                    f"\n{Colors.RED}Enemy {i+1} of {len(enemies)}:{Colors.END}"
+                )
 
             self.battle(enemy)
 
@@ -5586,6 +6048,7 @@ self.player = Character(name, character_class, self.classes_data)
             self.advance_room()
         else:
             self.dungeon_death()
+
     def handle_chest_room(self, room: Dict[str, Any]):
         """Handle a treasure chest room"""
         if not self.player:
@@ -5604,7 +6067,8 @@ self.player = Character(name, character_class, self.classes_data)
             chest_type = 'small'
 
         chest_templates = self.dungeons_data.get('chest_templates', {})
-        chest_data = chest_templates.get(chest_type, chest_templates.get('small', {}))
+        chest_data = chest_templates.get(chest_type,
+                                         chest_templates.get('small', {}))
 
         print(f"It's a {chest_data.get('name', 'chest')}!")
 
@@ -5612,7 +6076,8 @@ self.player = Character(name, character_class, self.classes_data)
         gold_min, gold_max = chest_data.get('gold_range', [50, 150])
         gold_reward = random.randint(gold_min, gold_max)
 
-        item_count_min, item_count_max = chest_data.get('item_count_range', [1, 2])
+        item_count_min, item_count_max = chest_data.get(
+            'item_count_range', [1, 2])
         item_count = random.randint(item_count_min, item_count_max)
 
         exp_reward = chest_data.get('experience', 100)
@@ -5622,7 +6087,8 @@ self.player = Character(name, character_class, self.classes_data)
         self.player.gain_experience(exp_reward)
 
         print(f"\n{Colors.GOLD}You found {gold_reward} gold!{Colors.END}")
-        print(f"{Colors.MAGENTA}You gained {exp_reward} experience!{Colors.END}")
+        print(
+            f"{Colors.MAGENTA}You gained {exp_reward} experience!{Colors.END}")
 
         # Generate items
         item_rarities = chest_data.get('item_rarity', ['common'])
@@ -5632,8 +6098,12 @@ self.player = Character(name, character_class, self.classes_data)
 
         # Handle guaranteed legendary items
         if guaranteed_legendary:
-            count = guaranteed_legendary if isinstance(guaranteed_legendary, int) else 1
-            legendary_items = [item for item in self.items_data.values() if item.get('rarity') == 'legendary']
+            count = guaranteed_legendary if isinstance(guaranteed_legendary,
+                                                       int) else 1
+            legendary_items = [
+                item for item in self.items_data.values()
+                if item.get('rarity') == 'legendary'
+            ]
             if legendary_items:
                 for _ in range(min(count, len(legendary_items))):
                     item = random.choice(legendary_items)
@@ -5644,7 +6114,10 @@ self.player = Character(name, character_class, self.classes_data)
         # Generate random items
         for _ in range(item_count - len(items_found)):
             rarity = random.choice(item_rarities)
-            possible_items = [item for item in self.items_data.values() if item.get('rarity') == rarity]
+            possible_items = [
+                item for item in self.items_data.values()
+                if item.get('rarity') == rarity
+            ]
 
             if possible_items:
                 item = random.choice(possible_items)
@@ -5680,7 +6153,8 @@ self.player = Character(name, character_class, self.classes_data)
             print(f"{Colors.RED}TRAP TRIGGERED!{Colors.END}")
 
             # Get random trap
-            trap_templates = self.dungeons_data.get('challenge_templates', {}).get('trap', {})
+            trap_templates = self.dungeons_data.get('challenge_templates',
+                                                    {}).get('trap', {})
             trap_types = trap_templates.get('types', [])
 
             if trap_types:
@@ -5693,13 +6167,17 @@ self.player = Character(name, character_class, self.classes_data)
 
                 # Apply difficulty modifier
                 difficulty_mod = trap.get('difficulty', 'normal')
-                mod_data = trap_templates.get('difficulty_modifiers', {}).get(difficulty_mod, {})
-                threshold += mod_data.get('threshold', 0) - 10  # Adjust threshold
+                mod_data = trap_templates.get('difficulty_modifiers',
+                                              {}).get(difficulty_mod, {})
+                threshold += mod_data.get('threshold',
+                                          0) - 10  # Adjust threshold
 
                 print(f"You roll a {roll} (need {threshold}+ to succeed)")
 
                 if roll >= threshold:
-                    print(f"{Colors.GREEN}You successfully avoid the trap!{Colors.END}")
+                    print(
+                        f"{Colors.GREEN}You successfully avoid the trap!{Colors.END}"
+                    )
 
                     # Success reward
                     reward = trap_templates.get('success_reward', {})
@@ -5771,7 +6249,9 @@ self.player = Character(name, character_class, self.classes_data)
         if elapsed > time_limit:
             print(f"{Colors.RED}You took too long to decide!{Colors.END}")
             # Random bad outcome
-            bad_options = [opt for opt in options if not opt.get('correct', False)]
+            bad_options = [
+                opt for opt in options if not opt.get('correct', False)
+            ]
             if bad_options:
                 outcome = random.choice(bad_options)
             else:
@@ -5818,7 +6298,9 @@ self.player = Character(name, character_class, self.classes_data)
                 if self.player:
                     gold_found = random.randint(10, 50)
                     self.player.gold += gold_found
-                    print(f"{Colors.GOLD}You found {gold_found} gold hidden in the room!{Colors.END}")
+                    print(
+                        f"{Colors.GOLD}You found {gold_found} gold hidden in the room!{Colors.END}"
+                    )
             else:
                 # Random encounter
                 print("You hear a noise...")
@@ -5851,7 +6333,9 @@ self.player = Character(name, character_class, self.classes_data)
             # Print start dialogue if available
             start_dialogue = boss.get_dialogue("on_start_battle")
             if start_dialogue:
-                print(f"\n{Colors.CYAN}{boss.name}:{Colors.END} {start_dialogue}")
+                print(
+                    f"\n{Colors.CYAN}{boss.name}:{Colors.END} {start_dialogue}"
+                )
 
             self.battle(boss)
 
@@ -5866,7 +6350,9 @@ self.player = Character(name, character_class, self.classes_data)
                 self.player.gain_experience(exp_reward)
                 self.player.gold += gold_reward
 
-                print(f"Gained {Colors.MAGENTA}{exp_reward} experience{Colors.END}")
+                print(
+                    f"Gained {Colors.MAGENTA}{exp_reward} experience{Colors.END}"
+                )
                 print(f"Gained {Colors.GOLD}{gold_reward} gold{Colors.END}")
 
                 # Boss loot
@@ -5908,8 +6394,10 @@ self.player = Character(name, character_class, self.classes_data)
         end_time = datetime.now()
         duration = end_time - start_time
 
-        print(f"Completion time: {duration.seconds // 60}m {duration.seconds % 60}s")
-        
+        print(
+            f"Completion time: {duration.seconds // 60}m {duration.seconds % 60}s"
+        )
+
         # Update challenge for dungeon completion
         self.update_challenge_progress('dungeon_complete')
 
@@ -5924,14 +6412,19 @@ self.player = Character(name, character_class, self.classes_data)
         if not self.current_dungeon:
             return
 
-        print(f"\n{Colors.YELLOW}Exiting {self.current_dungeon['name']}...{Colors.END}")
+        print(
+            f"\n{Colors.YELLOW}Exiting {self.current_dungeon['name']}...{Colors.END}"
+        )
 
         # Optional: penalty for early exit
         if self.dungeon_progress > 0 and self.player:
-            penalty_gold = min(self.player.gold // 10, 100)  # 10% of gold or 100 max
+            penalty_gold = min(self.player.gold // 10,
+                               100)  # 10% of gold or 100 max
             if penalty_gold > 0:
                 self.player.gold -= penalty_gold
-                print(f"{Colors.RED}Exit penalty: Lost {penalty_gold} gold{Colors.END}")
+                print(
+                    f"{Colors.RED}Exit penalty: Lost {penalty_gold} gold{Colors.END}"
+                )
 
         # Clear dungeon state
         self.current_dungeon = None
@@ -5941,7 +6434,9 @@ self.player = Character(name, character_class, self.classes_data)
 
     def dungeon_death(self):
         """Handle death in dungeon"""
-        print(f"\n{Colors.RED}{Colors.BOLD}You have fallen in the dungeon!{Colors.END}")
+        print(
+            f"\n{Colors.RED}{Colors.BOLD}You have fallen in the dungeon!{Colors.END}"
+        )
 
         if self.player:
             # Death penalty
@@ -5949,7 +6444,8 @@ self.player = Character(name, character_class, self.classes_data)
             self.player.mp = self.player.max_mp // 2
 
             # Lose some gold
-            gold_loss = min(self.player.gold // 5, 200)  # 20% of gold or 200 max
+            gold_loss = min(self.player.gold // 5,
+                            200)  # 20% of gold or 200 max
             self.player.gold -= gold_loss
             print(f"You lost {gold_loss} gold to the dungeon spirits.")
 
@@ -5973,8 +6469,12 @@ self.player = Character(name, character_class, self.classes_data)
             print("No crafting recipes available.")
             return
 
-        print(f"\n{Colors.MAGENTA}{Colors.BOLD}=== ALCHEMY WORKSHOP ==={Colors.END}")
-        print("Welcome to the Alchemy Workshop! Here you can craft potions, elixirs, and items.")
+        print(
+            f"\n{Colors.MAGENTA}{Colors.BOLD}=== ALCHEMY WORKSHOP ==={Colors.END}"
+        )
+        print(
+            "Welcome to the Alchemy Workshop! Here you can craft potions, elixirs, and items."
+        )
         print(f"\nYour gold: {Colors.GOLD}{self.player.gold}{Colors.END}")
 
         # Display available materials from inventory
@@ -5983,7 +6483,9 @@ self.player = Character(name, character_class, self.classes_data)
         while True:
             clear_screen()
             print(f"\n{Colors.BOLD}=== ALCHEMY WORKSHOP ==={Colors.END}")
-            print("Categories: [P]otions, [E]lixirs, [E]ntchantments, [U]tility, [A]ll")
+            print(
+                "Categories: [P]otions, [E]lixirs, [E]ntchantments, [U]tility, [A]ll"
+            )
             print("[C]raft Item, [M]aterials, [B]ack to Menu")
 
             choice = ask("\nChoose an option: ").strip().upper()
@@ -6034,7 +6536,9 @@ self.player = Character(name, character_class, self.classes_data)
 
         if not material_counts:
             print("No crafting materials in your inventory.")
-            print("Materials can be found as drops from enemies or purchased from shops.")
+            print(
+                "Materials can be found as drops from enemies or purchased from shops."
+            )
             return
 
         print(f"{'Material':<25} {'Quantity':<10}")
@@ -6048,10 +6552,8 @@ self.player = Character(name, character_class, self.classes_data)
             return
 
         recipes = self.crafting_data.get('recipes', {})
-        category_recipes = [
-            (rid, rdata) for rid, rdata in recipes.items()
-            if rdata.get('category') == category
-        ]
+        category_recipes = [(rid, rdata) for rid, rdata in recipes.items()
+                            if rdata.get('category') == category]
 
         if not category_recipes:
             print(f"\nNo recipes found in category: {category}")
@@ -6090,7 +6592,8 @@ self.player = Character(name, character_class, self.classes_data)
                 rarity = rdata.get('rarity', 'common')
                 rarity_color = get_rarity_color(rarity)
                 print(
-                    f"{start + i}. {rarity_color}{name}{Colors.END} ({category})")
+                    f"{start + i}. {rarity_color}{name}{Colors.END} ({category})"
+                )
 
             total_pages = (len(recipe_list) + page_size - 1) // page_size
             print(f"\nPage {current_page + 1}/{total_pages}")
@@ -6135,7 +6638,9 @@ self.player = Character(name, character_class, self.classes_data)
             rarity_color = get_rarity_color(rarity)
             print(f"{i}. {rarity_color}{name}{Colors.END}")
 
-        choice = ask(f"\nChoose recipe (1-{len(recipe_names)}) or press Enter to cancel: ").strip()
+        choice = ask(
+            f"\nChoose recipe (1-{len(recipe_names)}) or press Enter to cancel: "
+        ).strip()
 
         if not choice:
             return
@@ -6155,7 +6660,9 @@ self.player = Character(name, character_class, self.classes_data)
         # Check skill requirement
         skill_req = recipe.get('skill_requirement', 1)
         if self.player.level < skill_req:
-            print(f"\n{Colors.RED}You need at least level {skill_req} to craft this item.{Colors.END}")
+            print(
+                f"\n{Colors.RED}You need at least level {skill_req} to craft this item.{Colors.END}"
+            )
             return
 
         # Get materials required
@@ -6166,7 +6673,8 @@ self.player = Character(name, character_class, self.classes_data)
         for material, quantity in materials_needed.items():
             in_inventory = self.player.inventory.count(material)
             if in_inventory < quantity:
-                missing_materials.append(f"{material} (need {quantity}, have {in_inventory})")
+                missing_materials.append(
+                    f"{material} (need {quantity}, have {in_inventory})")
 
         if missing_materials:
             print(f"\n{Colors.RED}Missing materials:{Colors.END}")
@@ -6179,7 +6687,9 @@ self.player = Character(name, character_class, self.classes_data)
         output_items = recipe.get('output', {})
         print(f"\n{Colors.BOLD}=== CRAFT CONFIRMATION ==={Colors.END}")
         print(f"Recipe: {recipe.get('name')}")
-        print(f"Output: {', '.join(f'{qty}x {item}' for item, qty in output_items.items())}")
+        print(
+            f"Output: {', '.join(f'{qty}x {item}' for item, qty in output_items.items())}"
+        )
         print("\nMaterials to consume:")
         for material, quantity in materials_needed.items():
             print(f"  - {quantity}x {material}")
@@ -6200,7 +6710,9 @@ self.player = Character(name, character_class, self.classes_data)
                 self.player.inventory.append(item)
                 self.update_mission_progress('collect', item)
 
-        print(f"\n{Colors.GREEN}Successfully crafted {recipe.get('name')}!{Colors.END}")
+        print(
+            f"\n{Colors.GREEN}Successfully crafted {recipe.get('name')}!{Colors.END}"
+        )
         for item, quantity in output_items.items():
             print(f"  Received: {quantity}x {item}")
 
@@ -6211,7 +6723,8 @@ self.player = Character(name, character_class, self.classes_data)
             return
 
         shop_name = shop_data.get("name", "Shop")
-        welcome_msg = shop_data.get("welcome_message", f"Welcome to {shop_name}!")
+        welcome_msg = shop_data.get("welcome_message",
+                                    f"Welcome to {shop_name}!")
         items = shop_data.get("items", [])
         max_buy = shop_data.get("max_buy", 99)
 
@@ -6261,7 +6774,9 @@ self.player = Character(name, character_class, self.classes_data)
                 elif owned_count > 0:
                     status = f" {Colors.YELLOW}(Owned: {owned_count}){Colors.END}"
 
-                print(f"{start + i}. {rarity_color}{item['name']}{Colors.END} - {Colors.GOLD}{item['price']}g{Colors.END}{status}")
+                print(
+                    f"{start + i}. {rarity_color}{item['name']}{Colors.END} - {Colors.GOLD}{item['price']}g{Colors.END}{status}"
+                )
                 print(f"   {item['description']}")
 
             total_pages = (len(item_details) + page_size - 1) // page_size
@@ -6289,21 +6804,26 @@ self.player = Character(name, character_class, self.classes_data)
                     owned_count = self.player.inventory.count(item['id'])
 
                     if owned_count >= max_buy:
-                        print(f"{Colors.RED}You already own the maximum amount ({max_buy}) of this item.{Colors.END}")
+                        print(
+                            f"{Colors.RED}You already own the maximum amount ({max_buy}) of this item.{Colors.END}"
+                        )
                         continue
 
                     if self.player.gold >= item['price']:
                         self.player.gold -= item['price']
                         self.player.inventory.append(item['id'])
-                        print(f"{Colors.GREEN}Purchased {item['name']} for {item['price']} gold!{Colors.END}")
+                        print(
+                            f"{Colors.GREEN}Purchased {item['name']} for {item['price']} gold!{Colors.END}"
+                        )
                         self.update_mission_progress('collect', item['id'])
                     else:
-                        print(f"{Colors.RED}Not enough gold! Need {item['price']}, have {self.player.gold}.{Colors.END}")
+                        print(
+                            f"{Colors.RED}Not enough gold! Need {item['price']}, have {self.player.gold}.{Colors.END}"
+                        )
                 else:
                     print("Invalid item number.")
             else:
                 print("Invalid choice.")
-
         """Build structures - alias for build_home for now"""
         self.build_home()
 
@@ -6327,6 +6847,7 @@ self.player = Character(name, character_class, self.classes_data)
 def main():
     """Main entry point"""
     game = Game()
+    game.save_on_error = game.save_on_error  # Ensure it's reachable
 
     # Setup global handlers for Ctrl+C and uncaught exceptions so we can save before exit
     try:
