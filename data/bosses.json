@@ -870,5 +870,403 @@
       "Desert Crystal",
       "Burrower's Fang"
     ]
+  },
+  "goblin_king": {
+    "name": "Goblin King",
+    "hp": 140,
+    "attack": 20,
+    "defense": 8,
+    "speed": 14,
+    "description": "The greedy and cunning ruler of the goblin cave, wielding a dagger made from stolen treasures.",
+    "special_abilities": [
+      {
+        "name": "Backstab",
+        "description": "A sneaky attack from behind dealing critical damage",
+        "damage": 35,
+        "critical_chance": 0.4,
+        "mp_cost": 0,
+        "cooldown": 3
+      },
+      {
+        "name": "Summon Minions",
+        "description": "Calls forth goblin minions to aid in battle",
+        "effect": "summon",
+        "summon_count": 2,
+        "summon_type": "goblin",
+        "mp_cost": 20,
+        "cooldown": 5
+      },
+      {
+        "name": "Gold Toss",
+        "description": "Throws stolen gold coins to distract and damage enemies",
+        "damage": 15,
+        "hit_count": 3,
+        "mp_cost": 10,
+        "cooldown": 2
+      }
+    ],
+    "phases": [
+      {
+        "hp_threshold": 0.5,
+        "description": "The Goblin King becomes desperate and calls for help",
+        "attack_multiplier": 1.1,
+        "special_abilities_unlocked": ["Summon Minions"]
+      },
+      {
+        "hp_threshold": 0.25,
+        "description": "Cornered and furious, the King fights with all his cunning",
+        "attack_multiplier": 1.3,
+        "special_abilities_unlocked": ["Backstab", "Gold Toss"]
+      }
+    ],
+    "experience_reward": 250,
+    "gold_reward": 120,
+    "unique_loot": [
+      "Goblin King's Dagger",
+      "Stolen Gold Necklace",
+      "Crown of Greed"
+    ],
+    "unlock_conditions": {
+      "level": 4,
+      "missions_required": ["goblin_hunt"]
+    }
+  },
+  "fire_elemental_lord": {
+    "name": "Fire Elemental Lord Ignaros",
+    "hp": 260,
+    "attack": 32,
+    "defense": 18,
+    "speed": 16,
+    "description": "A towering being of pure flame that rules over the Fire Temple. Its presence causes the very air to burn.",
+    "special_abilities": [
+      {
+        "name": "Inferno Wave",
+        "description": "Unleashes a wave of fire that burns all enemies",
+        "damage": 40,
+        "burn_damage": 8,
+        "duration": 4,
+        "mp_cost": 25,
+        "cooldown": 3
+      },
+      {
+        "name": "Magma Armor",
+        "description": "Covers itself in molten rock, increasing defense and damaging attackers",
+        "defense_bonus": 12,
+        "damage_reflection": 0.2,
+        "duration": 5,
+        "mp_cost": 30,
+        "cooldown": 6
+      },
+      {
+        "name": "Eruption",
+        "description": "Causes the ground to erupt with volcanic force",
+        "damage": 50,
+        "stun_chance": 0.3,
+        "mp_cost": 35,
+        "cooldown": 5
+      },
+      {
+        "name": "Flame Dash",
+        "description": "Moves with incredible speed through flames",
+        "speed_bonus": 10,
+        "duration": 3,
+        "mp_cost": 20,
+        "cooldown": 4
+      }
+    ],
+    "phases": [
+      {
+        "hp_threshold": 0.7,
+        "description": "Ignaros tests intruders with controlled flames",
+        "attack_multiplier": 1.0,
+        "special_abilities_unlocked": ["Inferno Wave"]
+      },
+      {
+        "hp_threshold": 0.4,
+        "description": "The Lord's flames intensify with anger",
+        "attack_multiplier": 1.3,
+        "special_abilities_unlocked": ["Magma Armor", "Eruption"]
+      },
+      {
+        "hp_threshold": 0.2,
+        "description": "Ignaros becomes a being of pure destructive flame",
+        "attack_multiplier": 1.5,
+        "special_abilities_unlocked": ["Flame Dash"]
+      }
+    ],
+    "experience_reward": 500,
+    "gold_reward": 280,
+    "unique_loot": [
+      "Ember Core",
+      "Flame Lord's Crown",
+      "Magma Stone",
+      "Ignaros's Heart"
+    ],
+    "unlock_conditions": {
+      "level": 7,
+      "missions_required": ["fire_dragon_defeat", "crystal_caves_clear"]
+    }
+  },
+  "ice_giant_king": {
+    "name": "Ice Giant King Thrym",
+    "hp": 280,
+    "attack": 30,
+    "defense": 22,
+    "speed": 10,
+    "description": "The colossal ruler of the frozen peaks, wielding a massive club of eternal ice. His breath freezes the very soul.",
+    "special_abilities": [
+      {
+        "name": "Frost Slam",
+        "description": "A devastating blow that freezes the ground and enemies",
+        "damage": 45,
+        "freeze_chance": 0.4,
+        "mp_cost": 25,
+        "cooldown": 3
+      },
+      {
+        "name": "Blizzard Breath",
+        "description": "Exhales a freezing storm that reduces enemy speed",
+        "damage": 25,
+        "speed_reduction": 8,
+        "duration": 4,
+        "mp_cost": 20,
+        "cooldown": 4
+      },
+      {
+        "name": "Ice Armor",
+        "description": "Encases itself in thick ice, greatly increasing defense",
+        "defense_bonus": 15,
+        "duration": 5,
+        "mp_cost": 30,
+        "cooldown": 6
+      },
+      {
+        "name": "Avalanche Call",
+        "description": "Triggers an avalanche that buries enemies",
+        "damage": 55,
+        "stun_chance": 0.5,
+        "mp_cost": 40,
+        "cooldown": 7
+      }
+    ],
+    "phases": [
+      {
+        "hp_threshold": 0.6,
+        "description": "Thrym fights with the cold fury of his kingdom",
+        "attack_multiplier": 1.0,
+        "special_abilities_unlocked": ["Frost Slam"]
+      },
+      {
+        "hp_threshold": 0.35,
+        "description": "The King calls upon the full power of winter",
+        "attack_multiplier": 1.25,
+        "special_abilities_unlocked": ["Blizzard Breath", "Ice Armor"]
+      },
+      {
+        "hp_threshold": 0.15,
+        "description": "Thrym unleashes the eternal winter's wrath",
+        "attack_multiplier": 1.5,
+        "special_abilities_unlocked": ["Avalanche Call"]
+      }
+    ],
+    "experience_reward": 550,
+    "gold_reward": 320,
+    "unique_loot": [
+      "Frostbite",
+      "Glacial Shield",
+      "Thrym's Crown",
+      "Heart of Winter"
+    ],
+    "unlock_conditions": {
+      "level": 7,
+      "missions_required": ["ice_queen_defeat", "frozen_peaks_explore"]
+    }
+  },
+  "celestial_guardian": {
+    "name": "Celestial Guardian Auriel",
+    "hp": 380,
+    "attack": 38,
+    "defense": 28,
+    "speed": 22,
+    "description": "A divine being of pure light that guards the Celestial Tower. Its presence radiates holy power that burns the unworthy.",
+    "special_abilities": [
+      {
+        "name": "Holy Smite",
+        "description": "Strikes enemies with divine light, dealing massive damage",
+        "damage": 50,
+        "mp_cost": 25,
+        "cooldown": 3
+      },
+      {
+        "name": "Divine Shield",
+        "description": "Creates an impenetrable barrier of holy light",
+        "defense_bonus": 20,
+        "damage_reduction": 0.3,
+        "duration": 4,
+        "mp_cost": 35,
+        "cooldown": 6
+      },
+      {
+        "name": "Light of Judgment",
+        "description": "Calls down beams of purifying light from above",
+        "damage": 35,
+        "hit_count": 3,
+        "mp_cost": 30,
+        "cooldown": 4
+      },
+      {
+        "name": "Celestial Regeneration",
+        "description": "Heals using divine energy",
+        "heal_amount": 60,
+        "mp_cost": 40,
+        "cooldown": 5
+      },
+      {
+        "name": "Wings of Fury",
+        "description": "Unleashes a devastating attack with celestial wings",
+        "damage": 60,
+        "speed_bonus": 8,
+        "duration": 3,
+        "mp_cost": 45,
+        "cooldown": 7
+      }
+    ],
+    "phases": [
+      {
+        "hp_threshold": 0.75,
+        "description": "Auriel tests the worthiness of challengers",
+        "attack_multiplier": 1.0,
+        "special_abilities_unlocked": ["Holy Smite"]
+      },
+      {
+        "hp_threshold": 0.5,
+        "description": "The Guardian reveals more divine power",
+        "attack_multiplier": 1.2,
+        "special_abilities_unlocked": ["Divine Shield", "Light of Judgment"]
+      },
+      {
+        "hp_threshold": 0.25,
+        "description": "Auriel fights with the full fury of the heavens",
+        "attack_multiplier": 1.4,
+        "special_abilities_unlocked": ["Celestial Regeneration", "Wings of Fury"]
+      }
+    ],
+    "experience_reward": 650,
+    "gold_reward": 450,
+    "unique_loot": [
+      "Crown of the Dawn",
+      "Divine Sword",
+      "Auriel's Wings",
+      "Celestial Halo",
+      "Holy Relic"
+    ],
+    "unlock_conditions": {
+      "level": 9,
+      "missions_required": ["void_tyrant_defeat", "dragon_slayer_master"]
+    }
+  },
+  "supreme_being": {
+    "name": "Supreme Being Eternus",
+    "hp": 600,
+    "attack": 55,
+    "defense": 40,
+    "speed": 30,
+    "description": "The ultimate entity that exists beyond time and space. Only the most legendary heroes may challenge this being of pure cosmic power.",
+    "special_abilities": [
+      {
+        "name": "Cosmic Blast",
+        "description": "Unleashes the raw power of the universe",
+        "damage": 70,
+        "mp_cost": 40,
+        "cooldown": 3
+      },
+      {
+        "name": "Time Stop",
+        "description": "Freezes time itself, preventing enemy actions",
+        "effect": "stun_all",
+        "duration": 2,
+        "mp_cost": 50,
+        "cooldown": 8
+      },
+      {
+        "name": "Reality Warp",
+        "description": "Bends reality to weaken enemies and strengthen itself",
+        "attack_bonus": 15,
+        "defense_bonus": 15,
+        "enemy_attack_reduction": 10,
+        "duration": 5,
+        "mp_cost": 45,
+        "cooldown": 6
+      },
+      {
+        "name": "Eternal Flames",
+        "description": "Summons flames that burn for eternity",
+        "damage": 45,
+        "burn_damage": 12,
+        "duration": 6,
+        "mp_cost": 35,
+        "cooldown": 4
+      },
+      {
+        "name": "Supreme Judgment",
+        "description": "Delivers the final judgment upon all enemies",
+        "damage": 100,
+        "mp_cost": 60,
+        "cooldown": 10
+      },
+      {
+        "name": "Cosmic Regeneration",
+        "description": "Heals by drawing power from the cosmos itself",
+        "heal_amount": 100,
+        "mp_cost": 50,
+        "cooldown": 7
+      }
+    ],
+    "phases": [
+      {
+        "hp_threshold": 0.8,
+        "description": "Eternus observes the challenger with minimal effort",
+        "attack_multiplier": 1.0,
+        "special_abilities_unlocked": ["Cosmic Blast"]
+      },
+      {
+        "hp_threshold": 0.6,
+        "description": "The Being begins to take the battle seriously",
+        "attack_multiplier": 1.2,
+        "special_abilities_unlocked": ["Time Stop", "Reality Warp"]
+      },
+      {
+        "hp_threshold": 0.4,
+        "description": "Eternus unleashes more cosmic power",
+        "attack_multiplier": 1.4,
+        "special_abilities_unlocked": ["Eternal Flames"]
+      },
+      {
+        "hp_threshold": 0.2,
+        "description": "The Supreme Being fights at full power",
+        "attack_multiplier": 1.6,
+        "special_abilities_unlocked": ["Supreme Judgment", "Cosmic Regeneration"]
+      },
+      {
+        "hp_threshold": 0.1,
+        "description": "Eternus reveals its true, ultimate form",
+        "attack_multiplier": 2.0,
+        "special_abilities_unlocked": ["Cosmic Blast", "Time Stop", "Reality Warp", "Eternal Flames", "Supreme Judgment"]
+      }
+    ],
+    "experience_reward": 1000,
+    "gold_reward": 800,
+    "unique_loot": [
+      "Supreme Artifact",
+      "Eternal Essence",
+      "Legendary Crown",
+      "Cosmic Core",
+      "Timeless Shard",
+      "Infinity Gem"
+    ],
+    "unlock_conditions": {
+      "level": 10,
+      "missions_required": ["celestial_guardian_defeat", "all_dungeons_clear", "legend_achieved"]
+    }
   }
 }

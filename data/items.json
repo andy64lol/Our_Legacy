@@ -2488,13 +2488,7 @@
          "class": "Paladin"
       }
    },
-   "Holy Relic":{
-      "type": "material",
-      "description": "A sacred relic crackling with divine energy",
-      "price": 100,
-      "rarity": "rare"
-   },
-   "Divine Essence":{
+      "Divine Essence":{
       "type": "material",
       "description": "Pure essence of divine power extracted from holy artifacts",
       "price": 150,
@@ -2627,5 +2621,189 @@
       "description": "A crystallized focal point of divine power used in powerful rituals",
       "price": 120,
       "rarity": "rare"
+   },
+   "Goblin King's Dagger":{
+      "type": "weapon",
+      "description": "A crude but deadly dagger wielded by the Goblin King, made from stolen treasures",
+      "attack_bonus": 85,
+      "speed_bonus": 5,
+      "price": 160,
+      "rarity": "rare",
+      "requirements":{
+         "level": 4,
+         "class": "Rogue"
+      }
+   },
+   "Stolen Gold Necklace":{
+      "type": "accessory",
+      "description": "A necklace of gold coins stolen from countless victims, pulsing with greedy energy",
+      "attack_bonus": 3,
+      "defense_bonus": 2,
+      "hp_bonus": 20,
+      "price": 140,
+      "rarity": "uncommon",
+      "requirements":{
+         "level": 3
+      }
+   },
+   "Divine Sword":{
+      "type": "weapon",
+      "description": "A blade blessed by the gods themselves, radiating holy power",
+      "attack_bonus": 185,
+      "magic_weapon": true,
+      "holy_damage": 20,
+      "price": 450,
+      "rarity": "legendary",
+      "requirements":{
+         "level": 8,
+         "class": "Warrior"
+      }
+   },
+   "Supreme Artifact":{
+      "type": "accessory",
+      "description": "An artifact of unimaginable power, said to contain a fragment of creation itself",
+      "attack_bonus": 15,
+      "defense_bonus": 15,
+      "mp_bonus": 50,
+      "hp_bonus": 100,
+      "price": 1000,
+      "rarity": "legendary",
+      "requirements":{
+         "level": 10
+      }
+   },
+   "Legendary Crown":{
+      "type": "accessory",
+      "description": "A crown worn only by those who have proven themselves true legends",
+      "attack_bonus": 10,
+      "defense_bonus": 10,
+      "speed_bonus": 10,
+      "mp_bonus": 30,
+      "hp_bonus": 50,
+      "price": 800,
+      "rarity": "legendary",
+      "requirements":{
+         "level": 10
+      }
+   },
+   "Crown of Greed":{
+      "type": "accessory",
+      "description": "A crown that amplifies the wearer's desire for wealth and power",
+      "attack_bonus": 5,
+      "gold_bonus": 0.25,
+      "price": 180,
+      "rarity": "rare",
+      "requirements":{
+         "level": 4
+      }
+   },
+   "Ember Core":{
+      "type": "material",
+      "description": "The smoldering heart of a fire elemental lord",
+      "price": 150,
+      "rarity": "legendary"
+   },
+   "Flame Lord's Crown":{
+      "type": "accessory",
+      "description": "A crown forged from eternal flames, granting mastery over fire",
+      "attack_bonus": 8,
+      "fire_damage_bonus": 20,
+      "price": 350,
+      "rarity": "legendary",
+      "requirements":{
+         "level": 7
+      }
+   },
+   "Magma Stone":{
+      "type": "material",
+      "description": "A stone that burns with eternal heat, used in fire enchantments",
+      "price": 120,
+      "rarity": "rare"
+   },
+   "Ignaros's Heart":{
+      "type": "material",
+      "description": "The still-burning heart of the Fire Elemental Lord Ignaros",
+      "price": 200,
+      "rarity": "legendary"
+   },
+   "Glacial Shield":{
+      "type": "offhand",
+      "description": "A shield of eternal ice that never melts, freezing all who touch it",
+      "defense_bonus": 55,
+      "price": 320,
+      "rarity": "legendary",
+      "requirements":{
+         "level": 7
+      }
+   },
+   "Thrym's Crown":{
+      "type": "accessory",
+      "description": "The frozen crown of the Ice Giant King, radiating eternal winter",
+      "defense_bonus": 10,
+      "mp_bonus": 25,
+      "price": 380,
+      "rarity": "legendary",
+      "requirements":{
+         "level": 7
+      }
+   },
+   "Heart of Winter":{
+      "type": "material",
+      "description": "A crystal containing the essence of eternal winter",
+      "price": 180,
+      "rarity": "legendary"
+   },
+   "Auriel's Wings":{
+      "type": "accessory",
+      "description": "Celestial wings that grant the wearer divine speed and grace",
+      "speed_bonus": 15,
+      "evasion": 15,
+      "price": 500,
+      "rarity": "legendary",
+      "requirements":{
+         "level": 9
+      }
+   },
+   "Celestial Halo":{
+      "type": "accessory",
+      "description": "A halo of pure light that blesses the wearer with divine protection",
+      "defense_bonus": 12,
+      "mp_bonus": 40,
+      "hp_bonus": 30,
+      "price": 480,
+      "rarity": "legendary",
+      "requirements":{
+         "level": 9
+      }
+   },
+   "Holy Relic":{
+      "type": "material",
+      "description": "A sacred relic from the celestial realm, humming with divine power",
+      "price": 250,
+      "rarity": "legendary"
+   },
+   "Cosmic Core":{
+      "type": "material",
+      "description": "The condensed essence of cosmic power, pulsing with universal energy",
+      "price": 500,
+      "rarity": "legendary"
+   },
+   "Timeless Shard":{
+      "type": "material",
+      "description": "A fragment of crystal that exists outside of time itself",
+      "price": 450,
+      "rarity": "legendary"
+   },
+   "Infinity Gem":{
+      "type": "offhand",
+      "description": "A gem containing infinite possibilities, granting unimaginable power",
+      "mp_bonus": 80,
+      "attack_bonus": 10,
+      "price": 900,
+      "rarity": "legendary",
+      "requirements":{
+         "level": 10,
+         "class": "Mage"
+      }
    }
 }

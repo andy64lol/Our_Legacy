@@ -5780,13 +5780,25 @@ class Game:
                 self.exit_dungeon()
             return
 
-        # Show available dungeons
-        dungeons = self.dungeons_data.get('dungeons', [])
-        if not dungeons:
+        # Show available dungeons (filter by allowed_areas)
+        all_dungeons = self.dungeons_data.get('dungeons', [])
+        if not all_dungeons:
             print("No dungeons available.")
             return
 
-        print(f"\n{Colors.CYAN}Available Dungeons:{Colors.END}")
+        # Filter dungeons by allowed_areas for current location
+        dungeons = []
+        for dungeon in all_dungeons:
+            allowed_areas = dungeon.get('allowed_areas', [])
+            if not allowed_areas or self.current_area in allowed_areas:
+                dungeons.append(dungeon)
+
+        if not dungeons:
+            print(f"\n{Colors.YELLOW}No dungeons available in {self.current_area}.{Colors.END}")
+            print("Travel to other areas to find dungeons.")
+            return
+
+        print(f"\n{Colors.CYAN}Available Dungeons in {self.current_area}:{Colors.END}")
         for i, dungeon in enumerate(dungeons, 1):
             name = dungeon['name']
             difficulty = dungeon['difficulty']
@@ -5814,6 +5826,7 @@ class Game:
                 min_level = dungeon['difficulty'][0] * 5
                 if self.player.level >= min_level:
                     self.enter_dungeon(dungeon)
+                    clear_screen()
                 else:
                     print(
                         f"You need to be at least level {min_level} to enter this dungeon."
@@ -5846,9 +5859,24 @@ class Game:
     def generate_dungeon_rooms(self, dungeon: Dict[str, Any]):
         """Generate dungeon rooms based on room weights"""
         room_weights = dungeon.get('room_weights', {})
-        total_rooms = dungeon['rooms']
+        total_rooms = dungeon.get('rooms', 5)
 
         self.dungeon_rooms = []
+
+        # Validate room_weights
+        if not room_weights or sum(room_weights.values()) == 0:
+            # Default room weights if none provided or sum is zero
+            room_weights = {
+                'battle': 40,
+                'question': 20,
+                'chest': 15,
+                'empty': 15,
+                'trap_chest': 5,
+                'multi_choice': 5
+            }
+
+        if total_rooms <= 0:
+            total_rooms = 5
 
         # Create weighted room list
         room_types = []
@@ -5870,7 +5898,7 @@ class Game:
                 'type': room_type,
                 'room_number': i + 1,
                 'difficulty':
-                dungeon['difficulty'][0] + (i * 0.5)  # Scale difficulty
+                dungeon.get('difficulty', [1, 3])[0] + (i * 0.5)  # Scale difficulty
             }
 
             self.dungeon_rooms.append(room_data)
@@ -5881,34 +5909,39 @@ class Game:
             print("No active dungeon.")
             return
 
-        # Check if dungeon is complete
-        if self.dungeon_progress >= len(self.dungeon_rooms):
+        # Loop through rooms until dungeon is complete
+        while self.current_dungeon and self.dungeon_progress < len(self.dungeon_rooms):
+            # Get current room
+            room = self.dungeon_rooms[self.dungeon_progress]
+
+            print(
+                f"\n{Colors.CYAN}{Colors.BOLD}=== Room {room['room_number']} ==={Colors.END}"
+            )
+
+            # Handle room based on type
+            room_type = room['type']
+            if room_type == 'question':
+                self.handle_question_room(room)
+            elif room_type == 'battle':
+                self.handle_battle_room(room)
+            elif room_type == 'chest':
+                self.handle_chest_room(room)
+            elif room_type == 'trap_chest':
+                self.handle_trap_chest_room(room)
+            elif room_type == 'multi_choice':
+                self.handle_multi_choice_room(room)
+            elif room_type == 'empty':
+                self.handle_empty_room(room)
+            elif room_type == 'boss':
+                self.handle_boss_room(room)
+            
+            # Check if player died during room
+            if not self.player or not self.player.is_alive():
+                return
+        
+        # Dungeon complete
+        if self.current_dungeon and self.dungeon_progress >= len(self.dungeon_rooms):
             self.complete_dungeon()
-            return
-
-        # Get current room
-        room = self.dungeon_rooms[self.dungeon_progress]
-
-        print(
-            f"\n{Colors.CYAN}{Colors.BOLD}=== Room {room['room_number']} ==={Colors.END}"
-        )
-
-        # Handle room based on type
-        room_type = room['type']
-        if room_type == 'question':
-            self.handle_question_room(room)
-        elif room_type == 'battle':
-            self.handle_battle_room(room)
-        elif room_type == 'chest':
-            self.handle_chest_room(room)
-        elif room_type == 'trap_chest':
-            self.handle_trap_chest_room(room)
-        elif room_type == 'multi_choice':
-            self.handle_multi_choice_room(room)
-        elif room_type == 'empty':
-            self.handle_empty_room(room)
-        elif room_type == 'boss':
-            self.handle_boss_room(room)
 
     def handle_question_room(self, room: Dict[str, Any]):
         """Handle a question/riddle room"""
@@ -5920,7 +5953,7 @@ class Game:
         challenge_templates = self.dungeons_data.get('challenge_templates', {})
         question_template = challenge_templates.get('question', {})
 
-        if not question_template.get('types'):
+        if not question_template or not question_template.get('types'):
             print("No questions available. You proceed safely.")
             self.advance_room()
             return
@@ -5938,9 +5971,16 @@ class Game:
 
         time_limit = question_data.get('time_limit', 60)
         start_time = time.time()
+        answered_correctly = False
+        attempts = 0
+        max_attempts = question_data.get('max_attempts', 3)
 
-        while True:
-            answer = ask("Your answer: ").strip().lower()
+        while attempts < max_attempts:
+            answer = ask(f"Your answer ({max_attempts - attempts} tries left, or type 'leave'): ").strip().lower()
+
+            if answer == 'leave':
+                print("You decide to give up on the riddle.")
+                break
 
             if answer == 'hint' and question_data.get('hints'):
                 print(f"\n{Colors.CYAN}Hints:{Colors.END}")
@@ -5955,22 +5995,22 @@ class Game:
                 break
 
             # Check answer
-            correct_answer = question_data['answer'].lower()
+            correct_answer = question_data.get('answer', '').lower()
             if answer == correct_answer:
                 print(f"{Colors.GREEN}Correct!{Colors.END}")
+                answered_correctly = True
 
                 # Give rewards
                 reward = question_data.get('success_reward', {})
-                if reward.get('gold'):
+                if reward.get('gold') and self.player:
                     self.player.gold += reward['gold']
                     print(f"You gained {reward['gold']} gold!")
-                if reward.get('experience'):
+                if reward.get('experience') and self.player:
                     self.player.gain_experience(reward['experience'])
                     print(f"You gained {reward['experience']} experience!")
-
-                self.advance_room()
-                return
+                break
             else:
+                attempts += 1
                 print(f"{Colors.RED}Incorrect.{Colors.END}")
 
                 # Show close matches
@@ -5986,18 +6026,35 @@ class Game:
                         f"{Colors.YELLOW}Try again or ask for a hint.{Colors.END}"
                     )
 
-        # Failed - take damage
-        damage = question_data.get('failure_damage', 15)
-        actual_damage = self.player.take_damage(damage)
-        print(f"You took {actual_damage} damage from the failed riddle!")
-
-        if self.player.is_alive():
+        # Handle outcome
+        if answered_correctly:
             self.advance_room()
         else:
-            self.dungeon_death()
+            # Failed - take damage
+            damage = question_data.get('failure_damage', 15)
+            if self.player:
+                actual_damage = self.player.take_damage(damage)
+                print(f"You took {actual_damage} damage from the failed riddle!")
+
+                if self.player.is_alive():
+                    self.advance_room()
+                else:
+                    self.dungeon_death()
+            else:
+                self.advance_room()
 
     def handle_battle_room(self, room: Dict[str, Any]):
         """Handle a battle room with enemies"""
+        if not self.player:
+            print("No player available for battle.")
+            self.advance_room()
+            return
+
+        if not hasattr(self, 'enemies_data') or not self.enemies_data or not hasattr(self, 'areas_data') or not self.areas_data:
+            print("Game data missing. You proceed safely.")
+            self.advance_room()
+            return
+
         print("You hear the sounds of combat approaching...")
 
         # Generate enemies based on difficulty
@@ -6017,9 +6074,11 @@ class Game:
 
         enemies = []
         for _ in range(enemy_count):
+            if not area_enemies:
+                break
             enemy_name = random.choice(area_enemies)
             enemy_data = self.enemies_data.get(enemy_name)
-            if enemy_data:
+            if enemy_data and all(k in enemy_data for k in ['name', 'hp', 'attack', 'defense', 'speed', 'experience_reward', 'gold_reward']):
                 # Scale enemy stats by difficulty
                 scaled_data = enemy_data.copy()
                 scaled_data['hp'] = int(scaled_data['hp'] *
@@ -6063,6 +6122,8 @@ class Game:
     def handle_chest_room(self, room: Dict[str, Any]):
         """Handle a treasure chest room"""
         if not self.player:
+            print("No player available for chest room.")
+            self.advance_room()
             return
         print("You find a chest in the center of the room!")
 
@@ -6160,6 +6221,8 @@ class Game:
     def handle_trap_chest_room(self, room: Dict[str, Any]):
         """Handle a trapped chest room"""
         if not self.player:
+            print("No player available for trap chest room.")
+            self.advance_room()
             return
         print("You find a suspicious chest with strange markings...")
 
@@ -6210,38 +6273,12 @@ class Game:
                     if reward.get('experience'):
                         self.player.gain_experience(reward['experience'])
                         print(f"You gained {reward['experience']} experience!")
-
-                else:
-                    # Take damage
-                    base_damage = trap.get('base_damage', 20)
-                    damage_mod = mod_data.get('failure_damage_multiplier', 1.0)
-                    damage = int(base_damage * damage_mod)
-                    actual_damage = self.player.take_damage(damage)
-                    print(f"You took {actual_damage} damage from the trap!")
-
-                    if not self.player.is_alive():
-                        self.dungeon_death()
-                        return
-            else:
-                # Fallback trap
-                damage = random.randint(15, 30)
-                actual_damage = self.player.take_damage(damage)
-                print(f"You took {actual_damage} damage from the trap!")
-
-                if not self.player.is_alive():
-                    self.dungeon_death()
-                    return
-        else:
-            print(f"{Colors.GREEN}The chest was safe!{Colors.END}")
-            # Give small reward
-            gold_reward = random.randint(25, 75)
-            self.player.gold += gold_reward
-            print(f"You found {gold_reward} gold inside!")
-
-        self.advance_room()
-
     def handle_multi_choice_room(self, room: Dict[str, Any]):
         """Handle a multiple choice decision room"""
+        if not self.player:
+            print("No player available for multi-choice room.")
+            self.advance_room()
+            return
         print("You come to a crossroads with multiple paths...")
 
         # Get random selection challenge
@@ -6419,13 +6456,15 @@ class Game:
     def advance_room(self):
         """Advance to the next room"""
         self.dungeon_progress += 1
-        self.dungeon_state['current_room'] = self.dungeon_progress
+        if self.dungeon_progress < len(self.dungeon_rooms):
+            self.dungeon_state['current_room'] = self.dungeon_progress
 
         if self.dungeon_progress >= len(self.dungeon_rooms):
             self.complete_dungeon()
         else:
             print(f"\n{Colors.CYAN}Moving to the next room...{Colors.END}")
             time.sleep(1)
+            clear_screen()
 
     def complete_dungeon(self):
         """Complete the current dungeon"""
@@ -6437,7 +6476,14 @@ class Game:
         print(f"You successfully cleared {dungeon['name']}!")
 
         # Calculate completion time
-        start_time = datetime.fromisoformat(self.dungeon_state['start_time'])
+        start_time_str = self.dungeon_state.get('start_time')
+        if start_time_str:
+            try:
+                start_time = datetime.fromisoformat(start_time_str)
+            except (ValueError, TypeError):
+                start_time = datetime.now()
+        else:
+            start_time = datetime.now()
         end_time = datetime.now()
         duration = end_time - start_time
 
@@ -6448,6 +6494,34 @@ class Game:
         # Update challenge for dungeon completion
         self.update_challenge_progress('dungeon_complete')
 
+        # Give completion rewards
+        completion_reward = dungeon.get('completion_reward', {})
+        if completion_reward and self.player:
+            print(f"\n{Colors.GOLD}{Colors.BOLD}Completion Rewards:{Colors.END}")
+
+            # Gold reward
+            gold_reward = completion_reward.get('gold', 0)
+            if gold_reward > 0:
+                self.player.gold += gold_reward
+                print(f"  {Colors.GOLD}+{gold_reward} gold{Colors.END}")
+
+            # Experience reward
+            exp_reward = completion_reward.get('experience', 0)
+            if exp_reward > 0:
+                self.player.gain_experience(exp_reward)
+                print(f"  {Colors.MAGENTA}+{exp_reward} experience{Colors.END}")
+
+            # Item rewards
+            items = completion_reward.get('items', [])
+            if items:
+                print(f"  {Colors.YELLOW}Items received:{Colors.END}")
+                for item_name in items:
+                    self.player.inventory.append(item_name)
+                    item_data = self.items_data.get(item_name, {})
+                    color = get_rarity_color(item_data.get('rarity', 'common'))
+                    print(f"    - {color}{item_name}{Colors.END}")
+                    self.update_mission_progress('collect', item_name)
+
         # Clear dungeon state
         self.current_dungeon = None
         self.dungeon_progress = 0
@@ -6456,12 +6530,14 @@ class Game:
 
     def exit_dungeon(self):
         """Exit the current dungeon"""
-        if not self.current_dungeon:
+        if not self.player:
             return
 
-        print(
-            f"\n{Colors.YELLOW}Exiting {self.current_dungeon['name']}...{Colors.END}"
-        )
+        # Check for none here
+        if self.current_dungeon is not None:
+            print(f"\n{Colors.YELLOW}Exiting {self.current_dungeon['name']}...{Colors.END}")
+        else:
+            print(f"\n{Colors.YELLOW}Exiting dungeon...{Colors.END}")
 
         # Optional: penalty for early exit
         if self.dungeon_progress > 0 and self.player:
@@ -6481,6 +6557,11 @@ class Game:
 
     def dungeon_death(self):
         """Handle death in dungeon"""
+        if not self.player:
+            return
+        print(
+            f"\n{Colors.RED}{Colors.BOLD}You have fallen in the dungeon!{Colors.END}"
+        )
         print(
             f"\n{Colors.RED}{Colors.BOLD}You have fallen in the dungeon!{Colors.END}"
         )
