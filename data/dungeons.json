@@ -136,6 +136,7 @@
       "id": "fire_temple",
       "name": "Fire Temple",
       "description": "A temple built over a lake of molten lava.",
+      "allowed_areas": ["fire_volcano", "lava_fields"],
       "difficulty": [5, 6],
       "rooms": 9,
       "boss_id": "fire_elemental_lord",
@@ -182,7 +183,7 @@
       "allowed_areas": ["storm_mountains", "lightning_valley"],
       "difficulty": [6, 6],
       "rooms": 10,
-      "boss_id": "thunder_lord",
+      "boss_id": "storm_giant",
       "completion_reward": {
         "gold": 1500,
         "experience": 3000,
