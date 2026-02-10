@@ -27,3 +27,4 @@ scripts/activities.json
 .replit
 .env
 mods/
+.vercel/
