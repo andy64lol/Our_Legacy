@@ -1,6 +1,7 @@
+#!/usr/bin/env python3
 """
-Our Legacy - GUI Version
-A GUI wrapper for the text-based CLI Fantasy RPG Game using Py2GUI
+Our Legacy - Storywrite GUI Version
+A GUI wrapper for the mod uploader using Py2GUI
 """
 
 import builtins
@@ -21,8 +22,8 @@ from py2gui import (
     exit_gui
 )
 
-# Import the main game
-import main
+# Import the storywrite module
+import storywrite
 
 # Color code pattern for stripping
 COLOR_PATTERN = re.compile(r'\x1b\[[0-9;]*m')
@@ -57,50 +58,37 @@ def gui_input(prompt=""):
     """Replacement for input() that uses GUI input"""
     prompt = strip_colors(prompt)
     result = user_type_in(prompt)
-    # Clear the screen after user input
-    clear()
     return result if result is not None else ""
-
-
-def gui_ask(prompt=""):
-    """Replacement for ask() function used in main.py"""
-    return gui_input(prompt)
 
 
 # Monkey patch built-in functions globally
 builtins.print = gui_print
 builtins.input = gui_input
 
-# Patch the ask function in main module if it exists
-if hasattr(main, 'ask'):
-    main.ask = gui_ask
+# Patch clear function in storywrite module
+storywrite.clear = clear
 
-# Patch clear_screen to use py2gui's clear
-if hasattr(main, 'clear_screen'):
-    main.clear_screen = clear
-
-# Also patch in the Colors class to return empty strings
+# Replace Colors class in storywrite module
 class NoColors:
     """Color class that returns empty strings (no colors)"""
     def __getattr__(self, name):
         return ""
 
-# Replace Colors class in main module
-main.Colors = NoColors()
+storywrite.Colors = NoColors()
 
 
-def run_gui_game():
-    """Run the game in GUI mode"""
+def run_gui_storywrite():
+    """Run the mod uploader in GUI mode"""
     # Clear the screen first
     clear()
     
     # Display welcome message
-    display("=== Our Legacy - GUI Version ===\n")
-    display("Loading game...\n")
+    display("=== Our Legacy - Storywrite GUI Version ===\n")
+    display("Loading mod uploader...\n\n")
     
-    # Run the main game
+    # Run the mod uploader
     try:
-        main.main()
+        storywrite.main_menu()
     except SystemExit:
         pass
     except Exception as e:
@@ -113,4 +101,4 @@ if __name__ == "__main__":
     set_theme("dark")
     
     # Run the GUI
-    gui_run(run_gui_game)
+    gui_run(run_gui_storywrite)
