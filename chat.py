@@ -8,12 +8,13 @@ import os
 import sys
 import time
 import json
-import socket
 import threading
 import requests
 import readline
+import signal
 from datetime import datetime
 from typing import Dict, List, Optional, Tuple
+from urllib.parse import quote
 
 # ANSI Color Codes with enhanced styling
 class Colors:
@@ -115,12 +116,16 @@ def print_chat_divider(width: Optional[int] = None, color: str = Colors.DIM):
 # Configuration
 PING_URL = "https://our-legacy.vercel.app/api/ping"
 SEND_MESSAGE_URL = "https://our-legacy.vercel.app/api/send_message"
+CREATE_USER_URL = "https://our-legacy.vercel.app/api/create_user"
 GLOBAL_CHAT_URL = "https://raw.githubusercontent.com/andy64lol/globalchat/refs/heads/main/global_chat.json"
+USERS_URL = "https://raw.githubusercontent.com/andy64lol/globalchat/refs/heads/main/users.json"
 ALIAS_FILE = "data/saves/username.txt"
-COOLDOWN_SECONDS = 60
-AUTO_REFRESH_SECONDS = 30
+COOLDOWN_SECONDS = 20
+AUTO_REFRESH_SECONDS = 10
+BAN_CHECK_SECONDS = 90  # Check ban status every 90 seconds
 MAX_MESSAGE_LENGTH = 300
-MESSAGES_PER_PAGE = 15
+MESSAGES_PER_PAGE = 10
+MAX_FETCH_MESSAGES = 10  # Only fetch last 10 messages for performance
 
 class EnhancedChatClient:
     def __init__(self):
@@ -133,9 +138,68 @@ class EnhancedChatClient:
         self.last_refresh_time = 0
         self.is_exiting = False
         self.terminal_width = get_terminal_width()
+        self.last_message_count = 0  # Track displayed messages for incremental updates
+        self.message_queue = []  # Queue for async message updates
+        self.fetch_lock = threading.Lock()  # Lock for thread-safe fetching
+        self.users_list: List[Dict] = []  # Cached users list
+        self.is_banned = False  # Ban status
+        self.last_ban_check = 0  # Last ban check time
+        
+        # Set up terminal resize handler (Unix/Linux only)
+        try:
+            signal.signal(signal.SIGWINCH, self._handle_resize)
+        except (AttributeError, ValueError):
+            # Windows doesn't have SIGWINCH, ignore
+            pass
         
         # Load or create alias
         self.check_alias()
+    
+    def _handle_resize(self, signum, frame):
+        """Handle terminal resize event."""
+        self.terminal_width = get_terminal_width()
+    
+    def fetch_users(self) -> List[Dict]:
+        """Fetch users list from repository."""
+        try:
+            response = requests.get(USERS_URL, timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                if isinstance(data, list):
+                    self.users_list = data
+                    return data
+        except Exception as e:
+            print(f"{Colors.BRIGHT_RED}Error fetching users: {e}{Colors.RESET}")
+        return []
+    
+    def check_alias_exists(self, alias: str) -> bool:
+        """Check if alias already exists in users.json."""
+        # Use the API endpoint for more reliable checking
+        try:
+            response = requests.get(
+                f"{CREATE_USER_URL}?alias={quote(alias)}",
+                timeout=10
+            )
+            if response.status_code == 200:
+                data = response.json()
+                return data.get('exists', False)
+        except Exception as e:
+            print(f"{Colors.BRIGHT_YELLOW}Warning: Could not check alias availability online, falling back to local check{Colors.RESET}")
+        
+        # Fallback to local check
+        users = self.fetch_users()
+        for user in users:
+            if isinstance(user, dict) and user.get('alias', '').lower() == alias.lower():
+                return True
+        return False
+    
+    def is_user_banned(self, alias: str) -> bool:
+        """Check if user is banned."""
+        users = self.fetch_users()
+        for user in users:
+            if isinstance(user, dict) and user.get('alias', '').lower() == alias.lower():
+                return user.get('blacklisted', False)
+        return False
     
     def check_alias(self):
         """Check if alias exists, if not create one."""
@@ -143,6 +207,10 @@ class EnhancedChatClient:
             try:
                 with open(ALIAS_FILE, 'r') as f:
                     self.alias = f.read().strip()
+                # Check if banned on startup
+                if self.is_user_banned(self.alias):
+                    print(f"{Colors.BRIGHT_RED}You are banned from the chat.{Colors.RESET}")
+                    sys.exit(1)
                 self.show_welcome_back()
             except Exception as e:
                 print(f"{Colors.BRIGHT_RED}Error loading alias: {e}{Colors.RESET}")
@@ -162,13 +230,9 @@ class EnhancedChatClient:
         print(f"\n")
         print_centered_text("Connecting to chat server...", width, Colors.DIM)
         
-        # Simulate connection animation
-        for _ in range(3):
-            time.sleep(0.3)
-            print(f"{Colors.DIM}.{Colors.RESET}", end='', flush=True)
-        print()
-        
-        time.sleep(1)
+        # Quick connection indicator (0.1s for responsiveness)
+        print(f"{Colors.DIM}...{Colors.RESET}", flush=True)
+        time.sleep(0.1)
         clear_screen()
     
     def create_alias(self):
@@ -191,22 +255,23 @@ class EnhancedChatClient:
             alias = input().strip()
             
             if not alias:
-                self.clear_input_line(4)
                 print(f"{Colors.BRIGHT_RED}Alias cannot be empty.{Colors.RESET}")
                 continue
             
             if len(alias) > 20:
-                self.clear_input_line(4)
                 print(f"{Colors.BRIGHT_RED}Alias too long (max 20 characters).{Colors.RESET}")
                 continue
             
             if not all(c.isalnum() or c in '_- ' for c in alias):
-                self.clear_input_line(4)
                 print(f"{Colors.BRIGHT_RED}Only letters, numbers, spaces, underscores, and hyphens.{Colors.RESET}")
                 continue
             
+            # Check if alias already exists
+            if self.check_alias_exists(alias):
+                print(f"{Colors.BRIGHT_RED}Username '{alias}' is already taken. Please choose another.{Colors.RESET}")
+                continue
+            
             # Show confirmation
-            self.clear_input_line(4)
             print(f"\n{Colors.BRIGHT_GREEN}You chose: {Colors.BRIGHT_CYAN}{alias}{Colors.RESET}")
             print(f"\n{Colors.DIM}Confirm this alias? (y/n): {Colors.RESET}", end='')
             
@@ -217,21 +282,66 @@ class EnhancedChatClient:
                 self.save_alias()
                 break
             else:
-                self.clear_input_line(6)
                 print(f"{Colors.YELLOW}Let's try again.{Colors.RESET}")
                 continue
     
-    def clear_input_line(self, lines: int = 1):
-        """Clear the last line(s) of input."""
-        for _ in range(lines):
-            sys.stdout.write('\033[F')  # Move cursor up one line
-            sys.stdout.write('\033[K')  # Clear line
-    
+    def register_user_online(self, alias: str) -> bool:
+        """Register new user to GitHub repository via API."""
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                payload = {
+                    "alias": alias,
+                    "metadata": {
+                        "permissions": "user"
+                    }
+                }
+                
+                response = requests.post(
+                    CREATE_USER_URL,
+                    json=payload,
+                    headers={"Content-Type": "application/json"},
+                    timeout=15
+                )
+                
+                if response.status_code == 201:
+                    return True
+                elif response.status_code == 409:
+                    # User already exists - this is actually fine for recovery
+                    print(f"{Colors.BRIGHT_YELLOW}Note: Username already registered online{Colors.RESET}")
+                    return True
+                else:
+                    error_msg = f"HTTP {response.status_code}"
+                    try:
+                        error_data = response.json()
+                        error_msg = error_data.get('error', error_msg)
+                    except:
+                        pass
+                    print(f"{Colors.BRIGHT_YELLOW}Registration attempt {attempt + 1} failed: {error_msg}{Colors.RESET}")
+                    
+            except Exception as e:
+                print(f"{Colors.BRIGHT_YELLOW}Registration attempt {attempt + 1} error: {e}{Colors.RESET}")
+            
+            if attempt < max_retries - 1:
+                time.sleep(1)  # Wait before retry
+        
+        return False
+
     def save_alias(self):
-        """Save alias to file with enhanced confirmation."""
+        """Save alias to file with enhanced confirmation and online registration."""
         try:
             if self.alias is None:
                 return
+            
+            # First, register online (enforce username uniqueness)
+            print(f"\n{Colors.DIM}Registering username online...{Colors.RESET}")
+            online_success = self.register_user_online(self.alias)
+            
+            if not online_success:
+                print(f"{Colors.BRIGHT_RED}Failed to register username online. Please try again later.{Colors.RESET}")
+                # Don't exit - allow local-only mode for offline usage
+                print(f"{Colors.BRIGHT_YELLOW}Continuing in local-only mode...{Colors.RESET}")
+                time.sleep(1)
             
             os.makedirs(os.path.dirname(ALIAS_FILE), exist_ok=True)
             
@@ -239,11 +349,15 @@ class EnhancedChatClient:
                 f.write(self.alias)
             
             # Set read-only permissions
-            os.chmod(ALIAS_FILE, 0o444)
-            
-            # Try to make immutable
             try:
-                os.system(f'chattr +i "{ALIAS_FILE}" 2>/dev/null')
+                os.chmod(ALIAS_FILE, 0o444)
+            except Exception:
+                pass  # Permissions may not work on all systems
+            
+            # Try to make immutable (Linux only)
+            try:
+                if os.name != 'nt':  # chattr is Linux-specific
+                    os.system(f'chattr +i "{ALIAS_FILE}" 2>/dev/null')
             except:
                 pass
             
@@ -256,11 +370,15 @@ class EnhancedChatClient:
             print(f"\n")
             print_centered_text(f"Welcome, {self.alias}!", width, Colors.BRIGHT_CYAN)
             print(f"\n")
-            print_centered_text("Your identity is now secured.", width, Colors.DIM)
+            if online_success:
+                print_centered_text("Your identity is now secured and registered.", width, Colors.DIM)
+            else:
+                print_centered_text("Your identity is saved locally (offline mode).", width, Colors.BRIGHT_YELLOW)
             print(f"\n")
             print_centered_text("Entering chat...", width, Colors.DIM)
             
-            time.sleep(2)
+            # Minimal delay for user to read (0.1s)
+            time.sleep(0.1)
             
         except Exception as e:
             print(f"{Colors.BRIGHT_RED}Error saving alias: {e}{Colors.RESET}")
@@ -277,55 +395,107 @@ class EnhancedChatClient:
             return False
     
     def fetch_messages(self) -> bool:
-        """Fetch messages from global chat."""
-        try:
-            response = requests.get(GLOBAL_CHAT_URL, timeout=10)
-            
-            if response.status_code == 200:
-                data = response.json()
+        """Fetch messages from global chat - optimized for incremental updates."""
+        with self.fetch_lock:
+            try:
+                response = requests.get(GLOBAL_CHAT_URL, timeout=10)
                 
-                # Handle different JSON structures
-                if isinstance(data, dict):
-                    new_messages = data.get('messages', [])
-                elif isinstance(data, list):
-                    new_messages = data
-                else:
-                    new_messages = []
-                
-                # Normalize messages
-                normalized = []
-                for msg in new_messages:
-                    if isinstance(msg, dict):
-                        normalized.append(msg)
-                    elif isinstance(msg, str):
-                        try:
-                            parsed = json.loads(msg)
-                            if isinstance(parsed, dict):
-                                normalized.append(parsed)
-                            else:
+                if response.status_code == 200:
+                    data = response.json()
+                    
+                    # Handle different JSON structures
+                    if isinstance(data, dict):
+                        all_messages = data.get('messages', [])
+                    elif isinstance(data, list):
+                        all_messages = data
+                    else:
+                        all_messages = []
+                    
+                    # Only take last N messages for performance
+                    if len(all_messages) > MAX_FETCH_MESSAGES:
+                        all_messages = all_messages[-MAX_FETCH_MESSAGES:]
+                    
+                    # Normalize messages
+                    normalized = []
+                    for msg in all_messages:
+                        if isinstance(msg, dict):
+                            normalized.append(msg)
+                        elif isinstance(msg, str):
+                            try:
+                                parsed = json.loads(msg)
+                                if isinstance(parsed, dict):
+                                    normalized.append(parsed)
+                                else:
+                                    normalized.append({
+                                        'author': 'System',
+                                        'content': str(parsed),
+                                        'timestamp': int(time.time() * 1000)
+                                    })
+                            except:
                                 normalized.append({
                                     'author': 'System',
-                                    'content': str(parsed),
+                                    'content': msg,
                                     'timestamp': int(time.time() * 1000)
                                 })
-                        except:
-                            normalized.append({
-                                'author': 'System',
-                                'content': msg,
-                                'timestamp': int(time.time() * 1000)
-                            })
-                
-                # Update messages if changed
-                if normalized != self.messages:
-                    self.messages = normalized
-                    self.last_refresh_time = time.time()
-                    return True
+                    
+                    # Atomic update: check, update state, and queue in one operation
+                    old_count = len(self.messages)
+                    has_changes = normalized != self.messages
+                    
+                    if has_changes:
+                        self.messages = normalized
+                        self.last_refresh_time = time.time()
+                        # Queue new messages for display
+                        new_count = len(normalized)
+                        if new_count > old_count:
+                            # Only queue truly new messages
+                            self.message_queue.extend(normalized[old_count:])
+                        elif new_count < old_count:
+                            # Messages were deleted/archived, clear queue and refresh all
+                            self.message_queue = []
+                    
+                    return has_changes
+                    
                 return False
                 
-            return False
+            except Exception as e:
+                return False
+    
+    def display_new_messages(self):
+        """Display only new messages from queue (incremental update)."""
+        if not self.message_queue:
+            return
+        
+        width = self.terminal_width
+        
+        while self.message_queue:
+            msg = self.message_queue.pop(0)
             
-        except Exception as e:
-            return False
+            if isinstance(msg, dict):
+                author = msg.get('author', 'Unknown')
+                content = msg.get('content', '')
+                timestamp = msg.get('timestamp', int(time.time() * 1000))
+            else:
+                author = 'Unknown'
+                content = str(msg)
+                timestamp = int(time.time() * 1000)
+            
+            # Format timestamp
+            time_str = self.format_timestamp(timestamp)
+            
+            # Determine message style
+            if author == self.alias:
+                name_color = Colors.CHAT_NAME_SELF
+                prefix = f"{Colors.DIM}[{time_str}]{Colors.RESET} {name_color}{author}{Colors.RESET}: "
+            elif author == 'System' or author == 'Unknown':
+                name_color = Colors.CHAT_NAME_SYSTEM
+                prefix = f"{Colors.DIM}[{time_str}]{Colors.RESET} {name_color}*** {author}{Colors.RESET}: "
+            else:
+                name_color = Colors.CHAT_NAME_OTHER
+                prefix = f"{Colors.DIM}[{time_str}]{Colors.RESET} {name_color}{author}{Colors.RESET}: "
+            
+            print(f"{prefix}{Colors.BRIGHT_WHITE}{content}{Colors.RESET}")
+            print_chat_divider(width, Colors.DIM)
     
     def format_timestamp(self, timestamp_ms: int) -> str:
         """Format timestamp for display."""
@@ -342,10 +512,23 @@ class EnhancedChatClient:
         except:
             return "??:??"
     
-    def display_messages(self, show_header: bool = True):
-        """Display messages in a chat-like format with clean separation."""
+    def display_messages(self, show_header: bool = True, incremental: bool = False):
+        """Display messages in a chat-like format with clean separation.
+        
+        Args:
+            show_header: Whether to show header and clear screen
+            incremental: If True, only display new messages from queue
+        """
+        # Handle incremental updates (no clear, just append)
+        if incremental and not show_header:
+            self.display_new_messages()
+            return
+        
+        # Full refresh - only clear when explicitly requested for header mode
+        # This reduces flickering significantly
         if show_header:
             clear_screen()
+        
         width = self.terminal_width
         
         # Header with connection status
@@ -359,22 +542,28 @@ class EnhancedChatClient:
         
         if not self.messages:
             print(f"\n{Colors.DIM}No messages yet. Be the first to say something!{Colors.RESET}\n")
+            self.last_message_count = 0
             return
         
-        # Calculate pagination
+        # Always show last page (most recent messages)
         total_messages = len(self.messages)
         total_pages = max((total_messages + MESSAGES_PER_PAGE - 1) // MESSAGES_PER_PAGE, 1)
-        
-        if self.current_page < 0:
-            self.current_page = 0
-        if self.current_page >= total_pages:
-            self.current_page = total_pages - 1
+        self.current_page = min(self.current_page, total_pages - 1)  # Ensure valid page
+        self.current_page = max(0, self.current_page)  # Ensure non-negative
         
         start_idx = self.current_page * MESSAGES_PER_PAGE
         end_idx = min(start_idx + MESSAGES_PER_PAGE, total_messages)
         
+        # Ensure valid indices
+        start_idx = max(0, min(start_idx, total_messages - 1)) if total_messages > 0 else 0
+        end_idx = max(start_idx, min(end_idx, total_messages))
+        
         # Display messages
+        displayed_count = 0
         for idx in range(start_idx, end_idx):
+            if idx >= len(self.messages):
+                break
+                
             msg = self.messages[idx]
             
             if isinstance(msg, dict):
@@ -393,72 +582,34 @@ class EnhancedChatClient:
             if author == self.alias:
                 # Own message
                 name_color = Colors.CHAT_NAME_SELF
-                align = "right"
-                prefix = ">>> "
+                prefix = f"{Colors.DIM}[{time_str}]{Colors.RESET} {name_color}{author}{Colors.RESET}: "
             elif author == 'System' or author == 'Unknown':
                 # System message
                 name_color = Colors.CHAT_NAME_SYSTEM
-                align = "center"
-                prefix = "*** "
+                prefix = f"{Colors.DIM}[{time_str}]{Colors.RESET} {name_color}*** {author}{Colors.RESET}: "
             else:
                 # Other user's message
                 name_color = Colors.CHAT_NAME_OTHER
-                align = "left"
-                prefix = ""
+                prefix = f"{Colors.DIM}[{time_str}]{Colors.RESET} {name_color}{author}{Colors.RESET}: "
             
-            # Display message
-            print(f"{Colors.CHAT_TIMESTAMP}{time_str:>8}{Colors.RESET} ", end='')
+            # Display message in list-like format
+            print(f"{prefix}{Colors.BRIGHT_WHITE}{content}{Colors.RESET}")
+            displayed_count += 1
             
-            if align == "right":
-                # Right aligned (own message)
-                print(f"{name_color}{author:<15}{Colors.RESET} {Colors.BRIGHT_WHITE}{prefix}{content}{Colors.RESET}")
-            elif align == "center":
-                # Center aligned (system message)
-                print(f"{name_color}{prefix}{author}: {content}{Colors.RESET}")
-            else:
-                # Left aligned (other's message)
-                print(f"{Colors.BRIGHT_WHITE}{prefix}{content}{Colors.RESET} {name_color}{author:>15}{Colors.RESET}")
-            
-            # Message separator
-            if idx < end_idx - 1:
+            # Message separator (keeping the requested =================)
+            if idx < end_idx - 1 and displayed_count < MESSAGES_PER_PAGE:
                 print_chat_divider(width, Colors.DIM)
+        
+        # Update last message count
+        self.last_message_count = total_messages
     
     def display_input_area(self):
-        """Display the input area with status information."""
+        """Display the compact input area."""
         width = self.terminal_width
-        cooldown = self.get_cooldown_status()
         
-        # Print input area divider
+        # Print compact input area
         print()
         print_chat_divider(width, Colors.CHAT_STATUS)
-        print()
-        
-        # Status information
-        status_parts = []
-        
-        if cooldown > 0:
-            status_parts.append(f"{Colors.BRIGHT_RED}Cooldown: {cooldown}s{Colors.RESET}")
-        else:
-            status_parts.append(f"{Colors.BRIGHT_GREEN}Ready to send{Colors.RESET}")
-        
-        if self.auto_refresh:
-            status_parts.append(f"{Colors.BRIGHT_CYAN}Auto-refresh: ON{Colors.RESET}")
-        else:
-            status_parts.append(f"{Colors.BRIGHT_YELLOW}Auto-refresh: OFF{Colors.RESET}")
-        
-        # Calculate pagination info
-        total_messages = len(self.messages)
-        total_pages = max((total_messages + MESSAGES_PER_PAGE - 1) // MESSAGES_PER_PAGE, 1)
-        
-        if total_pages > 1:
-            status_parts.append(f"{Colors.DIM}Page {self.current_page + 1}/{total_pages}{Colors.RESET}")
-        
-        # Print status line
-        status_line = " | ".join(status_parts)
-        padding = (width - len(status_line)) // 2
-        padding = max(padding, 0)
-        print(f"{' ' * padding}{status_line}")
-        print()
     
     def get_cooldown_status(self) -> int:
         """Get remaining cooldown time."""
@@ -486,10 +637,6 @@ class EnhancedChatClient:
             print(f"{Colors.BRIGHT_YELLOW}Message cannot be empty.{Colors.RESET}")
             return False
         
-        # Show sending indicator
-        width = self.terminal_width
-        print(f"{Colors.DIM}Sending message...{Colors.RESET}")
-        
         try:
             payload = {
                 "message": content,
@@ -505,8 +652,6 @@ class EnhancedChatClient:
             
             if response.status_code == 200:
                 self.last_message_time = time.time()
-                print(f"{Colors.BRIGHT_GREEN}Message sent successfully!{Colors.RESET}")
-                time.sleep(0.5)
                 return True
             else:
                 error_msg = f"HTTP {response.status_code}"
@@ -559,82 +704,86 @@ class EnhancedChatClient:
         print(f"\n{Colors.DIM}Press Enter to return to chat...{Colors.RESET}")
         input()
     
+    def ban_check_thread(self):
+        """Background thread for checking ban status every 90 seconds."""
+        while not self.is_exiting:
+            current_time = time.time()
+            if current_time - self.last_ban_check >= BAN_CHECK_SECONDS:
+                try:
+                    if self.alias and self.is_user_banned(self.alias):
+                        self.is_banned = True
+                        print(f"\n{Colors.BRIGHT_RED}You have been banned from the chat. Exiting...{Colors.RESET}")
+                        self.is_exiting = True
+                        break
+                    self.last_ban_check = current_time
+                except:
+                    pass
+            time.sleep(5)  # Check every 5 seconds if it's time to check ban
+    
     def auto_refresh_thread(self):
-        """Background thread for auto-refreshing messages."""
+        """Background thread for auto-refreshing messages - non-blocking."""
         while not self.is_exiting:
             if self.auto_refresh:
                 current_time = time.time()
                 if current_time - self.last_refresh_time >= AUTO_REFRESH_SECONDS:
                     try:
                         if self.fetch_messages():
-                            # Only redisplay if not in input
-                            self.display_messages(show_header=True)
-                            self.display_input_area()
+                            # Queue new messages for display (don't block input)
+                            # Main loop will display them on next iteration
+                            pass
                     except:
                         pass
-            time.sleep(1)
+            # Shorter sleep for more responsive updates
+            time.sleep(0.5)
     
     def run(self):
-        """Main chat loop with enhanced initialization."""
+        """Main chat loop with enhanced initialization - optimized."""
         # Start with connection check
-        width = self.terminal_width
+        if not self.check_connection():
+            print(f"{Colors.BRIGHT_RED}Warning: Cannot connect to server. Some features may be limited.{Colors.RESET}")
+            time.sleep(1)
         
-        print(f"\n")
-        print_centered_text("INITIALIZING CHAT CLIENT", width, Colors.CHAT_WELCOME)
-        print(f"\n{Colors.DIM}Checking connection to server...{Colors.RESET}")
-        
-        if self.check_connection():
-            print(f"{Colors.BRIGHT_GREEN}✓ Connected to server{Colors.RESET}")
-        else:
-            print(f"{Colors.BRIGHT_YELLOW}⚠ Limited connectivity - messages may not send{Colors.RESET}")
-        
-        time.sleep(1)
-        
-        # Start auto-refresh thread
-        refresh_thread = threading.Thread(target=self.auto_refresh_thread, daemon=True)
-        refresh_thread.start()
-        
-        # Initial message fetch
-        print(f"\n{Colors.DIM}Loading messages...{Colors.RESET}")
+        # Display initial messages
         self.fetch_messages()
         
-        time.sleep(0.5)
-        self.display_messages(show_header=True)
-        self.display_input_area()
+        # Start background threads
+        auto_refresh_thread = threading.Thread(target=self.auto_refresh_thread, daemon=True)
+        ban_check_thread = threading.Thread(target=self.ban_check_thread, daemon=True)
+        auto_refresh_thread.start()
+        ban_check_thread.start()
         
-        # Chat history for readline
-        message_history = []
-        
+        # Main loop
         while not self.is_exiting:
             try:
-                # Show input prompt
-                cooldown = self.get_cooldown_status()
+                # Display messages and input area
+                self.display_messages(show_header=True)
+                self.display_input_area()
                 
+                # Display prompt
+                cooldown = self.get_cooldown_status()
                 if cooldown > 0:
-                    prompt = f"{Colors.BRIGHT_RED}[CD:{cooldown:02d}s]{Colors.RESET} {Colors.CHAT_PROMPT}{self.alias}>{Colors.RESET} "
-                elif not self.connection_ok:
-                    prompt = f"{Colors.BRIGHT_YELLOW}[OFFLINE]{Colors.RESET} {Colors.CHAT_PROMPT}{self.alias}>{Colors.RESET} "
+                    prompt = f"{Colors.BRIGHT_YELLOW}(Wait {cooldown}s) Enter message or /help: {Colors.RESET}"
                 else:
-                    prompt = f"{Colors.CHAT_PROMPT}{self.alias}>{Colors.RESET} "
+                    prompt = f"{Colors.BRIGHT_GREEN}Enter message or /help: {Colors.RESET}"
+                
+                print(f"{prompt}", end='')
+                sys.stdout.flush()
                 
                 # Get user input
                 try:
-                    user_input = input(prompt).strip()
-                except (KeyboardInterrupt, EOFError):
+                    user_input = input().strip()
+                except EOFError:
+                    # Handle Ctrl+D
                     print(f"\n{Colors.BRIGHT_CYAN}Goodbye!{Colors.RESET}")
-                    self.is_exiting = True
                     break
                 
                 if not user_input:
+                    # Just refresh display
                     continue
-                
-                # Add to history
-                if user_input and (not message_history or message_history[-1] != user_input):
-                    message_history.append(user_input)
                 
                 # Handle commands
                 if user_input.startswith('/'):
-                    cmd = user_input.lower()
+                    cmd = user_input.lower().strip()
                     
                     if cmd == '/r' or cmd == '/refresh':
                         print(f"{Colors.DIM}Refreshing messages...{Colors.RESET}")
@@ -646,16 +795,22 @@ class EnhancedChatClient:
                         continue
                     
                     elif cmd == '/next' or cmd == '/n':
-                        self.current_page += 1
+                        total_pages = max((len(self.messages) + MESSAGES_PER_PAGE - 1) // MESSAGES_PER_PAGE, 1)
+                        if self.current_page < total_pages - 1:
+                            self.current_page += 1
+                        else:
+                            print(f"{Colors.BRIGHT_YELLOW}Already at last page{Colors.RESET}")
+                            time.sleep(0.5)
                         self.display_messages(show_header=True)
                         self.display_input_area()
                         continue
                     
                     elif cmd == '/prev' or cmd == '/p':
-                        self.current_page -= 1
-                        if self.current_page < 0:
-                            self.current_page = 0
+                        if self.current_page > 0:
+                            self.current_page -= 1
+                        else:
                             print(f"{Colors.BRIGHT_YELLOW}Already at first page{Colors.RESET}")
+                            time.sleep(0.5)
                         self.display_messages(show_header=True)
                         self.display_input_area()
                         continue
@@ -665,6 +820,7 @@ class EnhancedChatClient:
                         status = "ON" if self.auto_refresh else "OFF"
                         color = Colors.BRIGHT_CYAN if self.auto_refresh else Colors.BRIGHT_YELLOW
                         print(f"{color}Auto-refresh: {status}{Colors.RESET}")
+                        time.sleep(0.5)
                         continue
                     
                     elif cmd == '/clear' or cmd == '/c':
@@ -678,6 +834,7 @@ class EnhancedChatClient:
                             print(f"{Colors.BRIGHT_GREEN}✓ Connected to server{Colors.RESET}")
                         else:
                             print(f"{Colors.BRIGHT_RED}✗ Cannot connect to server{Colors.RESET}")
+                        time.sleep(1)
                         continue
                     
                     elif cmd == '/exit' or cmd == '/quit' or cmd == '/q':
@@ -694,15 +851,20 @@ class EnhancedChatClient:
                     else:
                         print(f"{Colors.BRIGHT_RED}Unknown command: {user_input}{Colors.RESET}")
                         print(f"{Colors.DIM}Type /help for available commands{Colors.RESET}")
+                        time.sleep(1)
                         continue
                 
                 # Send message
                 if self.send_message(user_input):
-                    # Refresh messages after sending
-                    time.sleep(1)  # Small delay for server to process
+                    # Auto-refresh after sending
+                    time.sleep(0.5)  # Wait for server to update
                     self.fetch_messages()
+                    # Display updated messages
                     self.display_messages(show_header=True)
                     self.display_input_area()
+                else:
+                    # Wait a moment for user to read error message
+                    time.sleep(1)
                 
             except KeyboardInterrupt:
                 print(f"\n{Colors.BRIGHT_CYAN}Goodbye!{Colors.RESET}")
@@ -710,10 +872,12 @@ class EnhancedChatClient:
                 break
             except Exception as e:
                 print(f"\n{Colors.BRIGHT_RED}Unexpected error: {e}{Colors.RESET}")
+                time.sleep(1)
                 continue
         
         # Cleanup
         self.is_exiting = True
+        time.sleep(0.5)  # Give threads time to exit
 
 
 def main():
