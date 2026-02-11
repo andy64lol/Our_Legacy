@@ -268,45 +268,22 @@ class Py2GUI:
             pass  # Ignore print errors
     
     def _setup_menus(self) -> None:
-        """Set up menu system"""
+        """Set up menu system - simplified to only File and Themes"""
         menubar = Menu(self.root)
         self.root.config(menu=menubar)
         
         # File menu
-        if 'disabled_menus' not in self.config or 'File' not in self.config['disabled_menus']:
-            file_menu = Menu(menubar, tearoff=0)
-            menubar.add_cascade(label="File", menu=file_menu)
-            file_menu.add_command(label="Exit", command=self.exit)
+        file_menu = Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="File", menu=file_menu)
+        file_menu.add_command(label="Exit", command=self.exit)
         
-        # Edit menu
-        if 'disabled_menus' not in self.config or 'Edit' not in self.config['disabled_menus']:
-            edit_menu = Menu(menubar, tearoff=0)
-            menubar.add_cascade(label="Edit", menu=edit_menu)
-            edit_menu.add_command(label="Copy", command=self.copy_text)
-            edit_menu.add_command(label="Select All", command=self.select_all)
-        
-        # View menu
-        if 'disabled_menus' not in self.config or 'View' not in self.config['disabled_menus']:
-            view_menu = Menu(menubar, tearoff=0)
-            menubar.add_cascade(label="View", menu=view_menu)
-            
-            if 'disabled_views' not in self.config or 'Focus Input' not in self.config['disabled_views']:
-                view_menu.add_command(label="Focus Input", command=self.focus_input)
-            
-            if 'disabled_views' not in self.config or 'Clear Output' not in self.config['disabled_views']:
-                view_menu.add_command(label="Clear Output", command=self.clear)
-            
-            if 'disabled_views' not in self.config or 'Demo ANSI Colors' not in self.config['disabled_views']:
-                view_menu.add_command(label="Demo ANSI Colors", command=self._demo_colors)
-        
-        # Colors menu
-        if 'disabled_menus' not in self.config or 'Colors' not in self.config['disabled_menus']:
-            colors_menu = Menu(menubar, tearoff=0)
-            menubar.add_cascade(label="Colors", menu=colors_menu)
-            colors_menu.add_command(label="Default Theme", command=lambda: self.set_theme("default"))
-            colors_menu.add_command(label="Dark Theme", command=lambda: self.set_theme("dark"))
-            colors_menu.add_command(label="Light Theme", command=lambda: self.set_theme("light"))
-            colors_menu.add_command(label="Green on Black", command=lambda: self.set_theme("matrix"))
+        # Themes menu (renamed from Colors)
+        themes_menu = Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="Themes", menu=themes_menu)
+        themes_menu.add_command(label="Default Theme", command=lambda: self.set_theme("default"))
+        themes_menu.add_command(label="Dark Theme", command=lambda: self.set_theme("dark"))
+        themes_menu.add_command(label="Light Theme", command=lambda: self.set_theme("light"))
+        themes_menu.add_command(label="Green on Black", command=lambda: self.set_theme("matrix"))
     
     def _parse_ansi_codes(self, text: str) -> List[Tuple[str, List[str]]]:
         """Parse ANSI escape sequences in text"""

@@ -8,6 +8,11 @@ import os
 import sys
 import subprocess
 
+# Custom exception for clean exit (used by GUI wrapper)
+class LauncherExit(Exception):
+    """Exception raised when user wants to exit the launcher"""
+    pass
+
 # ANSI colors
 BLUE = "\033[34m"
 RESET = "\033[0m"
@@ -24,6 +29,10 @@ def run_storyland():
 def run_storywrite():
     # Just execute storywrite.py directly
     subprocess.run(["python3", "storywrite.py"])
+
+def run_chat():
+    # Execute chat.py directly
+    subprocess.run([sys.executable, "chat.py"])
 
 def show_credits():
     print(BLUE + "===============================================")
@@ -47,10 +56,11 @@ def main_menu():
         print(f"{BLUE}1.{RESET} Main game")
         print(f"{BLUE}2.{RESET} Browse mods")
         print(f"{BLUE}3.{RESET} Upload mod")
-        print(f"{BLUE}4.{RESET} Exit")
+        print(f"{BLUE}4.{RESET} Chat")
         print(f"{BLUE}5.{RESET} Credits")
+        print(f"{BLUE}6.{RESET} Exit")
         print("_______________________________________________")
-        choice = input("Please enter (1-5): ").strip()
+        choice = input("Please enter (1-6): ").strip()
 
         if choice == "1":
             run_main()
@@ -59,15 +69,20 @@ def main_menu():
         elif choice == "3":
             run_storywrite()
         elif choice == "4":
-            clear()
-            sys.exit(0)
+            run_chat()
         elif choice == "5":
             clear()
             show_credits()
+        elif choice == "6":
+            clear()
+            raise LauncherExit()
         else:
             input("Invalid choice! Press Enter to try again...")
 
 if __name__ == "__main__":
     clear()
-    main_menu()
+    try:
+        main_menu()
+    except LauncherExit:
+        pass
     clear()

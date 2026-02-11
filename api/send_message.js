@@ -177,9 +177,9 @@ async function handleMessage(req, res) {
     });
   }
   
-  if (message.length > 1000) {
+  if (message.length > 300) {
     return res.status(400).json({ 
-      error: "Message too long (max 1000 characters)" 
+      error: "Message too long (max 300 characters)" 
     });
   }
   
