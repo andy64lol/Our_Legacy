@@ -314,67 +314,27 @@ def format_item_name(item_name: str, rarity: str = "common") -> str:
     return f"{color}{item_name}{Colors.END}"
 
 
-    def ask(self, prompt: str,
-            valid_choices: Optional[List[str]] = None,
-            allow_empty: bool = True,
-            case_sensitive: bool = False,
-            suggest: bool = True) -> str:
-        """Prompt the user for input with optional validation and advance time."""
-        if hasattr(self, 'player') and self.player:
-            self.player.advance_time(1)
-        
-        while True:
-            try:
-                response = input(prompt)
-            except EOFError:
-                response = ''
+def ask(prompt: str,
+        valid_choices: Optional[List[str]] = None,
+        allow_empty: bool = True,
+        case_sensitive: bool = False,
+        suggest: bool = True) -> str:
+    """Prompt the user for input with optional validation and suggestions.
 
-            resp = response.strip()
+    - `valid_choices`: list of allowed responses (comparison controlled by `case_sensitive`).
+    - `allow_empty`: if False, empty input will be rejected.
+    - Returns the stripped input string.
+    """
+    while True:
+        try:
+            response = input(prompt)
+        except EOFError:
+            response = ''
 
-            # Normalize for comparison if case-insensitive
-            cmp_resp = resp if case_sensitive else resp.lower()
-            # Ensure cmp_choices is always a list[str] for safe membership checks
-            cmp_choices: List[str] = []
-            if valid_choices:
-                cmp_choices = [
-                    c if case_sensitive else c.lower() for c in valid_choices
-                ]
+        resp = response.strip()
 
-            # Empty handling
-            if not resp and allow_empty:
-                clear_screen()
-                return resp
-            if not resp and not allow_empty:
-                print("Input cannot be empty. Please try again.")
-                continue
-
-            # If no validation requested, accept
-            if not valid_choices:
-                clear_screen()
-                return resp
-
-            # Exact match
-            if cmp_choices and cmp_resp in cmp_choices:
-                clear_screen()
-                return resp
-
-            # If suggestions enabled, show closest matches
-            if suggest and cmp_choices:
-                close = difflib.get_close_matches(cmp_resp,
-                                                  cmp_choices,
-                                                  n=3,
-                                                  cutoff=0.4)
-                if close:
-                    print(f"Invalid input. Did you mean: {', '.join(close)} ?")
-                else:
-                    print(
-                        f"Invalid input. Allowed choices: {', '.join(cmp_choices)}"
-                    )
-            else:
-                # Fallback to showing valid choices if available
-                print(
-                    f"Invalid input. Allowed choices: {', '.join(cmp_choices or [])}"
-                )
+        # Normalize for comparison if case-insensitive
+        cmp_resp = resp if case_sensitive else resp.lower()
         # Ensure cmp_choices is always a list[str] for safe membership checks
         cmp_choices: List[str] = []
         if valid_choices:
@@ -705,38 +665,7 @@ class Character:
             "training_place_3": None,
         }
 
-        # Time system
-        self.day = 1
-        self.hour = 0
-        self.max_hours = 48
-        self.times_data = {}
-
-    def advance_time(self, hours: int = 1):
-        """Advance the game time by a number of hours."""
-        self.hour += hours
-        while self.hour >= self.max_hours:
-            self.hour -= self.max_hours
-            self.day += 1
-            print(f"\n{Colors.YELLOW}A new day begins! Day {self.day}{Colors.END}")
-
-    def get_time_period(self) -> str:
-        """Get the current time period name based on the hour."""
-        if not self.times_data:
-            return "unknown"
-        for period, data in self.times_data.items():
-            if data['start_hour'] <= self.hour <= data['end_hour']:
-                return period
-        return "unknown"
-
-    def get_time_description(self, language_data: Dict) -> str:
-        """Get the translated description of the current time."""
-        period = self.get_time_period()
-        if period == "unknown":
-            return "The passage of time is strange here..."
-        
-        period_data = self.times_data.get(period, {})
-        desc_key = period_data.get("description", "")
-        return language_data.get(desc_key, desc_key)
+        # Farming system: track planted crops and their growth time
         # Format: {farm_slot_id: [{"crop": "wheat", "days_left": 3}, ...]}
         self.farm_plots: Dict[str, List[Dict[str, Any]]] = {
             "farm_1": [],
@@ -852,6 +781,45 @@ class Character:
             self.rank = "E tier adventurer"
         else:
             self.rank = "F tier adventurer"
+
+    def get_time_period(self) -> str:
+        """Get the current time period name based on the hour."""
+        if not hasattr(self, 'times_data') or not self.times_data:
+            return "unknown"
+        for period, data in self.times_data.items():
+            if data['start_hour'] <= self.hour <= data['end_hour']:
+                return period
+        return "unknown"
+
+    def get_time_description(self, language_data: Dict) -> str:
+        """Get the translated description of the current time."""
+        period = self.get_time_period()
+        if period == "unknown":
+            return "The passage of time is strange here..."
+        
+        period_data = self.times_data.get(period, {})
+        desc_key = period_data.get("description", "")
+        return language_data.get(desc_key, desc_key)
+
+    def get_weather_description(self, language_data: Dict) -> str:
+        """Get the translated description of the current weather."""
+        if not hasattr(self, 'current_weather') or not self.current_weather:
+            self.current_weather = "sunny"  # Default
+        
+        weather_info = self.weather_data.get(self.current_weather, {})
+        desc_key = weather_info.get("description", "")
+        return language_data.get(desc_key, desc_key)
+
+    def advance_time(self, hours: int = 1):
+        """Advance the game time by a number of hours."""
+        self.hour += hours
+        while self.hour >= self.max_hours:
+            self.hour -= self.max_hours
+            self.day += 1
+            # Randomly change weather each day
+            if hasattr(self, 'weather_data') and self.weather_data:
+                self.current_weather = random.choice(list(self.weather_data.keys()))
+            print(f"\n{Colors.YELLOW}A new day begins! Day {self.day}{Colors.END}")
 
     def display_stats(self):
         """Display character statistics"""
@@ -1369,10 +1337,6 @@ class Game:
                 self.spells_data = json.load(f)
             with open('data/effects.json', 'r') as f:
                 self.effects_data = json.load(f)
-            with open('data/weather.json', 'r') as f:
-                self.weather_data = json.load(f)
-            with open('data/times.json', 'r') as f:
-                self.times_data = json.load(f)
             # Optional companions data
             try:
                 with open('data/companions.json', 'r') as f:
@@ -1860,6 +1824,13 @@ class Game:
             self.lang.get("current_location",
                           area=area_data.get('name', self.current_area)))
 
+        # Display time and weather
+        if hasattr(self, 'player') and self.player:
+            time_desc = self.player.get_time_description(self.lang)
+            weather_desc = self.player.get_weather_description(self.lang)
+            print(f"{Colors.YELLOW}{time_desc}{Colors.END}")
+            print(f"{Colors.CYAN}{weather_desc}{Colors.END}")
+
         print(f"{Colors.CYAN}1.{Colors.END} {self.lang.get('explore')}")
         print(f"{Colors.CYAN}2.{Colors.END} {self.lang.get('view_character')}")
         print(f"{Colors.CYAN}3.{Colors.END} {self.lang.get('travel')}")
@@ -1889,8 +1860,9 @@ class Game:
             )
             print(f"{Colors.CYAN}22.{Colors.END} {self.lang.get('quit')}")
             menu_max = "22"
-            choice = ask(f"{Colors.CYAN}Choose an option (1-{menu_max}): {Colors.END}",
-                         allow_empty=False)
+            choice = ask(
+                f"{Colors.CYAN}Choose an option (1-{menu_max}): {Colors.END}",
+                allow_empty=False)
         else:
             print(f"{Colors.CYAN}15.{Colors.END} {self.lang.get('save_game')}")
             print(f"{Colors.CYAN}16.{Colors.END} {self.lang.get('load_game')}")
@@ -1899,8 +1871,9 @@ class Game:
             )
             print(f"{Colors.CYAN}18.{Colors.END} {self.lang.get('quit')}")
             menu_max = "18"
-            choice = ask(f"{Colors.CYAN}Choose an option (1-{menu_max}): {Colors.END}",
-                         allow_empty=False)
+            choice = ask(
+                f"{Colors.CYAN}Choose an option (1-{menu_max}): {Colors.END}",
+                allow_empty=False)
 
         # Normalize textual shortcuts to numbers for backward compatibility
         shortcut_map = {
@@ -5869,11 +5842,15 @@ class Game:
                 dungeons.append(dungeon)
 
         if not dungeons:
-            print(f"\n{Colors.YELLOW}No dungeons available in {self.current_area}.{Colors.END}")
+            print(
+                f"\n{Colors.YELLOW}No dungeons available in {self.current_area}.{Colors.END}"
+            )
             print("Travel to other areas to find dungeons.")
             return
 
-        print(f"\n{Colors.CYAN}Available Dungeons in {self.current_area}:{Colors.END}")
+        print(
+            f"\n{Colors.CYAN}Available Dungeons in {self.current_area}:{Colors.END}"
+        )
         for i, dungeon in enumerate(dungeons, 1):
             name = dungeon['name']
             difficulty = dungeon['difficulty']
@@ -5972,8 +5949,8 @@ class Game:
             room_data = {
                 'type': room_type,
                 'room_number': i + 1,
-                'difficulty':
-                dungeon.get('difficulty', [1, 3])[0] + (i * 0.5)  # Scale difficulty
+                'difficulty': dungeon.get('difficulty', [1, 3])[0] +
+                (i * 0.5)  # Scale difficulty
             }
 
             self.dungeon_rooms.append(room_data)
@@ -5985,7 +5962,8 @@ class Game:
             return
 
         # Loop through rooms until dungeon is complete
-        while self.current_dungeon and self.dungeon_progress < len(self.dungeon_rooms):
+        while self.current_dungeon and self.dungeon_progress < len(
+                self.dungeon_rooms):
             # Get current room
             room = self.dungeon_rooms[self.dungeon_progress]
 
@@ -6009,13 +5987,14 @@ class Game:
                 self.handle_empty_room(room)
             elif room_type == 'boss':
                 self.handle_boss_room(room)
-            
+
             # Check if player died during room
             if not self.player or not self.player.is_alive():
                 return
-        
+
         # Dungeon complete
-        if self.current_dungeon and self.dungeon_progress >= len(self.dungeon_rooms):
+        if self.current_dungeon and self.dungeon_progress >= len(
+                self.dungeon_rooms):
             self.complete_dungeon()
 
     def handle_question_room(self, room: Dict[str, Any]):
@@ -6051,7 +6030,9 @@ class Game:
         max_attempts = question_data.get('max_attempts', 3)
 
         while attempts < max_attempts:
-            answer = ask(f"Your answer ({max_attempts - attempts} tries left, or type 'leave'): ").strip().lower()
+            answer = ask(
+                f"Your answer ({max_attempts - attempts} tries left, or type 'leave'): "
+            ).strip().lower()
 
             if answer == 'leave':
                 print("You decide to give up on the riddle.")
@@ -6109,7 +6090,8 @@ class Game:
             damage = question_data.get('failure_damage', 15)
             if self.player:
                 actual_damage = self.player.take_damage(damage)
-                print(f"You took {actual_damage} damage from the failed riddle!")
+                print(
+                    f"You took {actual_damage} damage from the failed riddle!")
 
                 if self.player.is_alive():
                     self.advance_room()
@@ -6125,7 +6107,9 @@ class Game:
             self.advance_room()
             return
 
-        if not hasattr(self, 'enemies_data') or not self.enemies_data or not hasattr(self, 'areas_data') or not self.areas_data:
+        if not hasattr(self,
+                       'enemies_data') or not self.enemies_data or not hasattr(
+                           self, 'areas_data') or not self.areas_data:
             print("Game data missing. You proceed safely.")
             self.advance_room()
             return
@@ -6142,10 +6126,13 @@ class Game:
         if not area_enemies:
             # Only use fallback enemies that actually exist in enemies_data
             fallback_enemies = ['goblin', 'orc', 'skeleton']
-            area_enemies = [e for e in fallback_enemies if e in self.enemies_data]
+            area_enemies = [
+                e for e in fallback_enemies if e in self.enemies_data
+            ]
             # If still no valid enemies, use all available enemies from enemies_data
             if not area_enemies:
-                area_enemies = list(self.enemies_data.keys())[:5]  # Use first 5 enemies as last resort
+                area_enemies = list(self.enemies_data.keys()
+                                    )[:5]  # Use first 5 enemies as last resort
 
         enemies = []
         for _ in range(enemy_count):
@@ -6153,7 +6140,10 @@ class Game:
                 break
             enemy_name = random.choice(area_enemies)
             enemy_data = self.enemies_data.get(enemy_name)
-            if enemy_data and all(k in enemy_data for k in ['name', 'hp', 'attack', 'defense', 'speed', 'experience_reward', 'gold_reward']):
+            if enemy_data and all(k in enemy_data for k in [
+                    'name', 'hp', 'attack', 'defense', 'speed',
+                    'experience_reward', 'gold_reward'
+            ]):
                 # Scale enemy stats by difficulty
                 scaled_data = enemy_data.copy()
                 scaled_data['hp'] = int(scaled_data['hp'] *
@@ -6168,7 +6158,9 @@ class Game:
 
         # Handle case where no valid enemies were found
         if not enemies:
-            print(f"{Colors.YELLOW}No enemies found! You proceed safely.{Colors.END}")
+            print(
+                f"{Colors.YELLOW}No enemies found! You proceed safely.{Colors.END}"
+            )
             self.advance_room()
             return
 
@@ -6262,7 +6254,8 @@ class Game:
                 bonus_gold = 100 * count
                 self.player.gold += bonus_gold
                 print(
-                    f"{Colors.YELLOW}No legendary items found! Added {bonus_gold} bonus gold instead.{Colors.END}")
+                    f"{Colors.YELLOW}No legendary items found! Added {bonus_gold} bonus gold instead.{Colors.END}"
+                )
 
         # Generate random items - with safety checks for empty item lists
         for _ in range(item_count - len(items_found)):
@@ -6282,7 +6275,8 @@ class Game:
                 bonus_gold = random.randint(25, 75)
                 self.player.gold += bonus_gold
                 print(
-                    f"{Colors.DARK_GRAY}No items of {rarity} rarity found. Added {bonus_gold} gold instead.{Colors.END}")
+                    f"{Colors.DARK_GRAY}No items of {rarity} rarity found. Added {bonus_gold} gold instead.{Colors.END}"
+                )
 
         if items_found:
             print(f"{Colors.YELLOW}Items found:{Colors.END}")
@@ -6348,6 +6342,7 @@ class Game:
                     if reward.get('experience'):
                         self.player.gain_experience(reward['experience'])
                         print(f"You gained {reward['experience']} experience!")
+
     def handle_multi_choice_room(self, room: Dict[str, Any]):
         """Handle a multiple choice decision room"""
         if not self.player:
@@ -6502,30 +6497,38 @@ class Game:
                 self.dungeon_death()
         else:
             # Boss not found - try to find a suitable replacement or generate a generic boss
-            print(f"{Colors.YELLOW}Boss data not found. A powerful enemy appears!{Colors.END}")
-            
+            print(
+                f"{Colors.YELLOW}Boss data not found. A powerful enemy appears!{Colors.END}"
+            )
+
             # Try to use dungeon completion rewards as a "boss substitute"
             dungeon = self.current_dungeon
             if dungeon:
                 completion_reward = dungeon.get('completion_reward', {})
-                exp_reward = completion_reward.get('experience', 500) // 2  # Half reward
+                exp_reward = completion_reward.get('experience',
+                                                   500) // 2  # Half reward
                 gold_reward = completion_reward.get('gold', 300) // 2
-                
+
                 if self.player:
                     self.player.gain_experience(exp_reward)
                     self.player.gold += gold_reward
-                    
-                    print(f"You defeated the mysterious guardian!")
-                    print(f"Gained {Colors.MAGENTA}{exp_reward} experience{Colors.END}")
-                    print(f"Gained {Colors.GOLD}{gold_reward} gold{Colors.END}")
-                    
+
+                    print("You defeated the mysterious guardian!")
+                    print(
+                        f"Gained {Colors.MAGENTA}{exp_reward} experience{Colors.END}"
+                    )
+                    print(
+                        f"Gained {Colors.GOLD}{gold_reward} gold{Colors.END}")
+
                     # Give a random item from completion reward if available
                     items = completion_reward.get('items', [])
                     if items:
                         loot = random.choice(items)
                         self.player.inventory.append(loot)
-                        print(f"{Colors.YELLOW}Special item: {loot}!{Colors.END}")
-            
+                        print(
+                            f"{Colors.YELLOW}Special item: {loot}!{Colors.END}"
+                        )
+
             self.complete_dungeon()
 
     def advance_room(self):
@@ -6572,7 +6575,8 @@ class Game:
         # Give completion rewards
         completion_reward = dungeon.get('completion_reward', {})
         if completion_reward and self.player:
-            print(f"\n{Colors.GOLD}{Colors.BOLD}Completion Rewards:{Colors.END}")
+            print(
+                f"\n{Colors.GOLD}{Colors.BOLD}Completion Rewards:{Colors.END}")
 
             # Gold reward
             gold_reward = completion_reward.get('gold', 0)
@@ -6584,7 +6588,8 @@ class Game:
             exp_reward = completion_reward.get('experience', 0)
             if exp_reward > 0:
                 self.player.gain_experience(exp_reward)
-                print(f"  {Colors.MAGENTA}+{exp_reward} experience{Colors.END}")
+                print(
+                    f"  {Colors.MAGENTA}+{exp_reward} experience{Colors.END}")
 
             # Item rewards
             items = completion_reward.get('items', [])
@@ -6610,7 +6615,9 @@ class Game:
 
         # Check for none here
         if self.current_dungeon is not None:
-            print(f"\n{Colors.YELLOW}Exiting {self.current_dungeon['name']}...{Colors.END}")
+            print(
+                f"\n{Colors.YELLOW}Exiting {self.current_dungeon['name']}...{Colors.END}"
+            )
         else:
             print(f"\n{Colors.YELLOW}Exiting dungeon...{Colors.END}")
 
