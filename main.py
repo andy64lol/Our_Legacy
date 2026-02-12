@@ -315,10 +315,10 @@ def format_item_name(item_name: str, rarity: str = "common") -> str:
 
 
     def ask(self, prompt: str,
-        valid_choices: Optional[List[str]] = None,
-        allow_empty: bool = True,
-        case_sensitive: bool = False,
-        suggest: bool = True) -> str:
+            valid_choices: Optional[List[str]] = None,
+            allow_empty: bool = True,
+            case_sensitive: bool = False,
+            suggest: bool = True) -> str:
         """Prompt the user for input with optional validation and advance time."""
         if hasattr(self, 'player') and self.player:
             self.player.advance_time(1)
@@ -329,10 +329,52 @@ def format_item_name(item_name: str, rarity: str = "common") -> str:
             except EOFError:
                 response = ''
 
-        resp = response.strip()
+            resp = response.strip()
 
-        # Normalize for comparison if case-insensitive
-        cmp_resp = resp if case_sensitive else resp.lower()
+            # Normalize for comparison if case-insensitive
+            cmp_resp = resp if case_sensitive else resp.lower()
+            # Ensure cmp_choices is always a list[str] for safe membership checks
+            cmp_choices: List[str] = []
+            if valid_choices:
+                cmp_choices = [
+                    c if case_sensitive else c.lower() for c in valid_choices
+                ]
+
+            # Empty handling
+            if not resp and allow_empty:
+                clear_screen()
+                return resp
+            if not resp and not allow_empty:
+                print("Input cannot be empty. Please try again.")
+                continue
+
+            # If no validation requested, accept
+            if not valid_choices:
+                clear_screen()
+                return resp
+
+            # Exact match
+            if cmp_choices and cmp_resp in cmp_choices:
+                clear_screen()
+                return resp
+
+            # If suggestions enabled, show closest matches
+            if suggest and cmp_choices:
+                close = difflib.get_close_matches(cmp_resp,
+                                                  cmp_choices,
+                                                  n=3,
+                                                  cutoff=0.4)
+                if close:
+                    print(f"Invalid input. Did you mean: {', '.join(close)} ?")
+                else:
+                    print(
+                        f"Invalid input. Allowed choices: {', '.join(cmp_choices)}"
+                    )
+            else:
+                # Fallback to showing valid choices if available
+                print(
+                    f"Invalid input. Allowed choices: {', '.join(cmp_choices or [])}"
+                )
         # Ensure cmp_choices is always a list[str] for safe membership checks
         cmp_choices: List[str] = []
         if valid_choices:
