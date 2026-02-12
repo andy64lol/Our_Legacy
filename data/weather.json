@@ -1,34 +1,34 @@
 {
     "sunny": {
-        "description": "The sun is shining outside and you feel great!",
+        "description": "weather_sunny_desc",
         "bonuses": {
             "exp_bonus": 0.1,
             "gold_bonus": 0.1
         }
     },
     "rainy": {
-        "description": "It's raining outside, but you can still have fun indoors!",
+        "description": "weather_rainy_desc",
         "bonuses": {
             "exp_bonus": 0.05,
             "gold_bonus": 0.05
         }
     },
     "snowy": {
-        "description": "The snow is falling and the world looks magical!",
+        "description": "weather_snowy_desc",
         "bonuses": {
             "exp_bonus": 0.15,
             "gold_bonus": 0.15
         }
     },
     "stormy": {
-        "description": "A storm is raging outside, but you can find shelter and stay safe!",
+        "description": "weather_stormy_desc",
         "bonuses": {
             "exp_bonus": 0.2,
             "gold_bonus": 0.2
         }
     },
     "null": {
-        "description": "There is no apparent weather here...",
+        "description": "weather_null_desc",
         "bonuses": {
             "exp_bonus": 0.0,
             "gold_bonus": 0.0
