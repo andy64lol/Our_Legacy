@@ -314,22 +314,20 @@ def format_item_name(item_name: str, rarity: str = "common") -> str:
     return f"{color}{item_name}{Colors.END}"
 
 
-def ask(prompt: str,
+    def ask(self, prompt: str,
         valid_choices: Optional[List[str]] = None,
         allow_empty: bool = True,
         case_sensitive: bool = False,
         suggest: bool = True) -> str:
-    """Prompt the user for input with optional validation and suggestions.
-
-    - `valid_choices`: list of allowed responses (comparison controlled by `case_sensitive`).
-    - `allow_empty`: if False, empty input will be rejected.
-    - Returns the stripped input string.
-    """
-    while True:
-        try:
-            response = input(prompt)
-        except EOFError:
-            response = ''
+        """Prompt the user for input with optional validation and advance time."""
+        if hasattr(self, 'player') and self.player:
+            self.player.advance_time(1)
+        
+        while True:
+            try:
+                response = input(prompt)
+            except EOFError:
+                response = ''
 
         resp = response.strip()
 
@@ -665,7 +663,38 @@ class Character:
             "training_place_3": None,
         }
 
-        # Farming system: track planted crops and their growth time
+        # Time system
+        self.day = 1
+        self.hour = 0
+        self.max_hours = 48
+        self.times_data = {}
+
+    def advance_time(self, hours: int = 1):
+        """Advance the game time by a number of hours."""
+        self.hour += hours
+        while self.hour >= self.max_hours:
+            self.hour -= self.max_hours
+            self.day += 1
+            print(f"\n{Colors.YELLOW}A new day begins! Day {self.day}{Colors.END}")
+
+    def get_time_period(self) -> str:
+        """Get the current time period name based on the hour."""
+        if not self.times_data:
+            return "unknown"
+        for period, data in self.times_data.items():
+            if data['start_hour'] <= self.hour <= data['end_hour']:
+                return period
+        return "unknown"
+
+    def get_time_description(self, language_data: Dict) -> str:
+        """Get the translated description of the current time."""
+        period = self.get_time_period()
+        if period == "unknown":
+            return "The passage of time is strange here..."
+        
+        period_data = self.times_data.get(period, {})
+        desc_key = period_data.get("description", "")
+        return language_data.get(desc_key, desc_key)
         # Format: {farm_slot_id: [{"crop": "wheat", "days_left": 3}, ...]}
         self.farm_plots: Dict[str, List[Dict[str, Any]]] = {
             "farm_1": [],
@@ -1298,6 +1327,10 @@ class Game:
                 self.spells_data = json.load(f)
             with open('data/effects.json', 'r') as f:
                 self.effects_data = json.load(f)
+            with open('data/weather.json', 'r') as f:
+                self.weather_data = json.load(f)
+            with open('data/times.json', 'r') as f:
+                self.times_data = json.load(f)
             # Optional companions data
             try:
                 with open('data/companions.json', 'r') as f:
