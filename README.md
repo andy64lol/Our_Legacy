@@ -1,4 +1,19 @@
-# Our Legacy - Text-Based CLI Fantasy RPG Game
+# ⚔️ Our Legacy - Text-Based CLI Fantasy RPG Game
+
+![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)
+![Node.js](https://img.shields.io/badge/Node.js-Required-green.svg)
+![License](https://img.shields.io/badge/License-MIT-yellow.svg)
+
+## 📑 Quick Links
+- [Overview](#overview)
+- [Quick Start](#quick-start)
+- [Features](#features)
+- [Installation](#installation--setup)
+- [Web Download](#web-download)
+- [Game Controls](#game-controls)
+- [File Structure](#file-structure)
+- [Mod System](#mod-system)
+- [Contributing](#contributing)
 
 ## Overview
 
@@ -52,15 +67,40 @@ Materials are found by defeating enemies or exploring specific areas:
 - **Enchantments**: Forge weapons and armor like *Steel Daggers* or *Swamp Scale Armor*.
 - **Utility**: Craft Luck Charms or extract pure Elemental Essences into Gems.
 
-## Installation & Setup
+## 🚀 Quick Start
 
 ### Prerequisites
 - **Python 3.9+**
+- **Node.js** (for scripting features)
 
-### Quick Start
+### Installation
 ```bash
+# Clone or download the repository
+git clone https://github.com/yourusername/our-legacy.git
+
+# Navigate to the project directory
+cd our-legacy
+
+# Run the game
 python3 main.py
+
+# Or use the launcher for all tools
+python3 launcher.py
 ```
+
+## 🌐 Web Download
+
+You can also download Our Legacy directly from the web interface:
+
+1. Open `index.html` in your browser
+2. Click the **"Download Our Legacy (ZIP)"** button
+3. Extract the ZIP file
+4. Run `python3 main.py` to start playing
+
+The web interface also includes:
+- 📖 Full documentation display
+- 🎮 Feature highlights
+- 📦 One-click ZIP download
 
 ## Game Controls
 
@@ -82,6 +122,8 @@ Our_Legacy/
 ├── storyland.py            # Download and manage mods from GitHub
 ├── storywrite.py           # Submit mods to the community
 ├── main.py                 # Core game engine (Python 3.9+)
+├── chat.py                 # The chat client for Global chat
+├── gui_all.py              # Experimental GUI version of launcher.py using Tkinter
 ├── README.md               # Quick start guide and overview
 ├── documentation.md        # Complete modding guide with parameters & examples
 ├── package.json            # Node.js project configuration (for scripting)
@@ -115,6 +157,8 @@ Our_Legacy/
 │   ├── market.js
 │   ├── ping.js
 │   ├── upload_test.js
+│   ├── send_message.js
+│   ├── create_user.js
 │   └── data/
 └── LICENSE                 # Project license
 ```
@@ -175,5 +219,24 @@ For complete parameter documentation, see [documentation.md](documentation.md):
 - **Mod creation guide** with step-by-step instructions
 - **Best practices** for mod development
 
+## 🤝 Contributing
+
+Contributions are welcome! Whether it's:
+- 🐛 Bug fixes
+- ✨ New features
+- 🔧 Mod creation
+- 📚 Documentation improvements
+- 🌍 Translation support
+
+Please ensure your code follows the existing style and includes appropriate documentation.
+
+## 📄 License
+
+This project is open source under the MIT License. See the [LICENSE](LICENSE) file for details.
+
 ---
-**Forge your destiny and leave behind a legend that will never be forgotten!**
+
+<p align="center">
+  <strong>Forge your destiny and leave behind a legend that will never be forgotten!</strong><br>
+  <em>Built with ❤️ using Python & Node.js</em>
+</p>
