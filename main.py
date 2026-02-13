@@ -801,7 +801,7 @@ class Character:
         period = self.get_time_period()
         if period == "unknown":
             return "The passage of time is strange here..."
-        
+
         period_data = self.times_data.get(period, {})
         desc_key = period_data.get("description", "")
         return language_manager.get(desc_key)
@@ -810,7 +810,7 @@ class Character:
         """Get the translated description of the current weather."""
         if not hasattr(self, 'current_weather') or not self.current_weather:
             self.current_weather = "sunny"  # Default
-        
+
         weather_info = self.weather_data.get(self.current_weather, {})
         desc_key = weather_info.get("description", "")
         return language_manager.get(desc_key)
@@ -823,8 +823,11 @@ class Character:
             self.day += 1
             # Randomly change weather each day
             if hasattr(self, 'weather_data') and self.weather_data:
-                self.current_weather = random.choice(list(self.weather_data.keys()))
-            print(f"\n{Colors.YELLOW}A new day begins! Day {self.day}{Colors.END}")
+                self.current_weather = random.choice(
+                    list(self.weather_data.keys()))
+            print(
+                f"\n{Colors.YELLOW}A new day begins! Day {self.day}{Colors.END}"
+            )
 
     def display_stats(self):
         """Display character statistics"""
@@ -2322,10 +2325,14 @@ class Game:
             # Apply weather bonuses
             if self.player.current_weather == "sunny":
                 exp_reward = int(exp_reward * 1.1)
-                print(f"{Colors.YELLOW}Sunny weather bonus: +10% EXP!{Colors.END}")
+                print(
+                    f"{Colors.YELLOW}Sunny weather bonus: +10% EXP!{Colors.END}"
+                )
             elif self.player.current_weather == "stormy":
                 gold_reward = int(gold_reward * 1.2)
-                print(f"{Colors.CYAN}Stormy weather bonus: +20% Gold (hazardous conditions)!{Colors.END}")
+                print(
+                    f"{Colors.CYAN}Stormy weather bonus: +20% Gold (hazardous conditions)!{Colors.END}"
+                )
 
             print(
                 f"Gained {Colors.MAGENTA}{exp_reward} experience{Colors.END}")
@@ -5372,16 +5379,26 @@ class Game:
                 self.player.farm_plots
                 if hasattr(self.player, 'farm_plots') else {}
             },
-            "current_area": self.current_area,
-            "visited_areas": list(self.visited_areas),
-            "mission_progress": self.mission_progress,
-            "completed_missions": self.completed_missions,
-            "save_version": "3.0",
-            "save_time": datetime.now().isoformat(),
-            "bosses_killed": self.player.bosses_killed if self.player else {},
-            "hour": self.player.hour if self.player else 8,
-            "day": self.player.day if self.player else 1,
-            "current_weather": self.player.current_weather if self.player else "sunny"
+            "current_area":
+            self.current_area,
+            "visited_areas":
+            list(self.visited_areas),
+            "mission_progress":
+            self.mission_progress,
+            "completed_missions":
+            self.completed_missions,
+            "save_version":
+            "3.0",
+            "save_time":
+            datetime.now().isoformat(),
+            "bosses_killed":
+            self.player.bosses_killed if self.player else {},
+            "hour":
+            self.player.hour if self.player else 8,
+            "day":
+            self.player.day if self.player else 1,
+            "current_weather":
+            self.player.current_weather if self.player else "sunny"
         }
 
         saves_dir = "data/saves"
@@ -5516,7 +5533,8 @@ class Game:
                             "bosses_killed", {})
                         self.player.hour = save_data.get("hour", 8)
                         self.player.day = save_data.get("day", 1)
-                        self.player.current_weather = save_data.get("current_weather", "sunny")
+                        self.player.current_weather = save_data.get(
+                            "current_weather", "sunny")
 
                     # Backward compatibility for old saves using current_missions
                     if not self.mission_progress and "current_missions" in save_data:
