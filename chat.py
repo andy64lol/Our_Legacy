@@ -117,7 +117,7 @@ def print_chat_divider(width: Optional[int] = None, color: str = Colors.DIM):
 PING_URL = "https://our-legacy.vercel.app/api/ping"
 SEND_MESSAGE_URL = "https://our-legacy.vercel.app/api/send_message"
 CREATE_USER_URL = "https://our-legacy.vercel.app/api/create_user"
-GLOBAL_CHAT_URL = "https://raw.githubusercontent.com/andy64lol/globalchat/refs/heads/main/global_chat.toml"
+GLOBAL_CHAT_URL = "https://raw.githubusercontent.com/andy64lol/globalchat/refs/heads/main/global_chat.toml?cache_bust=1"
 USERS_URL = "https://raw.githubusercontent.com/andy64lol/globalchat/refs/heads/main/users.json"
 ALIAS_FILE = "data/saves/username.txt"
 COOLDOWN_SECONDS = 20
