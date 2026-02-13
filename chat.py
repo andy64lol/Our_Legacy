@@ -113,7 +113,7 @@ def print_chat_divider(width: Optional[int] = None, color: str = Colors.DIM):
         width = get_terminal_width()
     print(f"{color}{'=' * width}{Colors.RESET}")
 
-# Configuration
+# Configuration - Primary URLs (Vercel)
 PING_URL = "https://our-legacy.vercel.app/api/ping"
 SEND_MESSAGE_URL = "https://our-legacy.vercel.app/api/send_message"
 CREATE_USER_URL = "https://our-legacy.vercel.app/api/create_user"
@@ -121,6 +121,14 @@ FETCH_MESSAGES_URL = "https://our-legacy.vercel.app/api/fetch_messages"
 FETCH_USERS_URL = "https://our-legacy.vercel.app/api/fetch_users"
 BAN_CHAT_URL = "https://our-legacy.vercel.app/api/ban_chat"
 USERS_URL = "https://raw.githubusercontent.com/andy64lol/globalchat/refs/heads/main/users.json"
+
+# Fallback URLs (Netlify)
+PING_URL_FALLBACK = "https://our-legacy.netlify.app/functions/ping"
+SEND_MESSAGE_URL_FALLBACK = "https://our-legacy.netlify.app/functions/send_messages"
+CREATE_USER_URL_FALLBACK = "https://our-legacy.netlify.app/functions/create_user"
+FETCH_MESSAGES_URL_FALLBACK = "https://our-legacy.netlify.app/functions/fetch_messages"
+FETCH_USERS_URL_FALLBACK = "https://our-legacy.netlify.app/functions/fetch_users"
+BAN_CHAT_URL_FALLBACK = "https://our-legacy.netlify.app/functions/ban_chat"
 ALIAS_FILE = "data/saves/username.txt"
 COOLDOWN_SECONDS = 20
 AUTO_REFRESH_SECONDS = 10
@@ -178,12 +186,13 @@ class EnhancedChatClient:
     
     def check_alias_exists(self, alias: str) -> bool:
         """Check if alias already exists in users.json."""
-        # Use the API endpoint for more reliable checking
+        # Use the API endpoint for more reliable checking with fallback
         try:
-            response = requests.get(
+            urls = [
                 f"{CREATE_USER_URL}?alias={quote(alias)}",
-                timeout=10
-            )
+                f"{CREATE_USER_URL_FALLBACK}?alias={quote(alias)}"
+            ]
+            response = self._try_urls(urls, method='get', timeout=10)
             if response.status_code == 200:
                 data = response.json()
                 return data.get('exists', False)
@@ -208,10 +217,11 @@ class EnhancedChatClient:
     def get_user_permissions(self, alias: str) -> str:
         """Get user permissions level."""
         try:
-            response = requests.get(
+            urls = [
                 f"{FETCH_USERS_URL}?alias={quote(alias)}",
-                timeout=10
-            )
+                f"{FETCH_USERS_URL_FALLBACK}?alias={quote(alias)}"
+            ]
+            response = self._try_urls(urls, method='get', timeout=10)
             if response.status_code == 200:
                 data = response.json()
                 if data.get('success') and data.get('user'):
@@ -239,12 +249,8 @@ class EnhancedChatClient:
                 "reason": reason
             }
             
-            response = requests.post(
-                BAN_CHAT_URL,
-                json=payload,
-                headers={"Content-Type": "application/json"},
-                timeout=10
-            )
+            urls = [BAN_CHAT_URL, BAN_CHAT_URL_FALLBACK]
+            response = self._try_urls(urls, method='post', json=payload, headers={"Content-Type": "application/json"}, timeout=10)
             
             if response.status_code == 200:
                 data = response.json()
@@ -273,12 +279,8 @@ class EnhancedChatClient:
                 "moderator_alias": self.alias
             }
             
-            response = requests.post(
-                BAN_CHAT_URL,
-                json=payload,
-                headers={"Content-Type": "application/json"},
-                timeout=10
-            )
+            urls = [BAN_CHAT_URL, BAN_CHAT_URL_FALLBACK]
+            response = self._try_urls(urls, method='post', json=payload, headers={"Content-Type": "application/json"}, timeout=10)
             
             if response.status_code == 200:
                 data = response.json()
@@ -307,12 +309,8 @@ class EnhancedChatClient:
                 "moderator_alias": self.alias
             }
             
-            response = requests.post(
-                BAN_CHAT_URL,
-                json=payload,
-                headers={"Content-Type": "application/json"},
-                timeout=10
-            )
+            urls = [BAN_CHAT_URL, BAN_CHAT_URL_FALLBACK]
+            response = self._try_urls(urls, method='post', json=payload, headers={"Content-Type": "application/json"}, timeout=10)
             
             if response.status_code == 200:
                 data = response.json()
@@ -439,12 +437,8 @@ class EnhancedChatClient:
                     }
                 }
                 
-                response = requests.post(
-                    CREATE_USER_URL,
-                    json=payload,
-                    headers={"Content-Type": "application/json"},
-                    timeout=15
-                )
+                urls = [CREATE_USER_URL, CREATE_USER_URL_FALLBACK]
+                response = self._try_urls(urls, method='post', json=payload, headers={"Content-Type": "application/json"}, timeout=15)
                 
                 if response.status_code == 201:
                     return True
@@ -526,10 +520,27 @@ class EnhancedChatClient:
             print(f"{Colors.BRIGHT_RED}Error saving alias: {e}{Colors.RESET}")
             sys.exit(1)
     
+    def _try_urls(self, urls, method='get', **kwargs):
+        """Try multiple URLs with fallback logic."""
+        last_error = None
+        for url in urls:
+            try:
+                if method == 'get':
+                    response = requests.get(url, **kwargs)
+                elif method == 'post':
+                    response = requests.post(url, **kwargs)
+                else:
+                    raise ValueError(f"Unsupported method: {method}")
+                return response
+            except Exception as e:
+                last_error = e
+                continue
+        raise last_error if last_error else Exception("All URLs failed")
+
     def check_connection(self) -> bool:
-        """Check if server is reachable."""
+        """Check if server is reachable with fallback."""
         try:
-            response = requests.get(PING_URL, timeout=5)
+            response = self._try_urls([PING_URL, PING_URL_FALLBACK], method='get', timeout=5)
             self.connection_ok = response.status_code == 200
             return self.connection_ok
         except:
@@ -546,7 +557,7 @@ class EnhancedChatClient:
         return 0
     
     def fetch_messages(self, force: bool = False) -> bool:
-        """Fetch messages from API with 20-second cooldown."""
+        """Fetch messages from API with 20-second cooldown and fallback."""
         # Check cooldown unless forced
         if not force:
             cooldown = self.get_fetch_cooldown()
@@ -556,7 +567,8 @@ class EnhancedChatClient:
         
         with self.fetch_lock:
             try:
-                response = requests.get(FETCH_MESSAGES_URL, timeout=10)
+                urls = [FETCH_MESSAGES_URL, FETCH_MESSAGES_URL_FALLBACK]
+                response = self._try_urls(urls, method='get', timeout=10)
                 
                 if response.status_code == 200:
                     data = response.json()
@@ -778,7 +790,7 @@ class EnhancedChatClient:
         return 0
     
     def send_message(self, content: str) -> bool:
-        """Send a message to the server."""
+        """Send a message to the server with fallback."""
         # Check cooldown
         cooldown = self.get_cooldown_status()
         if cooldown > 0:
@@ -800,12 +812,8 @@ class EnhancedChatClient:
                 "author": self.alias
             }
             
-            response = requests.post(
-                SEND_MESSAGE_URL,
-                json=payload,
-                headers={"Content-Type": "application/json"},
-                timeout=10
-            )
+            urls = [SEND_MESSAGE_URL, SEND_MESSAGE_URL_FALLBACK]
+            response = self._try_urls(urls, method='post', json=payload, headers={"Content-Type": "application/json"}, timeout=10)
             
             if response.status_code == 200:
                 self.last_message_time = time.time()
@@ -941,6 +949,8 @@ class EnhancedChatClient:
                 except EOFError:
                     # Handle Ctrl+D
                     print(f"\n{Colors.BRIGHT_CYAN}Goodbye!{Colors.RESET}")
+                    time.sleep(1)
+                    clear_screen()
                     break
                 
                 if not user_input:
@@ -1005,6 +1015,8 @@ class EnhancedChatClient:
                     
                     elif cmd == '/exit' or cmd == '/quit' or cmd == '/q':
                         print(f"\n{Colors.BRIGHT_CYAN}Goodbye!{Colors.RESET}")
+                        time.sleep(1)
+                        clear_screen()
                         self.is_exiting = True
                         break
                     
@@ -1077,6 +1089,8 @@ class EnhancedChatClient:
                 
             except KeyboardInterrupt:
                 print(f"\n{Colors.BRIGHT_CYAN}Goodbye!{Colors.RESET}")
+                time.sleep(1)
+                clear_screen()
                 self.is_exiting = True
                 break
             except Exception as e:
@@ -1097,6 +1111,8 @@ def main():
         chat.run()
     except KeyboardInterrupt:
         print(f"\n{Colors.BRIGHT_CYAN}Goodbye!{Colors.RESET}")
+        time.sleep(1)
+        clear_screen()
     except Exception as e:
         print(f"{Colors.BRIGHT_RED}Fatal error: {e}{Colors.RESET}")
         sys.exit(1)

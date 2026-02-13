@@ -11,6 +11,7 @@ import os
 import sys
 import requests
 import zipfile
+import time
 import io
 from pathlib import Path
 
@@ -224,6 +225,8 @@ def main():
         if choice in ['q', 'quit']:
             print(f"\n{Colors.CYAN}Thank you for using Our Legacy Mod Downloader Storyland!{Colors.RESET}")
             print(f"{Colors.CYAN}Goodbye!{Colors.RESET}\n")
+            time.sleep(1)
+            clear_screen()
             sys.exit(0)
         
         elif choice == 'n' or choice == 'next':
