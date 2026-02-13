@@ -624,8 +624,12 @@ class Character:
         # Each companion is {id, name, equipment: {weapon, armor, accessory}, level}
         self.companions: List[Dict[str, Any]] = []
 
-        # Battle state
-        self.defending = False
+        self.hour = 8  # Start at 8 AM
+        self.day = 1
+        self.max_hours = 24
+        self.current_weather = "sunny"
+        self.weather_data = {}
+        self.times_data = {}
 
         # Active temporary buffs/debuffs: list of {name, duration, modifiers}
         # modifiers is a dict like {"attack_bonus": 5, "defense_bonus": 2}
@@ -1766,6 +1770,8 @@ class Game:
         character_class = self.select_class()
 
         self.player = Character(name, character_class, self.classes_data)
+        self.player.weather_data = self.weather_data
+        self.player.times_data = self.times_data
         print(
             self.lang.get("welcome_adventurer",
                           name=name,
@@ -2098,6 +2104,8 @@ class Game:
 
     def explore(self):
         """Explore the current area"""
+        if self.player:
+            self.player.advance_time(1)  # Advance time on exploration
         if not self.player:
             print("No character created yet. Please create a character first.")
             return
@@ -2293,6 +2301,14 @@ class Game:
             # Rewards
             exp_reward = enemy.experience_reward
             gold_reward = enemy.gold_reward
+
+            # Apply weather bonuses
+            if self.player.current_weather == "sunny":
+                exp_reward = int(exp_reward * 1.1)
+                print(f"{Colors.YELLOW}Sunny weather bonus: +10% EXP!{Colors.END}")
+            elif self.player.current_weather == "stormy":
+                gold_reward = int(gold_reward * 1.2)
+                print(f"{Colors.CYAN}Stormy weather bonus: +20% Gold (hazardous conditions)!{Colors.END}")
 
             print(
                 f"Gained {Colors.MAGENTA}{exp_reward} experience{Colors.END}")
@@ -5345,7 +5361,10 @@ class Game:
             "completed_missions": self.completed_missions,
             "save_version": "3.0",
             "save_time": datetime.now().isoformat(),
-            "bosses_killed": self.player.bosses_killed if self.player else {}
+            "bosses_killed": self.player.bosses_killed if self.player else {},
+            "hour": self.player.hour if self.player else 8,
+            "day": self.player.day if self.player else 1,
+            "current_weather": self.player.current_weather if self.player else "sunny"
         }
 
         saves_dir = "data/saves"
@@ -5478,6 +5497,9 @@ class Game:
                     if self.player:
                         self.player.bosses_killed = save_data.get(
                             "bosses_killed", {})
+                        self.player.hour = save_data.get("hour", 8)
+                        self.player.day = save_data.get("day", 1)
+                        self.player.current_weather = save_data.get("current_weather", "sunny")
 
                     # Backward compatibility for old saves using current_missions
                     if not self.mission_progress and "current_missions" in save_data:
