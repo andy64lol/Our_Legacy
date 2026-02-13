@@ -118,6 +118,8 @@ PING_URL = "https://our-legacy.vercel.app/api/ping"
 SEND_MESSAGE_URL = "https://our-legacy.vercel.app/api/send_message"
 CREATE_USER_URL = "https://our-legacy.vercel.app/api/create_user"
 FETCH_MESSAGES_URL = "https://our-legacy.vercel.app/api/fetch_messages"
+FETCH_USERS_URL = "https://our-legacy.vercel.app/api/fetch_users"
+BAN_CHAT_URL = "https://our-legacy.vercel.app/api/ban_chat"
 USERS_URL = "https://raw.githubusercontent.com/andy64lol/globalchat/refs/heads/main/users.json"
 ALIAS_FILE = "data/saves/username.txt"
 COOLDOWN_SECONDS = 20
@@ -145,6 +147,7 @@ class EnhancedChatClient:
         self.is_banned = False  # Ban status
         self.last_ban_check = 0  # Last ban check time
         self.last_fetch_time = 0  # Last message fetch time (20s cooldown)
+        self.user_permissions = 'user'  # Current user permissions level
         
         # Set up terminal resize handler (Unix/Linux only)
         try:
@@ -201,6 +204,144 @@ class EnhancedChatClient:
             if isinstance(user, dict) and user.get('alias', '').lower() == alias.lower():
                 return user.get('blacklisted', False)
         return False
+    
+    def get_user_permissions(self, alias: str) -> str:
+        """Get user permissions level."""
+        try:
+            response = requests.get(
+                f"{FETCH_USERS_URL}?alias={quote(alias)}",
+                timeout=10
+            )
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('success') and data.get('user'):
+                    return data['user'].get('permissions', 'user')
+        except Exception as e:
+            print(f"{Colors.BRIGHT_RED}Error fetching user permissions: {e}{Colors.RESET}")
+        return 'user'
+    
+    def get_permission_level(self, permissions: str) -> int:
+        """Convert permission string to level number."""
+        levels = {
+            'user': 0,
+            'admin': 1,
+            'owner': 2
+        }
+        return levels.get(permissions, 0)
+    
+    def ban_user(self, target_alias: str, reason: Optional[str] = None) -> bool:
+        """Ban a user (admin/owner only)."""
+        try:
+            payload = {
+                "action": "ban",
+                "target_alias": target_alias,
+                "moderator_alias": self.alias,
+                "reason": reason
+            }
+            
+            response = requests.post(
+                BAN_CHAT_URL,
+                json=payload,
+                headers={"Content-Type": "application/json"},
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                print(f"{Colors.BRIGHT_GREEN}{data.get('message', 'User banned successfully')}{Colors.RESET}")
+                return True
+            else:
+                error_msg = f"HTTP {response.status_code}"
+                try:
+                    error_data = response.json()
+                    error_msg = error_data.get('error', error_msg)
+                except:
+                    pass
+                print(f"{Colors.BRIGHT_RED}Failed to ban: {error_msg}{Colors.RESET}")
+                return False
+                
+        except Exception as e:
+            print(f"{Colors.BRIGHT_RED}Error banning user: {e}{Colors.RESET}")
+            return False
+    
+    def unban_user(self, target_alias: str) -> bool:
+        """Unban a user (admin/owner only)."""
+        try:
+            payload = {
+                "action": "unban",
+                "target_alias": target_alias,
+                "moderator_alias": self.alias
+            }
+            
+            response = requests.post(
+                BAN_CHAT_URL,
+                json=payload,
+                headers={"Content-Type": "application/json"},
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                print(f"{Colors.BRIGHT_GREEN}{data.get('message', 'User unbanned successfully')}{Colors.RESET}")
+                return True
+            else:
+                error_msg = f"HTTP {response.status_code}"
+                try:
+                    error_data = response.json()
+                    error_msg = error_data.get('error', error_msg)
+                except:
+                    pass
+                print(f"{Colors.BRIGHT_RED}Failed to unban: {error_msg}{Colors.RESET}")
+                return False
+                
+        except Exception as e:
+            print(f"{Colors.BRIGHT_RED}Error unbanning user: {e}{Colors.RESET}")
+            return False
+    
+    def check_user_status(self, target_alias: str) -> bool:
+        """Check user ban status and permissions."""
+        try:
+            payload = {
+                "action": "check",
+                "target_alias": target_alias,
+                "moderator_alias": self.alias
+            }
+            
+            response = requests.post(
+                BAN_CHAT_URL,
+                json=payload,
+                headers={"Content-Type": "application/json"},
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('success') and data.get('target'):
+                    target = data['target']
+                    print(f"\n{Colors.BRIGHT_CYAN}User Status: {target_alias}{Colors.RESET}")
+                    print(f"{Colors.DIM}Permissions: {target.get('permissions', 'user')}{Colors.RESET}")
+                    print(f"{Colors.DIM}Blacklisted: {target.get('blacklisted', False)}{Colors.RESET}")
+                    if target.get('ban_reason'):
+                        print(f"{Colors.DIM}Ban Reason: {target.get('ban_reason')}{Colors.RESET}")
+                    if target.get('banned_by'):
+                        print(f"{Colors.DIM}Banned By: {target.get('banned_by')}{Colors.RESET}")
+                    return True
+            else:
+                error_msg = f"HTTP {response.status_code}"
+                try:
+                    error_data = response.json()
+                    error_msg = error_data.get('error', error_msg)
+                except:
+                    pass
+                print(f"{Colors.BRIGHT_RED}Failed to check status: {error_msg}{Colors.RESET}")
+                return False
+                
+        except Exception as e:
+            print(f"{Colors.BRIGHT_RED}Error checking user status: {e}{Colors.RESET}")
+            return False
+        
+        finally:
+            return False
     
     def check_alias(self):
         """Check if alias exists, if not create one."""
@@ -709,6 +850,14 @@ class EnhancedChatClient:
         print(f"  {Colors.CHAT_NAME_SELF}You{Colors.RESET}        - Your messages (with >>> prefix)")
         print(f"  {Colors.CHAT_NAME_SYSTEM}System{Colors.RESET}     - System notifications")
         
+        # Admin/Owner commands
+        if self.get_permission_level(self.user_permissions) >= 1:
+            print(f"\n{Colors.BRIGHT_RED}Admin/Owner Commands:{Colors.RESET}")
+            print_chat_divider(width, Colors.DIM)
+            print(f"  {Colors.BRIGHT_RED}/ban <user> [reason]{Colors.RESET} - {Colors.DIM}Ban a user{Colors.RESET}")
+            print(f"  {Colors.BRIGHT_RED}/unban <user>{Colors.RESET}       - {Colors.DIM}Unban a user{Colors.RESET}")
+            print(f"  {Colors.BRIGHT_RED}/check <user>{Colors.RESET}      - {Colors.DIM}Check user status{Colors.RESET}")
+        
         print(f"\n{Colors.BRIGHT_MAGENTA}Tips:{Colors.RESET}")
         print_chat_divider(width, Colors.DIM)
         print(f"  {Colors.DIM}• Press Ctrl+C to exit anytime{Colors.RESET}")
@@ -716,6 +865,7 @@ class EnhancedChatClient:
         print(f"  {Colors.DIM}• Cooldown: {COOLDOWN_SECONDS} seconds between messages{Colors.RESET}")
         print(f"  {Colors.DIM}• Auto-refresh: {AUTO_REFRESH_SECONDS}s interval{Colors.RESET}")
         print(f"  {Colors.DIM}• Max message length: {MAX_MESSAGE_LENGTH} characters{Colors.RESET}")
+        print(f"  {Colors.DIM}• Fetch cooldown: 20 seconds between refreshes{Colors.RESET}")
         
         print(f"\n{Colors.DIM}Press Enter to return to chat...{Colors.RESET}")
         input()
@@ -863,6 +1013,49 @@ class EnhancedChatClient:
                         self.display_messages(show_header=True)
                         self.display_input_area()
                         continue
+                    
+                    elif cmd == '/whoami':
+                        print(f"\n{Colors.BRIGHT_CYAN}Your Status:{Colors.RESET}")
+                        print(f"{Colors.DIM}Alias: {self.alias}{Colors.RESET}")
+                        print(f"{Colors.DIM}Permissions: {self.user_permissions}{Colors.RESET}")
+                        time.sleep(1)
+                        continue
+                    
+                    # Admin/Owner only commands
+                    elif self.get_permission_level(self.user_permissions) >= 1:
+                        if cmd.startswith('/ban '):
+                            parts = user_input.split(' ', 2)
+                            if len(parts) < 2:
+                                print(f"{Colors.BRIGHT_RED}Usage: /ban <username> [reason]{Colors.RESET}")
+                                time.sleep(1)
+                                continue
+                            target = parts[1].strip()
+                            reason = parts[2].strip() if len(parts) > 2 else None
+                            self.ban_user(target, reason)
+                            time.sleep(1)
+                            continue
+                        
+                        elif cmd.startswith('/unban '):
+                            parts = user_input.split(' ', 2)
+                            if len(parts) < 2:
+                                print(f"{Colors.BRIGHT_RED}Usage: /unban <username>{Colors.RESET}")
+                                time.sleep(1)
+                                continue
+                            target = parts[1].strip()
+                            self.unban_user(target)
+                            time.sleep(1)
+                            continue
+                        
+                        elif cmd.startswith('/check '):
+                            parts = user_input.split(' ', 2)
+                            if len(parts) < 2:
+                                print(f"{Colors.BRIGHT_RED}Usage: /check <username>{Colors.RESET}")
+                                time.sleep(1)
+                                continue
+                            target = parts[1].strip()
+                            self.check_user_status(target)
+                            time.sleep(1)
+                            continue
                     
                     else:
                         print(f"{Colors.BRIGHT_RED}Unknown command: {user_input}{Colors.RESET}")
