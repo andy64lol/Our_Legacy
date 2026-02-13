@@ -822,12 +822,40 @@ class Character:
             self.hour -= self.max_hours
             self.day += 1
             # Randomly change weather each day
-            if hasattr(self, 'weather_data') and self.weather_data:
-                self.current_weather = random.choice(
-                    list(self.weather_data.keys()))
+            self.update_weather()
             print(
                 f"\n{Colors.YELLOW}A new day begins! Day {self.day}{Colors.END}"
             )
+
+    def update_weather(self, area_id: Optional[str] = None):
+        """Update weather based on area exclusivity and general availability."""
+        if not hasattr(self, 'weather_data') or not self.weather_data:
+            return
+
+        target_area = area_id or getattr(self, 'current_area', None)
+        
+        # 1. Check if any weather is exclusive to THIS area
+        exclusive_weather = None
+        for w_id, w_info in self.weather_data.items():
+            exclusives = w_info.get("areas_exclusives", [])
+            if target_area in exclusives:
+                exclusive_weather = w_id
+                break
+        
+        if exclusive_weather:
+            self.current_weather = exclusive_weather
+            return
+
+        # 2. Otherwise, pick from weathers that don't have area exclusives
+        possible_weathers = []
+        for w_id, w_info in self.weather_data.items():
+            if not w_info.get("areas_exclusives"):
+                possible_weathers.append(w_id)
+        
+        if possible_weathers:
+            self.current_weather = random.choice(possible_weathers)
+        else:
+            self.current_weather = "sunny" # Fallback
 
     def display_stats(self):
         """Display character statistics"""
@@ -5190,6 +5218,8 @@ class Game:
             if 0 <= idx < len(connections):
                 new_area = connections[idx]
                 self.current_area = new_area
+                self.player.current_area = new_area
+                self.player.update_weather(new_area)
                 print(
                     f"Traveling to {self.areas_data.get(new_area, {}).get('name', new_area)}..."
                 )
