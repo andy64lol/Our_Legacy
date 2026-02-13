@@ -591,6 +591,7 @@ class Character:
         self.attack = stats.get("attack", 10)
         self.defense = stats.get("defense", 8)
         self.speed = stats.get("speed", 10)
+        self.defending = False
 
         # Equipment slots (legacy compatibility)
         self.weapon = None
