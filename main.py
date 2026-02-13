@@ -795,7 +795,7 @@ class Character:
                 return period
         return "unknown"
 
-    def get_time_description(self, language_data: Dict) -> str:
+    def get_time_description(self, language_manager: Any) -> str:
         """Get the translated description of the current time."""
         period = self.get_time_period()
         if period == "unknown":
@@ -803,16 +803,16 @@ class Character:
         
         period_data = self.times_data.get(period, {})
         desc_key = period_data.get("description", "")
-        return language_data.get(desc_key, desc_key)
+        return language_manager.get(desc_key)
 
-    def get_weather_description(self, language_data: Dict) -> str:
+    def get_weather_description(self, language_manager: Any) -> str:
         """Get the translated description of the current weather."""
         if not hasattr(self, 'current_weather') or not self.current_weather:
             self.current_weather = "sunny"  # Default
         
         weather_info = self.weather_data.get(self.current_weather, {})
         desc_key = weather_info.get("description", "")
-        return language_data.get(desc_key, desc_key)
+        return language_manager.get(desc_key)
 
     def advance_time(self, hours: int = 1):
         """Advance the game time by a number of hours."""
