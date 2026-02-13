@@ -94,7 +94,7 @@ async function readMessages() {
     return Array.isArray(content) ? content : [];
   } catch (error) {
     console.error('Error reading messages:', error);
-    return [];
+    throw error;
   }
 }
 
@@ -205,9 +205,18 @@ async function handleMessage(req, res) {
     });
   }
   
+  // Read current messages first
+  let messages;
   try {
-    // Read current messages
-    let messages = await readMessages();
+    messages = await readMessages();
+  } catch (error) {
+    console.error('Failed to read existing messages:', error);
+    return res.status(500).json({
+      error: "Failed to read existing messages. Please try again."
+    });
+  }
+  
+  try {
     const sha = await getFileSha();
     
     // Create new message
