@@ -117,7 +117,7 @@ def print_chat_divider(width: Optional[int] = None, color: str = Colors.DIM):
 PING_URL = "https://our-legacy.vercel.app/api/ping"
 SEND_MESSAGE_URL = "https://our-legacy.vercel.app/api/send_message"
 CREATE_USER_URL = "https://our-legacy.vercel.app/api/create_user"
-GLOBAL_CHAT_URL = "https://raw.githubusercontent.com/andy64lol/globalchat/refs/heads/main/global_chat.json"
+GLOBAL_CHAT_URL = "https://raw.githubusercontent.com/andy64lol/globalchat/refs/heads/main/global_chat.toml"
 USERS_URL = "https://raw.githubusercontent.com/andy64lol/globalchat/refs/heads/main/users.json"
 ALIAS_FILE = "data/saves/username.txt"
 COOLDOWN_SECONDS = 20
@@ -394,6 +394,30 @@ class EnhancedChatClient:
             self.connection_ok = False
             return False
     
+    def parse_toml_messages(self, text: str) -> List[Dict]:
+        """Parse TOML format messages to list of dicts."""
+        messages = []
+        blocks = text.split('[[messages]]')
+        
+        for block in blocks[1:]:  # Skip first empty element
+            msg = {}
+            lines = block.strip().split('\n')
+            
+            for line in lines:
+                line = line.strip()
+                if not line or line.startswith('#'):
+                    continue
+                
+                # Match key = "value" pattern
+                match = __import__('re').match(r'^(\w+)\s*=\s*"([^"]*)"', line)
+                if match:
+                    msg[match.group(1)] = match.group(2)
+            
+            if msg.get('content') and msg.get('author'):
+                messages.append(msg)
+        
+        return messages
+    
     def fetch_messages(self) -> bool:
         """Fetch messages from global chat - optimized for incremental updates."""
         with self.fetch_lock:
@@ -401,15 +425,8 @@ class EnhancedChatClient:
                 response = requests.get(GLOBAL_CHAT_URL, timeout=10)
                 
                 if response.status_code == 200:
-                    data = response.json()
-                    
-                    # Handle different JSON structures
-                    if isinstance(data, dict):
-                        all_messages = data.get('messages', [])
-                    elif isinstance(data, list):
-                        all_messages = data
-                    else:
-                        all_messages = []
+                    text = response.text
+                    all_messages = self.parse_toml_messages(text)
                     
                     # Only take last N messages for performance
                     if len(all_messages) > MAX_FETCH_MESSAGES:

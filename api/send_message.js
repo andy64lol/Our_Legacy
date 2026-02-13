@@ -7,7 +7,7 @@ const GITHUB_API = "https://api.github.com";
 const REPO_OWNER = "andy64lol";
 const REPO_NAME = "globalchat";
 const BRANCH = "main";
-const FILE_PATH = "global_chat.json";
+const FILE_PATH = "global_chat.toml";
 const OLD_MESSAGES_DIR = "old_messages";
 const MAX_MESSAGES = 100;
 const MESSAGES_TO_KEEP = 5;
@@ -78,20 +78,76 @@ function containsProfanity(text, profanityWords) {
   return false;
 }
 
+// Parse TOML content to messages array
+function parseTOML(text) {
+  const messages = [];
+  const blocks = text.split('[[messages]]').slice(1); // Skip empty first element
+  
+  for (const block of blocks) {
+    const message = {};
+    const lines = block.trim().split('\n');
+    
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith('#')) continue;
+      
+      const match = trimmed.match(/^(\w+)\s*=\s*"([^"]*)"/);
+      if (match) {
+        message[match[1]] = match[2];
+      }
+    }
+    
+    if (message.content && message.author) {
+      messages.push(message);
+    }
+  }
+  
+  return messages;
+}
+
+// Serialize messages array to TOML content
+function serializeTOML(messages) {
+  if (messages.length === 0) {
+    return '';
+  }
+  
+  const lines = [];
+  for (const msg of messages) {
+    lines.push('[[messages]]');
+    lines.push(`content = "${msg.content.replace(/"/g, '\\"')}"`);
+    lines.push(`author = "${msg.author.replace(/"/g, '\\"')}"`);
+    lines.push(`timestamp = "${msg.timestamp}"`);
+    lines.push(`id = "${msg.id}"`);
+    lines.push('');
+  }
+  
+  return lines.join('\n');
+}
+
 // Read messages from the repository
 async function readMessages() {
-  const rawUrl = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${BRANCH}/${FILE_PATH}`;
+  const rawUrl = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/refs/heads/${BRANCH}/${FILE_PATH}`;
+  console.log('Fetching messages from:', rawUrl);
   
   try {
     const response = await fetch(rawUrl, { cache: 'no-store' });
+    console.log('Response status:', response.status);
+    
     if (!response.ok) {
       if (response.status === 404) {
+        console.log('File not found, returning empty array');
         return [];
       }
       throw new Error(`Failed to fetch messages: ${response.status}`);
     }
-    const content = await response.json();
-    return Array.isArray(content) ? content : [];
+    
+    const text = await response.text();
+    console.log('Raw response text:', text.substring(0, 200));
+    
+    const messages = parseTOML(text);
+    console.log('Parsed messages count:', messages.length);
+    
+    return messages;
   } catch (error) {
     console.error('Error reading messages:', error);
     throw error;
@@ -100,7 +156,7 @@ async function readMessages() {
 
 // Save messages to repository
 async function saveMessages(messages, sha = null) {
-  const content = JSON.stringify(messages, null, 2);
+  const content = serializeTOML(messages);
   const encoded = Buffer.from(content).toString('base64');
   
   const payload = {
@@ -130,10 +186,10 @@ async function archiveMessages(messages) {
   const timestamp = messages.length > 0 
     ? messages[messages.length - 1].timestamp 
     : Date.now();
-  const archiveFilename = `${OLD_MESSAGES_DIR}/${timestamp}_chat.json`;
+  const archiveFilename = `${OLD_MESSAGES_DIR}/${timestamp}_chat.toml`;
   
   // Save archived messages - GitHub creates the directory automatically if it doesn't exist
-  const content = JSON.stringify(messages, null, 2);
+  const content = serializeTOML(messages);
   const encoded = Buffer.from(content).toString('base64');
   
   const archivePayload = {
@@ -209,15 +265,18 @@ async function handleMessage(req, res) {
   let messages;
   try {
     messages = await readMessages();
+    console.log('Successfully read messages, count:', messages.length);
   } catch (error) {
     console.error('Failed to read existing messages:', error);
     return res.status(500).json({
-      error: "Failed to read existing messages. Please try again."
+      error: "Failed to read existing messages. Please try again.",
+      details: error.message
     });
   }
   
   try {
     const sha = await getFileSha();
+    console.log('File SHA:', sha);
     
     // Create new message
     const newMessage = {
@@ -226,19 +285,25 @@ async function handleMessage(req, res) {
       timestamp: Date.now().toString(),
       id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
     };
+    console.log('New message created:', newMessage);
     
     // Check if we need to archive messages
     if (messages.length >= MAX_MESSAGES) {
+      console.log('Archiving messages, count:', messages.length);
       // Archive current messages before trimming
       await archiveMessages(messages);
       messages = messages.slice(-MESSAGES_TO_KEEP);
+      console.log('After archive, keeping:', messages.length);
     }
     
     // Add new message
     messages.push(newMessage);
+    console.log('After adding new message, total count:', messages.length);
     
     // Save updated messages
+    console.log('Saving messages with SHA:', sha);
     await saveMessages(messages, sha);
+    console.log('Messages saved successfully');
     
     return res.status(200).json({
       success: true,
