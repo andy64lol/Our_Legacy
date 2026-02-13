@@ -1394,6 +1394,20 @@ class Game:
             except FileNotFoundError:
                 self.housing_data = {}
 
+            # Load weather data
+            try:
+                with open('data/weather.json', 'r') as f:
+                    self.weather_data = json.load(f)
+            except FileNotFoundError:
+                self.weather_data = {}
+
+            # Load times data
+            try:
+                with open('data/times.json', 'r') as f:
+                    self.times_data = json.load(f)
+            except FileNotFoundError:
+                self.times_data = {}
+
             # Load shops data
             try:
                 with open('data/shops.json', 'r') as f:
@@ -1444,7 +1458,9 @@ class Game:
                           ('cutscenes.json', 'cutscenes_data'),
                           ('weekly_challenges.json', 'weekly_challenges_data'),
                           ('housing.json', 'housing_data'),
-                          ('shops.json', 'shops_data')]
+                          ('shops.json', 'shops_data'),
+                          ('weather.json', 'weather_data'),
+                          ('times.json', 'times_data')]
 
         for file_name, attr_name in mod_data_types:
             mod_data = self.mod_manager.load_mod_data(file_name)
@@ -1770,8 +1786,8 @@ class Game:
         character_class = self.select_class()
 
         self.player = Character(name, character_class, self.classes_data)
-        self.player.weather_data = self.weather_data
-        self.player.times_data = self.times_data
+        self.player.weather_data = getattr(self, 'weather_data', {})
+        self.player.times_data = getattr(self, 'times_data', {})
         print(
             self.lang.get("welcome_adventurer",
                           name=name,
