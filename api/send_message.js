@@ -83,16 +83,15 @@ async function readMessages() {
   const rawUrl = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${BRANCH}/${FILE_PATH}`;
   
   try {
-    const response = await fetch(rawUrl);
+    const response = await fetch(rawUrl, { cache: 'no-store' });
     if (!response.ok) {
       if (response.status === 404) {
         return [];
       }
       throw new Error(`Failed to fetch messages: ${response.status}`);
     }
-    const content = await response.text();
-    const decoded = Buffer.from(content, 'base64').toString('utf-8');
-    return JSON.parse(decoded);
+    const content = await response.json();
+    return Array.isArray(content) ? content : [];
   } catch (error) {
     console.error('Error reading messages:', error);
     return [];
