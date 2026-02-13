@@ -1,6 +1,6 @@
 # ⚔️ Our Legacy - Text-Based CLI Fantasy RPG Game
 
-![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)
+![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)
 ![Node.js](https://img.shields.io/badge/Node.js-Required-green.svg)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 
@@ -70,7 +70,7 @@ Materials are found by defeating enemies or exploring specific areas:
 ## 🚀 Quick Start
 
 ### Prerequisites
-- **Python 3.9+**
+- **Python 3.11+**
 - **Node.js** (for scripting features)
 
 ### Installation
@@ -121,7 +121,7 @@ Our_Legacy/
 ├── launcher.py             # Unified launcher for all tools
 ├── storyland.py            # Download and manage mods from GitHub
 ├── storywrite.py           # Submit mods to the community
-├── main.py                 # Core game engine (Python 3.9+)
+├── main.py                 # Core game engine (Python 3.11+)
 ├── chat.py                 # The chat client for Global chat
 ├── gui_all.py              # Experimental GUI version of launcher.py using Tkinter
 ├── README.md               # Quick start guide and overview
