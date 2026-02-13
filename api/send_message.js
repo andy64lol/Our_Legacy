@@ -221,12 +221,9 @@ async function handleMessage(req, res) {
     
     // Check if we need to archive messages
     if (messages.length >= MAX_MESSAGES) {
-      // Archive all except last MESSAGES_TO_KEEP
-      const toArchive = messages.slice(0, -MESSAGES_TO_KEEP);
-      const toKeep = messages.slice(-MESSAGES_TO_KEEP);
-      
-      await archiveMessages(toArchive);
-      messages = toKeep;
+      // Archive current messages before trimming
+      await archiveMessages(messages);
+      messages = messages.slice(-MESSAGES_TO_KEEP);
     }
     
     // Add new message
