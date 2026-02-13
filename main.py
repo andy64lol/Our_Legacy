@@ -628,6 +628,7 @@ class Character:
         self.hour = 8  # Start at 8 AM
         self.day = 1
         self.max_hours = 24
+        self.current_area = "starting_village"
         self.current_weather = "sunny"
         self.weather_data = {}
         self.times_data = {}
@@ -5218,7 +5219,6 @@ class Game:
             if 0 <= idx < len(connections):
                 new_area = connections[idx]
                 self.current_area = new_area
-                self.player.current_area = new_area
                 self.player.update_weather(new_area)
                 print(
                     f"Traveling to {self.areas_data.get(new_area, {}).get('name', new_area)}..."
