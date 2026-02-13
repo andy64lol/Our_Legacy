@@ -13,6 +13,7 @@ from pathlib import Path
 
 # Configuration
 API_URL = "https://our-legacy.vercel.app/api/upload_test"
+FALLBACK_NETLIFY_URL = "https://our-legacy.netlify.app/functions/upload_test"
 
 # Colors
 class Colors:
@@ -99,23 +100,32 @@ def upload_mod(mod_path):
     payload = {"dir_name": mod_name, "files": files}
     print(f"\n{Colors.YELLOW}Uploading to GitHub repository...{Colors.RESET}")
 
-    try:
-        response = requests.post(API_URL, json=payload)
-        response.raise_for_status()
-        result = response.json()
-        if result.get('success'):
-            print(f"\n{Colors.GREEN}{Colors.BOLD}✓ Successfully uploaded mod: {mod_name}{Colors.RESET}")
-            print(f"\n{Colors.CYAN}Uploaded Files:{Colors.RESET}")
-            for file in result.get('files', []):
-                print(f"  • {file}")
-            print(f"\n{Colors.BLUE}GitHub Directory: {result.get('directory')}{Colors.RESET}")
-            return True
-        else:
-            print(f"\n{Colors.RED}Error: {result.get('error', 'Unknown error')}{Colors.RESET}")
-            return False
-    except requests.exceptions.RequestException as e:
-        print(f"\n{Colors.RED}Upload failed: {e}{Colors.RESET}")
-        return False
+    urls_to_try = [API_URL, FALLBACK_NETLIFY_URL]
+    last_error = None
+    
+    for url in urls_to_try:
+        try:
+            print(f"{Colors.BLUE}Trying endpoint: {url}{Colors.RESET}")
+            response = requests.post(url, json=payload, timeout=30)
+            response.raise_for_status()
+            result = response.json()
+            if result.get('success'):
+                print(f"\n{Colors.GREEN}{Colors.BOLD}✓ Successfully uploaded mod: {mod_name}{Colors.RESET}")
+                print(f"\n{Colors.CYAN}Uploaded Files:{Colors.RESET}")
+                for file in result.get('files', []):
+                    print(f"  • {file}")
+                print(f"\n{Colors.BLUE}GitHub Directory: {result.get('directory')}{Colors.RESET}")
+                return True
+            else:
+                print(f"\n{Colors.YELLOW}Warning from {url}: {result.get('error', 'Unknown error')}{Colors.RESET}")
+                last_error = result.get('error', 'Unknown error')
+        except requests.exceptions.RequestException as e:
+            print(f"{Colors.YELLOW}Failed to connect to {url}: {e}{Colors.RESET}")
+            last_error = str(e)
+            continue
+    
+    print(f"\n{Colors.RED}Upload failed on all endpoints. Last error: {last_error}{Colors.RESET}")
+    return False
 
 
 def select_mod_directory():
