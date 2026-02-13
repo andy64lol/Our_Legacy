@@ -117,7 +117,7 @@ def print_chat_divider(width: Optional[int] = None, color: str = Colors.DIM):
 PING_URL = "https://our-legacy.vercel.app/api/ping"
 SEND_MESSAGE_URL = "https://our-legacy.vercel.app/api/send_message"
 CREATE_USER_URL = "https://our-legacy.vercel.app/api/create_user"
-GLOBAL_CHAT_URL = "https://raw.githubusercontent.com/andy64lol/globalchat/refs/heads/main/global_chat.toml?cache_bust=1"
+FETCH_MESSAGES_URL = "https://our-legacy.vercel.app/api/fetch_messages"
 USERS_URL = "https://raw.githubusercontent.com/andy64lol/globalchat/refs/heads/main/users.json"
 ALIAS_FILE = "data/saves/username.txt"
 COOLDOWN_SECONDS = 20
@@ -144,6 +144,7 @@ class EnhancedChatClient:
         self.users_list: List[Dict] = []  # Cached users list
         self.is_banned = False  # Ban status
         self.last_ban_check = 0  # Last ban check time
+        self.last_fetch_time = 0  # Last message fetch time (20s cooldown)
         
         # Set up terminal resize handler (Unix/Linux only)
         try:
@@ -394,39 +395,35 @@ class EnhancedChatClient:
             self.connection_ok = False
             return False
     
-    def parse_toml_messages(self, text: str) -> List[Dict]:
-        """Parse TOML format messages to list of dicts."""
-        messages = []
-        blocks = text.split('[[messages]]')
+    def get_fetch_cooldown(self) -> int:
+        """Get remaining fetch cooldown time (20 seconds)."""
+        current_time = time.time()
+        time_since_last = current_time - self.last_fetch_time
         
-        for block in blocks[1:]:  # Skip first empty element
-            msg = {}
-            lines = block.strip().split('\n')
-            
-            for line in lines:
-                line = line.strip()
-                if not line or line.startswith('#'):
-                    continue
-                
-                # Match key = "value" pattern
-                match = __import__('re').match(r'^(\w+)\s*=\s*"([^"]*)"', line)
-                if match:
-                    msg[match.group(1)] = match.group(2)
-            
-            if msg.get('content') and msg.get('author'):
-                messages.append(msg)
-        
-        return messages
+        if time_since_last < 20:
+            return 20 - int(time_since_last)
+        return 0
     
-    def fetch_messages(self) -> bool:
-        """Fetch messages from global chat - optimized for incremental updates."""
+    def fetch_messages(self, force: bool = False) -> bool:
+        """Fetch messages from API with 20-second cooldown."""
+        # Check cooldown unless forced
+        if not force:
+            cooldown = self.get_fetch_cooldown()
+            if cooldown > 0:
+                print(f"{Colors.BRIGHT_YELLOW}Please wait {cooldown}s before refreshing{Colors.RESET}")
+                return False
+        
         with self.fetch_lock:
             try:
-                response = requests.get(GLOBAL_CHAT_URL, timeout=10)
+                response = requests.get(FETCH_MESSAGES_URL, timeout=10)
                 
                 if response.status_code == 200:
-                    text = response.text
-                    all_messages = self.parse_toml_messages(text)
+                    data = response.json()
+                    
+                    if data.get('success') and 'data' in data:
+                        all_messages = data['data'].get('messages', [])
+                    else:
+                        return False
                     
                     # Only take last N messages for performance
                     if len(all_messages) > MAX_FETCH_MESSAGES:
@@ -462,6 +459,7 @@ class EnhancedChatClient:
                     if has_changes:
                         self.messages = normalized
                         self.last_refresh_time = time.time()
+                        self.last_fetch_time = time.time()  # Update fetch cooldown
                         # Queue new messages for display
                         new_count = len(normalized)
                         if new_count > old_count:
@@ -476,6 +474,7 @@ class EnhancedChatClient:
                 return False
                 
             except Exception as e:
+                print(f"{Colors.BRIGHT_RED}Error fetching messages: {e}{Colors.RESET}")
                 return False
     
     def display_new_messages(self):
@@ -744,7 +743,7 @@ class EnhancedChatClient:
                 current_time = time.time()
                 if current_time - self.last_refresh_time >= AUTO_REFRESH_SECONDS:
                     try:
-                        if self.fetch_messages():
+                        if self.fetch_messages(force=True):
                             # Queue new messages for display (don't block input)
                             # Main loop will display them on next iteration
                             pass
@@ -804,11 +803,11 @@ class EnhancedChatClient:
                     
                     if cmd == '/r' or cmd == '/refresh':
                         print(f"{Colors.DIM}Refreshing messages...{Colors.RESET}")
-                        if self.fetch_messages():
+                        if self.fetch_messages(force=True):
                             self.display_messages(show_header=True)
                             self.display_input_area()
                         else:
-                            print(f"{Colors.BRIGHT_YELLOW}No new messages{Colors.RESET}")
+                            print(f"{Colors.BRIGHT_YELLOW}No new messages or on cooldown{Colors.RESET}")
                         continue
                     
                     elif cmd == '/next' or cmd == '/n':
