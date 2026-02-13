@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Our Legacy Chat</title>
+    <link rel="stylesheet" href="chat.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Alias Setup Screen -->
+        <div id="setup-screen" class="screen">
+            <div class="setup-container">
+                <div class="wide-divider"></div>
+                <h1 class="welcome-title">OUR LEGACY CHAT</h1>
+                <div class="wide-divider"></div>
+                <h2 class="setup-subtitle">Create Your Chat Identity</h2>
+                <div class="wide-divider dim"></div>
+                
+                <div class="setup-form">
+                    <label class="input-label">Enter your chat alias (max 20 characters):</label>
+                    <p class="hint">Allowed: letters, numbers, spaces, underscores, hyphens</p>
+                    <input type="text" id="alias-input" maxlength="20" placeholder="Your alias...">
+                    <div id="alias-error" class="error-message"></div>
+                    
+                    <div id="alias-preview" class="alias-preview hidden">
+                        <p>You chose: <span id="preview-alias" class="alias-highlight"></span></p>
+                        <p class="confirm-text">Confirm this alias?</p>
+                        <div class="confirm-buttons">
+                            <button id="confirm-yes" class="btn btn-primary">Yes</button>
+                            <button id="confirm-no" class="btn btn-secondary">No</button>
+                        </div>
+                    </div>
+                    
+                    <button id="alias-submit" class="btn btn-primary full-width">Continue</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Screen -->
+        <div id="chat-screen" class="screen hidden">
+            <div class="chat-header">
+                <div class="header-top">
+                    <div class="wide-divider"></div>
+                    <h1 class="chat-title">
+                        OUR LEGACY CHAT
+                        <span id="connection-status" class="status-dot disconnected" title="Disconnected"></span>
+                    </h1>
+                    <div class="wide-divider"></div>
+                </div>
+                <div class="header-info">
+                    <span class="dim">Connected as: <span id="current-alias" class="alias-name"></span></span>
+                    <span id="cooldown-indicator" class="cooldown hidden">Wait <span id="cooldown-time">0</span>s</span>
+                </div>
+                <div class="chat-divider status-divider"></div>
+            </div>
+
+            <div id="messages-container" class="messages-container">
+                <div id="messages-list" class="messages-list">
+                    <div class="empty-state">No messages yet. Be the first to say something!</div>
+                </div>
+            </div>
+
+            <div class="input-area">
+                <div class="chat-divider"></div>
+                <div class="input-container">
+                    <input type="text" id="message-input" placeholder="Enter message or /help..." maxlength="300">
+                    <button id="send-btn" class="btn btn-send">Send</button>
+                </div>
+                <div class="input-hint">
+                    <span class="dim">Press Enter to send • /help for commands</span>
+                    <span id="char-count" class="char-count dim">0/300</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Help Modal -->
+        <div id="help-modal" class="modal hidden">
+            <div class="modal-content">
+                <div class="wide-divider"></div>
+                <h2 class="modal-title">CHAT COMMANDS HELP</h2>
+                <div class="wide-divider"></div>
+                
+                <div class="help-section">
+                    <h3 class="help-category">Basic Commands:</h3>
+                    <div class="chat-divider dim"></div>
+                    <ul class="command-list">
+                        <li><span class="command">/r</span> - Refresh messages</li>
+                        <li><span class="command">/next</span> - Next page</li>
+                        <li><span class="command">/prev</span> - Previous page</li>
+                        <li><span class="command">/auto</span> - Toggle auto-refresh</li>
+                        <li><span class="command">/clear</span> - Clear screen</li>
+                        <li><span class="command">/status</span> - Show connection status</li>
+                        <li><span class="command">/exit</span> - Quit chat</li>
+                        <li><span class="command">/help</span> - Show this help</li>
+                    </ul>
+                </div>
+
+                <div class="help-section">
+                    <h3 class="help-category">Message Format:</h3>
+                    <div class="chat-divider dim"></div>
+                    <ul class="format-list">
+                        <li><span class="name-other">Other users</span> - Messages from others</li>
+                        <li><span class="name-self">You</span> - Your messages</li>
+                        <li><span class="name-system">System</span> - System notifications</li>
+                    </ul>
+                </div>
+
+                <div id="admin-commands" class="help-section hidden">
+                    <h3 class="help-category admin">Admin/Owner Commands:</h3>
+                    <div class="chat-divider dim"></div>
+                    <ul class="command-list">
+                        <li><span class="command admin">/ban <user> [reason]</span> - Ban a user</li>
+                        <li><span class="command admin">/unban <user></span> - Unban a user</li>
+                        <li><span class="command admin">/check <user></span> - Check user status</li>
+                    </ul>
+                </div>
+
+                <div class="help-section">
+                    <h3 class="help-category tips">Tips:</h3>
+                    <div class="chat-divider dim"></div>
+                    <ul class="tips-list">
+                        <li>• Cooldown: 20 seconds between messages</li>
+                        <li>• Auto-refresh: 10s interval</li>
+                        <li>• Max message length: 300 characters</li>
+                        <li>• Fetch cooldown: 20 seconds between refreshes</li>
+                    </ul>
+                </div>
+
+                <button id="close-help" class="btn btn-primary full-width">Close Help</button>
+            </div>
+        </div>
+
+        <!-- User Status Modal -->
+        <div id="status-modal" class="modal hidden">
+            <div class="modal-content">
+                <h3 class="modal-title">User Status</h3>
+                <div id="status-content" class="status-content"></div>
+                <button id="close-status" class="btn btn-primary">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="chat.js"></script>
+</body>
+</html>
