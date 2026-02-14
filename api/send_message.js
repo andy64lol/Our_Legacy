@@ -358,6 +358,16 @@ async function handleRead(req, res) {
 export default async function handler(req, res) {
   const { method, query } = req;
   
+  // Enable CORS
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  
+  // Handle OPTIONS request for CORS preflight
+  if (method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  
   switch (method) {
     case "GET":
       return handleRead(req, res);
