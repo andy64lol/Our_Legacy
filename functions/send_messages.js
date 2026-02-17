@@ -4,8 +4,8 @@ const REPO_NAME = "globalchat";
 const BRANCH = "main";
 const FILE_PATH = "global_chat.toml";
 const OLD_MESSAGES_DIR = "old_messages";
-const MAX_MESSAGES = 100;
-const MESSAGES_TO_KEEP = 5;
+const MAX_MESSAGES = 1000;
+const MESSAGES_TO_KEEP = 20;
 const PROFANITY_WORDS_URL = "https://raw.githubusercontent.com/zautumnz/profane-words/refs/heads/master/words.json";
 
 async function githubFetch(url, options = {}) {
@@ -250,11 +250,6 @@ exports.handler = async function (event) {
       let messages = await readMessages();
       const sha = await getFileSha();
 
-      if (messages.length >= MAX_MESSAGES) {
-        await archiveMessages(messages);
-        messages = messages.slice(-MESSAGES_TO_KEEP);
-      }
-
       const newMessage = {
         content: message.trim(),
         author: author.trim(),
@@ -264,6 +259,11 @@ exports.handler = async function (event) {
 
       messages.push(newMessage);
       await saveMessages(messages, sha);
+
+      if (messages.length >= MAX_MESSAGES) {
+        await archiveMessages(messages);
+        messages = messages.slice(-MESSAGES_TO_KEEP);
+      }
 
       return {
         statusCode: 200,
