@@ -347,7 +347,7 @@ def ask(prompt: str,
             clear_screen()
             return resp
         if not resp and not allow_empty:
-            print("Input cannot be empty. Please try again.")
+            print(self.lang.get("input_cannot_be_empty"))
             continue
 
         # If no validation requested, accept
@@ -1076,7 +1076,7 @@ class Character:
                     self.update_stats_from_equipment(items_data)
                     return True
             # If all slots full, ask which one to replace
-            print("All accessory slots are full. Replace one?")
+            print(self.lang.get("all_accessory_slots_full"))
             for i in range(1, 4):
                 slot = f"accessory_{i}"
                 equipped = self.equipment[slot]
@@ -1459,7 +1459,7 @@ class Game:
             self._load_mod_data()
         except FileNotFoundError as e:
             print(f"Error loading game data: {e}")
-            print("Please ensure all data files exist in the data/ directory.")
+            print(self.lang.get("ensure_data_files"))
             sys.exit(1)
 
     def _load_mod_data(self):
@@ -1594,8 +1594,8 @@ class Game:
             clear_screen()
             print(f"{Colors.CYAN}{Colors.BOLD}")
             print("=" * 60)
-            print("             OUR LEGACY")
-            print("       Text-Based CLI Fantasy RPG")
+            print(f"             {self.lang.get('game_title_display')}")
+            print(f"       {self.lang.get('game_subtitle_display')}")
             print("=" * 60)
             print(f"{Colors.END}")
             print(self.lang.get("welcome_message"))
@@ -1624,7 +1624,7 @@ class Game:
             elif choice == "4":
                 self.mods_welcome()
             elif choice == "5":
-                print("Thank you for playing Our Legacy!")
+                print(self.lang.get("thank_exit"))
                 clear_screen()
                 sys.exit(0)
             else:
@@ -1639,10 +1639,8 @@ class Game:
             # Get current settings
             mods_enabled = self.mod_manager.settings.get("mods_enabled", True)
 
-            print(
-                f"\n1. Mod System: {'{Colors.GREEN}Enabled{Colors.END}' if mods_enabled else '{Colors.RED}Disabled{Colors.END}'}"
-            )
-            print("2. Back to Main Menu")
+            print(f"\n1. Mod System: {'{Colors.GREEN}Enabled{Colors.END}' if mods_enabled else '{Colors.RED}Disabled{Colors.END}'}")
+            print(self.lang.get("mod_menu_goback"))
 
             choice = ask("\nChoose an option: ").strip()
 
@@ -1653,14 +1651,12 @@ class Game:
                     print(f"{Colors.GREEN}Mod system enabled!{Colors.END}")
                 else:
                     print(f"{Colors.RED}Mod system disabled!{Colors.END}")
-                print(
-                    f"{Colors.YELLOW}Note: Changes take effect on game restart.{Colors.END}"
-                )
+                print(f"{Colors.YELLOW}Note: Changes take effect on game restart.{Colors.END}")
                 ask("\nPress Enter to continue...")
             elif choice == "2" or not choice:
                 break
             else:
-                print("Invalid choice.")
+                print(self.lang.get("invalid_choice"))
 
     def mods_welcome(self):
         """Mods menu available from welcome screen"""
@@ -1673,8 +1669,8 @@ class Game:
             mods_list = self.mod_manager.get_mod_list()
 
             if not mods_list:
-                print("\n{Colors.YELLOW}No mods found.{Colors.END}")
-                print("Place mods in the 'mods/' directory to use them.")
+                print(f"\n{Colors.YELLOW}{self.lang.get('no_mods_found')}{Colors.END}")
+                print(self.lang.get("place_mods_instruction"))
                 ask("\nPress Enter to go back...")
                 break
 
@@ -1710,8 +1706,8 @@ class Game:
 
             print(f"\n{Colors.YELLOW}Options:{Colors.END}")
             print(f"1-{len(mods_list)}. Toggle Mod")
-            print("R. Refresh Mod List")
-            print("B. Back to Main Menu")
+            print(f"R. {self.lang.get('ui_refresh_mod_list')}")
+            print(f"B. {self.lang.get('ui_back_to_main_menu')}")
 
             choice = ask("\nChoose an option: ").strip().upper()
 
@@ -1720,7 +1716,7 @@ class Game:
             elif choice == 'R':
                 # Refresh mods
                 self.mod_manager.discover_mods()
-                print("Mod list refreshed!")
+                print(self.lang.get("mod_list_refreshed"))
                 time.sleep(0.5)
             elif choice.isdigit():
                 idx = int(choice) - 1
@@ -1734,15 +1730,15 @@ class Game:
                         )
                         ask("\nPress Enter to continue...")
                 else:
-                    print("Invalid mod number.")
+                    print(self.lang.get("invalid_mod_number"))
                     time.sleep(1)
             else:
-                print("Invalid choice.")
+                print(self.lang.get("invalid_choice"))
                 time.sleep(1)
 
     def display_available_classes(self):
         """Display all available character classes from classes.json"""
-        print("\nChoose your class:")
+        print(f"\n{self.lang.get('ui_choose_class')}")
 
         color_map = [
             Colors.RED, Colors.BLUE, Colors.GREEN, Colors.YELLOW,
@@ -1807,7 +1803,7 @@ class Game:
         """Create a new character"""
         print(
             f"{Colors.BOLD}{self.lang.get('character_creation')}{Colors.END}")
-        print("-" * 30)
+        print(self.lang.get("separator_30"))
 
         name = ask(self.lang.get("enter_name"))
         if not name:
@@ -1989,7 +1985,7 @@ class Game:
             if self.player:
                 self.player.display_stats()
             else:
-                print("No character created yet.")
+                print(self.lang.get("no_character"))
         elif choice == "3":
             self.travel()
 
@@ -2079,12 +2075,12 @@ class Game:
             self.quit_game()
 
         else:
-            print("Invalid choice. Please try again.")
+            print(self.lang.get("invalid_choice"))
 
     def fight_boss_menu(self):
         """Menu to select and fight a boss in the current area"""
         if not self.player:
-            print("No character created yet.")
+            print(self.lang.get("no_character"))
             return
 
         area_data = self.areas_data.get(self.current_area, {})
@@ -2149,14 +2145,14 @@ class Game:
                         )
                     self.battle(boss)
             else:
-                print("Invalid choice.")
+                print(self.lang.get("invalid_choice"))
 
     def explore(self):
         """Explore the current area"""
         if self.player:
             self.player.advance_time(1)  # Advance time on exploration
         if not self.player:
-            print("No character created yet. Please create a character first.")
+            print(self.lang.get('no_character_created'))
             return
 
         # Continuous mission check on every action
@@ -2171,7 +2167,7 @@ class Game:
         if random.random() < 0.7:  # 70% chance of encounter
             self.random_encounter()
         else:
-            print("You explore the area but find nothing of interest.")
+            print(self.lang.get("explore_nothing_found"))
 
             # Small chance to find materials
             if random.random() < 0.4:  # 40% chance to find materials
@@ -2192,7 +2188,7 @@ class Game:
         possible_enemies = area_data.get("possible_enemies", [])
 
         if not possible_enemies:
-            print("No enemies found in this area.")
+            print(self.lang.get("no_enemies_in_area"))
             return
 
         # Regular enemy encounter
@@ -2204,7 +2200,7 @@ class Game:
             print(f"\n{Colors.RED}A wild {enemy.name} appears!{Colors.END}")
             self.battle(enemy)
         else:
-            print("You explore the area but find no enemies.")
+            print(self.lang.get("explore_no_enemies"))
 
     def update_challenge_progress(self, challenge_type: str, value: int = 1):
         """Update challenge progress and check for completions"""
@@ -2417,7 +2413,7 @@ class Game:
             # Respawn penalty
             self.player.hp = self.player.max_hp // 2
             self.player.mp = self.player.max_mp // 2
-            print("You respawn at the starting village.")
+            print(self.lang.get("respawn"))
             self.current_area = "starting_village"
 
     def player_turn(self, enemy: Enemy) -> bool:
@@ -2426,17 +2422,17 @@ class Game:
             return True
 
         print(f"\n{Colors.BOLD}Your turn!{Colors.END}")
-        print("1. Attack")
-        print("2. Use Item")
-        print("3. Defend")
-        print("4. Flee")
+        print(f"1. {self.lang.get('attack')}")
+        print(f"2. {self.lang.get('use_item')}")
+        print(f"3. {self.lang.get('defend')}")
+        print(f"4. {self.lang.get('flee')}")
         # Can only cast spells if weapon is magic-capable
         weapon_name: Optional[str] = self.player.equipment.get('weapon')
         weapon_data = self.items_data.get(weapon_name,
                                           {}) if weapon_name else {}
         can_cast = bool(weapon_data.get('magic_weapon'))
         if can_cast:
-            print("5. Cast Spell")
+            print(f"5. {self.lang.get('cast_spell')}")
 
         choice = ask(
             "Choose action (1-5): " if can_cast else "Choose action (1-4): ")
@@ -2450,19 +2446,19 @@ class Game:
         elif choice == "5" and can_cast:
             self.cast_spell(enemy, weapon_name)
         elif choice == "3":
-            print("You defend, reducing incoming damage by half!")
+            print(self.lang.get("you_defend"))
             self.player.defending = True
         elif choice == "4":
             flee_chance = 0.7 if self.player.get_effective_speed(
             ) > enemy.speed else 0.4
             if random.random() < flee_chance:
-                print("You successfully fled from battle!")
+                print(self.lang.get("you_successfully_fled"))
                 return False
             else:
-                print("Failed to flee!")
+                print(self.lang.get("failed_to_flee"))
                 return True
         else:
-            print("Invalid choice. You lose your turn!")
+            print(self.lang.get("invalid_choice_turn_lost"))
 
         return True
 
@@ -2751,10 +2747,10 @@ class Game:
         ]
 
         if not consumables:
-            print("No consumable items available!")
+            print(self.lang.get("no_consumable_items"))
             return
 
-        print("Available consumables:")
+        print(self.lang.get("available_consumables"))
         for i, item in enumerate(consumables, 1):
             item_data = self.items_data[item]
             print(
@@ -2769,9 +2765,9 @@ class Game:
                 self.use_item(item)
                 self.player.inventory.remove(item)
             else:
-                print("Invalid choice!")
+                print(self.lang.get("invalid_choice"))
         except ValueError:
-            print("Invalid input!")
+            print(self.lang.get("invalid_input"))
 
     def cast_spell(self, enemy: Enemy, weapon_name: Optional[str] = None):
         """Cast a spell from the player's equipped magic weapon."""
@@ -2780,7 +2776,7 @@ class Game:
 
         # Handle case where no weapon is equipped
         if not weapon_name:
-            print("You need to equip a magic weapon to cast spells.")
+            print(self.lang.get("need_magic_weapon"))
             return
 
         # Gather spells allowed by the equipped weapon
@@ -2791,7 +2787,7 @@ class Game:
                 available.append((sname, sdata))
 
         if not available:
-            print("No spells available for your weapon.")
+            print(self.lang.get("no_spells_available"))
             return
 
         # Pagination for spells
@@ -2825,12 +2821,12 @@ class Game:
             print(f"\n{Colors.YELLOW}Options:{Colors.END}")
             if total_pages > 1:
                 if page > 0:
-                    print("P. Previous Page")
+                    print(f"P. {self.lang.get('ui_previous_page')}")
                 if page < total_pages - 1:
-                    print("N. Next Page")
+                    print(f"N. {self.lang.get('ui_next_page')}")
 
             print(f"1-{len(current_spells)}. Cast Spell")
-            print("B. Back")
+            print(f"B. {self.lang.get('back')}")
 
             choice = ask("\nChoose an option: ").upper()
 
@@ -2846,15 +2842,15 @@ class Game:
                     sname, sdata = current_spells[idx]
                     break
                 else:
-                    print("Invalid selection.")
+                    print(self.lang.get('invalid_selection'))
                     time.sleep(1)
             else:
-                print("Invalid choice.")
+                print(self.lang.get("invalid_choice"))
                 time.sleep(1)
 
         cost = sdata.get('mp_cost', 0)
         if self.player.mp < cost:
-            print("Not enough MP to cast that spell.")
+            print(self.lang.get("not_enough_mp"))
             return
 
         # Pay cost
@@ -3001,14 +2997,14 @@ class Game:
     def view_inventory(self):
         """View character inventory"""
         if not self.player:
-            print("No character created yet.")
+            print(self.lang.get("no_character"))
             return
 
         print(f"\n{Colors.BOLD}=== INVENTORY ==={Colors.END}")
         print(f"Gold: {Colors.GOLD}{self.player.gold}{Colors.END}")
 
         if not self.player.inventory:
-            print("Your inventory is empty.")
+            print(self.lang.get('inventory_empty'))
             return
 
         # Group items by type
@@ -3035,12 +3031,12 @@ class Game:
                                                            'offhand')
         ]
         if equipable:
-            print("\nEquipment options:")
-            print("  E. Equip an item from inventory")
-            print("  U. Unequip a slot")
+            print(self.lang.get("equipment_options"))
+            print(self.lang.get("equip_from_inventory"))
+            print(self.lang.get("unequip_slot"))
             choice = ask("Choose option (E/U) or press Enter to return: ")
             if choice.lower() == 'e':
-                print("\nEquipable items:")
+                print(self.lang.get("equipable_items"))
                 for i, item in enumerate(equipable, 1):
                     print(
                         f"{i}. {item} - {self.items_data.get(item, {}).get('description','')}"
@@ -3060,7 +3056,7 @@ class Game:
                                 f"Cannot equip {item_name} (requirements not met)."
                             )
             elif choice.lower() == 'u':
-                print("\nCurrently equipped:")
+                print(self.lang.get("currently_equipped"))
                 for slot in ('weapon', 'armor', 'offhand', 'accessory_1',
                              'accessory_2', 'accessory_3'):
                     print(
@@ -3076,7 +3072,7 @@ class Game:
                     if removed:
                         print(f"Unequipped {removed} from {slot_choice}.")
                     else:
-                        print("Nothing to unequip from that slot.")
+                        print(self.lang.get("nothing_to_unequip"))
 
     def view_missions(self):
         """View and manage missions"""
@@ -3120,10 +3116,10 @@ class Game:
                         f"   {Colors.DARK_GRAY}{mission.get('description')}{Colors.END}"
                     )
 
-                print("\nOptions: [A] Available, [C] Cancel Mission, [B] Back")
+                print(f"\n{self.lang.get('options_available_cancel_back')}")
             else:
-                print("\nNo active missions.")
-                print("\nOptions: [A] Available Missions, [B] Back")
+                print(self.lang.get("no_active_missions"))
+                print(f"\n{self.lang.get('options_available_missions_back')}")
 
             choice = ask("\nChoose an option: ").upper()
 
@@ -3146,7 +3142,7 @@ class Game:
                             print(f"Mission '{m_name}' cancelled.")
                             time.sleep(1)
                     else:
-                        print("Invalid mission number.")
+                        print(self.lang.get("invalid_mission_number"))
                         time.sleep(1)
 
     def available_missions_menu(self):
@@ -3165,7 +3161,7 @@ class Game:
             ]
 
             if not available_missions:
-                print("\nNo new missions available at this time.")
+                print(self.lang.get("no_new_missions"))
                 ask("\nPress Enter to go back...")
                 break
 
@@ -3199,13 +3195,13 @@ class Game:
             print(f"\nPage {page + 1}/{total_pages}")
             if total_pages > 1:
                 if page > 0:
-                    print("P. Previous Page")
+                    print(f"P. {self.lang.get('ui_previous_page')}")
                 if page < total_pages - 1:
-                    print("N. Next Page")
+                    print(f"N. {self.lang.get('ui_next_page')}")
 
             if current_page_missions:
                 print(f"1-{len(current_page_missions)}. Accept Mission")
-            print("B. Back")
+            print(f"B. {self.lang.get('back')}")
 
             choice = ask("\nChoose an option: ").upper()
 
@@ -3221,7 +3217,7 @@ class Game:
                     mission_id = current_page_missions[idx]
                     self.accept_mission(mission_id)
                 else:
-                    print("Invalid mission number.")
+                    print(self.lang.get("invalid_mission_number"))
                     time.sleep(1)
 
     def accept_mission(self, mission_id: str):
@@ -3264,10 +3260,10 @@ class Game:
 
                 time.sleep(1)
             else:
-                print("Error: Mission data not found.")
+                print(self.lang.get("mission_data_not_found"))
                 time.sleep(1)
         else:
-            print("Mission already accepted!")
+            print(self.lang.get("mission_already_accepted"))
             time.sleep(1)
 
     def update_mission_progress(self,
@@ -3371,7 +3367,7 @@ class Game:
     def claim_rewards(self):
         """Claim rewards for completed missions"""
         if not self.player:
-            print("No character created yet.")
+            print(self.lang.get("no_character"))
             return
 
         completed_missions = [
@@ -3379,11 +3375,11 @@ class Game:
             if progress.get('completed', False)
         ]
         if not completed_missions:
-            print("No completed missions to claim rewards for.")
+            print(self.lang.get("no_completed_missions"))
             return
 
         print(f"\n{Colors.BOLD}=== CLAIM REWARDS ==={Colors.END}")
-        print("Completed missions:")
+        print(self.lang.get("completed_missions_header"))
         for i, mid in enumerate(completed_missions, 1):
             mission = self.missions_data.get(mid, {})
             reward = mission.get('reward', {})
@@ -3424,12 +3420,12 @@ class Game:
                 if items:
                     print(f"Received items: {', '.join(items)}")
             else:
-                print("Invalid choice.")
+                print(self.lang.get("invalid_choice"))
 
     def visit_shop(self):
         """Visit the shop - displays items for sale in the current area"""
         if not self.player:
-            print("No character created yet.")
+            print(self.lang.get("no_character"))
             return
 
         area_data = self.areas_data.get(self.current_area, {})
@@ -3462,7 +3458,7 @@ class Game:
                         shop_id.replace("_", " ").title())
                 print(f"{i}. {shop_name}")
 
-            print("\n0. Leave")
+            print(self.lang.get("leave_option"))
             choice = ask("Which shop would you like to visit? ")
 
             if choice == "0" or not choice.isdigit():
@@ -3472,7 +3468,7 @@ class Game:
             if 0 <= shop_idx < len(available_shops):
                 selected_shop = available_shops[shop_idx]
             else:
-                print("Invalid choice.")
+                print(self.lang.get("invalid_choice"))
                 return
         else:
             selected_shop = available_shops[0]
@@ -3486,7 +3482,7 @@ class Game:
     def _visit_housing_shop_inline(self):
         """Visit the housing shop in your_land to buy housing items"""
         if not self.player:
-            print("No character created yet.")
+            print(self.lang.get("no_character"))
             return
 
         print(f"\n{Colors.BOLD}{Colors.CYAN}=== HOUSING SHOP ==={Colors.END}")
@@ -3504,7 +3500,7 @@ class Game:
         # Get all housing items
         housing_items = list(self.housing_data.items())
         if not housing_items:
-            print("No housing items available.")
+            print(self.lang.get("no_housing_items_available"))
             return
 
         page_size = 8
@@ -3516,7 +3512,7 @@ class Game:
             page_items = housing_items[start:end]
 
             if not page_items:
-                print("No more items.")
+                print(self.lang.get("no_more_items"))
                 break
 
             print(
@@ -3603,7 +3599,7 @@ class Game:
         """Visit a specific shop by ID"""
 
         if not self.player:
-            print("No character created yet.")
+            print(self.lang.get("no_character"))
             return
 
         shop_data = self.shops_data.get(shop_id, {})
@@ -3616,14 +3612,14 @@ class Game:
     def build_home(self):
         """Build and manage structures on your land"""
         if not self.player:
-            print("No character created yet.")
+            print(self.lang.get("no_character"))
             return
 
         if not self.player.housing_owned:
             print(
                 f"{Colors.YELLOW}You haven't purchased any housing items yet! Visit the Housing Shop first.{Colors.END}"
             )
-            input("Press Enter to continue...")
+            input(self.lang.get("press_enter"))
             return
 
         while True:
@@ -3687,10 +3683,10 @@ class Game:
                 print()
 
             print(f"{Colors.BOLD}Options:{Colors.END}")
-            print("1. Place Item in Slot")
-            print("2. Remove Item from Slot")
-            print("3. View detailed home status")
-            print("B. Back")
+            print(f"1. {self.lang.get('place_item_slot')}")
+            print(f"2. {self.lang.get('remove_item_slot')}")
+            print(f"3. {self.lang.get('view_home_status')}")
+            print(f"B. {self.lang.get('back')}")
 
             choice = ask(
                 f"\n{Colors.CYAN}Choose option: {Colors.END}").strip().upper()
@@ -3767,7 +3763,7 @@ class Game:
         ]
 
         if not occupied_slots:
-            print("No items placed to remove.")
+            print(self.lang.get("no_items_to_remove"))
             return
 
         print(f"\n{Colors.BOLD}Placed Items:{Colors.END}")
@@ -3788,12 +3784,12 @@ class Game:
             return
 
         if not choice.isdigit():
-            print("Invalid choice.")
+            print(self.lang.get("invalid_choice"))
             return
 
         idx = int(choice) - 1
         if not (0 <= idx < len(occupied_slots)):
-            print("Invalid item number.")
+            print(self.lang.get("invalid_item_number"))
             return
 
         target_slot = occupied_slots[idx]
@@ -3811,14 +3807,14 @@ class Game:
             self.player.comfort_points -= item.get('comfort_points', 0)
 
         print(f"{Colors.YELLOW}Removed item from {target_slot}.{Colors.END}")
-        input("Press Enter to continue...")
+        input(self.lang.get("press_enter"))
 
     def _place_housing_item(self):
         """Place a housing item in a slot"""
         if not self.player:
             return
         if not self.player.housing_owned:
-            print("No housing items to place.")
+            print(self.lang.get("no_housing_items"))
             return
 
         print(f"\n{Colors.BOLD}Available Items:{Colors.END}")
@@ -3838,19 +3834,19 @@ class Game:
             return
 
         if not choice.isdigit():
-            print("Invalid choice.")
+            print(self.lang.get("invalid_choice"))
             return
 
         idx = int(choice) - 1
         if not (0 <= idx < len(self.player.housing_owned)):
-            print("Invalid item number.")
+            print(self.lang.get("invalid_item_number"))
             return
 
         item_id = self.player.housing_owned[idx]
         item = self.housing_data.get(item_id)
 
         if not item:
-            print("Item data not found.")
+            print(self.lang.get("item_data_not_found"))
             return
 
         item_type = item.get('type', 'decoration')
@@ -3896,12 +3892,12 @@ class Game:
             return
 
         if not slot_choice.isdigit():
-            print("Invalid choice.")
+            print(self.lang.get("invalid_choice"))
             return
 
         slot_idx = int(slot_choice) - 1
         if not (0 <= slot_idx < len(empty_slots)):
-            print("Invalid slot number.")
+            print(self.lang.get("invalid_slot_number"))
             return
 
         target_slot = empty_slots[slot_idx]
@@ -3916,12 +3912,12 @@ class Game:
         print(
             f"{Colors.GREEN}Placed {item.get('name', item_id)} in {target_slot}!{Colors.END}"
         )
-        input("Press Enter to continue...")
+        input(self.lang.get("press_enter"))
 
     def build_structures(self):
         """Build and manage structures on your land"""
         if not self.player:
-            print("No character created yet.")
+            print(self.lang.get("no_character"))
             return
 
         while True:
@@ -4026,7 +4022,7 @@ class Game:
                               available_items: List[Dict]):
         """Manage slots for a specific building type"""
         if not self.player:
-            print("No character created yet.")
+            print(self.lang.get("no_character"))
             return
 
         while True:
@@ -4098,7 +4094,7 @@ class Game:
     def manage_slot(self, slot_name: str, available_items: List[Dict]):
         """Manage a specific building slot"""
         if not self.player:
-            print("No character created yet.")
+            print(self.lang.get("no_character"))
             return
 
         current_item = self.player.building_slots.get(slot_name)
@@ -4153,12 +4149,12 @@ class Game:
                 if current_item:
                     self.player.building_slots[slot_name] = None
                     print(f"\n{Colors.GREEN}✓ Slot cleared!{Colors.END}")
-                    input("Press Enter to continue...")
+                    input(self.lang.get("press_enter"))
                     break
                 else:
                     print(
                         f"\n{Colors.YELLOW}Slot is already empty.{Colors.END}")
-                    input("Press Enter to continue...")
+                    input(self.lang.get("press_enter"))
             elif choice.isdigit():
                 item_idx = int(choice) - 1
                 if 0 <= item_idx < len(available_items):
@@ -4202,19 +4198,19 @@ class Game:
                         print(
                             f"Total comfort: {Colors.CYAN}{self.player.comfort_points}{Colors.END}"
                         )
-                        input("Press Enter to continue...")
+                        input(self.lang.get("press_enter"))
                         break
                     else:
                         needed = swap_cost - self.player.gold
                         print(
                             f"\n{Colors.RED}✗ Not enough gold! Need {needed} more.{Colors.END}"
                         )
-                        input("Press Enter to continue...")
+                        input(self.lang.get("press_enter"))
 
     def farm(self):
         """Farm crops on your land"""
         if not self.player:
-            print("No character created yet.")
+            print(self.lang.get("no_character"))
             return
 
         # Check if player has any farm buildings
@@ -4226,7 +4222,7 @@ class Game:
             print(
                 f"\n{Colors.YELLOW}You need to build a farm first! Use the 'Build Structures' option.{Colors.END}"
             )
-            input("Press Enter to continue...")
+            input(self.lang.get("press_enter"))
             return
 
         while True:
@@ -4325,7 +4321,7 @@ class Game:
         print(
             f"\n{Colors.BOLD}{Colors.CYAN}=== PLANT {crop_name.upper()} ==={Colors.END}\n"
         )
-        print("Select which farm plot to use:\n")
+        print(self.lang.get("select_farm_plot"))
 
         farm_choices = []
         for farm_idx in range(1, 3):
@@ -4345,7 +4341,7 @@ class Game:
 
         if not farm_choices:
             print(f"{Colors.YELLOW}No active farms available!{Colors.END}")
-            input("Press Enter to continue...")
+            input(self.lang.get("press_enter"))
             return
 
         choice = ask(
@@ -4380,7 +4376,7 @@ class Game:
                         f"\n{Colors.YELLOW}This farm plot is full! ({max_plots}/{max_plots} plants){Colors.END}"
                     )
 
-                input("Press Enter to continue...")
+                input(self.lang.get("press_enter"))
 
     def harvest_crops(self):
         """Harvest ready crops from farm plots"""
@@ -4429,7 +4425,7 @@ class Game:
                 f"{Colors.YELLOW}No crops are ready to harvest yet.{Colors.END}"
             )
 
-        input("Press Enter to continue...")
+        input(self.lang.get("press_enter"))
 
     def view_farming_inventory(self):
         """View crops in inventory"""
@@ -4482,7 +4478,7 @@ class Game:
             print(
                 f"{Colors.YELLOW}You have no crops in your inventory yet.{Colors.END}"
             )
-            input("Press Enter to continue...")
+            input(self.lang.get("press_enter"))
 
     def sell_crops(self):
         """Sell crops for gold"""
@@ -4524,12 +4520,12 @@ class Game:
             f"\n{Colors.GREEN}✓ Sold all crops for {Colors.GOLD}{total_gold} gold{Colors.END}{Colors.GREEN}!{Colors.END}"
         )
         print(f"Total gold: {Colors.GOLD}{self.player.gold}{Colors.END}")
-        input("Press Enter to continue...")
+        input(self.lang.get("press_enter"))
 
     def training(self):
         """Training system for improving stats using training_place buildings"""
         if not self.player:
-            print("No character created yet.")
+            print(self.lang.get("no_character"))
             return
 
         # Check if player has any training_place buildings
@@ -4541,7 +4537,7 @@ class Game:
             print(
                 f"\n{Colors.YELLOW}You need to build a Training Place first! Use the 'Build Structures' option.{Colors.END}"
             )
-            input("Press Enter to continue...")
+            input(self.lang.get("press_enter"))
             return
 
         import random
@@ -4691,7 +4687,7 @@ class Game:
                     f"Speed: {Colors.YELLOW}{old_stats['speed']} → {self.player.speed}{Colors.END}"
                 )
 
-                input("\nPress Enter to continue...")
+                input(self.lang.get('press_enter'))
             else:
                 print(f"{Colors.RED}Invalid choice.{Colors.END}")
                 time.sleep(1)
@@ -4797,7 +4793,7 @@ class Game:
     def visit_tavern(self):
         """Visit the tavern to hire companions."""
         if not self.player:
-            print("No character created yet.")
+            print(self.lang.get("no_character"))
             return
 
         print(f"\n{Colors.BOLD}=== TAVERN ==={Colors.END}")
@@ -4808,7 +4804,7 @@ class Game:
 
         companions = list(self.companions_data.items())
         if not companions:
-            print("No companions are available at the moment.")
+            print(self.lang.get('no_companions_available'))
             return
 
         page_size = 6
@@ -4830,7 +4826,7 @@ class Game:
                 )
                 print(f"   {desc}")
 
-            print("Shortcuts: N-next, P-prev, Enter-leave")
+            print(self.lang.get('ui_shortcuts_nav'))
             choice = ask(
                 f"\nHire companion (1-{len(page_items)}) or press Enter to leave: "
             )
@@ -4841,12 +4837,12 @@ class Game:
                 if end < len(companions):
                     current_page += 1
                 else:
-                    print("No more pages.")
+                    print(self.lang.get('ui_no_more_pages'))
             elif choice.lower() == 'p':
                 if current_page > 0:
                     current_page -= 1
                 else:
-                    print("Already on first page.")
+                    print(self.lang.get('ui_already_first_page'))
             elif choice.isdigit():
                 idx = int(choice) - 1
                 if 0 <= idx < len(page_items):
@@ -4878,23 +4874,23 @@ class Game:
                         self.player.update_stats_from_equipment(
                             self.items_data, self.companions_data)
                     else:
-                        print("Not enough gold!")
+                        print(self.lang.get('not_enough_gold'))
                 else:
-                    print("Invalid choice.")
+                    print(self.lang.get("invalid_choice"))
 
     def visit_market(self):
         """Visit the Elite Market - browse and buy items from the API at 50% off"""
         if not self.player:
-            print("No character created yet.")
+            print(self.lang.get("no_character"))
             return
 
         if not self.market_api:
-            print("Market API not available.")
+            print(self.lang.get('market_api_not_available'))
             return
 
         print(
             f"\n{Colors.MAGENTA}{Colors.BOLD}=== ELITE MARKET ==={Colors.END}")
-        print("Welcome to the Elite Market! All items sold at 50% OFF!")
+        print(self.lang.get('welcome_elite_market'))
         if self.player:
             print(f"\nYour gold: {Colors.GOLD}{self.player.gold}{Colors.END}")
 
@@ -4923,18 +4919,18 @@ class Game:
 
         items = self.market_api.get_all_items()
         if not items:
-            print("No items available in the market.")
+            print(self.lang.get('no_items_available_market'))
             return
 
         # Get filter options from player
         print(f"\n{Colors.CYAN}=== BROWSE ITEMS ==={Colors.END}")
-        print("Filters available:")
-        print("  1. All Items")
-        print("  2. By Type (weapon, armor, consumable, etc.)")
-        print("  3. By Rarity (common, uncommon, rare, legendary)")
-        print("  4. By Class (Mage, Warrior, Rogue, etc.)")
-        print("  5. By Max Price")
-        print("  R. Refresh market (forces new fetch)")
+        print(self.lang.get('ui_filters_available'))
+        print(self.lang.get('filter_all_items'))
+        print(self.lang.get('filter_by_type_desc'))
+        print(self.lang.get('filter_by_rarity_desc'))
+        print(self.lang.get('filter_by_class_desc'))
+        print(self.lang.get('filter_by_max_price_desc'))
+        print(f"  R. {self.lang.get('filter_refresh_market')}")
 
         choice = ask("\nChoose filter (1-5, R) or press Enter to browse all: "
                      ).strip().upper()
@@ -4950,11 +4946,11 @@ class Game:
             item_type = ask("Enter type: ").strip().lower()
             filtered_items = self.market_api.filter_items(item_type=item_type)
         elif choice == '3':
-            print("\nRarities: common, uncommon, rare, legendary")
+            print(f"\n{self.lang.get('rarities_list')}")
             rarity = ask("Enter rarity: ").strip().lower()
             filtered_items = self.market_api.filter_items(rarity=rarity)
         elif choice == '4':
-            print("\nClasses: Warrior, Mage, Rogue, Hunter, Bard, etc.")
+            print(f"\n{self.lang.get('classes_list')}")
             class_req = ask("Enter class: ").strip()
             filtered_items = self.market_api.filter_items(class_req=class_req)
         elif choice == '5':
@@ -4963,7 +4959,7 @@ class Game:
                 filtered_items = self.market_api.filter_items(
                     max_price=max_price)
             except ValueError:
-                print("Invalid price, showing all items.")
+                print(self.lang.get('invalid_price_showing_all'))
         elif choice == 'R':
             filtered_items = self.market_api.get_all_items()
             # Force refresh
@@ -4971,7 +4967,7 @@ class Game:
             filtered_items = self.market_api.get_all_items()
 
         if not filtered_items:
-            print("No items match your filters.")
+            print(self.lang.get('no_items_match_filters'))
             return
 
         # Sort by market price by default
@@ -4988,7 +4984,7 @@ class Game:
             page_items = filtered_items[start:end]
 
             if not page_items:
-                print("No more items.")
+                print(self.lang.get("no_more_items"))
                 break
 
             print(
@@ -5024,10 +5020,10 @@ class Game:
             print(f"\n{Colors.YELLOW}Options:{Colors.END}")
             print(f"1-{len(page_items)}. Buy Item")
             if len(filtered_items) > page_size:
-                print("N. Next Page")
-                print("P. Previous Page")
-            print("F. Filter Items")
-            print("Enter. Return to Main Menu")
+                print(f"N. {self.lang.get('ui_next_page')}")
+                print(f"P. {self.lang.get('ui_previous_page')}")
+            print(f"F. {self.lang.get('ui_filter_items')}")
+            print(f"Enter. {self.lang.get('ui_return_to_main_menu')}")
 
             choice = ask("\nChoose action: ").strip().upper()
 
@@ -5041,11 +5037,11 @@ class Game:
                     current_page -= 1
             elif choice == 'F':
                 # Apply filter
-                print("\nRefine search:")
-                print("  1. By Type")
-                print("  2. By Rarity")
-                print("  3. By Class")
-                print("  4. By Max Price")
+                print(f"\n{self.lang.get('ui_refine_search')}")
+                print(self.lang.get('filter_by_type'))
+                print(self.lang.get('filter_by_rarity'))
+                print(self.lang.get('filter_by_class'))
+                print(self.lang.get('filter_by_max_price'))
                 sub_choice = ask("Choose filter: ").strip()
                 if sub_choice == '1':
                     item_type = ask("Enter type: ").strip().lower()
@@ -5095,12 +5091,12 @@ class Game:
                             f"\n{Colors.RED}Not enough gold! Need {market_price}, have {self.player.gold}.{Colors.END}"
                         )
                 else:
-                    print("Invalid selection.")
+                    print(self.lang.get('invalid_selection'))
 
     def manage_companions(self):
         """Manage hired companions."""
         if not self.player:
-            print("No character created yet.")
+            print(self.lang.get("no_character"))
             return
 
         while True:
@@ -5151,10 +5147,10 @@ class Game:
                         print(f"   Bonuses: {', '.join(bonuses)}")
                     print(f"   {comp_data.get('description', '')}")
 
-            print("\nOptions:")
-            print("D - Dismiss a companion")
-            print("E - Equip item on companion")
-            print("Enter - Return to main menu")
+            print(f"\n{self.lang.get('ui_options')}")
+            print(self.lang.get('ui_dismiss_companion'))
+            print(self.lang.get('ui_equip_companion'))
+            print(self.lang.get('ui_enter_return'))
 
             choice = ask("Choose action: ").strip().lower()
 
@@ -5181,20 +5177,20 @@ class Game:
                             self.player.update_stats_from_equipment(
                                 self.items_data, self.companions_data)
                         else:
-                            print("Invalid selection.")
+                            print(self.lang.get('invalid_selection'))
                     except ValueError:
-                        print("Invalid input.")
+                        print(self.lang.get('invalid_input'))
             elif choice == 'e':
                 # Equip item on companion
-                print("Companion equipment feature coming soon!")
+                print(self.lang.get('ui_companion_equip_soon'))
                 # TODO: Implement companion equipment
             else:
-                print("Invalid choice.")
+                print(self.lang.get("invalid_choice"))
 
     def travel(self):
         """Travel to connected areas from the current area."""
         if not self.player:
-            print("No character created yet.")
+            print(self.lang.get("no_character"))
             return
 
         current = self.current_area
@@ -5204,10 +5200,10 @@ class Game:
         print(f"\n{Colors.BOLD}=== TRAVEL ==={Colors.END}")
         print(f"Current location: {area_data.get('name', current)}")
         if not connections:
-            print("No connected areas to travel to.")
+            print(self.lang.get('no_connected_areas'))
             return
 
-        print("Connected areas:")
+        print(self.lang.get('ui_connected_areas'))
         for i, aid in enumerate(connections, 1):
             a = self.areas_data.get(aid, {})
             print(f"{i}. {a.get('name', aid)} - {a.get('description','')}")
@@ -5246,10 +5242,10 @@ class Game:
 
         sellable = [it for it in self.player.inventory]
         if not sellable:
-            print("You have nothing to sell.")
+            print(self.lang.get('you_have_nothing_sell'))
             return
 
-        print("\nYour inventory:")
+        print(f"\n{self.lang.get('ui_your_inventory')}")
         for i, item in enumerate(sellable, 1):
             equip_marker = ''
             for slot, eq in self.player.equipment.items():
@@ -5266,13 +5262,13 @@ class Game:
             return
         idx = int(choice) - 1
         if not (0 <= idx < len(sellable)):
-            print("Invalid selection.")
+            print(self.lang.get('invalid_selection'))
             return
 
         item = sellable[idx]
         # Prevent selling equipped items
         if item in self.player.equipment.values():
-            print("Unequip the item before selling it.")
+            print(self.lang.get('unequip_before_selling'))
             return
 
         price = self.items_data.get(item, {}).get('price', 0)
@@ -5284,7 +5280,7 @@ class Game:
     def rest(self):
         """Rest in a safe area to recover HP and MP for gold."""
         if not self.player:
-            print("No character created yet.")
+            print(self.lang.get("no_character"))
             return
 
         area_data = self.areas_data.get(self.current_area, {})
@@ -5316,7 +5312,7 @@ class Game:
 
         choice = ask(f"Rest for {rest_cost} gold? (y/n): ")
         if choice.lower() != 'y':
-            print("You decide not to rest.")
+            print(self.lang.get('decide_not_rest'))
             return
 
         # Deduct gold and restore HP/MP
@@ -5344,7 +5340,7 @@ class Game:
         (useful for error/unstable saves like 'err_save_unstable_').
         """
         if not self.player:
-            print("No character to save.")
+            print(self.lang.get('no_character_save'))
             return
 
         save_data = {
@@ -5472,15 +5468,15 @@ class Game:
         """Load a saved game with enhanced equipment handling and backward compatibility"""
         saves_dir = "data/saves"
         if not os.path.exists(saves_dir):
-            print("No save files found.")
+            print(self.lang.get('no_save_files'))
             return
 
         save_files = [f for f in os.listdir(saves_dir) if f.endswith('.json')]
         if not save_files:
-            print("No save files found.")
+            print(self.lang.get('no_save_files'))
             return
 
-        print("Available save files:")
+        print(self.lang.get('available_save_files'))
         for i, save_file in enumerate(save_files, 1):
             character_name = save_file.replace('_save.json', '')
             print(f"{i}. {character_name}")
@@ -5784,15 +5780,15 @@ class Game:
 
     def quit_game(self):
         """Quit the game"""
-        print("\nHave you saved your progress? (yes/no) (CASE SENSITIVE!!!)")
+        print(f"\n{self.lang.get('ui_have_you_saved')}")
         response = input(">>> ").strip().lower()
         if response == "no":
             clear_screen()
-            print("Saving your progress...")
+            print(self.lang.get('ui_saving_progress'))
             self.save_game()
-            print("Progress saved!")
-        print("Thank you for playing Our Legacy!")
-        print("Your legacy will be remembered...")
+            print(self.lang.get('ui_progress_saved'))
+        print(self.lang.get('ui_thank_you_playing'))
+        print(self.lang.get('ui_legacy_remembered'))
         sys.exit(0)
 
     def _gather_materials(self):
@@ -5893,11 +5889,11 @@ class Game:
     def visit_dungeons(self):
         """Visit the dungeon menu to select and enter dungeons"""
         if not self.player:
-            print("No character created yet.")
+            print(self.lang.get("no_character"))
             return
 
         print(f"\n{Colors.BOLD}=== DUNGEONS ==={Colors.END}")
-        print("Welcome to the Dungeon Portal! Choose your challenge:")
+        print(self.lang.get('ui_dungeon_portal'))
 
         # Check if player is in a dungeon
         if self.current_dungeon:
@@ -5918,7 +5914,7 @@ class Game:
         # Show available dungeons (filter by allowed_areas)
         all_dungeons = self.dungeons_data.get('dungeons', [])
         if not all_dungeons:
-            print("No dungeons available.")
+            print(self.lang.get('ui_no_dungeons'))
             return
 
         # Filter dungeons by allowed_areas for current location
@@ -5932,7 +5928,7 @@ class Game:
             print(
                 f"\n{Colors.YELLOW}No dungeons available in {self.current_area}.{Colors.END}"
             )
-            print("Travel to other areas to find dungeons.")
+            print(self.lang.get('ui_travel_find_dungeons'))
             return
 
         print(
@@ -5971,7 +5967,7 @@ class Game:
                         f"You need to be at least level {min_level} to enter this dungeon."
                     )
             else:
-                print("Invalid choice.")
+                print(self.lang.get("invalid_choice"))
 
     def enter_dungeon(self, dungeon: Dict[str, Any]):
         """Enter a dungeon and generate rooms"""
@@ -6045,7 +6041,7 @@ class Game:
     def continue_dungeon(self):
         """Continue through the current dungeon"""
         if not self.current_dungeon or not self.dungeon_rooms:
-            print("No active dungeon.")
+            print(self.lang.get('ui_no_active_dungeon'))
             return
 
         # Loop through rooms until dungeon is complete
@@ -6088,14 +6084,14 @@ class Game:
         """Handle a question/riddle room"""
         if not self.player:
             return
-        print("You encounter a mystical pedestal with glowing runes...")
+        print(self.lang.get('ui_mystical_pedestal'))
 
         # Get random question from challenge templates
         challenge_templates = self.dungeons_data.get('challenge_templates', {})
         question_template = challenge_templates.get('question', {})
 
         if not question_template or not question_template.get('types'):
-            print("No questions available. You proceed safely.")
+            print(self.lang.get('ui_no_questions'))
             self.advance_room()
             return
 
@@ -6122,7 +6118,7 @@ class Game:
             ).strip().lower()
 
             if answer == 'leave':
-                print("You decide to give up on the riddle.")
+                print(self.lang.get('ui_give_up_riddle'))
                 break
 
             if answer == 'hint' and question_data.get('hints'):
@@ -6190,18 +6186,18 @@ class Game:
     def handle_battle_room(self, room: Dict[str, Any]):
         """Handle a battle room with enemies"""
         if not self.player:
-            print("No player available for battle.")
+            print(self.lang.get('ui_no_player_battle'))
             self.advance_room()
             return
 
         if not hasattr(self,
                        'enemies_data') or not self.enemies_data or not hasattr(
                            self, 'areas_data') or not self.areas_data:
-            print("Game data missing. You proceed safely.")
+            print(self.lang.get('ui_game_data_missing'))
             self.advance_room()
             return
 
-        print("You hear the sounds of combat approaching...")
+        print(self.lang.get('ui_combat_approaching'))
 
         # Generate enemies based on difficulty
         difficulty = room.get('difficulty', 1)
@@ -6276,10 +6272,10 @@ class Game:
     def handle_chest_room(self, room: Dict[str, Any]):
         """Handle a treasure chest room"""
         if not self.player:
-            print("No player available for chest room.")
+            print(self.lang.get('ui_no_player_chest'))
             self.advance_room()
             return
-        print("You find a chest in the center of the room!")
+        print(self.lang.get('ui_chest_center_room'))
 
         # Determine chest quality based on difficulty
         difficulty = room.get('difficulty', 1)
@@ -6377,15 +6373,15 @@ class Game:
     def handle_trap_chest_room(self, room: Dict[str, Any]):
         """Handle a trapped chest room"""
         if not self.player:
-            print("No player available for trap chest room.")
+            print(self.lang.get('ui_no_player_trap'))
             self.advance_room()
             return
-        print("You find a suspicious chest with strange markings...")
+        print(self.lang.get('ui_suspicious_chest'))
 
         choice = ask("Open the chest (O) or leave it (L)? ").strip().upper()
 
         if choice == 'L':
-            print("You wisely decide to leave the chest alone.")
+            print(self.lang.get('ui_leave_chest_alone'))
             self.advance_room()
             return
 
@@ -6433,17 +6429,17 @@ class Game:
     def handle_multi_choice_room(self, room: Dict[str, Any]):
         """Handle a multiple choice decision room"""
         if not self.player:
-            print("No player available for multi-choice room.")
+            print(self.lang.get('ui_no_player_multichoice'))
             self.advance_room()
             return
-        print("You come to a crossroads with multiple paths...")
+        print(self.lang.get('ui_crossroads_paths'))
 
         # Get random selection challenge
         challenge_templates = self.dungeons_data.get('challenge_templates', {})
         selection_template = challenge_templates.get('selection', {})
 
         if not selection_template.get('types'):
-            print("The paths seem safe. You proceed.")
+            print(self.lang.get('ui_paths_safe'))
             self.advance_room()
             return
 
@@ -6476,7 +6472,7 @@ class Game:
         elif choice.isdigit() and 1 <= int(choice) <= len(options):
             outcome = options[int(choice) - 1]
         else:
-            print("Invalid choice.")
+            print(self.lang.get("invalid_choice"))
             return
 
         print(f"\n{outcome['reason']}")
@@ -6506,7 +6502,7 @@ class Game:
 
     def handle_empty_room(self, room: Dict[str, Any]):
         """Handle an empty room"""
-        print("This room appears to be empty...")
+        print(self.lang.get('ui_room_empty'))
 
         # Small chance for hidden treasure or encounter
         if random.random() < 0.3:  # 30% chance
@@ -6520,14 +6516,14 @@ class Game:
                     )
             else:
                 # Random encounter
-                print("You hear a noise...")
+                print(self.lang.get('ui_hear_noise'))
                 time.sleep(1)
                 self.random_encounter()
                 if self.player and not self.player.is_alive():
                     self.dungeon_death()
                     return
         else:
-            print("Nothing of interest here.")
+            print(self.lang.get('ui_nothing_interest'))
 
         self.advance_room()
 
@@ -6600,7 +6596,7 @@ class Game:
                     self.player.gain_experience(exp_reward)
                     self.player.gold += gold_reward
 
-                    print("You defeated the mysterious guardian!")
+                    print(self.lang.get('ui_defeated_guardian'))
                     print(
                         f"Gained {Colors.MAGENTA}{exp_reward} experience{Colors.END}"
                     )
@@ -6748,7 +6744,7 @@ class Game:
 
         # Return to starting village
         self.current_area = "starting_village"
-        print("You respawn at the starting village.")
+        print(self.lang.get("respawn"))
 
         # Clear dungeon state
         self.current_dungeon = None
@@ -6759,11 +6755,11 @@ class Game:
     def visit_alchemy(self):
         """Visit the Alchemy workshop to craft items"""
         if not self.player:
-            print("No character created yet.")
+            print(self.lang.get("no_character"))
             return
 
         if not self.crafting_data or not self.crafting_data.get('recipes'):
-            print("No crafting recipes available.")
+            print(self.lang.get('ui_no_crafting_recipes'))
             return
 
         print(
@@ -6783,7 +6779,7 @@ class Game:
             print(
                 "Categories: [P]otions, [E]lixirs, [E]ntchantments, [U]tility, [A]ll"
             )
-            print("[C]raft Item, [M]aterials, [B]ack to Menu")
+            print(self.lang.get('ui_craft_item'))
 
             choice = ask("\nChoose an option: ").strip().upper()
 
@@ -6793,7 +6789,7 @@ class Game:
                 self._display_recipes_by_category('Potions')
             elif choice == 'E':
                 # Ask which type of E (Elixirs or Enchantments)
-                print("E - Elixirs, N - Enchantments")
+                print(self.lang.get('ui_elixirs_enchantments'))
                 sub = ask("Choose (E/N): ").strip().upper()
                 if sub == 'E':
                     self._display_recipes_by_category('Elixirs')
@@ -6808,7 +6804,7 @@ class Game:
             elif choice == 'M':
                 self._display_crafting_materials()
             else:
-                print("Invalid choice.")
+                print(self.lang.get("invalid_choice"))
 
     def _display_crafting_materials(self):
         """Display materials available in player's inventory"""
@@ -6832,7 +6828,7 @@ class Game:
                 material_counts[item] = material_counts.get(item, 0) + 1
 
         if not material_counts:
-            print("No crafting materials in your inventory.")
+            print(self.lang.get('ui_no_crafting_materials'))
             print(
                 "Materials can be found as drops from enemies or purchased from shops."
             )
@@ -6870,7 +6866,7 @@ class Game:
 
         recipes = self.crafting_data.get('recipes', {})
         if not recipes:
-            print("\nNo recipes available.")
+            print(f"\n{self.lang.get('ui_no_recipes_available')}")
             return
 
         page_size = 10
@@ -6897,11 +6893,11 @@ class Game:
 
             if total_pages > 1:
                 if current_page > 0:
-                    print("P. Previous Page")
+                    print(f"P. {self.lang.get('ui_previous_page')}")
                 if current_page < total_pages - 1:
-                    print("N. Next Page")
-            print("C. Craft Item")
-            print("B. Back")
+                    print(f"N. {self.lang.get('ui_next_page')}")
+            print(f"C. {self.lang.get('ui_craft_option')}")
+            print(f"B. {self.lang.get('back')}")
 
             choice = ask("\nChoose an option: ").strip().upper()
 
@@ -6914,12 +6910,12 @@ class Game:
             elif choice == 'C':
                 self._craft_item()
             else:
-                print("Invalid choice.")
+                print(self.lang.get("invalid_choice"))
 
     def _craft_item(self):
         """Craft an item using materials from inventory"""
         if not self.player or not self.crafting_data:
-            print("Cannot craft items.")
+            print(self.lang.get('ui_cannot_craft'))
             return
 
         recipes = self.crafting_data.get('recipes', {})
@@ -6943,12 +6939,12 @@ class Game:
             return
 
         if not choice.isdigit():
-            print("Invalid choice.")
+            print(self.lang.get("invalid_choice"))
             return
 
         idx = int(choice) - 1
         if not (0 <= idx < len(recipe_names)):
-            print("Invalid recipe number.")
+            print(self.lang.get('invalid_recipe_number'))
             return
 
         recipe_id = recipe_names[idx]
@@ -6977,7 +6973,7 @@ class Game:
             print(f"\n{Colors.RED}Missing materials:{Colors.END}")
             for m in missing_materials:
                 print(f"  - {m}")
-            print("\nGather more materials before crafting.")
+            print(f"\n{self.lang.get('ui_gather_more_materials')}")
             return
 
         # Show craft confirmation
@@ -6987,13 +6983,13 @@ class Game:
         print(
             f"Output: {', '.join(f'{qty}x {item}' for item, qty in output_items.items())}"
         )
-        print("\nMaterials to consume:")
+        print(f"\n{self.lang.get('ui_materials_consume')}")
         for material, quantity in materials_needed.items():
             print(f"  - {quantity}x {material}")
 
         confirm = ask("\nCraft this item? (y/n): ").strip().lower()
         if confirm != 'y':
-            print("Crafting cancelled.")
+            print(self.lang.get('ui_crafting_cancelled'))
             return
 
         # Consume materials
@@ -7016,7 +7012,7 @@ class Game:
     def _visit_general_shop(self, shop_data):
         """Visit a general shop (not housing)"""
         if not self.player:
-            print("No character created yet.")
+            print(self.lang.get("no_character"))
             return
 
         shop_name = shop_data.get("name", "Shop")
@@ -7030,7 +7026,7 @@ class Game:
         print(f"Your gold: {Colors.GOLD}{self.player.gold}{Colors.END}")
 
         if not items:
-            print("This shop has no items available.")
+            print(self.lang.get('ui_shop_no_items'))
             return
 
         # Group items by type for better display
@@ -7048,7 +7044,7 @@ class Game:
                 })
 
         if not item_details:
-            print("No valid items found in this shop.")
+            print(self.lang.get('ui_no_valid_items_shop'))
             return
 
         page_size = 8
@@ -7081,10 +7077,10 @@ class Game:
 
             if total_pages > 1:
                 if current_page > 0:
-                    print("P. Previous Page")
+                    print(f"P. {self.lang.get('ui_previous_page')}")
                 if current_page < total_pages - 1:
-                    print("N. Next Page")
-            print("B. Back")
+                    print(f"N. {self.lang.get('ui_next_page')}")
+            print(f"B. {self.lang.get('back')}")
 
             choice = ask("\nChoose item to buy or option: ").strip().upper()
 
@@ -7118,9 +7114,9 @@ class Game:
                             f"{Colors.RED}Not enough gold! Need {item['price']}, have {self.player.gold}.{Colors.END}"
                         )
                 else:
-                    print("Invalid item number.")
+                    print(self.lang.get("invalid_item_number"))
             else:
-                print("Invalid choice.")
+                print(self.lang.get("invalid_choice"))
         """Build structures - alias for build_home for now"""
         self.build_home()
 
@@ -7133,7 +7129,7 @@ class Game:
         elif choice == "load_game":
             self.load_game()
             if not self.player:
-                print("No game loaded. Starting new game...")
+                print(self.lang.get('ui_no_game_loaded'))
                 self.create_character()
 
         # Main game loop

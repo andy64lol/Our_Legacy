@@ -1,5 +1,6 @@
 # Ignore save files and cache
 data/saves/
+bash/
 __pycache__/
 *.pyc
 *.pyo
