@@ -15,16 +15,8 @@ import difflib
 import signal
 import traceback
 import io
+from utilities.settings import ModManager as UtilsModManager, get_setting, set_setting, DEFAULT_SETTINGS
 
-# Default settings
-DEFAULT_SETTINGS = {
-    "mods_enabled": True,
-    "disabled_mods": [],
-    "overwrite_save_by_uuid": False
-}
-
-
-from utilities.settings import ModManager as UtilsModManager, get_setting, set_setting
 
 class ModManager(UtilsModManager):
     """Manages mod loading and data merging"""
@@ -567,7 +559,10 @@ class Character:
         if lang is None:
             # Create a mock lang if None to avoid "get" on None errors
             class MockLang:
-                def get(self, key, default=None): return key
+
+                def get(self, key, default=None):
+                    return key
+
             self.lang = MockLang()
         else:
             self.lang = lang
@@ -820,7 +815,7 @@ class Character:
             return
 
         target_area = area_id or getattr(self, 'current_area', None)
-        
+
         # 1. Check if any weather is exclusive to THIS area
         exclusive_weather = None
         for w_id, w_info in self.weather_data.items():
@@ -828,7 +823,7 @@ class Character:
             if target_area in exclusives:
                 exclusive_weather = w_id
                 break
-        
+
         if exclusive_weather:
             self.current_weather = exclusive_weather
             return
@@ -838,11 +833,11 @@ class Character:
         for w_id, w_info in self.weather_data.items():
             if not w_info.get("areas_exclusives"):
                 possible_weathers.append(w_id)
-        
+
         if possible_weathers:
             self.current_weather = random.choice(possible_weathers)
         else:
-            self.current_weather = "sunny" # Fallback
+            self.current_weather = "sunny"  # Fallback
 
     def display_stats(self):
         """Display character statistics"""
@@ -1065,9 +1060,12 @@ class Character:
             if self.lang is None:
                 # Create a mock lang if None to avoid "get" on None errors
                 class MockLang:
-                    def get(self, key, default=None): return key
+
+                    def get(self, key, default=None):
+                        return key
+
                 self.lang = MockLang()
-            
+
             print(self.lang.get("all_accessory_slots_full"))
             for i in range(1, 4):
                 slot = f"accessory_{i}"
@@ -1631,7 +1629,9 @@ class Game:
             # Get current settings
             mods_enabled = self.mod_manager.settings.get("mods_enabled", True)
 
-            print(f"\n1. Mod System: {'{Colors.GREEN}Enabled{Colors.END}' if mods_enabled else '{Colors.RED}Disabled{Colors.END}'}")
+            print(
+                f"\n1. Mod System: {'{Colors.GREEN}Enabled{Colors.END}' if mods_enabled else '{Colors.RED}Disabled{Colors.END}'}"
+            )
             print(self.lang.get("mod_menu_goback"))
 
             choice = ask("\nChoose an option: ").strip()
@@ -1643,7 +1643,9 @@ class Game:
                     print(f"{Colors.GREEN}Mod system enabled!{Colors.END}")
                 else:
                     print(f"{Colors.RED}Mod system disabled!{Colors.END}")
-                print(f"{Colors.YELLOW}Note: Changes take effect on game restart.{Colors.END}")
+                print(
+                    f"{Colors.YELLOW}Note: Changes take effect on game restart.{Colors.END}"
+                )
                 ask("\nPress Enter to continue...")
             elif choice == "2" or not choice:
                 break
@@ -1661,7 +1663,9 @@ class Game:
             mods_list = self.mod_manager.get_mod_list()
 
             if not mods_list:
-                print(f"\n{Colors.YELLOW}{self.lang.get('no_mods_found')}{Colors.END}")
+                print(
+                    f"\n{Colors.YELLOW}{self.lang.get('no_mods_found')}{Colors.END}"
+                )
                 print(self.lang.get("place_mods_instruction"))
                 ask("\nPress Enter to go back...")
                 break
@@ -1806,7 +1810,10 @@ class Game:
 
         character_class = self.select_class()
 
-        self.player = Character(name, character_class, self.classes_data, lang=self.lang)
+        self.player = Character(name,
+                                character_class,
+                                self.classes_data,
+                                lang=self.lang)
         self.player.weather_data = getattr(self, 'weather_data', {})
         self.player.times_data = getattr(self, 'times_data', {})
         print(
@@ -5723,7 +5730,9 @@ class Game:
                 f"{Colors.YELLOW}Please check your inventory and re-equip valid items.{Colors.END}"
             )
 
-    def save_on_error(self, exc_info=None, filename_prefix="err_save_unstable_"):
+    def save_on_error(self,
+                      exc_info=None,
+                      filename_prefix="err_save_unstable_"):
         """Attempt to save the current game state and write a traceback log when an error occurs."""
         try:
             # Build a safe player name for filenames
@@ -7118,6 +7127,7 @@ class Game:
         # Main game loop
         while True:
             self.main_menu()
+
 
 def main():
     """Main entry point"""

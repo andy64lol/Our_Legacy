@@ -7,6 +7,7 @@ Runs all scripts directly from the same directory.
 import os
 import sys
 import subprocess
+from utilities.settings import get_setting, set_setting
 
 # Custom exception for clean exit (used by GUI wrapper)
 class LauncherExit(Exception):
