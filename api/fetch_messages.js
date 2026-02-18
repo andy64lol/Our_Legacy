@@ -1,17 +1,12 @@
-// Fetch Messages API for Our Legacy
-// Uses GitHub REST API to read messages from globalchat repository
-// Repository: andy64lol/globalchat
-// File: global_chat.toml on main branch
-
 const GITHUB_API = "https://api.github.com";
 const REPO_OWNER = "andy64lol";
 const REPO_NAME = "globalchat";
 const BRANCH = "main";
 const FILE_PATH = "global_chat.toml";
 
-// GitHub REST API helper
 async function githubFetch(url, options = {}) {
   const token = process.env.GITHUB_REST_API;
+
   const headers = {
     Authorization: `Bearer ${token}`,
     Accept: "application/vnd.github+json",
@@ -22,70 +17,68 @@ async function githubFetch(url, options = {}) {
 
   const response = await fetch(url, { ...options, headers });
   const data = await response.json();
-  
+
   if (!response.ok) {
-    throw { status: response.status, data };
+    throw {
+      status: response.status,
+      data,
+      message:
+        data?.message ||
+        `GitHub API request failed with status ${response.status}`
+    };
   }
-  
+
   return data;
 }
 
-// Parse TOML content to messages array
 function parseTOML(text) {
   const messages = [];
-  const blocks = text.split('[[messages]]').slice(1); // Skip empty first element
-  
+  const blocks = text.split("[[messages]]").slice(1);
+
   for (const block of blocks) {
     const message = {};
-    const lines = block.trim().split('\n');
-    
+    const lines = block.trim().split("\n");
+
     for (const line of lines) {
       const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith('#')) continue;
-      
+      if (!trimmed || trimmed.startsWith("#")) continue;
+
       const match = trimmed.match(/^(\w+)\s*=\s*"([^"]*)"/);
       if (match) {
         message[match[1]] = match[2];
       }
     }
-    
+
     if (message.content && message.author) {
       messages.push(message);
     }
   }
-  
+
   return messages;
 }
 
-// Get file content from GitHub
 async function getFileContent() {
   const data = await githubFetch(
     `${GITHUB_API}/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}?ref=${BRANCH}`
   );
-  
+
   if (!data.content) {
-    throw new Error('File content not found');
+    throw new Error("File content not found in API response");
   }
-  
-  // Decode base64 content
-  const decoded = Buffer.from(data.content, 'base64').toString('utf-8');
-  return decoded;
+
+  return Buffer.from(data.content, "base64").toString("utf-8");
 }
 
-// Main handler
 export default async function handler(req, res) {
-  // Enable CORS
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  
-  // Handle OPTIONS request for CORS preflight
-  if (req.method === 'OPTIONS') {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+  if (req.method === "OPTIONS") {
     return res.status(200).end();
   }
-  
-  // Only allow GET requests
-  if (req.method !== 'GET') {
+
+  if (req.method !== "GET") {
     return res.status(405).json({
       error: "Method not allowed",
       allowed: ["GET"]
@@ -93,37 +86,40 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Fetch file content from GitHub
     const tomlContent = await getFileContent();
-    
-    // Parse TOML to messages array
     const messages = parseTOML(tomlContent);
-    
-    // Get pagination parameters
+
     const { limit = 50, offset = 0 } = req.query;
-    const limitNum = parseInt(limit);
-    const offsetNum = parseInt(offset);
-    
-    // Paginate results
+
+    const limitNum = isNaN(parseInt(limit))
+      ? 50
+      : Math.max(1, Math.min(parseInt(limit), 100));
+
+    const offsetNum = isNaN(parseInt(offset))
+      ? 0
+      : Math.max(0, parseInt(offset));
+
     const start = Math.min(offsetNum, messages.length);
     const end = Math.min(start + limitNum, messages.length);
-    const paginatedMessages = messages.slice(start, end);
-    
+
     return res.status(200).json({
       success: true,
       data: {
-        messages: paginatedMessages,
+        messages: messages.slice(start, end),
         total: messages.length,
         limit: limitNum,
         offset: offsetNum,
         hasMore: end < messages.length
+      },
+      meta: {
+        source: "GitHub REST API",
+        file: FILE_PATH,
+        branch: BRANCH
       }
     });
-    
   } catch (error) {
-    console.error('Error fetching messages:', error);
-    
-    // Handle specific error cases
+    console.error("Legacy messages API error:", error);
+
     if (error.status === 404) {
       return res.status(404).json({
         error: "Messages file not found",
@@ -136,9 +132,17 @@ export default async function handler(req, res) {
         }
       });
     }
-    
+
+    if (error.status === 401 || error.status === 403) {
+      return res.status(500).json({
+        error: "Authentication failed",
+        message: "Check your GitHub token."
+      });
+    }
+
     return res.status(error.status || 500).json({
-      error: error.data?.message || error.message || "Failed to fetch messages"
+      error: "Failed to fetch messages",
+      message: error.data?.message || error.message
     });
   }
 }

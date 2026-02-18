@@ -4543,7 +4543,7 @@ class Game:
             return
 
         import random
-from utilities.settings import DEFAULT_SETTINGS as UTILS_DEFAULT_SETTINGS
+from utilities.settings import SettingsManager, get_setting, set_setting, DEFAULT_SETTINGS, ModManager
 
         # Calculate training effectiveness based on buildings
         training_bonus = self._calculate_training_effectiveness()

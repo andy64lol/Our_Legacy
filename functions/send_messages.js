@@ -42,9 +42,17 @@ async function getFileSha() {
 
 async function fetchProfanityWords() {
   try {
-    const response = await fetch(PROFANITY_WORDS_URL);
-    if (!response.ok) throw new Error(`Failed: ${response.status}`);
-    return await response.json();
+    const urlParts = PROFANITY_WORDS_URL.split('/');
+    const apiOwner = urlParts[3]; // zautumnz
+    const apiRepo = urlParts[4]; // profane-words
+    const apiRef = urlParts[7]; // master
+    const apiFilePath = urlParts.slice(8).join('/'); // words.json
+
+    const apiUrl = `${GITHUB_API}/repos/${apiOwner}/${apiRepo}/contents/${apiFilePath}?ref=${apiRef}`;
+    
+    const data = await githubFetch(apiUrl);
+    const content = Buffer.from(data.content, 'base64').toString('utf-8');
+    return JSON.parse(content);
   } catch {
     return [];
   }
@@ -104,17 +112,16 @@ function serializeTOML(messages) {
 }
 
 async function readMessages() {
-  const rawUrl = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/refs/heads/${BRANCH}/${FILE_PATH}`;
-
-  const response = await fetch(rawUrl, { cache: "no-store" });
-
-  if (!response.ok) {
-    if (response.status === 404) return [];
-    throw new Error(`Failed: ${response.status}`);
+  try {
+    const data = await githubFetch(
+      `${GITHUB_API}/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}?ref=${BRANCH}`
+    );
+    const content = Buffer.from(data.content, 'base64').toString('utf-8');
+    return parseTOML(content);
+  } catch (error) {
+    if (error.status === 404) return [];
+    throw new Error(`Failed to read messages: ${error.data?.message || error.message}`);
   }
-
-  const text = await response.text();
-  return parseTOML(text);
 }
 
 async function saveMessages(messages, sha = null) {
@@ -161,7 +168,6 @@ async function archiveMessages(messages) {
     }
   );
 }
-
 exports.handler = async function (event) {
   // CORS headers
   const headers = {

@@ -3,14 +3,8 @@
   "available_languages": {
     "en": "English",
     "es": "Español",
-    "fr": "Français",
-    "de": "Deutsch",
-    "it": "Italiano",
-    "pt": "Português",
-    "ru": "Русский",
-    "ja": "日本語",
-    "ko": "한국어",
-    "zh": "中文"
+    "zh_simp": "中文 (简体)",
+    "zh_trad": "中文 (繁體)"
   },
   "fallback_language": "en",
   "overwrite_save_files": true

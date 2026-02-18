@@ -1,8 +1,3 @@
-// Global Chat API for Our Legacy
-// Message structure: [{ content, author, timestamp }]
-// Repository: andy64lol/globalchat
-// File: global_chat.json on main branch
-
 const GITHUB_API = "https://api.github.com";
 const REPO_OWNER = "andy64lol";
 const REPO_NAME = "globalchat";
@@ -13,9 +8,9 @@ const MAX_MESSAGES = 1000;
 const MESSAGES_TO_KEEP = 20;
 const PROFANITY_WORDS_URL = "https://raw.githubusercontent.com/zautumnz/profane-words/refs/heads/master/words.json";
 
-// GitHub REST API helper
 async function githubFetch(url, options = {}) {
   const token = process.env.GITHUB_REST_API;
+
   const headers = {
     Authorization: `Bearer ${token}`,
     Accept: "application/vnd.github+json",
@@ -26,15 +21,14 @@ async function githubFetch(url, options = {}) {
 
   const response = await fetch(url, { ...options, headers });
   const data = await response.json();
-  
+
   if (!response.ok) {
     throw { status: response.status, data };
   }
-  
+
   return data;
 }
 
-// Get file SHA for updates
 async function getFileSha() {
   try {
     const data = await githubFetch(
@@ -46,131 +40,104 @@ async function getFileSha() {
   }
 }
 
-// Fetch profanity words for filtering
 async function fetchProfanityWords() {
   try {
-    const response = await fetch(PROFANITY_WORDS_URL);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch profanity words: ${response.status}`);
-    }
-    const words = await response.json();
-    return words;
-  } catch (error) {
-    console.error('Error fetching profanity words:', error);
+    const urlParts = PROFANITY_WORDS_URL.split('/');
+    const apiOwner = urlParts[3];
+    const apiRepo = urlParts[4];
+    const apiRef = urlParts[7];
+    const apiFilePath = urlParts.slice(8).join('/');
+
+    const apiUrl = `${GITHUB_API}/repos/${apiOwner}/${apiRepo}/contents/${apiFilePath}?ref=${apiRef}`;
+    const data = await githubFetch(apiUrl);
+
+    const content = Buffer.from(data.content, 'base64').toString('utf-8');
+    return JSON.parse(content);
+  } catch {
     return [];
   }
 }
 
-// Check if text contains profanity
 function containsProfanity(text, profanityWords) {
-  if (!text || typeof text !== 'string') return false;
-  
-  const lowerText = text.toLowerCase();
+  if (!text || typeof text !== "string") return false;
+
   for (const word of profanityWords) {
-    if (typeof word === 'string' && word.trim()) {
-      const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const regex = new RegExp(`\\b${escapedWord}\\b`, 'i');
-      if (regex.test(text)) {
-        return true;
-      }
+    if (typeof word === "string" && word.trim()) {
+      const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const regex = new RegExp(`\\b${escaped}\\b`, "i");
+      if (regex.test(text)) return true;
     }
   }
+
   return false;
 }
 
-// Parse TOML content to messages array
 function parseTOML(text) {
   const messages = [];
-  const blocks = text.split('[[messages]]').slice(1); // Skip empty first element
-  
+  const blocks = text.split("[[messages]]").slice(1);
+
   for (const block of blocks) {
     const message = {};
-    const lines = block.trim().split('\n');
-    
+    const lines = block.trim().split("\n");
+
     for (const line of lines) {
       const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith('#')) continue;
-      
+      if (!trimmed || trimmed.startsWith("#")) continue;
+
       const match = trimmed.match(/^(\w+)\s*=\s*"([^"]*)"/);
-      if (match) {
-        message[match[1]] = match[2];
-      }
+      if (match) message[match[1]] = match[2];
     }
-    
-    if (message.content && message.author) {
-      messages.push(message);
-    }
+
+    if (message.content && message.author) messages.push(message);
   }
-  
+
   return messages;
 }
 
-// Serialize messages array to TOML content
 function serializeTOML(messages) {
-  if (messages.length === 0) {
-    return '';
-  }
-  
+  if (!messages.length) return "";
+
   const lines = [];
+
   for (const msg of messages) {
-    lines.push('[[messages]]');
+    lines.push("[[messages]]");
     lines.push(`content = "${msg.content.replace(/"/g, '\\"')}"`);
     lines.push(`author = "${msg.author.replace(/"/g, '\\"')}"`);
     lines.push(`timestamp = "${msg.timestamp}"`);
     lines.push(`id = "${msg.id}"`);
-    lines.push('');
+    lines.push("");
   }
-  
-  return lines.join('\n');
+
+  return lines.join("\n");
 }
 
-// Read messages from the repository
 async function readMessages() {
-  const rawUrl = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/refs/heads/${BRANCH}/${FILE_PATH}`;
-  console.log('Fetching messages from:', rawUrl);
-  
   try {
-    const response = await fetch(rawUrl, { cache: 'no-store' });
-    console.log('Response status:', response.status);
-    
-    if (!response.ok) {
-      if (response.status === 404) {
-        console.log('File not found, returning empty array');
-        return [];
-      }
-      throw new Error(`Failed to fetch messages: ${response.status}`);
-    }
-    
-    const text = await response.text();
-    console.log('Raw response text:', text.substring(0, 200));
-    
-    const messages = parseTOML(text);
-    console.log('Parsed messages count:', messages.length);
-    
-    return messages;
+    const data = await githubFetch(
+      `${GITHUB_API}/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}?ref=${BRANCH}`
+    );
+    const content = Buffer.from(data.content, 'base64').toString('utf-8');
+    return parseTOML(content);
   } catch (error) {
-    console.error('Error reading messages:', error);
+    if (error.status === 404) return [];
     throw error;
   }
 }
 
-// Save messages to repository
 async function saveMessages(messages, sha = null) {
   const content = serializeTOML(messages);
-  const encoded = Buffer.from(content).toString('base64');
-  
+  const encoded = Buffer.from(content).toString("base64");
+
   const payload = {
-    message: messages.length > 0 
-      ? `Update chat: ${messages.length} messages` 
+    message: messages.length
+      ? `Update chat: ${messages.length} messages`
       : "Initialize chat",
     content: encoded,
     branch: BRANCH
   };
-  
-  if (sha) {
-    payload.sha = sha;
-  }
-  
+
+  if (sha) payload.sha = sha;
+
   return await githubFetch(
     `${GITHUB_API}/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`,
     {
@@ -180,204 +147,117 @@ async function saveMessages(messages, sha = null) {
   );
 }
 
-// Archive old messages
 async function archiveMessages(messages) {
-  // Create archive filename with timestamp
-  const timestamp = messages.length > 0 
-    ? messages[messages.length - 1].timestamp 
+  const timestamp = messages.length
+    ? messages[messages.length - 1].timestamp
     : Date.now();
+
   const archiveFilename = `${OLD_MESSAGES_DIR}/${timestamp}_chat.toml`;
-  
-  // Save archived messages - GitHub creates the directory automatically if it doesn't exist
   const content = serializeTOML(messages);
-  const encoded = Buffer.from(content).toString('base64');
-  
-  const archivePayload = {
-    message: `Archive ${messages.length} old messages`,
-    content: encoded,
-    branch: BRANCH
-  };
-  
+  const encoded = Buffer.from(content).toString("base64");
+
   await githubFetch(
     `${GITHUB_API}/repos/${REPO_OWNER}/${REPO_NAME}/contents/${archiveFilename}`,
     {
       method: "PUT",
-      body: JSON.stringify(archivePayload)
+      body: JSON.stringify({
+        message: `Archive ${messages.length} old messages`,
+        content: encoded,
+        branch: BRANCH
+      })
     }
   );
 }
 
-// Get latest commit SHA
-async function getLatestCommitSha() {
-  const data = await githubFetch(
-    `${GITHUB_API}/repos/${REPO_OWNER}/${REPO_NAME}/commits/${BRANCH}`
-  );
-  return data.sha;
-}
-
-// Handle incoming messages
-async function handleMessage(req, res) {
-  const { message, author } = req.body;
-  
-  // Validate input
-  if (!message || !author) {
-    return res.status(400).json({ 
-      error: "Message and author are required" 
-    });
-  }
-  
-  if (typeof message !== 'string' || typeof author !== 'string') {
-    return res.status(400).json({ 
-      error: "Message and author must be strings" 
-    });
-  }
-  
-  if (message.length > 300) {
-    return res.status(400).json({ 
-      error: "Message too long (max 300 characters)" 
-    });
-  }
-  
-  if (author.length > 50) {
-    return res.status(400).json({ 
-      error: "Author name too long (max 50 characters)" 
-    });
-  }
-  
-  // Check for profanity
-  const profanityWords = await fetchProfanityWords();
-  
-  if (containsProfanity(message, profanityWords)) {
-    return res.status(400).json({ 
-      error: "Message contains prohibited content",
-      filtered: true
-    });
-  }
-  
-  if (containsProfanity(author, profanityWords)) {
-    return res.status(400).json({ 
-      error: "Author name contains prohibited content",
-      filtered: true
-    });
-  }
-  
-  // Read current messages first
-  let messages;
-  try {
-    messages = await readMessages();
-    console.log('Successfully read messages, count:', messages.length);
-  } catch (error) {
-    console.error('Failed to read existing messages:', error);
-    return res.status(500).json({
-      error: "Failed to read existing messages. Please try again.",
-      details: error.message
-    });
-  }
-  
-  try {
-    const sha = await getFileSha();
-    console.log('File SHA:', sha);
-    
-    // Create new message
-    const newMessage = {
-      content: message.trim(),
-      author: author.trim(),
-      timestamp: Date.now().toString(),
-      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-    };
-    console.log('New message created:', newMessage);
-
-    // Add new message
-    messages.push(newMessage);
-    console.log('After adding new message, total count:', messages.length);
-    
-    // Check if we need to archive messages
-    if (messages.length >= MAX_MESSAGES) {
-      console.log('Archiving messages, count:', messages.length);
-      // Archive current messages before trimming
-      await archiveMessages(messages);
-      messages = messages.slice(-MESSAGES_TO_KEEP);
-      console.log('After archive, keeping:', messages.length);
-    }
-    
-    
-    // Save updated messages
-    console.log('Saving messages with SHA:', sha);
-    await saveMessages(messages, sha);
-    console.log('Messages saved successfully');
-    
-    return res.status(200).json({
-      success: true,
-      message: "Message sent successfully",
-      data: {
-        id: newMessage.id,
-        timestamp: newMessage.timestamp,
-        position: messages.length
-      }
-    });
-    
-  } catch (error) {
-    console.error('Error sending message:', error);
-    return res.status(error.status || 500).json({
-      error: error.data?.message || error.message || "Failed to send message"
-    });
-  }
-}
-
-// Handle reading messages
-async function handleRead(req, res) {
-  const { limit = 50, offset = 0 } = req.query;
-  
-  try {
-    const messages = await readMessages();
-    
-    // Pagination
-    const start = Math.min(offset, messages.length);
-    const end = Math.min(start + parseInt(limit), messages.length);
-    const paginatedMessages = messages.slice(start, end);
-    
-    return res.status(200).json({
-      success: true,
-      data: {
-        messages: paginatedMessages,
-        total: messages.length,
-        limit: parseInt(limit),
-        offset: parseInt(offset),
-        hasMore: end < messages.length
-      }
-    });
-    
-  } catch (error) {
-    console.error('Error reading messages:', error);
-    return res.status(error.status || 500).json({
-      error: error.data?.message || error.message || "Failed to read messages"
-    });
-  }
-}
-
-// Main handler
 export default async function handler(req, res) {
-  const { method, query } = req;
-  
-  // Enable CORS
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  
-  // Handle OPTIONS request for CORS preflight
-  if (method === 'OPTIONS') {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+  if (req.method === "OPTIONS") {
     return res.status(200).end();
   }
-  
-  switch (method) {
-    case "GET":
-      return handleRead(req, res);
-    case "POST":
-      return handleMessage(req, res);
-    default:
-      return res.status(405).json({ 
-        error: "Method not allowed",
-        allowed: ["GET", "POST"]
+
+  if (req.method === "GET") {
+    const { limit = 50, offset = 0 } = req.query;
+
+    try {
+      const messages = await readMessages();
+      const start = Math.min(parseInt(offset), messages.length);
+      const end = Math.min(start + parseInt(limit), messages.length);
+
+      return res.status(200).json({
+        success: true,
+        data: {
+          messages: messages.slice(start, end),
+          total: messages.length,
+          limit: parseInt(limit),
+          offset: parseInt(offset),
+          hasMore: end < messages.length
+        }
       });
+    } catch (error) {
+      return res.status(500).json({ error: error.message });
+    }
   }
+
+  if (req.method === "POST") {
+    const { message, author } = req.body || {};
+
+    if (!message || !author) {
+      return res.status(400).json({ error: "Message and author required" });
+    }
+
+    if (message.length > 300 || author.length > 50) {
+      return res.status(400).json({ error: "Input too long" });
+    }
+
+    const profanityWords = await fetchProfanityWords();
+
+    if (
+      containsProfanity(message, profanityWords) ||
+      containsProfanity(author, profanityWords)
+    ) {
+      return res.status(400).json({ error: "Prohibited content", filtered: true });
+    }
+
+    try {
+      let messages = await readMessages();
+      const sha = await getFileSha();
+
+      const newMessage = {
+        content: message.trim(),
+        author: author.trim(),
+        timestamp: Date.now().toString(),
+        id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      };
+
+      messages.push(newMessage);
+      await saveMessages(messages, sha);
+
+      if (messages.length >= MAX_MESSAGES) {
+        await archiveMessages(messages);
+        messages = messages.slice(-MESSAGES_TO_KEEP);
+        await saveMessages(messages); // important fix
+      }
+
+      return res.status(200).json({
+        success: true,
+        data: {
+          id: newMessage.id,
+          timestamp: newMessage.timestamp,
+          position: messages.length
+        }
+      });
+    } catch (error) {
+      return res.status(error.status || 500).json({
+        error: error.data?.message || error.message
+      });
+    }
+  }
+
+  return res.status(405).json({
+    error: "Method not allowed",
+    allowed: ["GET", "POST"]
+  });
 }

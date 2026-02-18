@@ -2449,7 +2449,6 @@
       "price": 150,
       "rarity": "rare",
       "requirements": {
-         "level": 2,
          "class": "Paladin"
       }
    },
