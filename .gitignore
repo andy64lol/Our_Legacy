@@ -30,3 +30,4 @@ scripts/activities.json
 mods/
 .vercel/
 node_modules/
+server.py

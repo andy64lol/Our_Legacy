@@ -24,36 +24,14 @@ DEFAULT_SETTINGS = {
 }
 
 
-class ModManager:
+from utilities.settings import ModManager as UtilsModManager, get_setting, set_setting
+
+class ModManager(UtilsModManager):
     """Manages mod loading and data merging"""
 
     def __init__(self):
-        self.mods_dir = "mods"
-        self.mods: Dict[str, Dict[str, Any]] = {}
-        self.enabled_mods: List[str] = []
-        self.settings_file = "data/mod_settings.json"
-        self.settings = DEFAULT_SETTINGS.copy()
-        self.load_settings()
-
-    def load_settings(self):
-        """Load mod settings from file"""
-        try:
-            if os.path.exists(self.settings_file):
-                with open(self.settings_file, 'r') as f:
-                    loaded_settings = json.load(f)
-                    # Merge with defaults
-                    self.settings.update(loaded_settings)
-        except (json.JSONDecodeError, IOError):
-            self.settings = DEFAULT_SETTINGS.copy()
-
-    def save_settings(self):
-        """Save mod settings to file"""
-        try:
-            os.makedirs(os.path.dirname(self.settings_file), exist_ok=True)
-            with open(self.settings_file, 'w') as f:
-                json.dump(self.settings, f, indent=2)
-        except IOError as e:
-            print(f"Error saving mod settings: {e}")
+        super().__init__()
+        self.discover_mods()
 
     def discover_mods(self):
         """Discover all mods in the mods directory"""
@@ -586,7 +564,13 @@ class Character:
             }
             stats = default_stats
 
-        self.max_hp = stats.get("hp", 100)
+        if lang is None:
+            # Create a mock lang if None to avoid "get" on None errors
+            class MockLang:
+                def get(self, key, default=None): return key
+            self.lang = MockLang()
+        else:
+            self.lang = lang
         self.hp = self.max_hp
         self.max_mp = stats.get("mp", 50)
         self.mp = self.max_mp
@@ -1078,6 +1062,12 @@ class Character:
                     self.update_stats_from_equipment(items_data)
                     return True
             # If all slots full, ask which one to replace
+            if self.lang is None:
+                # Create a mock lang if None to avoid "get" on None errors
+                class MockLang:
+                    def get(self, key, default=None): return key
+                self.lang = MockLang()
+            
             print(self.lang.get("all_accessory_slots_full"))
             for i in range(1, 4):
                 slot = f"accessory_{i}"
@@ -4542,9 +4532,6 @@ class Game:
             input(self.lang.get("press_enter"))
             return
 
-        import random
-from utilities.settings import DEFAULT_SETTINGS as UTILS_DEFAULT_SETTINGS
-
         # Calculate training effectiveness based on buildings
         training_bonus = self._calculate_training_effectiveness()
 
@@ -5736,22 +5723,15 @@ from utilities.settings import DEFAULT_SETTINGS as UTILS_DEFAULT_SETTINGS
                 f"{Colors.YELLOW}Please check your inventory and re-equip valid items.{Colors.END}"
             )
 
-    def save_on_error(self,
-                      exc_info=None,
-                      filename_prefix: str = "err_save_unstable_"):
-        """Attempt to save the current game state and write a traceback log when an error occurs.
-
-        This is intended for use in exception and signal handlers. It will try to save the
-        current player state with a filename prefixed by `filename_prefix` and also write a
-        `.log` file containing the traceback.
-        """
+    def save_on_error(self, exc_info=None, filename_prefix="err_save_unstable_"):
+        """Attempt to save the current game state and write a traceback log when an error occurs."""
         try:
             # Build a safe player name for filenames
             pname = (self.player.name if self.player
                      and getattr(self.player, 'name', None) else 'unknown')
             # Try to save using the standard save function with prefix
             try:
-                self.save_game(filename_prefix=filename_prefix)
+                self.save_game(filename_prefix)
             except Exception as se:
                 print(f"Error while saving game on error: {se}")
 
@@ -7139,11 +7119,9 @@ from utilities.settings import DEFAULT_SETTINGS as UTILS_DEFAULT_SETTINGS
         while True:
             self.main_menu()
 
-
 def main():
     """Main entry point"""
     game = Game()
-    game.save_on_error = game.save_on_error  # Ensure it's reachable
 
     # Setup global handlers for Ctrl+C and uncaught exceptions so we can save before exit
     try:
