@@ -1,4 +1,4 @@
-# Our Legacy - replit.md
+# Our Legacy
 
 ## Overview
 
