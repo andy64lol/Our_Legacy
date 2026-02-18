@@ -1,6 +1,10 @@
 # Ignore save files and cache
 data/saves/
 bash/
+# But keep the translation checker script
+!bash/check_translations.sh
+# Ignore non-important utility scripts
+bash/non_important/
 __pycache__/
 *.pyc
 *.pyo
@@ -31,3 +35,7 @@ mods/
 .vercel/
 node_modules/
 server.py
+replit.md
+# Generated scripts for fixing prints
+bash/fix_prints*.sh
+bash/backups/

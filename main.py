@@ -566,6 +566,7 @@ class Character:
             self.lang = MockLang()
         else:
             self.lang = lang
+        self.max_hp = stats.get("hp", 100)
         self.hp = self.max_hp
         self.max_mp = stats.get("mp", 50)
         self.mp = self.max_mp
@@ -735,8 +736,8 @@ class Character:
             self.attack += self.level_up_bonuses.get("attack", 0)
             self.defense += self.level_up_bonuses.get("defense", 0)
             self.speed += self.level_up_bonuses.get("speed", 0)
-            self.hp = self.max_hp
-            self.mp = self.max_mp
+            self.max_hp = stats.get("hp", 100)
+        self.hp = self.max_hp
 
         print(
             f"{Colors.GREEN}{Colors.BOLD}Level Up!{Colors.END} You are now level {self.level}!"
@@ -1463,7 +1464,7 @@ class Game:
         if not enabled_mods:
             return
 
-        print(f"\n{Colors.CYAN}Loading mods...{Colors.END}")
+        print(self.lang.get("nloading_mods"))
 
         # Load mod data for each data type
         mod_data_types = [('areas.json', 'areas_data'),
@@ -1524,7 +1525,7 @@ class Game:
                     f"  Loaded {len(mod_data)} entries from mods for {file_name}"
                 )
 
-        print(f"{Colors.GREEN}Mod loading complete!{Colors.END}")
+        print(self.lang.get("mod_loading_complete_1"))
 
     def load_config(self):
         """Load configuration - uses hardcoded defaults since config file is removed"""
@@ -1562,7 +1563,7 @@ class Game:
         if 'choice' in content:
             choices = content['choice']
             if choices:
-                print(f"\n{Colors.YELLOW}Choose your response:{Colors.END}")
+                print(self.lang.get("nchoose_your_response"))
                 choice_keys = list(choices.keys())
                 for i, choice_key in enumerate(choice_keys, 1):
                     print(f"{i}. {choice_key}")
@@ -1624,7 +1625,7 @@ class Game:
         """Settings menu available from welcome screen"""
         while True:
             clear_screen()
-            print(f"\n{Colors.BOLD}=== SETTINGS ==={Colors.END}")
+            print(self.lang.get("n_settings"))
 
             # Get current settings
             mods_enabled = self.mod_manager.settings.get("mods_enabled", True)
@@ -1640,9 +1641,9 @@ class Game:
                 # Toggle mods system
                 self.mod_manager.toggle_mods_system()
                 if self.mod_manager.settings.get("mods_enabled", True):
-                    print(f"{Colors.GREEN}Mod system enabled!{Colors.END}")
+                    print(self.lang.get("mod_system_enabled_1"))
                 else:
-                    print(f"{Colors.RED}Mod system disabled!{Colors.END}")
+                    print(self.lang.get("03331mmod_system_disabled0330m"))
                 print(
                     f"{Colors.YELLOW}Note: Changes take effect on game restart.{Colors.END}"
                 )
@@ -1656,7 +1657,7 @@ class Game:
         """Mods menu available from welcome screen"""
         while True:
             clear_screen()
-            print(f"\n{Colors.BOLD}=== MODS ==={Colors.END}")
+            print(self.lang.get("n_mods"))
 
             # Refresh mod list
             self.mod_manager.discover_mods()
@@ -1700,7 +1701,7 @@ class Game:
                         description) > 100 else description
                     print(f"   {desc}")
 
-            print(f"\n{Colors.YELLOW}Options:{Colors.END}")
+            print(self.lang.get("noptions"))
             print(f"1-{len(mods_list)}. Toggle Mod")
             print(f"R. {self.lang.get('ui_refresh_mod_list')}")
             print(f"B. {self.lang.get('ui_back_to_main_menu')}")
@@ -1899,10 +1900,10 @@ class Game:
         # Show Build options only in your_land
         menu_max = "18"
         if self.current_area == "your_land":
-            print(f"{Colors.GOLD}15.{Colors.END} Furnish Home")
-            print(f"{Colors.GOLD}16.{Colors.END} Build Structures")
-            print(f"{Colors.GOLD}17.{Colors.END} Farm")
-            print(f"{Colors.GOLD}18.{Colors.END} Training")
+            print(self.lang.get("15_furnish_home"))
+            print(self.lang.get("16_build_structures"))
+            print(self.lang.get("17_farm"))
+            print(self.lang.get("18_training"))
             print(f"{Colors.CYAN}19.{Colors.END} {self.lang.get('save_game')}")
             print(f"{Colors.CYAN}20.{Colors.END} {self.lang.get('load_game')}")
             print(
@@ -2267,7 +2268,7 @@ class Game:
         if not self.player:
             return
 
-        print(f"\n{Colors.BOLD}=== BATTLE ==={Colors.END}")
+        print(self.lang.get("n_battle"))
         print(f"VS {enemy.name}")
 
         # Track if player fled
@@ -2329,7 +2330,7 @@ class Game:
 
         # Battle outcome
         if player_fled:
-            print(f"\n{Colors.YELLOW}You fled from the battle!{Colors.END}")
+            print(self.lang.get("nyou_fled_from_the_battle"))
             # Optional: Add penalty for fleeing?
             return
 
@@ -2420,7 +2421,7 @@ class Game:
         if not self.player:
             return True
 
-        print(f"\n{Colors.BOLD}Your turn!{Colors.END}")
+        print(self.lang.get("nyour_turn"))
         print(f"1. {self.lang.get('attack')}")
         print(f"2. {self.lang.get('use_item')}")
         print(f"3. {self.lang.get('defend')}")
@@ -2817,7 +2818,7 @@ class Game:
                 )
                 print(f"   {sdata.get('description', '')}")
 
-            print(f"\n{Colors.YELLOW}Options:{Colors.END}")
+            print(self.lang.get("noptions_1"))
             if total_pages > 1:
                 if page > 0:
                     print(f"P. {self.lang.get('ui_previous_page')}")
@@ -2999,7 +3000,7 @@ class Game:
             print(self.lang.get("no_character"))
             return
 
-        print(f"\n{Colors.BOLD}=== INVENTORY ==={Colors.END}")
+        print(self.lang.get("n_inventory"))
         print(f"Gold: {Colors.GOLD}{self.player.gold}{Colors.END}")
 
         if not self.player.inventory:
@@ -3086,7 +3087,7 @@ class Game:
             ]
 
             if active_missions:
-                print(f"\n{Colors.CYAN}--- Active Missions ---{Colors.END}")
+                print(self.lang.get("n_active_missions"))
                 for i, mid in enumerate(active_missions, 1):
                     mission = self.missions_data.get(mid, {})
                     progress = self.mission_progress[mid]
@@ -3377,7 +3378,7 @@ class Game:
             print(self.lang.get("no_completed_missions"))
             return
 
-        print(f"\n{Colors.BOLD}=== CLAIM REWARDS ==={Colors.END}")
+        print(self.lang.get("n_claim_rewards"))
         print(self.lang.get("completed_missions_header"))
         for i, mid in enumerate(completed_missions, 1):
             mission = self.missions_data.get(mid, {})
@@ -3413,7 +3414,7 @@ class Game:
                 del self.mission_progress[mission_id]
                 self.completed_missions.append(mission_id)
 
-                print(f"\n{Colors.GREEN}Rewards claimed!{Colors.END}")
+                print(self.lang.get("nrewards_claimed"))
                 print(f"Gained {Colors.MAGENTA}{exp} experience{Colors.END}")
                 print(f"Gained {Colors.GOLD}{gold} gold{Colors.END}")
                 if items:
@@ -3484,7 +3485,7 @@ class Game:
             print(self.lang.get("no_character"))
             return
 
-        print(f"\n{Colors.BOLD}{Colors.CYAN}=== HOUSING SHOP ==={Colors.END}")
+        print(self.lang.get("n_housing_shop"))
         print(
             f"{Colors.YELLOW}Welcome to the Housing Shop! Build your dream home with these items.{Colors.END}"
         )
@@ -3537,15 +3538,15 @@ class Game:
                     f"   Price: {price_color}{price} gold{Colors.END} | Comfort: {Colors.CYAN}+{comfort}{Colors.END}"
                 )
 
-            print(f"\n{Colors.YELLOW}Options:{Colors.END}")
+            print(self.lang.get("noptions_2"))
             print(
                 f"{Colors.CYAN}1-{len(page_items)}.{Colors.END} Buy/Add Housing Item"
             )
             if len(housing_items) > page_size:
-                print(f"{Colors.CYAN}N.{Colors.END} Next Page")
-                print(f"{Colors.CYAN}P.{Colors.END} Previous Page")
-            print(f"{Colors.GOLD}B.{Colors.END} Furnish/View Home")
-            print(f"{Colors.CYAN}Enter.{Colors.END} Leave Shop")
+                print(self.lang.get("n_next_page"))
+                print(self.lang.get("p_previous_page"))
+            print(self.lang.get("b_furnishview_home"))
+            print(self.lang.get("enter_leave_shop"))
 
             choice = ask("\nChoose action: ").strip().upper()
 
@@ -3592,7 +3593,7 @@ class Game:
                             f"\n{Colors.RED}✗ Not enough gold! Need {Colors.BOLD}{price}{Colors.END}{Colors.RED}, have {self.player.gold}.{Colors.END}"
                         )
                 else:
-                    print(f"{Colors.RED}Invalid selection.{Colors.END}")
+                    print(self.lang.get("invalid_selection_1"))
 
     def visit_specific_shop(self, shop_id):
         """Visit a specific shop by ID"""
@@ -3681,7 +3682,7 @@ class Game:
                         print(f"  {slot}: {Colors.GRAY}Empty{Colors.END}")
                 print()
 
-            print(f"{Colors.BOLD}Options:{Colors.END}")
+            print(self.lang.get("options_1"))
             print(f"1. {self.lang.get('place_item_slot')}")
             print(f"2. {self.lang.get('remove_item_slot')}")
             print(f"3. {self.lang.get('view_home_status')}")
@@ -3699,7 +3700,7 @@ class Game:
             elif choice == '3':
                 self.view_home_status()
             else:
-                print(f"{Colors.RED}Invalid choice.{Colors.END}")
+                print(self.lang.get("invalid_choice_1"))
                 time.sleep(1)
 
     def view_home_status(self):
@@ -3707,7 +3708,7 @@ class Game:
         if not self.player:
             return
 
-        print(f"\n{Colors.BOLD}=== HOME DETAILS ==={Colors.END}")
+        print(self.lang.get("n_home_details"))
         print(
             f"\nComfort Points: {Colors.CYAN}{self.player.comfort_points}{Colors.END}"
         )
@@ -3719,7 +3720,7 @@ class Game:
         print(f"Unique Items Placed: {len(set(placed_items))}")
 
         # Calculate comfort distribution
-        print(f"\n{Colors.BOLD}Item Breakdown:{Colors.END}")
+        print(self.lang.get("nitem_breakdown"))
         item_comforts = {}
         for item_id in placed_items:
             item_data = self.housing_data.get(item_id, {})
@@ -3765,7 +3766,7 @@ class Game:
             print(self.lang.get("no_items_to_remove"))
             return
 
-        print(f"\n{Colors.BOLD}Placed Items:{Colors.END}")
+        print(self.lang.get("nplaced_items"))
         for i, slot in enumerate(occupied_slots, 1):
             item_id = self.player.building_slots[slot]
             if item_id in self.housing_data:
@@ -3816,7 +3817,7 @@ class Game:
             print(self.lang.get("no_housing_items"))
             return
 
-        print(f"\n{Colors.BOLD}Available Items:{Colors.END}")
+        print(self.lang.get("navailable_items"))
         for i, item_id in enumerate(self.player.housing_owned, 1):
             if item_id in self.housing_data:
                 item = self.housing_data[item_id]
@@ -3989,7 +3990,7 @@ class Game:
 
             # Display building slots
             menu_idx = 1
-            print(f"{Colors.BOLD}Building Slots:{Colors.END}\n")
+            print(self.lang.get("building_slotsn"))
 
             for b_type, info in building_types.items():
                 placed = placed_items.get(b_type, 0)
@@ -4001,7 +4002,7 @@ class Game:
                 )
                 menu_idx += 1
 
-            print(f"\n{Colors.CYAN}Q.{Colors.END} Quit")
+            print(self.lang.get("nq_quit"))
             choice = ask(
                 f"\n{Colors.CYAN}Choose a building type to manage: {Colors.END}"
             ).strip().upper()
@@ -4036,7 +4037,7 @@ class Game:
             max_slots = b_info["slots"]
 
             # Display all slots for this type
-            print(f"{Colors.BOLD}Slots:{Colors.END}")
+            print(self.lang.get("slots"))
             slot_list = []
             for i in range(1, max_slots + 1):
                 slot_name = f"{b_type}_{i}"
@@ -4078,7 +4079,7 @@ class Game:
                 )
 
             print(f"\n{Colors.CYAN}1-{max_slots}.{Colors.END} Manage slot")
-            print(f"{Colors.CYAN}B.{Colors.END} Back to land menu")
+            print(self.lang.get("b_back_to_land_menu"))
 
             choice = ask(
                 f"\n{Colors.CYAN}Choose action: {Colors.END}").strip().upper()
@@ -4116,9 +4117,9 @@ class Game:
                 print(
                     f"Swap cost: {Colors.GOLD}{swap_cost} gold{Colors.END}\n")
             else:
-                print(f"{Colors.GRAY}Current item: Empty{Colors.END}\n")
+                print(self.lang.get("current_item_emptyn"))
 
-            print(f"{Colors.BOLD}Available items to place:{Colors.END}\n")
+            print(self.lang.get("available_items_to_placen"))
 
             for idx, item in enumerate(available_items, 1):
                 item_id = item["id"]
@@ -4135,8 +4136,8 @@ class Game:
                     f"   Comfort: {Colors.CYAN}+{item_comfort}{Colors.END} | Swap cost: {Colors.GOLD}{swap_cost}g{Colors.END}"
                 )
 
-            print(f"\n{Colors.CYAN}C.{Colors.END} Clear this slot")
-            print(f"{Colors.CYAN}B.{Colors.END} Back")
+            print(self.lang.get("nc_clear_this_slot"))
+            print(self.lang.get("b_back"))
 
             choice = ask(
                 f"\n{Colors.CYAN}Select item to place or action: {Colors.END}"
@@ -4147,7 +4148,7 @@ class Game:
             elif choice == 'C':
                 if current_item:
                     self.player.building_slots[slot_name] = None
-                    print(f"\n{Colors.GREEN}✓ Slot cleared!{Colors.END}")
+                    print(self.lang.get("n_slot_cleared"))
                     input(self.lang.get("press_enter"))
                     break
                 else:
@@ -4226,7 +4227,7 @@ class Game:
 
         while True:
             clear_screen()
-            print(f"\n{Colors.BOLD}{Colors.CYAN}=== FARMING ==={Colors.END}")
+            print(self.lang.get("n_farming"))
             print(
                 f"{Colors.YELLOW}Tend to your crops and harvest your bounty{Colors.END}\n"
             )
@@ -4234,7 +4235,7 @@ class Game:
             # Show available crops to plant
             crops_data = self.farming_data.get("crops", {})
 
-            print(f"{Colors.BOLD}Available Crops to Plant:{Colors.END}\n")
+            print(self.lang.get("available_crops_to_plantn"))
             crops_list = list(crops_data.items())
             for idx, (crop_id, crop_data) in enumerate(crops_list, 1):
                 name = crop_data.get("name", crop_id)
@@ -4249,7 +4250,7 @@ class Game:
                     f"   Growth: {Colors.YELLOW}{growth_time} days{Colors.END} | Harvest: {Colors.GREEN}+{harvest}{Colors.END}\n"
                 )
 
-            print(f"{Colors.BOLD}Farm Status:{Colors.END}\n")
+            print(self.lang.get("farm_statusn"))
 
             # Show farm plot status
             for farm_idx in range(1, 3):
@@ -4288,9 +4289,9 @@ class Game:
 
             print(
                 f"{Colors.CYAN}1-{len(crops_list)}.{Colors.END} Plant a crop")
-            print(f"{Colors.CYAN}H.{Colors.END} Harvest crops")
-            print(f"{Colors.CYAN}V.{Colors.END} View inventory")
-            print(f"{Colors.CYAN}B.{Colors.END} Back")
+            print(self.lang.get("h_harvest_crops"))
+            print(self.lang.get("v_view_inventory"))
+            print(self.lang.get("b_back_1"))
 
             choice = ask(
                 f"\n{Colors.CYAN}Choose action: {Colors.END}").strip().upper()
@@ -4339,7 +4340,7 @@ class Game:
                 farm_choices.append(farm_slot)
 
         if not farm_choices:
-            print(f"{Colors.YELLOW}No active farms available!{Colors.END}")
+            print(self.lang.get("no_active_farms_available"))
             input(self.lang.get("press_enter"))
             return
 
@@ -4449,7 +4450,7 @@ class Game:
                 crop_counts[item] = crop_counts.get(item, 0) + 1
 
         if crop_counts:
-            print(f"{Colors.BOLD}Crops in Inventory:{Colors.END}\n")
+            print(self.lang.get("crops_in_inventoryn"))
             for crop_name, count in crop_counts.items():
                 crop_id = crop_names[crop_name]
                 crop_data = crops_data.get(crop_id, {})
@@ -4462,9 +4463,9 @@ class Game:
                     f"  Sell price: {Colors.GOLD}{sell_price}g{Colors.END} each | Total: {Colors.GOLD}{sell_price * count}g{Colors.END}\n"
                 )
 
-            print(f"{Colors.CYAN}S.{Colors.END} Sell crops")
-            print(f"{Colors.CYAN}C.{Colors.END} Cook crops (alchemy)")
-            print(f"{Colors.CYAN}B.{Colors.END} Back")
+            print(self.lang.get("s_sell_crops"))
+            print(self.lang.get("c_cook_crops_alchemy"))
+            print(self.lang.get("b_back_2"))
 
             choice = ask(
                 f"\n{Colors.CYAN}Choose action: {Colors.END}").strip().upper()
@@ -4485,7 +4486,7 @@ class Game:
             return
 
         clear_screen()
-        print(f"\n{Colors.BOLD}{Colors.CYAN}=== SELL CROPS ==={Colors.END}\n")
+        print(self.lang.get("n_sell_crops_n"))
 
         crops_data = self.farming_data.get("crops", {})
         crop_names = {
@@ -4554,7 +4555,7 @@ class Game:
             # Show training facility info
             self._display_training_facilities()
 
-            print(f"{Colors.BOLD}Current Stats:{Colors.END}")
+            print(self.lang.get("current_stats_1"))
             print(
                 f"HP: {Colors.RED}{self.player.max_hp}{Colors.END} | MP: {Colors.BLUE}{self.player.max_mp}{Colors.END}"
             )
@@ -4562,28 +4563,28 @@ class Game:
                 f"Attack: {Colors.RED}{self.player.attack}{Colors.END} | Defense: {Colors.GREEN}{self.player.defense}{Colors.END} | Speed: {Colors.YELLOW}{self.player.speed}{Colors.END}\n"
             )
 
-            print(f"{Colors.BOLD}Training Types:{Colors.END}\n")
-            print(f"{Colors.CYAN}1.{Colors.END} Morning Training (1d4)")
+            print(self.lang.get("training_typesn"))
+            print(self.lang.get("1_morning_training_1d4"))
             print(
                 f"   {Colors.GREEN}4: +4%{Colors.END} | {Colors.YELLOW}3: +2%{Colors.END} | {Colors.RED}1-2: -1%{Colors.END}"
             )
             print()
-            print(f"{Colors.CYAN}2.{Colors.END} Calm Training (1d6)")
+            print(self.lang.get("2_calm_training_1d6"))
             print(
                 f"   {Colors.GREEN}6: +13%{Colors.END} | {Colors.GREEN}5: +10%{Colors.END} | {Colors.YELLOW}4: +7%{Colors.END} | {Colors.YELLOW}3: +1%{Colors.END} | {Colors.RED}1-2: -3%{Colors.END}"
             )
             print()
-            print(f"{Colors.CYAN}3.{Colors.END} Normal Training (1d8)")
+            print(self.lang.get("3_normal_training_1d8"))
             print(
                 f"   {Colors.GREEN}5-8: +10%{Colors.END} | {Colors.RED}1-3: -7%{Colors.END}"
             )
             print()
-            print(f"{Colors.CYAN}4.{Colors.END} Intense Training (1d20)")
+            print(self.lang.get("4_intense_training_1d20"))
             print(
                 f"   {Colors.GREEN}16-20: +20%{Colors.END} | {Colors.GREEN}11-15: +15%{Colors.END} | {Colors.YELLOW}10: +10%{Colors.END} | {Colors.RED}5-9: -10%{Colors.END} | {Colors.RED}1-4: -20%{Colors.END}"
             )
             print()
-            print(f"{Colors.CYAN}B.{Colors.END} Back")
+            print(self.lang.get("b_back_3"))
 
             choice = ask(f"\n{Colors.CYAN}Choose training type: {Colors.END}"
                          ).strip().upper()
@@ -4637,7 +4638,7 @@ class Game:
                         f"{Colors.RED}Training failed!{Colors.END} All stats decrease by {Colors.RED}{abs(final_bonus_percent):.1f}%{Colors.END}{bonus_description}"
                     )
                 else:
-                    print(f"{Colors.YELLOW}No change in stats.{Colors.END}")
+                    print(self.lang.get("no_change_in_stats"))
 
                 # Calculate stat changes
                 old_stats = {
@@ -4667,7 +4668,7 @@ class Game:
                     self.player.hp = min(self.player.hp, self.player.max_hp)
                     self.player.mp = min(self.player.mp, self.player.max_mp)
 
-                print(f"\n{Colors.BOLD}Stat Changes:{Colors.END}")
+                print(self.lang.get("nstat_changes"))
                 print(
                     f"HP: {Colors.RED}{old_stats['max_hp']} → {self.player.max_hp}{Colors.END}"
                 )
@@ -4686,7 +4687,7 @@ class Game:
 
                 input(self.lang.get('press_enter'))
             else:
-                print(f"{Colors.RED}Invalid choice.{Colors.END}")
+                print(self.lang.get("invalid_choice_2"))
                 time.sleep(1)
 
     def _calculate_training_effectiveness(self) -> float:
@@ -4739,7 +4740,7 @@ class Game:
         if not self.player:
             return
 
-        print(f"{Colors.BOLD}Training Facilities:{Colors.END}")
+        print(self.lang.get("training_facilities_1"))
 
         facilities = []
         for i in range(1, 4):
@@ -4783,7 +4784,7 @@ class Game:
                     f"  {Colors.GRAY}Training Effectiveness: x{effectiveness:.1f}{Colors.END}"
                 )
         else:
-            print(f"  {Colors.YELLOW}No training facilities built{Colors.END}")
+            print(self.lang.get("no_training_facilities_built"))
 
         print()
 
@@ -4793,7 +4794,7 @@ class Game:
             print(self.lang.get("no_character"))
             return
 
-        print(f"\n{Colors.BOLD}=== TAVERN ==={Colors.END}")
+        print(self.lang.get("n_tavern"))
         print(
             "Welcome to The Rusty Tankard. Here you can hire companions to join your party."
         )
@@ -4920,7 +4921,7 @@ class Game:
             return
 
         # Get filter options from player
-        print(f"\n{Colors.CYAN}=== BROWSE ITEMS ==={Colors.END}")
+        print(self.lang.get("n_browse_items"))
         print(self.lang.get('ui_filters_available'))
         print(self.lang.get('filter_all_items'))
         print(self.lang.get('filter_by_type_desc'))
@@ -5014,7 +5015,7 @@ class Game:
                     f"   {price_color}{market_price}{Colors.END} gold (was {original_price})"
                 )
 
-            print(f"\n{Colors.YELLOW}Options:{Colors.END}")
+            print(self.lang.get("noptions_3"))
             print(f"1-{len(page_items)}. Buy Item")
             if len(filtered_items) > page_size:
                 print(f"N. {self.lang.get('ui_next_page')}")
@@ -5097,7 +5098,7 @@ class Game:
             return
 
         while True:
-            print(f"\n{Colors.BOLD}=== COMPANIONS ==={Colors.END}")
+            print(self.lang.get("n_companions"))
             print(f"Active companions: {len(self.player.companions)}/4")
 
             if not self.player.companions:
@@ -5194,7 +5195,7 @@ class Game:
         area_data = self.areas_data.get(current, {})
         connections = area_data.get("connections", [])
 
-        print(f"\n{Colors.BOLD}=== TRAVEL ==={Colors.END}")
+        print(self.lang.get("n_travel"))
         print(f"Current location: {area_data.get('name', current)}")
         if not connections:
             print(self.lang.get('no_connected_areas'))
@@ -5870,7 +5871,7 @@ class Game:
             found_text.append(f"{color}{qty}x {material}{Colors.END}")
 
         # Display gathered materials
-        print(f"\n{Colors.YELLOW}You found materials:{Colors.END}")
+        print(self.lang.get("nyou_found_materials"))
         for text in found_text:
             print(f"  - {text}")
 
@@ -5884,7 +5885,7 @@ class Game:
             print(self.lang.get("no_character"))
             return
 
-        print(f"\n{Colors.BOLD}=== DUNGEONS ==={Colors.END}")
+        print(self.lang.get("n_dungeons"))
         print(self.lang.get('ui_dungeon_portal'))
 
         # Check if player is in a dungeon
@@ -6089,7 +6090,7 @@ class Game:
 
         question_data = random.choice(question_template['types'])
 
-        print(f"\n{Colors.YELLOW}{Colors.BOLD}Riddle:{Colors.END}")
+        print(self.lang.get("nriddle"))
         print(question_data['question'])
 
         # Show hints if available
@@ -6114,7 +6115,7 @@ class Game:
                 break
 
             if answer == 'hint' and question_data.get('hints'):
-                print(f"\n{Colors.CYAN}Hints:{Colors.END}")
+                print(self.lang.get("nhints"))
                 for i, hint in enumerate(question_data['hints'], 1):
                     print(f"{i}. {hint}")
                 continue
@@ -6122,13 +6123,13 @@ class Game:
             # Check time limit
             elapsed = time.time() - start_time
             if elapsed > time_limit:
-                print(f"{Colors.RED}Time's up!{Colors.END}")
+                print(self.lang.get("times_up"))
                 break
 
             # Check answer
             correct_answer = question_data.get('answer', '').lower()
             if answer == correct_answer:
-                print(f"{Colors.GREEN}Correct!{Colors.END}")
+                print(self.lang.get("correct"))
                 answered_correctly = True
 
                 # Give rewards
@@ -6142,7 +6143,7 @@ class Game:
                 break
             else:
                 attempts += 1
-                print(f"{Colors.RED}Incorrect.{Colors.END}")
+                print(self.lang.get("incorrect"))
 
                 # Show close matches
                 close = difflib.get_close_matches(answer, [correct_answer],
@@ -6256,7 +6257,7 @@ class Game:
             self.battle(enemy)
 
         if self.player and self.player.is_alive():
-            print(f"{Colors.GREEN}You cleared the battle room!{Colors.END}")
+            print(self.lang.get("you_cleared_the_battle_room"))
             self.advance_room()
         else:
             self.dungeon_death()
@@ -6354,7 +6355,7 @@ class Game:
                 )
 
         if items_found:
-            print(f"{Colors.YELLOW}Items found:{Colors.END}")
+            print(self.lang.get("items_found"))
             for item in items_found:
                 item_data = self.items_data.get(item, {})
                 color = get_rarity_color(item_data.get('rarity', 'common'))
@@ -6380,7 +6381,7 @@ class Game:
         # Roll for trap
         trap_chance = 0.7  # 70% chance of trap
         if random.random() < trap_chance:
-            print(f"{Colors.RED}TRAP TRIGGERED!{Colors.END}")
+            print(self.lang.get("trap_triggered"))
 
             # Get random trap
             trap_templates = self.dungeons_data.get('challenge_templates',
@@ -6437,7 +6438,7 @@ class Game:
 
         challenge = random.choice(selection_template['types'])
 
-        print(f"\n{Colors.YELLOW}{Colors.BOLD}Decision:{Colors.END}")
+        print(self.lang.get("ndecision"))
         print(challenge['question'])
 
         options = challenge.get('options', [])
@@ -6452,7 +6453,7 @@ class Game:
         # Check time limit
         elapsed = time.time() - start_time
         if elapsed > time_limit:
-            print(f"{Colors.RED}You took too long to decide!{Colors.END}")
+            print(self.lang.get("you_took_too_long_to_decide"))
             # Random bad outcome
             bad_options = [
                 opt for opt in options if not opt.get('correct', False)
@@ -6531,7 +6532,7 @@ class Game:
             boss_data = self.bosses_data[boss_id]
             boss = Boss(boss_data, self.dialogues_data)
 
-            print(f"\n{Colors.RED}{Colors.BOLD}BOSS BATTLE!{Colors.END}")
+            print(self.lang.get("nboss_battle"))
             print(f"You face {boss.name}!")
             print(boss.description)
 
@@ -6545,7 +6546,7 @@ class Game:
             self.battle(boss)
 
             if self.player and self.player.is_alive():
-                print(f"\n{Colors.GREEN}{Colors.BOLD}VICTORY!{Colors.END}")
+                print(self.lang.get("nvictory"))
                 print(f"You defeated {boss.name}!")
 
                 # Boss rewards
@@ -6615,7 +6616,7 @@ class Game:
         if self.dungeon_progress >= len(self.dungeon_rooms):
             self.complete_dungeon()
         else:
-            print(f"\n{Colors.CYAN}Moving to the next room...{Colors.END}")
+            print(self.lang.get("nmoving_to_the_next_room"))
             time.sleep(1)
             clear_screen()
 
@@ -6625,7 +6626,7 @@ class Game:
             return
 
         dungeon = self.current_dungeon
-        print(f"\n{Colors.GOLD}{Colors.BOLD}DUNGEON COMPLETE!{Colors.END}")
+        print(self.lang.get("ndungeon_complete"))
         print(f"You successfully cleared {dungeon['name']}!")
 
         # Calculate completion time
@@ -6669,7 +6670,7 @@ class Game:
             # Item rewards
             items = completion_reward.get('items', [])
             if items:
-                print(f"  {Colors.YELLOW}Items received:{Colors.END}")
+                print(self.lang.get("items_received"))
                 for item_name in items:
                     self.player.inventory.append(item_name)
                     item_data = self.items_data.get(item_name, {})
@@ -6694,7 +6695,7 @@ class Game:
                 f"\n{Colors.YELLOW}Exiting {self.current_dungeon['name']}...{Colors.END}"
             )
         else:
-            print(f"\n{Colors.YELLOW}Exiting dungeon...{Colors.END}")
+            print(self.lang.get("nexiting_dungeon"))
 
         # Optional: penalty for early exit
         if self.dungeon_progress > 0 and self.player:
@@ -6767,7 +6768,7 @@ class Game:
 
         while True:
             clear_screen()
-            print(f"\n{Colors.BOLD}=== ALCHEMY WORKSHOP ==={Colors.END}")
+            print(self.lang.get("n_alchemy_workshop"))
             print(
                 "Categories: [P]otions, [E]lixirs, [E]ntchantments, [U]tility, [A]ll"
             )
@@ -6803,7 +6804,7 @@ class Game:
         if not self.player:
             return
 
-        print(f"\n{Colors.CYAN}=== YOUR MATERIALS ==={Colors.END}")
+        print(self.lang.get("n_your_materials"))
 
         # Get all material categories
         material_categories = self.crafting_data.get('material_categories', {})
@@ -6870,7 +6871,7 @@ class Game:
             end = start + page_size
             page_items = recipe_list[start:end]
 
-            print(f"\n{Colors.BOLD}=== ALL RECIPES ==={Colors.END}")
+            print(self.lang.get("n_all_recipes"))
             for i, (rid, rdata) in enumerate(page_items, 1):
                 name = rdata.get('name', rid)
                 category = rdata.get('category', 'Unknown')
@@ -6913,7 +6914,7 @@ class Game:
         recipes = self.crafting_data.get('recipes', {})
 
         # Show all recipes for selection
-        print(f"\n{Colors.BOLD}=== CRAFT ITEM ==={Colors.END}")
+        print(self.lang.get("n_craft_item"))
         recipe_names = list(recipes.keys())
 
         for i, rid in enumerate(recipe_names, 1):
@@ -6962,7 +6963,7 @@ class Game:
                     f"{material} (need {quantity}, have {in_inventory})")
 
         if missing_materials:
-            print(f"\n{Colors.RED}Missing materials:{Colors.END}")
+            print(self.lang.get("nmissing_materials"))
             for m in missing_materials:
                 print(f"  - {m}")
             print(f"\n{self.lang.get('ui_gather_more_materials')}")
@@ -6970,7 +6971,7 @@ class Game:
 
         # Show craft confirmation
         output_items = recipe.get('output', {})
-        print(f"\n{Colors.BOLD}=== CRAFT CONFIRMATION ==={Colors.END}")
+        print(self.lang.get("n_craft_confirmation"))
         print(f"Recipe: {recipe.get('name')}")
         print(
             f"Output: {', '.join(f'{qty}x {item}' for item, qty in output_items.items())}"
