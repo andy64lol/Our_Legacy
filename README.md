@@ -76,7 +76,7 @@ Materials are found by defeating enemies or exploring specific areas:
 ### Installation
 ```bash
 # Clone or download the repository
-git clone https://github.com/yourusername/our-legacy.git
+git clone https://github.com/andy64lol/our-legacy.git
 
 # Navigate to the project directory
 cd our-legacy
