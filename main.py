@@ -829,7 +829,7 @@ class Character:
             self.day += 1
             # Randomly change weather each day
             self.update_weather()
-            new_day_msg = f"A new day begins! Day {self.day}"
+            new_day_msg = self.lang.get("new_day_begins", day=self.day)
             print(f"\n{Colors.wrap(new_day_msg, Colors.YELLOW)}")
 
     def update_weather(self, area_id: Optional[str] = None):
