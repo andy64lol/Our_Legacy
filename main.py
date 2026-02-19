@@ -862,6 +862,29 @@ class Character:
         else:
             self.current_weather = "sunny"  # Fallback
 
+    def display_status(self):
+        """Display character status and current world info"""
+        print(create_section_header(self.lang.get("character_status", "CHARACTER STATUS")))
+        print(f"{Colors.wrap(self.lang.get('name_label', 'Name:'), Colors.CYAN)} {self.name}")
+        print(f"{Colors.wrap(self.lang.get('class_label', 'Class:'), Colors.CYAN)} {self.character_class}")
+        print(f"{Colors.wrap(self.lang.get('level_label', 'Level:'), Colors.CYAN)} {self.level} ({self.rank})")
+        
+        # Dynamic Time and Day using translation keys
+        time_str = self.lang.get("current_time", hour=f"{self.hour:02d}")
+        day_str = self.lang.get("current_day", day=self.day)
+        print(f"{Colors.wrap(time_str, Colors.YELLOW)} | {Colors.wrap(day_str, Colors.YELLOW)}")
+        
+        print(f"{Colors.wrap(self.lang.get('hp_label', 'HP:'), Colors.RED)} {create_hp_mp_bar(self.hp, self.max_hp, color=Colors.RED)}")
+        print(f"{Colors.wrap(self.lang.get('mp_label', 'MP:'), Colors.BLUE)} {create_hp_mp_bar(self.mp, self.max_mp, color=Colors.BLUE)}")
+        print(f"{Colors.wrap(self.lang.get('exp_label', 'EXP:'), Colors.MAGENTA)} {create_progress_bar(self.experience, self.experience_to_next, color=Colors.MAGENTA)}")
+        print(f"{Colors.wrap(self.lang.get('gold_label', 'Gold:'), Colors.GOLD)} {self.gold}g")
+        
+        # Display location and weather
+        loc_str = self.lang.get("current_location", area=self.current_area)
+        weather_str = self.lang.get(f"weather_{self.current_weather}")
+        print(f"{Colors.wrap(loc_str, Colors.CYAN)} | {Colors.wrap(weather_str, Colors.CYAN)}")
+        print(create_separator())
+
     def display_stats(self):
         """Display character statistics"""
         print(
