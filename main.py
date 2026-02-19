@@ -881,7 +881,7 @@ class Character:
         
         # Display location and weather
         loc_str = self.lang.get("current_location", area=self.current_area)
-        weather_str = self.lang.get(f"weather_{self.current_weather}")
+        weather_str = self.lang.get(f"weather_{self.current_weather}", self.current_weather.capitalize())
         print(f"{Colors.wrap(loc_str, Colors.CYAN)} | {Colors.wrap(weather_str, Colors.CYAN)}")
         print(create_separator())
 
@@ -1950,6 +1950,10 @@ class Game:
 
     def main_menu(self):
         """Display main menu"""
+        # Advance time by 1 hour each menu loop to make it dynamic
+        if self.player:
+            self.player.advance_time(1)
+
         # Continuous mission check on every main menu return
         self.update_mission_progress('check', '')
 
@@ -1967,11 +1971,12 @@ class Game:
 
         # Display time and weather
         if hasattr(self, 'player') and self.player:
-            weather_desc = self.player.get_weather_description(self.lang)
-            time_desc = self.player.get_time_description(self.lang)
-            print(f"{Colors.CYAN}{weather_desc}{Colors.END}")
-            print(f"{Colors.YELLOW}{time_desc}{Colors.END}")
-            print(f"{Colors.MAGENTA}Day {self.player.day}{Colors.END}")
+            time_str = self.lang.get("current_time", hour=f"{self.player.hour:02d}")
+            day_str = self.lang.get("current_day", day=self.player.day)
+            weather_str = self.lang.get(f"weather_{self.player.current_weather}", self.player.current_weather.capitalize())
+            
+            print(f"{Colors.YELLOW}{time_str} | {day_str}{Colors.END}")
+            print(f"{Colors.CYAN}{weather_str}{Colors.END}")
 
         print(f"{Colors.CYAN}1.{Colors.END} {self.lang.get('explore')}")
         print(f"{Colors.CYAN}2.{Colors.END} {self.lang.get('view_character')}")
