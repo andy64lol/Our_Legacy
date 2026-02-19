@@ -85,6 +85,8 @@
   "current_hp_3": " HP",
   "current_item_emptyn": "\\033[90mCurrent item: Empty\\033[0m\\n",
   "current_location": "Location: {area}",
+  "current_time": "Time: {hour}:00",
+  "current_day": "Day: {day}",
   "current_mp_1": "Current MP: ",
   "current_mp_2": "/",
   "current_mp_3": " MP",
