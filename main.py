@@ -15,15 +15,28 @@ import difflib
 import signal
 import traceback
 import io
-from utilities.settings import ModManager as UtilsModManager, get_setting, set_setting, DEFAULT_SETTINGS
+from utilities.settings import ModManager as UtilsModManager, get_setting, set_setting, DEFAULT_SETTINGS, get_settings_manager
 
 
 class ModManager(UtilsModManager):
     """Manages mod loading and data merging"""
 
     def __init__(self):
-        super().__init__()
+        self.mods_dir = "mods"
+        self.mods: Dict[str, Dict[str, Any]] = {}
+        self.enabled_mods: List[str] = []
+        self.settings_manager = get_settings_manager()
+        self.settings = self.settings_manager.settings
         self.discover_mods()
+
+    def load_settings(self):
+        """Load settings using the global settings manager"""
+        self.settings_manager.load_settings()
+        self.settings = self.settings_manager.settings
+
+    def save_settings(self):
+        """Save settings using the global settings manager"""
+        self.settings_manager.save_settings()
 
     def discover_mods(self):
         """Discover all mods in the mods directory"""
@@ -736,7 +749,6 @@ class Character:
             self.attack += self.level_up_bonuses.get("attack", 0)
             self.defense += self.level_up_bonuses.get("defense", 0)
             self.speed += self.level_up_bonuses.get("speed", 0)
-            self.max_hp = stats.get("hp", 100)
         self.hp = self.max_hp
 
         print(
