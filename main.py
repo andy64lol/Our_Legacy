@@ -1457,69 +1457,69 @@ class Game:
             mod_effects = self.mod_manager.load_mod_data("effects.json")
             self.effects_data.update(mod_effects)
 
-        except Exception as e:
-            print(f"Error loading game data: {e}")
-            print(self.get_lang_string("ensure_data_files"))
-
-            # Load dungeons data
-            try:
-                with open('data/dungeons.json', 'r') as f:
-                    self.dungeons_data = json.load(f)
-            except FileNotFoundError:
-                self.dungeons_data = {}
-
-            # Load weekly challenges data
-            try:
-                with open('data/weekly_challenges.json', 'r') as f:
-                    self.weekly_challenges_data = json.load(f)
-                # Initialize challenge progress
-                for challenge in self.weekly_challenges_data.get(
-                        'challenges', []):
-                    self.challenge_progress[challenge['id']] = 0
-            except FileNotFoundError:
-                self.weekly_challenges_data = {}
-
-            # Load housing data
-            try:
-                with open('data/housing.json', 'r') as f:
-                    self.housing_data = json.load(f)
-            except FileNotFoundError:
-                self.housing_data = {}
-
-            # Load weather data
-            try:
-                with open('data/weather.json', 'r') as f:
-                    self.weather_data = json.load(f)
-            except FileNotFoundError:
-                self.weather_data = {}
-
-            # Load times data
-            try:
-                with open('data/times.json', 'r') as f:
-                    self.times_data = json.load(f)
-            except FileNotFoundError:
-                self.times_data = {}
-
-            # Load shops data
-            try:
-                with open('data/shops.json', 'r') as f:
-                    self.shops_data = json.load(f)
-            except FileNotFoundError:
-                self.shops_data = {}
-
-            # Load farming data
-            try:
-                with open('data/farming.json', 'r') as f:
-                    self.farming_data = json.load(f)
-            except FileNotFoundError:
-                self.farming_data = {}
-
-            # Load mod data after base game data
-            self._load_mod_data()
         except FileNotFoundError as e:
             print(f"Error loading game data: {e}")
             print(self.lang.get("ensure_data_files"))
             sys.exit(1)
+        except Exception as e:
+            print(f"Error loading game data: {e}")
+            print(self.lang.get("ensure_data_files"))
+
+        # Load dungeons data
+        try:
+            with open('data/dungeons.json', 'r') as f:
+                self.dungeons_data = json.load(f)
+        except FileNotFoundError:
+            self.dungeons_data = {}
+
+        # Load weekly challenges data
+        try:
+            with open('data/weekly_challenges.json', 'r') as f:
+                self.weekly_challenges_data = json.load(f)
+            # Initialize challenge progress
+            for challenge in self.weekly_challenges_data.get(
+                    'challenges', []):
+                self.challenge_progress[challenge['id']] = 0
+        except FileNotFoundError:
+            self.weekly_challenges_data = {}
+
+        # Load housing data
+        try:
+            with open('data/housing.json', 'r') as f:
+                self.housing_data = json.load(f)
+        except FileNotFoundError:
+            self.housing_data = {}
+
+        # Load weather data
+        try:
+            with open('data/weather.json', 'r') as f:
+                self.weather_data = json.load(f)
+        except FileNotFoundError:
+            self.weather_data = {}
+
+        # Load times data
+        try:
+            with open('data/times.json', 'r') as f:
+                self.times_data = json.load(f)
+        except FileNotFoundError:
+            self.times_data = {}
+
+        # Load shops data
+        try:
+            with open('data/shops.json', 'r') as f:
+                self.shops_data = json.load(f)
+        except FileNotFoundError:
+            self.shops_data = {}
+
+        # Load farming data
+        try:
+            with open('data/farming.json', 'r') as f:
+                self.farming_data = json.load(f)
+        except FileNotFoundError:
+            self.farming_data = {}
+
+        # Load mod data after base game data
+        self._load_mod_data()
 
     def _load_mod_data(self):
         """Load and merge mod data into base game data"""
