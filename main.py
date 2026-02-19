@@ -1307,10 +1307,11 @@ class LanguageManager:
         """Get translated string with robust formatting and escape handling"""
         # Get translation, fallback to key if not found
         text = self.translations.get(key, key)
-        
+
         # Handle literal escape sequences found in JSON files
-        text = text.replace("\\n", "\n").replace("\\033", "\033").replace("\\x1b", "\x1b").replace("\\r", "\r")
-        
+        text = text.replace("\\n", "\n").replace("\\033", "\033").replace(
+            "\\x1b", "\x1b").replace("\\r", "\r")
+
         if kwargs:
             try:
                 text = text.format(**kwargs)
@@ -1320,7 +1321,7 @@ class LanguageManager:
                     text = f"{text} {kwargs['area']}"
                 elif key == "welcome_adventurer" and "name" in kwargs and "{name}" not in text:
                     text = f"{text} {kwargs['name']}"
-        
+
         return text
 
     def should_overwrite_saves(self) -> bool:
@@ -1438,22 +1439,22 @@ class Game:
             # Apply mod data
             mod_enemies = self.mod_manager.load_mod_data("enemies.json")
             self.enemies_data.update(mod_enemies)
-            
+
             mod_areas = self.mod_manager.load_mod_data("areas.json")
             self.areas_data.update(mod_areas)
-            
+
             mod_items = self.mod_manager.load_mod_data("items.json")
             self.items_data.update(mod_items)
-            
+
             mod_missions = self.mod_manager.load_mod_data("missions.json")
             self.missions_data.update(mod_missions)
-            
+
             mod_bosses = self.mod_manager.load_mod_data("bosses.json")
             self.bosses_data.update(mod_bosses)
-            
+
             mod_spells = self.mod_manager.load_mod_data("spells.json")
             self.spells_data.update(mod_spells)
-            
+
             mod_effects = self.mod_manager.load_mod_data("effects.json")
             self.effects_data.update(mod_effects)
 
@@ -1477,8 +1478,7 @@ class Game:
             with open('data/weekly_challenges.json', 'r') as f:
                 self.weekly_challenges_data = json.load(f)
             # Initialize challenge progress
-            for challenge in self.weekly_challenges_data.get(
-                    'challenges', []):
+            for challenge in self.weekly_challenges_data.get('challenges', []):
                 self.challenge_progress[challenge['id']] = 0
         except FileNotFoundError:
             self.weekly_challenges_data = {}
@@ -5444,7 +5444,8 @@ class Game:
                 "farm_plots": getattr(self.player, 'farm_plots', {}),
                 "hour": getattr(self.player, 'hour', 8),
                 "day": getattr(self.player, 'day', 1),
-                "current_weather": getattr(self.player, 'current_weather', "sunny")
+                "current_weather": getattr(self.player, 'current_weather',
+                                           "sunny")
             },
             "current_area": self.current_area,
             "visited_areas": list(self.visited_areas),
@@ -5586,11 +5587,16 @@ class Game:
 
                     # Load boss kill cooldowns
                     if self.player:
-                        self.player.bosses_killed = save_data.get("bosses_killed", {})
+                        self.player.bosses_killed = save_data.get(
+                            "bosses_killed", {})
                         # Check both top-level and player-level for backward compatibility
-                        self.player.hour = save_data.get("hour", player_data.get("hour", 8))
-                        self.player.day = save_data.get("day", player_data.get("day", 1))
-                        self.player.current_weather = save_data.get("current_weather", player_data.get("current_weather", "sunny"))
+                        self.player.hour = save_data.get(
+                            "hour", player_data.get("hour", 8))
+                        self.player.day = save_data.get(
+                            "day", player_data.get("day", 1))
+                        self.player.current_weather = save_data.get(
+                            "current_weather",
+                            player_data.get("current_weather", "sunny"))
 
                     # Backward compatibility for old saves using current_missions
                     if not self.mission_progress and "current_missions" in save_data:
