@@ -829,8 +829,9 @@ class Character:
             self.day += 1
             # Randomly change weather each day
             self.update_weather()
-            new_day_msg = self.lang.get("new_day_begins", day=self.day)
-            print(f"\n{Colors.wrap(new_day_msg, Colors.YELLOW)}")
+            if self.lang:
+                new_day_msg = self.lang.get("new_day_begins", day=str(self.day))
+                print(f"\n{Colors.wrap(new_day_msg, Colors.YELLOW)}")
 
     def update_weather(self, area_id: Optional[str] = None):
         """Update weather based on area exclusivity and general availability."""
@@ -864,14 +865,17 @@ class Character:
 
     def display_status(self):
         """Display character status and current world info"""
+        if not self.lang:
+            return
+
         print(create_section_header(self.lang.get("character_status", "CHARACTER STATUS")))
         print(f"{Colors.wrap(self.lang.get('name_label', 'Name:'), Colors.CYAN)} {self.name}")
         print(f"{Colors.wrap(self.lang.get('class_label', 'Class:'), Colors.CYAN)} {self.character_class}")
         print(f"{Colors.wrap(self.lang.get('level_label', 'Level:'), Colors.CYAN)} {self.level} ({self.rank})")
         
         # Dynamic Time and Day using translation keys
-        time_str = self.lang.get("current_time", hour=f"{self.hour:02d}")
-        day_str = self.lang.get("current_day", day=self.day)
+        time_str = self.lang.get("current_time", hour=str(self.hour).zfill(2))
+        day_str = self.lang.get("current_day", day=str(self.day))
         print(f"{Colors.wrap(time_str, Colors.YELLOW)} | {Colors.wrap(day_str, Colors.YELLOW)}")
         
         print(f"{Colors.wrap(self.lang.get('hp_label', 'HP:'), Colors.RED)} {create_hp_mp_bar(self.hp, self.max_hp, color=Colors.RED)}")
@@ -1289,7 +1293,8 @@ class LanguageManager:
     def __init__(self):
         self.config: Dict[str, Any] = {}
         self.translations: Dict[str, str] = {}
-        self.current_language = "en"
+        # Get language from settings, fallback to 'en'
+        self.current_language = get_setting("language", "en")
         self.load_config()
         self.load_translations()
 
@@ -1298,18 +1303,30 @@ class LanguageManager:
         try:
             with open('data/languages/config.json', 'r') as f:
                 self.config = json.load(f)
-                self.current_language = self.config.get(
-                    'default_language', 'en')
+                # Ensure current_language matches settings
+                self.current_language = get_setting("language", self.config.get('default_language', 'en'))
         except (FileNotFoundError, json.JSONDecodeError):
             # Fallback defaults
             self.config = {
                 "default_language": "en",
                 "available_languages": {
-                    "en": "English"
+                    "en": "English",
+                    "es": "Español",
+                    "zh_simp": "简体中文"
                 },
                 "fallback_language": "en",
                 "overwrite_save_files": True
             }
+
+    def change_language(self, lang_code: str):
+        """Change current language and save to settings"""
+        if lang_code in self.config.get("available_languages", {}):
+            self.current_language = lang_code
+            set_setting("language", lang_code)
+            self.load_translations()
+            print(f"Language changed to: {self.config['available_languages'][lang_code]}")
+            return True
+        return False
 
     def load_translations(self):
         """Load translation strings for current language"""
@@ -1970,9 +1987,9 @@ class Game:
         print(self.lang.get("current_location", area=area_name))
 
         # Display time and weather
-        if hasattr(self, 'player') and self.player:
-            time_str = self.lang.get("current_time", hour=f"{self.player.hour:02d}")
-            day_str = self.lang.get("current_day", day=self.player.day)
+        if hasattr(self, 'player') and self.player and self.lang:
+            time_str = self.lang.get("current_time", hour=str(self.player.hour).zfill(2))
+            day_str = self.lang.get("current_day", day=str(self.player.day))
             weather_str = self.lang.get(f"weather_{self.player.current_weather}", self.player.current_weather.capitalize())
             
             print(f"{Colors.YELLOW}{time_str} | {day_str}{Colors.END}")

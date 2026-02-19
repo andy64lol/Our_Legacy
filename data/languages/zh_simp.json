@@ -78,7 +78,7 @@
   "weather_cloudy": "多云",
   "weather_foggy": "有雾",
   "new_day_begins": "新的一天开始了！第 {day} 天",
-  "current_location_2": "",
+  "current_mp_1": "当前魔法值：",
   "wild_encounter_1": "一只野生的 ",
   "wild_encounter_2": " 出现了！",
   "fled_battle": "你逃离了战斗！",

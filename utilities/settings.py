@@ -12,7 +12,8 @@ from typing import Dict, List, Any, Optional
 DEFAULT_SETTINGS = {
     "mods_enabled": True,
     "disabled_mods": [],
-    "overwrite_save_by_uuid": False
+    "overwrite_save_by_uuid": False,
+    "language": "en"
 }
 
 
