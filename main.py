@@ -1944,10 +1944,11 @@ class Game:
 
         # Display time and weather
         if hasattr(self, 'player') and self.player:
-            time_desc = self.player.get_time_description(self.lang)
             weather_desc = self.player.get_weather_description(self.lang)
-            print(f"{Colors.YELLOW}{time_desc}{Colors.END}")
+            time_desc = self.player.get_time_description(self.lang)
             print(f"{Colors.CYAN}{weather_desc}{Colors.END}")
+            print(f"{Colors.YELLOW}{time_desc}{Colors.END}")
+            print(f"{Colors.MAGENTA}Day {self.player.day}{Colors.END}")
 
         print(f"{Colors.CYAN}1.{Colors.END} {self.lang.get('explore')}")
         print(f"{Colors.CYAN}2.{Colors.END} {self.lang.get('view_character')}")
