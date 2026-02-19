@@ -1304,13 +1304,23 @@ class LanguageManager:
                     self.translations = {}
 
     def get(self, key: str, **kwargs) -> str:
-        """Get translated string, with optional formatting"""
+        """Get translated string with robust formatting and escape handling"""
+        # Get translation, fallback to key if not found
         text = self.translations.get(key, key)
+        
+        # Handle literal escape sequences found in JSON files
+        text = text.replace("\\n", "\n").replace("\\033", "\033").replace("\\x1b", "\x1b").replace("\\r", "\r")
+        
         if kwargs:
             try:
                 text = text.format(**kwargs)
-            except (KeyError, ValueError):
-                pass  # Return text as-is if formatting fails
+            except (KeyError, ValueError, IndexError):
+                # Fallback for missing placeholders in translation strings
+                if key == "current_location" and "area" in kwargs and "{area}" not in text:
+                    text = f"{text} {kwargs['area']}"
+                elif key == "welcome_adventurer" and "name" in kwargs and "{name}" not in text:
+                    text = f"{text} {kwargs['name']}"
+        
         return text
 
     def should_overwrite_saves(self) -> bool:
@@ -1414,6 +1424,42 @@ class Game:
                     self.cutscenes_data = json.load(f)
             except FileNotFoundError:
                 self.cutscenes_data = {}
+
+            # Load weather and times data
+            try:
+                with open('data/weather.json', 'r') as f:
+                    self.weather_data = json.load(f)
+                with open('data/times.json', 'r') as f:
+                    self.times_data = json.load(f)
+            except FileNotFoundError:
+                self.weather_data = {}
+                self.times_data = {}
+
+            # Apply mod data
+            mod_enemies = self.mod_manager.load_mod_data("enemies.json")
+            self.enemies_data.update(mod_enemies)
+            
+            mod_areas = self.mod_manager.load_mod_data("areas.json")
+            self.areas_data.update(mod_areas)
+            
+            mod_items = self.mod_manager.load_mod_data("items.json")
+            self.items_data.update(mod_items)
+            
+            mod_missions = self.mod_manager.load_mod_data("missions.json")
+            self.missions_data.update(mod_missions)
+            
+            mod_bosses = self.mod_manager.load_mod_data("bosses.json")
+            self.bosses_data.update(mod_bosses)
+            
+            mod_spells = self.mod_manager.load_mod_data("spells.json")
+            self.spells_data.update(mod_spells)
+            
+            mod_effects = self.mod_manager.load_mod_data("effects.json")
+            self.effects_data.update(mod_effects)
+
+        except Exception as e:
+            print(f"Error loading game data: {e}")
+            print(self.get_lang_string("ensure_data_files"))
 
             # Load dungeons data
             try:
@@ -1893,9 +1939,8 @@ class Game:
 
         # Show current location
         area_data = self.areas_data.get(self.current_area, {})
-        print(
-            self.lang.get("current_location",
-                          area=area_data.get('name', self.current_area)))
+        area_name = area_data.get('name', self.current_area)
+        print(self.lang.get("current_location", area=area_name))
 
         # Display time and weather
         if hasattr(self, 'player') and self.player:
@@ -2210,7 +2255,8 @@ class Game:
         possible_enemies = area_data.get("possible_enemies", [])
 
         if not possible_enemies:
-            print(self.lang.get("no_enemies_in_area"))
+            msg = self.lang.get("no_enemies_in_area")
+            print(msg.replace("\\n", "\n").replace("\\033", "\033"))
             return
 
         # Regular enemy encounter
@@ -2219,10 +2265,12 @@ class Game:
 
         if enemy_data:
             enemy = Enemy(enemy_data)
-            print(f"\n{Colors.RED}A wild {enemy.name} appears!{Colors.END}")
+            msg = f"\nA wild {enemy.name} appears!"
+            print(f"\n{Colors.wrap(msg, Colors.RED)}")
             self.battle(enemy)
         else:
-            print(self.lang.get("explore_no_enemies"))
+            msg = self.lang.get("explore_no_enemies")
+            print(msg.replace("\\n", "\n").replace("\\033", "\033"))
 
     def update_challenge_progress(self, challenge_type: str, value: int = 1):
         """Update challenge progress and check for completions"""
@@ -2769,10 +2817,12 @@ class Game:
         ]
 
         if not consumables:
-            print(self.lang.get("no_consumable_items"))
+            msg = self.lang.get("no_consumable_items")
+            print(msg.replace("\\n", "\n").replace("\\033", "\033"))
             return
 
-        print(self.lang.get("available_consumables"))
+        msg = self.lang.get("available_consumables")
+        print(msg.replace("\\n", "\n").replace("\\033", "\033"))
         for i, item in enumerate(consumables, 1):
             item_data = self.items_data[item]
             print(
