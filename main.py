@@ -1343,10 +1343,10 @@ class LanguageManager:
                 except (FileNotFoundError, json.JSONDecodeError):
                     self.translations = {}
 
-    def get(self, key: str, **kwargs) -> str:
+    def get(self, key: str, default: Optional[str] = None, **kwargs) -> str:
         """Get translated string with robust formatting and escape handling"""
-        # Get translation, fallback to key if not found
-        text = self.translations.get(key, key)
+        # Get translation, fallback to default or key if not found
+        text = self.translations.get(key, default if default is not None else key)
 
         # Handle literal escape sequences found in JSON files
         text = text.replace("\\n", "\n").replace("\\033", "\033").replace(
