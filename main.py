@@ -202,7 +202,14 @@ class Colors:
     def _color(code: str) -> str:
         """Return color code if colors are enabled, otherwise empty string"""
         global COLORS_ENABLED
-        return code if COLORS_ENABLED else ""
+        if not COLORS_ENABLED:
+            return ""
+        return code
+
+    @classmethod
+    def wrap(cls, text: str, color_code: str) -> str:
+        """Wrap text with color code and end with END code"""
+        return f"{cls._color(color_code)}{text}{cls._color(cls.END)}"
 
 
 def clear_screen():
@@ -225,7 +232,7 @@ def create_progress_bar(current: int,
     empty = "░" * (width - filled_width)
     percentage = (current / maximum) * 100
 
-    return f"[{color}{filled}{Colors.END}{empty}] {percentage:.1f}%"
+    return f"[{Colors.wrap(filled, color)}{empty}] {percentage:.1f}%"
 
 
 def create_boss_hp_bar(current: int,
@@ -241,7 +248,10 @@ def create_boss_hp_bar(current: int,
     empty = "░" * (width - filled_width)
     percentage = (current / maximum) * 100
 
-    return f"{Colors.BOLD}{Colors.RED}BOSS HP{Colors.END} [{color}{filled}{Colors.END}{empty}] {Colors.BOLD}{percentage:.1f}%{Colors.END} ({current}/{maximum})"
+    boss_label = Colors.wrap("BOSS HP", f"{Colors.BOLD}{Colors.RED}")
+    bar = f"[{Colors.wrap(filled, color)}{empty}]"
+    percent_text = Colors.wrap(f"{percentage:.1f}%", Colors.BOLD)
+    return f"{boss_label} {bar} {percent_text} ({current}/{maximum})"
 
 
 def create_hp_mp_bar(current: int,
@@ -256,7 +266,7 @@ def create_hp_mp_bar(current: int,
     filled = "█" * filled_width
     empty = "░" * (width - filled_width)
 
-    return f"[{color}{filled}{Colors.END}{empty}] {current}/{maximum}"
+    return f"[{Colors.wrap(filled, color)}{empty}] {current}/{maximum}"
 
 
 def create_separator(char: str = "=", length: int = 60) -> str:
@@ -267,12 +277,13 @@ def create_separator(char: str = "=", length: int = 60) -> str:
 def create_section_header(title: str, char: str = "=", width: int = 60) -> str:
     """Create a decorative section header."""
     padding = (width - len(title) - 2) // 2
-    return f"{Colors.CYAN}{Colors.BOLD}{char * padding} {title} {char * padding}{Colors.END}"
+    header_text = f"{char * padding} {title} {char * padding}"
+    return Colors.wrap(header_text, f"{Colors.CYAN}{Colors.BOLD}")
 
 
 def loading_indicator(message: str = "Loading"):
     """Display a loading indicator."""
-    print(f"\n{Colors.YELLOW}{message}{Colors.END}", end="", flush=True)
+    print(f"\n{Colors.wrap(message, Colors.YELLOW)}", end="", flush=True)
     for i in range(3):
         time.sleep(0.5)
         print(".", end="", flush=True)
@@ -294,7 +305,7 @@ def get_rarity_color(rarity: str) -> str:
 def format_item_name(item_name: str, rarity: str = "common") -> str:
     """Format item name with rarity color."""
     color = get_rarity_color(rarity)
-    return f"{color}{item_name}{Colors.END}"
+    return Colors.wrap(item_name, color)
 
 
 def ask(prompt: str,
@@ -818,9 +829,8 @@ class Character:
             self.day += 1
             # Randomly change weather each day
             self.update_weather()
-            print(
-                f"\n{Colors.YELLOW}A new day begins! Day {self.day}{Colors.END}"
-            )
+            new_day_msg = f"A new day begins! Day {self.day}"
+            print(f"\n{Colors.wrap(new_day_msg, Colors.YELLOW)}")
 
     def update_weather(self, area_id: Optional[str] = None):
         """Update weather based on area exclusivity and general availability."""
@@ -2458,7 +2468,7 @@ class Game:
         elif choice == "5" and can_cast:
             self.cast_spell(enemy, weapon_name)
         elif choice == "3":
-            print(self.lang.get("you_defend"))
+            print(Colors.wrap(self.lang.get("you_defend"), Colors.BLUE))
             self.player.defending = True
         elif choice == "4":
             flee_chance = 0.7 if self.player.get_effective_speed(
@@ -5344,51 +5354,30 @@ class Game:
         print(f"Gold remaining: {Colors.GOLD}{self.player.gold}{Colors.END}")
 
     def save_game(self, filename_prefix: str = ""):
-        """Save the game with an optional filename prefix (keeps backward compatible signature).
-
-        If `filename_prefix` is provided it will be prepended to the filename
-        (useful for error/unstable saves like 'err_save_unstable_').
-        """
+        """Save the game with an optional filename prefix (keeps backward compatible signature)."""
         if not self.player:
             print(self.lang.get('no_character_save'))
             return
 
         save_data = {
             "player": {
-                "name":
-                self.player.name,
-                "uuid":
-                self.player.uuid,
-                "character_class":
-                self.player.character_class,
-                "level":
-                self.player.level,
-                "experience":
-                self.player.experience,
-                "experience_to_next":
-                self.player.experience_to_next,
-                "max_hp":
-                self.player.max_hp,
-                "hp":
-                self.player.hp,
-                "max_mp":
-                self.player.max_mp,
-                "mp":
-                self.player.mp,
-                "attack":
-                self.player.attack,
-                "defense":
-                self.player.defense,
-                "speed":
-                self.player.speed,
-                "inventory":
-                self.player.inventory,
-                "gold":
-                self.player.gold,
-                "equipment":
-                self.player.equipment,
-                "companions":
-                self.player.companions,
+                "name": self.player.name,
+                "uuid": self.player.uuid,
+                "character_class": self.player.character_class,
+                "level": self.player.level,
+                "experience": self.player.experience,
+                "experience_to_next": self.player.experience_to_next,
+                "max_hp": self.player.max_hp,
+                "hp": self.player.hp,
+                "max_mp": self.player.max_mp,
+                "mp": self.player.mp,
+                "attack": self.player.attack,
+                "defense": self.player.defense,
+                "speed": self.player.speed,
+                "inventory": self.player.inventory,
+                "gold": self.player.gold,
+                "equipment": self.player.equipment,
+                "companions": self.player.companions,
                 "base_stats": {
                     "base_max_hp": self.player.base_max_hp,
                     "base_max_mp": self.player.base_max_mp,
@@ -5396,45 +5385,27 @@ class Game:
                     "base_defense": self.player.base_defense,
                     "base_speed": self.player.base_speed
                 },
-                "class_data":
-                self.player.class_data,
-                "rank":
-                self.player.rank,
-                "active_buffs":
-                self.player.active_buffs,
-                "housing_owned":
-                self.player.housing_owned
-                if hasattr(self.player, 'housing_owned') else [],
-                "comfort_points":
-                self.player.comfort_points
-                if hasattr(self.player, 'comfort_points') else 0,
-                "building_slots":
-                self.player.building_slots
-                if hasattr(self.player, 'building_slots') else {},
-                "farm_plots":
-                self.player.farm_plots
-                if hasattr(self.player, 'farm_plots') else {}
+                "class_data": self.player.class_data,
+                "rank": self.player.rank,
+                "active_buffs": self.player.active_buffs,
+                "housing_owned": getattr(self.player, 'housing_owned', []),
+                "comfort_points": getattr(self.player, 'comfort_points', 0),
+                "building_slots": getattr(self.player, 'building_slots', {}),
+                "farm_plots": getattr(self.player, 'farm_plots', {}),
+                "hour": getattr(self.player, 'hour', 8),
+                "day": getattr(self.player, 'day', 1),
+                "current_weather": getattr(self.player, 'current_weather', "sunny")
             },
-            "current_area":
-            self.current_area,
-            "visited_areas":
-            list(self.visited_areas),
-            "mission_progress":
-            self.mission_progress,
-            "completed_missions":
-            self.completed_missions,
-            "save_version":
-            "3.0",
-            "save_time":
-            datetime.now().isoformat(),
-            "bosses_killed":
-            self.player.bosses_killed if self.player else {},
-            "hour":
-            self.player.hour if self.player else 8,
-            "day":
-            self.player.day if self.player else 1,
-            "current_weather":
-            self.player.current_weather if self.player else "sunny"
+            "current_area": self.current_area,
+            "visited_areas": list(self.visited_areas),
+            "mission_progress": self.mission_progress,
+            "completed_missions": self.completed_missions,
+            "save_version": "3.1",
+            "save_time": datetime.now().isoformat(),
+            "bosses_killed": getattr(self.player, 'bosses_killed', {}),
+            "hour": getattr(self.player, 'hour', 8),
+            "day": getattr(self.player, 'day', 1),
+            "current_weather": getattr(self.player, 'current_weather', "sunny")
         }
 
         saves_dir = "data/saves"
@@ -5565,12 +5536,11 @@ class Game:
 
                     # Load boss kill cooldowns
                     if self.player:
-                        self.player.bosses_killed = save_data.get(
-                            "bosses_killed", {})
-                        self.player.hour = save_data.get("hour", 8)
-                        self.player.day = save_data.get("day", 1)
-                        self.player.current_weather = save_data.get(
-                            "current_weather", "sunny")
+                        self.player.bosses_killed = save_data.get("bosses_killed", {})
+                        # Check both top-level and player-level for backward compatibility
+                        self.player.hour = save_data.get("hour", player_data.get("hour", 8))
+                        self.player.day = save_data.get("day", player_data.get("day", 1))
+                        self.player.current_weather = save_data.get("current_weather", player_data.get("current_weather", "sunny"))
 
                     # Backward compatibility for old saves using current_missions
                     if not self.mission_progress and "current_missions" in save_data:
