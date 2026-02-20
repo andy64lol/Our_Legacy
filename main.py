@@ -846,7 +846,7 @@ class Character:
 
         return language_manager.get(desc_key, self.current_weather.capitalize())
 
-    def advance_time(self, hours: int = 1):
+    def advance_time(self, hours: float = 1.0):
         """Advance the game time by a number of hours."""
         old_total_hours = (self.day - 1) * 24 + self.hour
         self.hour += hours
@@ -2027,9 +2027,10 @@ class Game:
 
     def main_menu(self):
         """Display main menu"""
-        # Advance time by 1 hour each menu loop to make it dynamic
+        # Advance time by 0.5 to 1.5 hours each menu loop
         if self.player:
-            self.player.advance_time(1)
+            random_hours = random.uniform(0.5, 1.5)
+            self.player.advance_time(random_hours)
 
         # Continuous mission check on every main menu return
         self.update_mission_progress('check', '')
@@ -2048,7 +2049,10 @@ class Game:
 
         # Display time and weather
         if hasattr(self, 'player') and self.player and self.lang:
-            time_str = self.lang.get("current_time", hour=str(self.player.hour).zfill(2))
+            # Format hour for display (handling float)
+            display_hour = int(self.player.hour)
+            display_minute = int((self.player.hour - display_hour) * 60)
+            time_str = self.lang.get("current_time", hour=f"{display_hour:02d}:{display_minute:02d}")
             day_str = self.lang.get("current_day", day=str(self.player.day))
             weather_desc = self.player.get_weather_description(self.lang)
             
