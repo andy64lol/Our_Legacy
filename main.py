@@ -27,7 +27,13 @@ class ModManager(UtilsModManager):
         self.enabled_mods: List[str] = []
         self.settings_manager = get_settings_manager()
         self.settings = self.settings_manager.settings
-        self.lang = lang
+        if lang is None:
+            class MockLang:
+                def get(self, key, default=None, **kwargs):
+                    return key
+            self.lang = MockLang()
+        else:
+            self.lang = lang
         self.discover_mods()
 
     def load_settings(self):
@@ -342,7 +348,7 @@ def ask(prompt: str,
             clear_screen()
             return resp
         if not resp and not allow_empty:
-            print(self.lang.get("input_empty_error"))
+            print("Input cannot be empty.")
             continue
 
         # If no validation requested, accept
@@ -362,7 +368,7 @@ def ask(prompt: str,
                                               n=3,
                                               cutoff=0.4)
             if close:
-                print(self.lang.get("invalid_input_suggestion").format(suggestions=', '.join(close)))
+                print(f"Did you mean one of these? {', '.join(close)}")
             else:
                 print(
                     f"Invalid input. Allowed choices: {', '.join(cmp_choices)}"
@@ -427,7 +433,13 @@ class MarketAPI:
         self.cache = None
         self.last_fetch = None
         self.cooldown_minutes = MARKET_COOLDOWN_MINUTES
-        self.lang = lang
+        if lang is None:
+            class MockLang:
+                def get(self, key, default=None, **kwargs):
+                    return key
+            self.lang = MockLang()
+        else:
+            self.lang = lang
 
     def _is_cache_valid(self) -> bool:
         """Check if cache is still valid (within cooldown period)"""
@@ -586,7 +598,7 @@ class Character:
             # Create a mock lang if None to avoid "get" on None errors
             class MockLang:
 
-                def get(self, key, default=None):
+                def get(self, key, default=None, **kwargs):
                     return key
 
             self.lang = MockLang()
@@ -1118,7 +1130,7 @@ class Character:
                 # Create a mock lang if None to avoid "get" on None errors
                 class MockLang:
 
-                    def get(self, key, default=None):
+                    def get(self, key, default=None, **kwargs):
                         return key
 
                 self.lang = MockLang()
