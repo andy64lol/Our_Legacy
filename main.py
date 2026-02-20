@@ -2050,10 +2050,10 @@ class Game:
         if hasattr(self, 'player') and self.player and self.lang:
             time_str = self.lang.get("current_time", hour=str(self.player.hour).zfill(2))
             day_str = self.lang.get("current_day", day=str(self.player.day))
-            weather_str = self.lang.get(f"weather_{self.player.current_weather}", self.player.current_weather.capitalize())
+            weather_desc = self.player.get_weather_description(self.lang)
             
             print(f"{Colors.YELLOW}{time_str} | {day_str}{Colors.END}")
-            print(f"{Colors.CYAN}{weather_str}{Colors.END}")
+            print(f"{Colors.CYAN}{weather_desc}{Colors.END}")
 
         print(f"{Colors.CYAN}1.{Colors.END} {self.lang.get('explore')}")
         print(f"{Colors.CYAN}2.{Colors.END} {self.lang.get('view_character')}")
