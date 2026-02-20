@@ -58,7 +58,7 @@ class ModManager(UtilsModManager):
                             mod_data['folder_name'] = entry
                             self.mods[entry] = mod_data
                     except (json.JSONDecodeError, IOError):
-                        print(f"Warning: Failed to load mod.json for {entry}")
+                        print(self.lang.get("mod_load_error").format(entry=entry))
 
     def get_enabled_mods(self) -> List[str]:
         """Get list of enabled mod folder names"""
@@ -131,10 +131,10 @@ class ModManager(UtilsModManager):
 
         if folder_name in disabled:
             disabled.remove(folder_name)
-            print(f"Mod enabled: {folder_name}")
+            print(self.lang.get("mod_enabled_msg").format(folder_name=folder_name))
         else:
             disabled.add(folder_name)
-            print(f"Mod disabled: {folder_name}")
+            print(self.lang.get("mod_disabled_msg").format(folder_name=folder_name))
 
         self.settings["disabled_mods"] = list(disabled)
         self.save_settings()
@@ -144,7 +144,7 @@ class ModManager(UtilsModManager):
         self.settings["mods_enabled"] = not self.settings.get(
             "mods_enabled", True)
         status = "enabled" if self.settings["mods_enabled"] else "disabled"
-        print(f"Mod system {status}!")
+        print(self.lang.get("mod_system_status_msg").format(status=status))
         self.save_settings()
         return self.settings["mods_enabled"]
 
@@ -341,7 +341,7 @@ def ask(prompt: str,
             clear_screen()
             return resp
         if not resp and not allow_empty:
-            print("Input cannot be empty. Please try again.")
+            print(self.lang.get("input_empty_error"))
             continue
 
         # If no validation requested, accept
@@ -361,7 +361,7 @@ def ask(prompt: str,
                                               n=3,
                                               cutoff=0.4)
             if close:
-                print(f"Invalid input. Did you mean: {', '.join(close)} ?")
+                print(self.lang.get("invalid_input_suggestion").format(suggestions=', '.join(close)))
             else:
                 print(
                     f"Invalid input. Allowed choices: {', '.join(cmp_choices)}"
@@ -440,7 +440,7 @@ class MarketAPI:
         """Fetch market data from the API with caching and cooldown"""
         # Check cache validity
         if not force_refresh and self._is_cache_valid():
-            print(f"{Colors.CYAN}Visiting the market...{Colors.END}")
+            print(f"{Colors.CYAN}{self.lang.get('visiting_market')}{Colors.END}")
             return self.cache
 
         # Check cooldown
@@ -466,14 +466,14 @@ class MarketAPI:
                     data = response.json()
                     self.cache = data
                     self.last_fetch = datetime.now()
-                    print(f"{Colors.GREEN}Market is open!{Colors.END}")
+                    print(f"{Colors.GREEN}{self.lang.get('market_open_msg')}{Colors.END}")
                     return data
                 else:
                     print(
                         f"{Colors.RED}Failed to reach to the market: HTTP {response.status_code}{Colors.END}"
                     )
             except requests.exceptions.RequestException as e:
-                print(f"{Colors.RED}Network error: {e}{Colors.END}")
+                print(f"{Colors.RED}{self.lang.get('network_error_msg').format(error=e)}{Colors.END}")
         else:
             # Fallback using urllib
             try:
