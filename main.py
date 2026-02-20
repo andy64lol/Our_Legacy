@@ -21,12 +21,13 @@ from utilities.settings import ModManager as UtilsModManager, get_setting, set_s
 class ModManager(UtilsModManager):
     """Manages mod loading and data merging"""
 
-    def __init__(self):
+    def __init__(self, lang=None):
         self.mods_dir = "mods"
         self.mods: Dict[str, Dict[str, Any]] = {}
         self.enabled_mods: List[str] = []
         self.settings_manager = get_settings_manager()
         self.settings = self.settings_manager.settings
+        self.lang = lang
         self.discover_mods()
 
     def load_settings(self):
@@ -1324,7 +1325,7 @@ class LanguageManager:
             self.current_language = lang_code
             set_setting("language", lang_code)
             self.load_translations()
-            print(self.lang.get("language_changed_msg").format(language=self.config['available_languages'][lang_code]))
+            print(self.get("language_changed_msg").format(language=self.config['available_languages'][lang_code]))
             return True
         return False
 
@@ -1409,11 +1410,11 @@ class Game:
         self.dungeon_rooms: List[Dict[str, Any]] = []
         self.dungeon_state: Dict[str, Any] = {}
 
-        # Initialize ModManager
-        self.mod_manager = ModManager()
-
         # Initialize Language Manager
         self.lang = LanguageManager()
+
+        # Initialize ModManager with translation support
+        self.mod_manager = ModManager(lang=self.lang)
 
         # Load game data
         self.load_game_data()
