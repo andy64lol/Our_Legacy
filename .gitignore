@@ -39,3 +39,5 @@ replit.md
 # Generated scripts for fixing prints
 bash/fix_prints*.sh
 bash/backups/
+./replit/
+.config/

@@ -423,10 +423,11 @@ MARKET_COOLDOWN_MINUTES = 10
 class MarketAPI:
     """API for accessing the Elite Market with 10-minute cooldown"""
 
-    def __init__(self):
+    def __init__(self, lang=None):
         self.cache = None
         self.last_fetch = None
         self.cooldown_minutes = MARKET_COOLDOWN_MINUTES
+        self.lang = lang
 
     def _is_cache_valid(self) -> bool:
         """Check if cache is still valid (within cooldown period)"""
@@ -818,9 +819,14 @@ class Character:
         if not hasattr(self, 'current_weather') or not self.current_weather:
             self.current_weather = "sunny"  # Default
 
+        # Use the specific description from weather_data if available
         weather_info = self.weather_data.get(self.current_weather, {})
-        desc_key = weather_info.get("description", "")
-        return language_manager.get(desc_key)
+        desc_key = weather_info.get("description")
+        if desc_key:
+            return language_manager.get(desc_key)
+        
+        # Fallback to the generic weather name translation
+        return language_manager.get(f"weather_{self.current_weather}", self.current_weather.capitalize())
 
     def advance_time(self, hours: int = 1):
         """Advance the game time by a number of hours."""
@@ -886,8 +892,8 @@ class Character:
         
         # Display location and weather
         loc_str = self.lang.get("current_location", area=self.current_area)
-        weather_str = self.lang.get(f"weather_{self.current_weather}", self.current_weather.capitalize())
-        print(f"{Colors.wrap(loc_str, Colors.CYAN)} | {Colors.wrap(weather_str, Colors.CYAN)}")
+        weather_desc = self.get_weather_description(self.lang)
+        print(f"{Colors.wrap(loc_str, Colors.CYAN)} | {Colors.wrap(weather_desc, Colors.CYAN)}")
         print(create_separator())
 
     def display_stats(self):
@@ -1355,14 +1361,16 @@ class LanguageManager:
 
         if kwargs:
             try:
-                text = text.format(**kwargs)
+                # Ensure all values in kwargs are strings for .format() if they are numbers
+                formatted_kwargs = {k: str(v) for k, v in kwargs.items()}
+                text = text.format(**formatted_kwargs)
             except (KeyError, ValueError, IndexError):
                 # Fallback for missing placeholders in translation strings
                 if key == "current_location" and "area" in kwargs and "{area}" not in text:
                     text = f"{text} {kwargs['area']}"
                 elif key == "welcome_adventurer" and "name" in kwargs and "{name}" not in text:
                     text = f"{text} {kwargs['name']}"
-
+        
         return text
 
     def should_overwrite_saves(self) -> bool:
@@ -1415,6 +1423,9 @@ class Game:
 
         # Initialize ModManager with translation support
         self.mod_manager = ModManager(lang=self.lang)
+
+        # Initialize Market API with translation support
+        self.market_api = MarketAPI(lang=self.lang)
 
         # Load game data
         self.load_game_data()
