@@ -833,24 +833,39 @@ class Character:
 
         # Use the specific description from weather_data if available
         weather_info = self.weather_data.get(self.current_weather, {})
-        desc_key = weather_info.get("description")
-        if desc_key:
-            return language_manager.get(desc_key)
-        
-        # Fallback to the generic weather name translation
-        return language_manager.get(f"weather_{self.current_weather}", self.current_weather.capitalize())
+        desc_key = weather_info.get("description", f"weather_{self.current_weather}")
+
+        # Check if it's night for variation
+        is_night = self.hour < 6 or self.hour >= 18
+        if is_night:
+            night_desc_key = f"{desc_key}_night"
+            # Try to get night description, fallback to day description
+            description = language_manager.get(night_desc_key)
+            if description != night_desc_key:
+                return description
+
+        return language_manager.get(desc_key, self.current_weather.capitalize())
 
     def advance_time(self, hours: int = 1):
         """Advance the game time by a number of hours."""
+        old_total_hours = (self.day - 1) * 24 + self.hour
         self.hour += hours
+        
         while self.hour >= self.max_hours:
             self.hour -= self.max_hours
             self.day += 1
-            # Randomly change weather each day
-            self.update_weather()
             if self.lang:
                 new_day_msg = self.lang.get("new_day_begins", day=str(self.day))
                 print(f"\n{Colors.wrap(new_day_msg, Colors.YELLOW)}")
+
+        new_total_hours = (self.day - 1) * 24 + self.hour
+        
+        # Weather rotation check: chance every 30 hours
+        if (new_total_hours // 30) > (old_total_hours // 30):
+            if random.random() < 0.7:  # 70% chance to rotate every 30 hours
+                self.update_weather()
+        elif random.random() < 0.05: # Small random chance otherwise
+            self.update_weather()
 
     def update_weather(self, area_id: Optional[str] = None):
         """Update weather based on area exclusivity and general availability."""
