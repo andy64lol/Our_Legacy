@@ -1324,7 +1324,7 @@ class LanguageManager:
             self.current_language = lang_code
             set_setting("language", lang_code)
             self.load_translations()
-            print(f"Language changed to: {self.config['available_languages'][lang_code]}")
+            print(self.lang.get("language_changed_msg").format(language=self.config['available_languages'][lang_code]))
             return True
         return False
 
@@ -1647,7 +1647,7 @@ class Game:
     def play_cutscene(self, cutscene_id: str):
         """Play a cutscene by ID"""
         if cutscene_id not in self.cutscenes_data:
-            print(f"Cutscene {cutscene_id} not found.")
+            print(self.lang.get("cutscene_not_found_msg").format(cutscene_id=cutscene_id))
             return
 
         cutscene = self.cutscenes_data[cutscene_id]
@@ -1962,7 +1962,7 @@ class Game:
                 item_type = self.items_data.get(item, {}).get("type")
                 if item_type == slot:
                     self.player.equip(item, self.items_data)
-                    print(f"{Colors.GREEN}Equipped: {item}{Colors.END}")
+                    print(self.lang.get("equipped_msg").format(item=item))
                     break
 
     def change_language_menu(self):
@@ -2302,7 +2302,7 @@ class Game:
         area_data = self.areas_data.get(self.current_area, {})
         area_name = area_data.get("name", "Unknown Area")
 
-        print(f"\n{Colors.CYAN}Exploring {area_name}...{Colors.END}")
+        print(self.lang.get("exploring_area_msg").format(area_name=area_name))
 
         # Random encounter chance
         if random.random() < 0.7:  # 70% chance of encounter
@@ -2318,7 +2318,7 @@ class Game:
             if random.random() < 0.3:  # 30% chance to find gold
                 found_gold = random.randint(5, 20)
                 self.player.gold += found_gold
-                print(f"{Colors.GOLD}You found {found_gold} gold!{Colors.END}")
+                print(self.lang.get("found_gold_msg").format(gold=found_gold))
 
     def random_encounter(self):
         """Handle random encounter with regular enemies"""
@@ -6352,7 +6352,7 @@ class Game:
             self.advance_room()
             return
 
-        print(f"You encounter {len(enemies)} enemy(ies)!")
+        print(self.lang.get("encounter_enemies_msg").format(count=len(enemies)))
 
         # Battle each enemy
         for i, enemy in enumerate(enemies):
@@ -6397,7 +6397,7 @@ class Game:
         chest_data = chest_templates.get(chest_type,
                                          chest_templates.get('small', {}))
 
-        print(f"It's a {chest_data.get('name', 'chest')}!")
+        print(self.lang.get("found_chest_msg").format(name=chest_data.get('name', 'chest')))
 
         # Generate rewards
         gold_min, gold_max = chest_data.get('gold_range', [50, 150])
@@ -6515,7 +6515,7 @@ class Game:
                 threshold += mod_data.get('threshold',
                                           0) - 10  # Adjust threshold
 
-                print(f"You roll a {roll} (need {threshold}+ to succeed)")
+                print(self.lang.get("roll_result_msg").format(roll=roll, threshold=threshold))
 
                 if roll >= threshold:
                     print(
@@ -6526,7 +6526,7 @@ class Game:
                     reward = trap_templates.get('success_reward', {})
                     if reward.get('gold'):
                         self.player.gold += reward['gold']
-                        print(f"You found {reward['gold']} gold in the chest!")
+                        print(self.lang.get("found_gold_chest_msg").format(gold=reward['gold']))
                     if reward.get('experience'):
                         self.player.gain_experience(reward['experience'])
                         print(f"You gained {reward['experience']} experience!")
@@ -6645,7 +6645,7 @@ class Game:
             boss = Boss(boss_data, self.dialogues_data)
 
             print(self.lang.get("nboss_battle"))
-            print(f"You face {boss.name}!")
+            print(self.lang.get("face_boss_msg").format(name=boss.name))
             print(boss.description)
 
             # Print start dialogue if available
@@ -6659,7 +6659,7 @@ class Game:
 
             if self.player and self.player.is_alive():
                 print(self.lang.get("nvictory"))
-                print(f"You defeated {boss.name}!")
+                print(self.lang.get("defeated_boss_msg").format(name=boss.name))
 
                 # Boss rewards
                 exp_reward = boss.experience_reward * 2  # Double XP for bosses
@@ -6739,7 +6739,7 @@ class Game:
 
         dungeon = self.current_dungeon
         print(self.lang.get("ndungeon_complete"))
-        print(f"You successfully cleared {dungeon['name']}!")
+        print(self.lang.get("cleared_dungeon_msg").format(name=dungeon['name']))
 
         # Calculate completion time
         start_time_str = self.dungeon_state.get('start_time')
@@ -6845,7 +6845,7 @@ class Game:
             gold_loss = min(self.player.gold // 5,
                             200)  # 20% of gold or 200 max
             self.player.gold -= gold_loss
-            print(f"You lost {gold_loss} gold to the dungeon spirits.")
+            print(self.lang.get("lost_gold_dungeon_msg").format(gold=gold_loss))
 
         # Return to starting village
         self.current_area = "starting_village"
@@ -6954,7 +6954,7 @@ class Game:
                             if rdata.get('category') == category]
 
         if not category_recipes:
-            print(f"\nNo recipes found in category: {category}")
+            print(self.lang.get("no_recipes_category").format(category=category))
             return
 
         print(f"\n{Colors.BOLD}=== {category.upper()} ==={Colors.END}")
@@ -7084,7 +7084,7 @@ class Game:
         # Show craft confirmation
         output_items = recipe.get('output', {})
         print(self.lang.get("n_craft_confirmation"))
-        print(f"Recipe: {recipe.get('name')}")
+        print(self.lang.get("recipe_name_msg").format(name=recipe.get('name')))
         print(
             f"Output: {', '.join(f'{qty}x {item}' for item, qty in output_items.items())}"
         )
@@ -7112,7 +7112,7 @@ class Game:
             f"\n{Colors.GREEN}Successfully crafted {recipe.get('name')}!{Colors.END}"
         )
         for item, quantity in output_items.items():
-            print(f"  Received: {quantity}x {item}")
+            print(self.lang.get("received_quantity_item").format(quantity=quantity, item=item))
 
     def _visit_general_shop(self, shop_data):
         """Visit a general shop (not housing)"""
