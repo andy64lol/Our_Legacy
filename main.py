@@ -833,7 +833,7 @@ class Character:
 
         # Use the specific description from weather_data if available
         weather_info = self.weather_data.get(self.current_weather, {})
-        desc_key = weather_info.get("description", f"weather_{self.current_weather}")
+        desc_key = weather_info.get("description", f"weather_{self.current_weather}_desc")
 
         # Check if it's night for variation
         is_night = self.hour < 6 or self.hour >= 18
@@ -2029,7 +2029,7 @@ class Game:
         """Display main menu"""
         # Advance time by 0.5 to 1.5 hours each menu loop
         if self.player:
-            random_hours = random.uniform(0.5, 1.5)
+            random_hours = random.uniform(0.15, 0.20)
             self.player.advance_time(random_hours)
 
         # Continuous mission check on every main menu return
@@ -2334,7 +2334,7 @@ class Game:
     def explore(self):
         """Explore the current area"""
         if self.player:
-            self.player.advance_time(1)  # Advance time on exploration
+            self.player.advance_time(0.25)  # Advance time on exploration
         if not self.player:
             print(self.lang.get('no_character_created'))
             return
@@ -3212,6 +3212,12 @@ class Game:
                 if item_data.get("description"):
                     print(f"    {item_data['description']}")
 
+        # Get consumable items
+        consumables = [
+            it for it in self.player.inventory
+            if self.items_data.get(it, {}).get('type') == 'consumable'
+        ]
+        
         # Offer equip/unequip options for equipment items
         equipable = [
             it for it in self.player.inventory
@@ -3219,11 +3225,14 @@ class Game:
                                                            'accessory',
                                                            'offhand')
         ]
-        if equipable:
+        if equipable or consumables:
             print(self.lang.get("equipment_options"))
-            print(self.lang.get("equip_from_inventory"))
-            print(self.lang.get("unequip_slot"))
-            choice = ask("Choose option (E/U) or press Enter to return: ")
+            if equipable:
+                print(self.lang.get("equip_from_inventory"))
+                print(self.lang.get("unequip_slot"))
+            if consumables:
+                print("  C. Use a consumable item")
+            choice = ask("Choose option (E/U/C) or press Enter to return: ")
             if choice.lower() == 'e':
                 print(self.lang.get("equipable_items"))
                 for i, item in enumerate(equipable, 1):
@@ -3262,6 +3271,20 @@ class Game:
                         print(f"Unequipped {removed} from {slot_choice}.")
                     else:
                         print(self.lang.get("nothing_to_unequip"))
+            elif choice.lower() == 'c' and consumables:
+                # Use consumable item
+                print("\nConsumable items:")
+                for i, item in enumerate(consumables, 1):
+                    item_data = self.items_data.get(item, {})
+                    print(f"{i}. {item} - {item_data.get('description', '')}")
+                sel = ask(f"Choose item to use (1-{len(consumables)}) or press Enter: ")
+                if sel and sel.isdigit():
+                    idx = int(sel) - 1
+                    if 0 <= idx < len(consumables):
+                        item_name = consumables[idx]
+                        self.use_item(item_name)
+                        self.player.inventory.remove(item_name)
+                        print(f"Used {item_name}.")
 
     def view_missions(self):
         """View and manage missions"""
