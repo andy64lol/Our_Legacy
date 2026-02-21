@@ -134,5 +134,38 @@
     "action_chance": 0.9,
     "abilities": [{"name": "Shadow Strike", "type": "crit_boost", "crit_damage_bonus": 20, "duration": 3}],
     "price": 950
+  },
+  "companion_13": {
+    "name": "Kaelen of the Wild",
+    "class": "Druid",
+    "rank": "rare",
+    "description": "A wild druid who brings the power of nature to your side.",
+    "attack_bonus": 5,
+    "mp_bonus": 20,
+    "action_chance": 0.65,
+    "abilities": [{"name": "Entangle", "type": "debuff", "effect": "slow", "duration": 2}],
+    "price": 280
+  },
+  "companion_14": {
+    "name": "Father Thomas",
+    "class": "Priest",
+    "rank": "uncommon",
+    "description": "A humble priest who provides consistent healing and protection.",
+    "healing_bonus": 30,
+    "defense_bonus": 4,
+    "action_chance": 0.6,
+    "abilities": [{"name": "Blessing", "type": "buff", "effect": "defense_boost", "duration": 3}],
+    "price": 200
+  },
+  "companion_15": {
+    "name": "Sir Galahad",
+    "class": "Paladin",
+    "rank": "epic",
+    "description": "A noble paladin who shields his allies with divine grace.",
+    "defense_bonus": 12,
+    "attack_bonus": 8,
+    "action_chance": 0.7,
+    "abilities": [{"name": "Holy Shield", "type": "buff", "effect": "shield", "duration": 2}],
+    "price": 500
   }
 }

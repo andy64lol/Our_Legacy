@@ -387,7 +387,36 @@
       "power": 120,
       "type": "damage",
       "description": "Concentrated sunlight burns through any foe.",
-      "allowed_weapons": ["Druidic Staff"]
+      "allowed_weapons": ["Druidic Staff", "Ancient Oak Staff"]
+   },
+   "Nature's Blessing": {
+      "mp_cost": 20,
+      "power": 60,
+      "type": "heal",
+      "description": "The forest heals your wounds.",
+      "allowed_weapons": ["Druidic Staff", "Ancient Oak Staff"]
+   },
+   "Barkskin": {
+      "mp_cost": 15,
+      "power": 25,
+      "type": "buff",
+      "description": "Increases defense by hardening skin like bark.",
+      "effects": ["defense_boost"],
+      "allowed_weapons": ["Druidic Staff", "Ancient Oak Staff"]
+   },
+   "Divine Smite": {
+      "mp_cost": 25,
+      "power": 90,
+      "type": "damage",
+      "description": "Smite the enemy with holy fire.",
+      "allowed_weapons": ["Priest's Staff", "High Priest's Scepter", "Paladin's Shortsword", "Guardian Hammer"]
+   },
+   "Heavenly Prayer": {
+      "mp_cost": 30,
+      "power": 100,
+      "type": "heal",
+      "description": "A powerful prayer that restores significant HP.",
+      "allowed_weapons": ["Priest's Staff", "High Priest's Scepter"]
    }
 }
 
