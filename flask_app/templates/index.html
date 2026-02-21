@@ -3,81 +3,198 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flask Wrapper for main.py</title>
+    <title>RPG Terminal Engine</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css" />
+    <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.js"></script>
     <style>
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
+            background: #000;
             margin: 0;
-            background-color: #f0f2f5;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            color: #0f0;
+            font-family: 'Courier New', Courier, monospace;
+            overflow: hidden;
         }
-        .container {
-            text-align: center;
-            padding: 2.5rem;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            max-width: 500px;
-            width: 90%;
+        #terminal-container {
+            flex-grow: 1;
+            padding: 5px;
+            background: #000;
         }
-        h1 { color: #1c1e21; margin-bottom: 1.5rem; }
-        button {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            padding: 0.75rem 1.5rem;
-            font-size: 1rem;
-            border-radius: 6px;
+        .toolbar {
+            padding: 8px 15px;
+            background: #111;
+            border-top: 1px solid #333;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 14px;
+        }
+        .btn {
+            background: #222;
+            color: #0f0;
+            border: 1px solid #0f0;
+            padding: 4px 12px;
             cursor: pointer;
-            transition: background-color 0.2s;
+            font-family: inherit;
+            font-size: 12px;
+            text-transform: uppercase;
+            transition: all 0.2s;
         }
-        button:hover { background-color: #0056b3; }
-        #output {
-            margin-top: 1.5rem;
-            padding: 1rem;
-            background-color: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 6px;
-            text-align: left;
-            white-space: pre-wrap;
-            font-family: monospace;
-            display: none;
+        .btn:hover {
+            background: #0f0;
+            color: #000;
         }
+        .btn-start {
+            border-color: #0f0;
+            color: #0f0;
+        }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            background: #444;
+        }
+        .status-online { background: #0f0; box-shadow: 0 0 5px #0f0; }
+        input[type="file"] { display: none; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Flask Wrapper</h1>
-        <p>This application wraps <strong>main.py</strong>. Click the button below to execute its logic through the web interface.</p>
-        <button onclick="runMain()">Run main.py</button>
-        <div id="output"></div>
+    <div id="terminal-container"></div>
+    
+    <div class="toolbar">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <span id="status-dot" class="status-dot"></span>
+            <span id="status-text">OFFLINE</span>
+        </div>
+        
+        <button class="btn btn-start" onclick="startEngine()">Initialize Engine</button>
+        
+        <div style="border-left: 1px solid #333; height: 20px;"></div>
+        
+        <button class="btn" onclick="document.getElementById('save-upload').click()">Upload Save</button>
+        <button class="btn" onclick="downloadSave()">Download Save</button>
+        
+        <input type="file" id="save-upload" onchange="uploadSave(this)">
     </div>
 
     <script>
-        async function runMain() {
-            const outputDiv = document.getElementById('output');
-            outputDiv.style.display = 'block';
-            outputDiv.textContent = 'Running...';
-            
-            try {
-                const response = await fetch('/run', { method: 'POST' });
-                const data = await response.json();
-                
-                if (data.error) {
-                    outputDiv.textContent = 'Error: ' + data.error;
-                } else {
-                    outputDiv.textContent = data.stdout || 'No output produced.';
-                    if (data.stderr) {
-                        outputDiv.textContent += '\n\nErrors:\n' + data.stderr;
-                    }
-                }
-            } catch (err) {
-                outputDiv.textContent = 'Failed to connect to the server.';
+        // Terminal Setup
+        const term = new Terminal({
+            cursorBlink: true,
+            theme: {
+                background: '#000',
+                foreground: '#0f0',
+                cursor: '#0f0'
+            },
+            fontFamily: '"Courier New", Courier, monospace',
+            fontSize: 14,
+            allowProposedApi: true
+        });
+        
+        const fitAddon = new FitAddon.FitAddon();
+        term.loadAddon(fitAddon);
+        term.open(document.getElementById('terminal-container'));
+        fitAddon.fit();
+
+        let sessionId = null;
+        let pollInterval = null;
+
+        function updateStatus(online) {
+            const dot = document.getElementById('status-dot');
+            const text = document.getElementById('status-text');
+            if (online) {
+                dot.className = 'status-dot status-online';
+                text.textContent = 'RUNNING';
+            } else {
+                dot.className = 'status-dot';
+                text.textContent = 'OFFLINE';
             }
         }
+
+        async function startEngine() {
+            if (sessionId) {
+                if (!confirm("Engine already running. Restart?")) return;
+                clearInterval(pollInterval);
+            }
+            
+            term.clear();
+            term.writeln('\x1b[1;32m>>> INITIALIZING CORE ENGINE...\x1b[0m');
+            
+            try {
+                const response = await fetch('/start_terminal', { method: 'POST' });
+                const data = await response.json();
+                sessionId = data.session_id;
+                
+                updateStatus(true);
+                
+                if (pollInterval) clearInterval(pollInterval);
+                pollInterval = setInterval(pollOutput, 50);
+            } catch (err) {
+                term.writeln('\x1b[1;31m[CRITICAL ERROR] FAILED TO INITIALIZE ENGINE\x1b[0m');
+            }
+        }
+
+        async function pollOutput() {
+            if (!sessionId) return;
+            try {
+                const response = await fetch(`/read_output/${sessionId}`);
+                const data = await response.json();
+                
+                if (data.output) {
+                    term.write(data.output);
+                }
+                
+                if (!data.is_alive) {
+                    clearInterval(pollInterval);
+                    sessionId = null;
+                    updateStatus(false);
+                    term.writeln('\r\n\x1b[1;33m[ENGINE HALTED]\x1b[0m');
+                }
+            } catch (err) {
+                console.error("Poll error:", err);
+            }
+        }
+
+        // Handle user input
+        term.onData(data => {
+            if (sessionId) {
+                fetch(`/send_input/${sessionId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ input: data })
+                });
+            }
+        });
+
+        async function uploadSave(input) {
+            if (!input.files.length) return;
+            
+            const formData = new FormData();
+            formData.append('file', input.files[0]);
+            
+            term.writeln('\x1b[1;34m>>> UPLOADING DATA STRATUM...\x1b[0m');
+            
+            const response = await fetch('/upload_save', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+            term.writeln('\x1b[1;32m>>> ' + data.status + '\x1b[0m');
+        }
+
+        function downloadSave() {
+            window.location.href = '/download_save';
+        }
+
+        window.onresize = () => fitAddon.fit();
+        
+        // Initial message
+        term.writeln('RPG TERMINAL INTERFACE v2.0');
+        term.writeln('READY FOR INITIALIZATION.');
     </script>
 </body>
 </html>
