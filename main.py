@@ -5834,18 +5834,10 @@ class Game:
                 # No existing save found, create new one with timestamp
                 timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
                 filename = f"{saves_dir}/{safe_prefix}{self.player.name}_{self.player.uuid[:8]}_save_{timestamp}_{self.player.character_class}_{self.player.level}.json"
-        # Default behavior: create new save with timestamp
-        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        filename = f"{saves_dir}/{safe_prefix}{self.player.name}_{self.player.uuid[:8]}_save_{timestamp}_{self.player.character_class}_{self.player.level}.json"
-
-        # If running in Flask/Terminal environment, also update a stable web_save.json
-        if os.environ.get('TERM') == 'xterm-256color':
-            web_save_path = os.path.join(saves_dir, "web_save.json")
-            try:
-                with open(web_save_path, 'w') as f:
-                    json.dump(save_data, f, indent=2)
-            except Exception:
-                pass
+        else:
+            # Default behavior: create new save with timestamp
+            timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+            filename = f"{saves_dir}/{safe_prefix}{self.player.name}_{self.player.uuid[:8]}_save_{timestamp}_{self.player.character_class}_{self.player.level}.json"
 
         with open(filename, 'w') as f:
             json.dump(save_data, f, indent=2)
@@ -5860,17 +5852,6 @@ class Game:
             return
 
         save_files = [f for f in os.listdir(saves_dir) if f.endswith('.json')]
-        
-        # In web environment, prioritize web_save.json or most recent if it exists
-        if os.environ.get('TERM') == 'xterm-256color':
-            if "web_save.json" in save_files:
-                # Move it to the top of the list
-                save_files.remove("web_save.json")
-                save_files.insert(0, "web_save.json")
-            else:
-                # Sort by modification time to put most recent first
-                save_files.sort(key=lambda x: os.path.getmtime(os.path.join(saves_dir, x)), reverse=True)
-
         if not save_files:
             print(self.lang.get('no_save_files'))
             return
