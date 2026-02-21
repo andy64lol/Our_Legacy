@@ -1,0 +1,38 @@
+{
+  "slime": {
+    "name": "Slime",
+    "description": "A bouncy green slime that helps you find items.",
+    "price": 500,
+    "boosts": {
+      "item_find_chance": 0.05,
+      "gold_gain": 0.02
+    }
+  },
+  "wolf_pup": {
+    "name": "Wolf Pup",
+    "description": "A loyal wolf pup that increases your attack.",
+    "price": 1200,
+    "boosts": {
+      "attack": 5,
+      "speed": 2
+    }
+  },
+  "owl": {
+    "name": "Owl",
+    "description": "A wise owl that increases your magic power.",
+    "price": 1000,
+    "boosts": {
+      "mp": 20,
+      "defense": 3
+    }
+  },
+  "phoenix_chick": {
+    "name": "Phoenix Chick",
+    "description": "A legendary bird that boosts your HP and recovery.",
+    "price": 5000,
+    "boosts": {
+      "hp": 50,
+      "hp_regen": 2
+    }
+  }
+}

@@ -15,7 +15,8 @@ import difflib
 import signal
 import traceback
 import io
-from utilities.settings import ModManager as UtilsModManager, get_setting, set_setting, DEFAULT_SETTINGS, get_settings_manager
+from utilities.settings import ModManager as UtilsModManager, get_setting, set_setting, get_settings_manager
+import requests
 
 
 class ModManager(UtilsModManager):
@@ -28,9 +29,12 @@ class ModManager(UtilsModManager):
         self.settings_manager = get_settings_manager()
         self.settings = self.settings_manager.settings
         if lang is None:
+
             class MockLang:
+
                 def get(self, key, default=None, **kwargs):
                     return key
+
             self.lang = MockLang()
         else:
             self.lang = lang
@@ -65,7 +69,9 @@ class ModManager(UtilsModManager):
                             mod_data['folder_name'] = entry
                             self.mods[entry] = mod_data
                     except (json.JSONDecodeError, IOError):
-                        print(self.lang.get("mod_load_error").format(entry=entry))
+                        print(
+                            self.lang.get("mod_load_error").format(
+                                entry=entry))
 
     def get_enabled_mods(self) -> List[str]:
         """Get list of enabled mod folder names"""
@@ -110,7 +116,6 @@ class ModManager(UtilsModManager):
         """Get list of all mods with their metadata and status"""
         mods_list = []
         enabled = self.get_enabled_mods()
-        disabled = set(self.settings.get("disabled_mods", []))
 
         for name, mod in self.mods.items():
             mods_list.append({
@@ -138,10 +143,14 @@ class ModManager(UtilsModManager):
 
         if folder_name in disabled:
             disabled.remove(folder_name)
-            print(self.lang.get("mod_enabled_msg").format(folder_name=folder_name))
+            print(
+                self.lang.get("mod_enabled_msg").format(
+                    folder_name=folder_name))
         else:
             disabled.add(folder_name)
-            print(self.lang.get("mod_disabled_msg").format(folder_name=folder_name))
+            print(
+                self.lang.get("mod_disabled_msg").format(
+                    folder_name=folder_name))
 
         self.settings["disabled_mods"] = list(disabled)
         self.save_settings()
@@ -155,19 +164,6 @@ class ModManager(UtilsModManager):
         self.save_settings()
         return self.settings["mods_enabled"]
 
-
-# Optional HTTP library for market API
-try:
-    import requests
-    REQUESTS_AVAILABLE = True
-except ImportError:
-    requests = None
-    REQUESTS_AVAILABLE = False
-    try:
-        import urllib.request
-        import urllib.parse
-    except ImportError:
-        pass
 
 # Optional readline for tab-completion (best-effort)
 try:
@@ -328,9 +324,12 @@ def ask(prompt: str,
     - Returns the stripped input string.
     """
     if lang is None:
+
         class MockLang:
+
             def get(self, key, default=None, **kwargs):
                 return key
+
         lang = MockLang()
 
     while True:
@@ -375,16 +374,22 @@ def ask(prompt: str,
                                               n=3,
                                               cutoff=0.4)
             if close:
-                print(lang.get("did_you_mean_msg", "Did you mean one of these? {close}").format(close=', '.join(close)))
+                print(
+                    lang.get("did_you_mean_msg",
+                             "Did you mean one of these? {close}").format(
+                                 close=', '.join(close)))
             else:
                 print(
-                    lang.get("invalid_input_choices_msg", "Invalid input. Allowed choices: {choices}").format(choices=', '.join(cmp_choices))
-                )
+                    lang.get(
+                        "invalid_input_choices_msg",
+                        "Invalid input. Allowed choices: {choices}").format(
+                            choices=', '.join(cmp_choices)))
         else:
             # Fallback to showing valid choices if available
             print(
-                lang.get("invalid_input_choices_msg", "Invalid input. Allowed choices: {choices}").format(choices=', '.join(cmp_choices or []))
-            )
+                lang.get("invalid_input_choices_msg",
+                         "Invalid input. Allowed choices: {choices}").format(
+                             choices=', '.join(cmp_choices or [])))
 
         # Retry loop
 
@@ -441,9 +446,12 @@ class MarketAPI:
         self.last_fetch = None
         self.cooldown_minutes = MARKET_COOLDOWN_MINUTES
         if lang is None:
+
             class MockLang:
+
                 def get(self, key, default=None, **kwargs):
                     return key
+
             self.lang = MockLang()
         else:
             self.lang = lang
@@ -461,7 +469,8 @@ class MarketAPI:
         """Fetch market data from the API with caching and cooldown"""
         # Check cache validity
         if not force_refresh and self._is_cache_valid():
-            print(f"{Colors.CYAN}{self.lang.get('visiting_market')}{Colors.END}")
+            print(
+                f"{Colors.CYAN}{self.lang.get('visiting_market')}{Colors.END}")
             return self.cache
 
         # Check cooldown
@@ -471,8 +480,10 @@ class MarketAPI:
             mins = int(remaining.total_seconds() // 60)
             secs = int(remaining.total_seconds() % 60)
             print(
-                self.lang.get("market_closed_msg", "Merchants have left and the market is closed! Please come back in {mins}m {secs}s").format(mins=mins, secs=secs)
-            )
+                self.lang.get(
+                    "market_closed_msg",
+                    "Merchants have left and the market is closed! Please come back in {mins}m {secs}s"
+                ).format(mins=mins, secs=secs))
             return None
 
         print(
@@ -487,14 +498,18 @@ class MarketAPI:
                     data = response.json()
                     self.cache = data
                     self.last_fetch = datetime.now()
-                    print(f"{Colors.GREEN}{self.lang.get('market_open_msg', 'Market is open!')}{Colors.END}")
+                    print(
+                        f"{Colors.GREEN}{self.lang.get('market_open_msg', 'Market is open!')}{Colors.END}"
+                    )
                     return data
                 else:
                     print(
                         f"{Colors.RED}{self.lang.get('market_reach_error', 'Failed to reach to the market: HTTP {code}').format(code=response.status_code)}{Colors.END}"
                     )
             except requests.exceptions.RequestException as e:
-                print(f"{Colors.RED}{self.lang.get('network_error_msg').format(error=e)}{Colors.END}")
+                print(
+                    f"{Colors.RED}{self.lang.get('network_error_msg').format(error=e)}{Colors.END}"
+                )
         else:
             # Fallback using urllib
             try:
@@ -504,10 +519,14 @@ class MarketAPI:
                     data = json.loads(response.read().decode())
                     self.cache = data
                     self.last_fetch = datetime.now()
-                    print(f"{Colors.GREEN}{self.lang.get('market_open_msg', 'Market is open!')}{Colors.END}")
+                    print(
+                        f"{Colors.GREEN}{self.lang.get('market_open_msg', 'Market is open!')}{Colors.END}"
+                    )
                     return data
             except Exception as e:
-                print(f"{Colors.RED}{self.lang.get('network_error_msg', 'Network error: {error}').format(error=e)}{Colors.END}")
+                print(
+                    f"{Colors.RED}{self.lang.get('network_error_msg', 'Network error: {error}').format(error=e)}{Colors.END}"
+                )
 
         return None
 
@@ -576,11 +595,14 @@ class Character:
         self.name = name
         self.character_class = character_class
         self.uuid = player_uuid or str(uuid.uuid4())
-        
+
         if lang is None:
+
             class MockLangCharacterAttr:
+
                 def get(self, key, default=None, **kwargs):
                     return key
+
             self.lang = MockLangCharacterAttr()
         else:
             self.lang = lang
@@ -612,18 +634,23 @@ class Character:
         if self.lang is None:
             # Create a unique mock lang for Character init
             class MockLangCharacterInit:
+
                 def get(self, key, default=None, **kwargs):
                     return key
+
             self.lang = MockLangCharacterInit()
         else:
             self.lang = lang
 
         if self.lang is None:
+
             class MockLangCharacterStats:
+
                 def get(self, key, default=None, **kwargs):
                     return key
+
             self.lang = MockLangCharacterStats()
-             
+
         self.max_hp = stats.get("hp", 100)
         self.hp = self.max_hp
         self.max_mp = stats.get("mp", 50)
@@ -664,6 +691,11 @@ class Character:
         # Companions (4 max) - now storing full companion data
         # Each companion is {id, name, equipment: {weapon, armor, accessory}, level}
         self.companions: List[Dict[str, Any]] = []
+
+        self.active_pet: Optional[str] = None
+        self.pets_owned: List[str] = []
+        self.pets_data: Dict[str, Any] = {}
+        self._load_pets_data()
 
         self.hour = 8  # Start at 8 AM
         self.day = 1
@@ -736,6 +768,27 @@ class Character:
         self.armor = self.equipment.get("armor")
         self.accessory = self.equipment.get("accessory_1")
         self.offhand = self.equipment.get("offhand")
+
+    def _load_pets_data(self):
+        """Load pet data from data/pets.json"""
+        try:
+            with open('data/pets.json', 'r') as f:
+                self.pets_data = json.load(f)
+        except Exception:
+            self.pets_data = {}
+
+    def get_pet_boost(self, stat: str) -> float:
+        """Get the current pet's boost for a given stat, scaled by land comfort."""
+        if not hasattr(self, 'active_pet') or not self.active_pet or self.active_pet not in self.pets_data:
+            return 0.0
+        
+        pet = self.pets_data[self.active_pet]
+        boosts = pet.get('boosts', {})
+        base_boost = boosts.get(stat, 0.0)
+        
+        # Scale boost by comfort points: 1% increase per 10 comfort points
+        comfort_multiplier = 1.0 + (getattr(self, 'comfort_points', 0) / 1000.0)
+        return base_boost * comfort_multiplier
 
     def is_alive(self) -> bool:
         """Check if character is alive"""
@@ -853,7 +906,8 @@ class Character:
 
         # Use the specific description from weather_data if available
         weather_info = self.weather_data.get(self.current_weather, {})
-        desc_key = weather_info.get("description", f"weather_{self.current_weather}_desc")
+        desc_key = weather_info.get("description",
+                                    f"weather_{self.current_weather}_desc")
 
         # Check if it's night for variation
         is_night = self.hour < 6 or self.hour >= 18
@@ -864,7 +918,8 @@ class Character:
             if description != night_desc_key:
                 return description
 
-        return language_manager.get(desc_key, self.current_weather.capitalize())
+        return language_manager.get(desc_key,
+                                    self.current_weather.capitalize())
 
     def advance_time(self, minutes: float = 10.0):
         """Advance the game time by a number of minutes (default 10 mins)."""
@@ -873,21 +928,22 @@ class Character:
         hours = game_minutes / 60.0
         old_total_hours = (self.day - 1) * 24 + self.hour
         self.hour += hours
-        
+
         while self.hour >= self.max_hours:
             self.hour -= self.max_hours
             self.day += 1
             if self.lang:
-                new_day_msg = self.lang.get("new_day_begins", day=str(self.day))
+                new_day_msg = self.lang.get("new_day_begins",
+                                            day=str(self.day))
                 print(f"\n{Colors.wrap(new_day_msg, Colors.YELLOW)}")
 
         new_total_hours = (self.day - 1) * 24 + self.hour
-        
+
         # Weather rotation check: chance every 30 hours
         if (new_total_hours // 30) > (old_total_hours // 30):
             if random.random() < 0.7:  # 70% chance to rotate every 30 hours
                 self.update_weather()
-        elif random.random() < 0.05: # Small random chance otherwise
+        elif random.random() < 0.05:  # Small random chance otherwise
             self.update_weather()
 
     def update_weather(self, area_id: Optional[str] = None):
@@ -925,25 +981,48 @@ class Character:
         if not self.lang:
             return
 
-        print(create_section_header(self.lang.get("character_status", "CHARACTER STATUS")))
-        print(f"{Colors.wrap(self.lang.get('name_label', 'Name:'), Colors.CYAN)} {self.name}")
-        print(f"{Colors.wrap(self.lang.get('class_label', 'Class:'), Colors.CYAN)} {self.character_class}")
-        print(f"{Colors.wrap(self.lang.get('level_label', 'Level:'), Colors.CYAN)} {self.level} ({self.rank})")
-        
+        print(
+            create_section_header(
+                self.lang.get("character_status", "CHARACTER STATUS")))
+        print(
+            f"{Colors.wrap(self.lang.get('name_label', 'Name:'), Colors.CYAN)} {self.name}"
+        )
+        if hasattr(self, 'active_pet') and self.active_pet:
+            pet_name = self.active_pet.replace('_', ' ').title()
+            print(f"{Colors.wrap('Pet:', Colors.MAGENTA)} {pet_name}")
+        print(
+            f"{Colors.wrap(self.lang.get('class_label', 'Class:'), Colors.CYAN)} {self.character_class}"
+        )
+        print(
+            f"{Colors.wrap(self.lang.get('level_label', 'Level:'), Colors.CYAN)} {self.level} ({self.rank})"
+        )
+
         # Dynamic Time and Day using translation keys
         time_str = self.lang.get("current_time", hour=str(self.hour).zfill(2))
         day_str = self.lang.get("current_day", day=str(self.day))
-        print(f"{Colors.wrap(time_str, Colors.YELLOW)} | {Colors.wrap(day_str, Colors.YELLOW)}")
-        
-        print(f"{Colors.wrap(self.lang.get('hp_label', 'HP:'), Colors.RED)} {create_hp_mp_bar(self.hp, self.max_hp, color=Colors.RED)}")
-        print(f"{Colors.wrap(self.lang.get('mp_label', 'MP:'), Colors.BLUE)} {create_hp_mp_bar(self.mp, self.max_mp, color=Colors.BLUE)}")
-        print(f"{Colors.wrap(self.lang.get('exp_label', 'EXP:'), Colors.MAGENTA)} {create_progress_bar(self.experience, self.experience_to_next, color=Colors.MAGENTA)}")
-        print(f"{Colors.wrap(self.lang.get('gold_label', 'Gold:'), Colors.GOLD)} {self.gold}g")
-        
+        print(
+            f"{Colors.wrap(time_str, Colors.YELLOW)} | {Colors.wrap(day_str, Colors.YELLOW)}"
+        )
+
+        print(
+            f"{Colors.wrap(self.lang.get('hp_label', 'HP:'), Colors.RED)} {create_hp_mp_bar(self.hp, self.max_hp, color=Colors.RED)}"
+        )
+        print(
+            f"{Colors.wrap(self.lang.get('mp_label', 'MP:'), Colors.BLUE)} {create_hp_mp_bar(self.mp, self.max_mp, color=Colors.BLUE)}"
+        )
+        print(
+            f"{Colors.wrap(self.lang.get('exp_label', 'EXP:'), Colors.MAGENTA)} {create_progress_bar(self.experience, self.experience_to_next, color=Colors.MAGENTA)}"
+        )
+        print(
+            f"{Colors.wrap(self.lang.get('gold_label', 'Gold:'), Colors.GOLD)} {self.gold}g"
+        )
+
         # Display location and weather
         loc_str = self.lang.get("current_location", area=self.current_area)
         weather_desc = self.get_weather_description(self.lang)
-        print(f"{Colors.wrap(loc_str, Colors.CYAN)} | {Colors.wrap(weather_desc, Colors.CYAN)}")
+        print(
+            f"{Colors.wrap(loc_str, Colors.CYAN)} | {Colors.wrap(weather_desc, Colors.CYAN)}"
+        )
         print(create_separator())
 
     def display_stats(self):
@@ -1361,7 +1440,8 @@ class LanguageManager:
             with open('data/languages/config.json', 'r') as f:
                 self.config = json.load(f)
                 # Ensure current_language matches settings
-                self.current_language = get_setting("language", self.config.get('default_language', 'en'))
+                self.current_language = get_setting(
+                    "language", self.config.get('default_language', 'en'))
         except (FileNotFoundError, json.JSONDecodeError):
             # Fallback defaults
             self.config = {
@@ -1381,7 +1461,9 @@ class LanguageManager:
             self.current_language = lang_code
             set_setting("language", lang_code)
             self.load_translations()
-            print(self.get("language_changed_msg").format(language=self.config['available_languages'][lang_code]))
+            print(
+                self.get("language_changed_msg").format(
+                    language=self.config['available_languages'][lang_code]))
             return True
         return False
 
@@ -1403,7 +1485,8 @@ class LanguageManager:
     def get(self, key: str, default: Optional[str] = None, **kwargs) -> str:
         """Get translated string with robust formatting and escape handling"""
         # Get translation, fallback to default or key if not found
-        text = self.translations.get(key, default if default is not None else key)
+        text = self.translations.get(key,
+                                     default if default is not None else key)
 
         # Handle literal escape sequences found in JSON files
         text = text.replace("\\n", "\n").replace("\\033", "\033").replace(
@@ -1420,7 +1503,7 @@ class LanguageManager:
                     text = f"{text} {kwargs['area']}"
                 elif key == "welcome_adventurer" and "name" in kwargs and "{name}" not in text:
                     text = f"{text} {kwargs['name']}"
-        
+
         return text
 
     def should_overwrite_saves(self) -> bool:
@@ -1709,7 +1792,9 @@ class Game:
     def play_cutscene(self, cutscene_id: str):
         """Play a cutscene by ID"""
         if cutscene_id not in self.cutscenes_data:
-            print(self.lang.get("cutscene_not_found_msg").format(cutscene_id=cutscene_id))
+            print(
+                self.lang.get("cutscene_not_found_msg").format(
+                    cutscene_id=cutscene_id))
             return
 
         cutscene = self.cutscenes_data[cutscene_id]
@@ -2029,17 +2114,22 @@ class Game:
 
     def change_language_menu(self):
         """Menu to change the game language"""
-        print(f"\n{Colors.CYAN}{Colors.BOLD}=== {self.lang.get('settings', 'SETTINGS')} ==={Colors.END}")
-        available = self.lang.config.get("available_languages", {"en": "English"})
-        
+        print(
+            f"\n{Colors.CYAN}{Colors.BOLD}=== {self.lang.get('settings', 'SETTINGS')} ==={Colors.END}"
+        )
+        available = self.lang.config.get("available_languages",
+                                         {"en": "English"})
+
         langs = list(available.items())
         for i, (code, name) in enumerate(langs, 1):
             print(f"{Colors.CYAN}{i}.{Colors.END} {name}")
-        
-        print(f"{Colors.CYAN}{len(langs) + 1}.{Colors.END} {self.lang.get('back', 'Back')}")
-        
+
+        print(
+            f"{Colors.CYAN}{len(langs) + 1}.{Colors.END} {self.lang.get('back', 'Back')}"
+        )
+
         choice = ask(f"{Colors.CYAN}Choose a language: {Colors.END}")
-        
+
         if choice.isdigit():
             idx = int(choice) - 1
             if 0 <= idx < len(langs):
@@ -2075,10 +2165,12 @@ class Game:
             # Format hour for display (handling float)
             display_hour = int(self.player.hour)
             display_minute = int((self.player.hour - display_hour) * 60)
-            time_str = self.lang.get("current_time", hour=f"{display_hour:02d}:{display_minute:02d}")
+            time_str = self.lang.get(
+                "current_time",
+                hour=f"{display_hour:02d}:{display_minute:02d}")
             day_str = self.lang.get("current_day", day=str(self.player.day))
             weather_desc = self.player.get_weather_description(self.lang)
-            
+
             print(f"{Colors.YELLOW}{time_str} | {day_str}{Colors.END}")
             print(f"{Colors.CYAN}{weather_desc}{Colors.END}")
 
@@ -2096,33 +2188,36 @@ class Game:
         print(f"{Colors.CYAN}12.{Colors.END} {self.lang.get('companions')}")
         print(f"{Colors.CYAN}13.{Colors.END} {self.lang.get('dungeons')}")
         print(f"{Colors.CYAN}14.{Colors.END} {self.lang.get('challenges')}")
-        print(f"{Colors.CYAN}15.{Colors.END} {self.lang.get('settings', 'Settings')}")
+        print(
+            f"{Colors.CYAN}15.{Colors.END} {self.lang.get('settings', 'Settings')}"
+        )
+        print(f"{Colors.CYAN}16.{Colors.END} Pet Shop")
 
         # Show Build options only in your_land
-        menu_max = "19"
+        menu_max = "20"
         if self.current_area == "your_land":
             print(self.lang.get("16_furnish_home"))
             print(self.lang.get("17_build_structures"))
             print(self.lang.get("18_farm"))
             print(self.lang.get("19_training"))
-            print(f"{Colors.CYAN}20.{Colors.END} {self.lang.get('save_game')}")
-            print(f"{Colors.CYAN}21.{Colors.END} {self.lang.get('load_game')}")
+            print(f"{Colors.CYAN}21.{Colors.END} {self.lang.get('save_game')}")
+            print(f"{Colors.CYAN}22.{Colors.END} {self.lang.get('load_game')}")
             print(
-                f"{Colors.CYAN}22.{Colors.END} {self.lang.get('claim_rewards')}"
+                f"{Colors.CYAN}23.{Colors.END} {self.lang.get('claim_rewards')}"
             )
-            print(f"{Colors.CYAN}23.{Colors.END} {self.lang.get('quit')}")
-            menu_max = "23"
+            print(f"{Colors.CYAN}24.{Colors.END} {self.lang.get('quit')}")
+            menu_max = "24"
             choice = ask(
                 f"{Colors.CYAN}Choose an option (1-{menu_max}): {Colors.END}",
                 allow_empty=False)
         else:
-            print(f"{Colors.CYAN}16.{Colors.END} {self.lang.get('save_game')}")
-            print(f"{Colors.CYAN}17.{Colors.END} {self.lang.get('load_game')}")
+            print(f"{Colors.CYAN}17.{Colors.END} {self.lang.get('save_game')}")
+            print(f"{Colors.CYAN}18.{Colors.END} {self.lang.get('load_game')}")
             print(
-                f"{Colors.CYAN}18.{Colors.END} {self.lang.get('claim_rewards')}"
+                f"{Colors.CYAN}19.{Colors.END} {self.lang.get('claim_rewards')}"
             )
-            print(f"{Colors.CYAN}19.{Colors.END} {self.lang.get('quit')}")
-            menu_max = "19"
+            print(f"{Colors.CYAN}20.{Colors.END} {self.lang.get('quit')}")
+            menu_max = "20"
             choice = ask(
                 f"{Colors.CYAN}Choose an option (1-{menu_max}): {Colors.END}",
                 allow_empty=False)
@@ -2357,7 +2452,8 @@ class Game:
     def explore(self):
         """Explore the current area"""
         if self.player:
-            self.player.advance_time(5.0)  # 5 minutes real = 2.5 minutes game time
+            self.player.advance_time(
+                5.0)  # 5 minutes real = 2.5 minutes game time
         if not self.player:
             print(self.lang.get('no_character_created'))
             return
@@ -3240,7 +3336,7 @@ class Game:
             it for it in self.player.inventory
             if self.items_data.get(it, {}).get('type') == 'consumable'
         ]
-        
+
         # Offer equip/unequip options for equipment items
         equipable = [
             it for it in self.player.inventory
@@ -3254,7 +3350,9 @@ class Game:
                 print(self.lang.get("equip_from_inventory"))
                 print(self.lang.get("unequip_slot"))
             if consumables:
-                print(self.lang.get("use_consumable_option", "  C. Use a consumable item"))
+                print(
+                    self.lang.get("use_consumable_option",
+                                  "  C. Use a consumable item"))
             choice = ask("Choose option (E/U/C) or press Enter to return: ")
             if choice.lower() == 'e':
                 print(self.lang.get("equipable_items"))
@@ -3296,11 +3394,15 @@ class Game:
                         print(self.lang.get("nothing_to_unequip"))
             elif choice.lower() == 'c' and consumables:
                 # Use consumable item
-                print(f"\n{self.lang.get('consumable_items_header', 'Consumable items:')}")
+                print(
+                    f"\n{self.lang.get('consumable_items_header', 'Consumable items:')}"
+                )
                 for i, item in enumerate(consumables, 1):
                     item_data = self.items_data.get(item, {})
                     print(f"{i}. {item} - {item_data.get('description', '')}")
-                sel = ask(f"Choose item to use (1-{len(consumables)}) or press Enter: ")
+                sel = ask(
+                    f"Choose item to use (1-{len(consumables)}) or press Enter: "
+                )
                 if sel and sel.isdigit():
                     idx = int(sel) - 1
                     if 0 <= idx < len(consumables):
@@ -5566,6 +5668,99 @@ class Game:
         )
         print(f"Gold remaining: {Colors.GOLD}{self.player.gold}{Colors.END}")
 
+    def _load_pets_data(self):
+        """Load pet data from data/pets.json"""
+        try:
+            with open('data/pets.json', 'r') as f:
+                self.pets_data = json.load(f)
+        except Exception:
+            self.pets_data = {}
+
+    def get_pet_boost(self, stat: str) -> float:
+        """Get the current pet's boost for a given stat, scaled by land comfort."""
+        if not self.active_pet or self.active_pet not in self.pets_data:
+            return 0.0
+        
+        pet = self.pets_data[self.active_pet]
+        boosts = pet.get('boosts', {})
+        base_boost = boosts.get(stat, 0.0)
+        
+        # Scale boost by comfort points: 1% increase per 10 comfort points
+        comfort_multiplier = 1.0 + (getattr(self, 'comfort_points', 0) / 1000.0)
+        return base_boost * comfort_multiplier
+
+    def pet_shop(self):
+        """Menu for buying and managing pets."""
+        while True:
+            clear_screen()
+            print(create_section_header("PET SHOP"))
+            print(f"Your Gold: {Colors.GOLD}{self.player.gold}g{Colors.END}")
+            
+            # Using localized pet names if possible, else fallback
+            active_pet_name = "None"
+            if self.player.active_pet:
+                active_pet_name = self.player.pets_data.get(self.player.active_pet, {}).get('name', self.player.active_pet)
+            
+            print(f"Current Pet: {Colors.MAGENTA}{active_pet_name}{Colors.END}\n")
+            
+            print(f"{Colors.CYAN}1.{Colors.END} Buy Pet")
+            print(f"{Colors.CYAN}2.{Colors.END} Manage Pets")
+            print(f"{Colors.CYAN}3.{Colors.END} Back")
+            
+            choice = ask("Select an option: ")
+            
+            if choice == '1':
+                print("\nAvailable Pets:")
+                available = []
+                for pet_id, pet in self.player.pets_data.items():
+                    if pet_id not in self.player.pets_owned:
+                        print(f"- {pet['name']} ({pet['price']}g): {pet['description']}")
+                        available.append(pet_id)
+                
+                if not available:
+                    print("You already own all available pets!")
+                    ask("Press Enter to continue...")
+                    continue
+
+                pet_input = ask("\nEnter pet name to buy or press Enter to cancel: ").lower().strip().replace(' ', '_')
+                if not pet_input:
+                    continue
+
+                if pet_input in self.player.pets_data and pet_input not in self.player.pets_owned:
+                    price = self.player.pets_data[pet_input]['price']
+                    if self.player.gold >= price:
+                        self.player.gold -= price
+                        self.player.pets_owned.append(pet_input)
+                        print(f"You bought a {self.player.pets_data[pet_input]['name']}!")
+                    else:
+                        print("Not enough gold!")
+                else:
+                    print("Invalid pet or already owned.")
+                ask("Press Enter to continue...")
+            
+            elif choice == '2':
+                if not self.player.pets_owned:
+                    print("You don't own any pets yet.")
+                    ask("Press Enter to continue...")
+                    continue
+
+                print("\nYour Pets:")
+                for i, pet_id in enumerate(self.player.pets_owned, 1):
+                    pet_name = self.player.pets_data.get(pet_id, {}).get('name', pet_id)
+                    status = "(Active)" if pet_id == self.player.active_pet else ""
+                    print(f"{i}. {pet_name} {status}")
+                
+                sel = ask(f"Select pet to activate (1-{len(self.player.pets_owned)}) or press Enter: ")
+                if sel and sel.isdigit():
+                    idx = int(sel) - 1
+                    if 0 <= idx < len(self.player.pets_owned):
+                        self.player.active_pet = self.player.pets_owned[idx]
+                        print(f"{self.player.pets_data[self.player.active_pet]['name']} is now active!")
+                        ask("Press Enter to continue...")
+
+            elif choice == '3':
+                break
+
     def save_game(self, filename_prefix: str = ""):
         """Save the game with an optional filename prefix (keeps backward compatible signature)."""
         if not self.player:
@@ -5607,8 +5802,9 @@ class Game:
                 "farm_plots": getattr(self.player, 'farm_plots', {}),
                 "hour": getattr(self.player, 'hour', 8),
                 "day": getattr(self.player, 'day', 1),
-                "current_weather": getattr(self.player, 'current_weather',
-                                           "sunny")
+                "current_weather": getattr(self.player, 'current_weather', "sunny"),
+                "active_pet": getattr(self.player, 'active_pet', None),
+                "pets_owned": getattr(self.player, 'pets_owned', [])
             },
             "current_area": self.current_area,
             "visited_areas": list(self.visited_areas),
@@ -5749,6 +5945,12 @@ class Game:
                     self.completed_missions = save_data.get(
                         "completed_missions", [])
                     self.achievements = save_data.get("achievements", [])
+                    
+                    # Load Pet data
+                    player_save = save_data.get("player", {})
+                    if self.player:
+                        self.player.active_pet = player_save.get("active_pet")
+                        self.player.pets_owned = player_save.get("pets_owned", [])
 
                     # Load boss kill cooldowns
                     if self.player:
@@ -6443,7 +6645,8 @@ class Game:
             self.advance_room()
             return
 
-        print(self.lang.get("encounter_enemies_msg").format(count=len(enemies)))
+        print(
+            self.lang.get("encounter_enemies_msg").format(count=len(enemies)))
 
         # Battle each enemy
         for i, enemy in enumerate(enemies):
@@ -6488,7 +6691,9 @@ class Game:
         chest_data = chest_templates.get(chest_type,
                                          chest_templates.get('small', {}))
 
-        print(self.lang.get("found_chest_msg").format(name=chest_data.get('name', 'chest')))
+        print(
+            self.lang.get("found_chest_msg").format(
+                name=chest_data.get('name', 'chest')))
 
         # Generate rewards
         gold_min, gold_max = chest_data.get('gold_range', [50, 150])
@@ -6606,7 +6811,9 @@ class Game:
                 threshold += mod_data.get('threshold',
                                           0) - 10  # Adjust threshold
 
-                print(self.lang.get("roll_result_msg").format(roll=roll, threshold=threshold))
+                print(
+                    self.lang.get("roll_result_msg").format(
+                        roll=roll, threshold=threshold))
 
                 if roll >= threshold:
                     print(
@@ -6617,7 +6824,9 @@ class Game:
                     reward = trap_templates.get('success_reward', {})
                     if reward.get('gold'):
                         self.player.gold += reward['gold']
-                        print(self.lang.get("found_gold_chest_msg").format(gold=reward['gold']))
+                        print(
+                            self.lang.get("found_gold_chest_msg").format(
+                                gold=reward['gold']))
                     if reward.get('experience'):
                         self.player.gain_experience(reward['experience'])
                         print(f"You gained {reward['experience']} experience!")
@@ -6750,7 +6959,8 @@ class Game:
 
             if self.player and self.player.is_alive():
                 print(self.lang.get("nvictory"))
-                print(self.lang.get("defeated_boss_msg").format(name=boss.name))
+                print(
+                    self.lang.get("defeated_boss_msg").format(name=boss.name))
 
                 # Boss rewards
                 exp_reward = boss.experience_reward * 2  # Double XP for bosses
@@ -6830,7 +7040,8 @@ class Game:
 
         dungeon = self.current_dungeon
         print(self.lang.get("ndungeon_complete"))
-        print(self.lang.get("cleared_dungeon_msg").format(name=dungeon['name']))
+        print(
+            self.lang.get("cleared_dungeon_msg").format(name=dungeon['name']))
 
         # Calculate completion time
         start_time_str = self.dungeon_state.get('start_time')
@@ -6936,7 +7147,8 @@ class Game:
             gold_loss = min(self.player.gold // 5,
                             200)  # 20% of gold or 200 max
             self.player.gold -= gold_loss
-            print(self.lang.get("lost_gold_dungeon_msg").format(gold=gold_loss))
+            print(
+                self.lang.get("lost_gold_dungeon_msg").format(gold=gold_loss))
 
         # Return to starting village
         self.current_area = "starting_village"
@@ -7045,7 +7257,8 @@ class Game:
                             if rdata.get('category') == category]
 
         if not category_recipes:
-            print(self.lang.get("no_recipes_category").format(category=category))
+            print(
+                self.lang.get("no_recipes_category").format(category=category))
             return
 
         print(f"\n{Colors.BOLD}=== {category.upper()} ==={Colors.END}")
@@ -7203,7 +7416,9 @@ class Game:
             f"\n{Colors.GREEN}Successfully crafted {recipe.get('name')}!{Colors.END}"
         )
         for item, quantity in output_items.items():
-            print(self.lang.get("received_quantity_item").format(quantity=quantity, item=item))
+            print(
+                self.lang.get("received_quantity_item").format(
+                    quantity=quantity, item=item))
 
     def _visit_general_shop(self, shop_data):
         """Visit a general shop (not housing)"""
@@ -7315,6 +7530,73 @@ class Game:
                 print(self.lang.get("invalid_choice"))
         """Build structures - alias for build_home for now"""
         self.build_home()
+
+    def pet_shop(self):
+        """Visit the pet shop to buy and manage pets."""
+        if not self.player:
+            return
+
+        while True:
+            clear_screen()
+            print(f"{Colors.BOLD}{Colors.MAGENTA}=== PET SHOP ==={Colors.END}")
+            print(f"Gold: {Colors.GOLD}{self.player.gold}g{Colors.END}")
+            print(f"Current Pet: {Colors.CYAN}{self.player.active_pet or 'None'}{Colors.END}")
+            print(f"Comfort Points: {Colors.GREEN}{getattr(self.player, 'comfort_points', 0)}{Colors.END}")
+            print("-" * 30)
+            print("1. Buy a new pet")
+            print("2. Change active pet")
+            print("B. Back")
+
+            choice = ask("Choose an option: ").strip().upper()
+
+            if choice == '1':
+                available_pets = {k: v for k, v in self.player.pets_data.items() if k not in self.player.pets_owned}
+                if not available_pets:
+                    print("You already own all available pets!")
+                    ask("Press Enter to continue...")
+                    continue
+
+                print("\nAvailable Pets:")
+                pet_list = list(available_pets.items())
+                for i, (pet_id, data) in enumerate(pet_list, 1):
+                    print(f"{i}. {data['name']} ({data['price']}g) - {data['description']}")
+                
+                sel = ask(f"Select a pet to buy (1-{len(pet_list)}) or press Enter: ")
+                if sel and sel.isdigit():
+                    idx = int(sel) - 1
+                    if 0 <= idx < len(pet_list):
+                        pet_id, data = pet_list[idx]
+                        if self.player.gold >= data['price']:
+                            self.player.gold -= data['price']
+                            self.player.pets_owned.append(pet_id)
+                            self.player.active_pet = pet_id
+                            print(f"You bought {data['name']}! It is now your active pet.")
+                        else:
+                            print("Not enough gold!")
+                        ask("Press Enter to continue...")
+
+            elif choice == '2':
+                if not self.player.pets_owned:
+                    print("You don't own any pets yet!")
+                    ask("Press Enter to continue...")
+                    continue
+
+                print("\nYour Pets:")
+                for i, pet_id in enumerate(self.player.pets_owned, 1):
+                    pet_name = self.player.pets_data.get(pet_id, {}).get('name', pet_id)
+                    status = "(Active)" if pet_id == self.player.active_pet else ""
+                    print(f"{i}. {pet_name} {status}")
+                
+                sel = ask(f"Select pet to activate (1-{len(self.player.pets_owned)}) or press Enter: ")
+                if sel and sel.isdigit():
+                    idx = int(sel) - 1
+                    if 0 <= idx < len(self.player.pets_owned):
+                        self.player.active_pet = self.player.pets_owned[idx]
+                        print(f"{self.player.pets_data[self.player.active_pet]['name']} is now active!")
+                        ask("Press Enter to continue...")
+
+            elif choice == 'B':
+                break
 
     def run(self):
         """Main game loop"""
