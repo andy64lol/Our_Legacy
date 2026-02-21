@@ -3,32 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flask Wrapper</title>
+    <title>Flask Wrapper for main.py</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
             background-color: #f0f2f5;
         }
         .container {
             text-align: center;
-            padding: 2rem;
+            padding: 2.5rem;
             background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            max-width: 500px;
+            width: 90%;
         }
-        h1 { color: #1c1e21; }
-        p { color: #606770; }
+        h1 { color: #1c1e21; margin-bottom: 1.5rem; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        button:hover { background-color: #0056b3; }
+        #output {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            text-align: left;
+            white-space: pre-wrap;
+            font-family: monospace;
+            display: none;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Flask Wrapper</h1>
-        <p>Your Flask application is running successfully!</p>
+        <p>This application wraps <strong>main.py</strong>. Click the button below to execute its logic through the web interface.</p>
+        <button onclick="runMain()">Run main.py</button>
+        <div id="output"></div>
     </div>
+
+    <script>
+        async function runMain() {
+            const outputDiv = document.getElementById('output');
+            outputDiv.style.display = 'block';
+            outputDiv.textContent = 'Running...';
+            
+            try {
+                const response = await fetch('/run', { method: 'POST' });
+                const data = await response.json();
+                
+                if (data.error) {
+                    outputDiv.textContent = 'Error: ' + data.error;
+                } else {
+                    outputDiv.textContent = data.stdout || 'No output produced.';
+                    if (data.stderr) {
+                        outputDiv.textContent += '\n\nErrors:\n' + data.stderr;
+                    }
+                }
+            } catch (err) {
+                outputDiv.textContent = 'Failed to connect to the server.';
+            }
+        }
+    </script>
 </body>
 </html>
