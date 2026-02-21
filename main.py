@@ -578,10 +578,10 @@ class Character:
         self.uuid = player_uuid or str(uuid.uuid4())
         
         if lang is None:
-            class MockLangCharacter:
+            class MockLangCharacterAttr:
                 def get(self, key, default=None, **kwargs):
                     return key
-            self.lang = MockLangCharacter()
+            self.lang = MockLangCharacterAttr()
         else:
             self.lang = lang
 
@@ -610,13 +610,20 @@ class Character:
             stats = default_stats
 
         if self.lang is None:
-            class MockLangCharacter:
+            # Create a unique mock lang for Character init
+            class MockLangCharacterInit:
                 def get(self, key, default=None, **kwargs):
                     return key
-            self.lang = MockLangCharacter()
+            self.lang = MockLangCharacterInit()
         else:
             self.lang = lang
 
+        if self.lang is None:
+            class MockLangCharacterStats:
+                def get(self, key, default=None, **kwargs):
+                    return key
+            self.lang = MockLangCharacterStats()
+             
         self.max_hp = stats.get("hp", 100)
         self.hp = self.max_hp
         self.max_mp = stats.get("mp", 50)
@@ -859,8 +866,11 @@ class Character:
 
         return language_manager.get(desc_key, self.current_weather.capitalize())
 
-    def advance_time(self, hours: float = 1.0):
-        """Advance the game time by a number of hours."""
+    def advance_time(self, minutes: float = 10.0):
+        """Advance the game time by a number of minutes (default 10 mins)."""
+        # Time flows slower: 10 minutes real action = 5 minutes game time
+        game_minutes = minutes / 2.0
+        hours = game_minutes / 60.0
         old_total_hours = (self.day - 1) * 24 + self.hour
         self.hour += hours
         
@@ -2040,10 +2050,10 @@ class Game:
 
     def main_menu(self):
         """Display main menu"""
-        # Advance time by 0.5 to 1.5 hours each menu loop
+        # Advance time by 5 to 10 minutes each menu loop
         if self.player:
-            random_hours = random.uniform(0.15, 0.20)
-            self.player.advance_time(random_hours)
+            # 10 minutes real = 5 minutes game time
+            self.player.advance_time(10.0)
 
         # Continuous mission check on every main menu return
         self.update_mission_progress('check', '')
@@ -2347,7 +2357,7 @@ class Game:
     def explore(self):
         """Explore the current area"""
         if self.player:
-            self.player.advance_time(0.25)  # Advance time on exploration
+            self.player.advance_time(5.0)  # 5 minutes real = 2.5 minutes game time
         if not self.player:
             print(self.lang.get('no_character_created'))
             return
@@ -5604,6 +5614,7 @@ class Game:
             "visited_areas": list(self.visited_areas),
             "mission_progress": self.mission_progress,
             "completed_missions": self.completed_missions,
+            "achievements": getattr(self, 'achievements', []),
             "save_version": "3.1",
             "save_time": datetime.now().isoformat(),
             "bosses_killed": getattr(self.player, 'bosses_killed', {}),
@@ -5737,6 +5748,7 @@ class Game:
                         "mission_progress", {})
                     self.completed_missions = save_data.get(
                         "completed_missions", [])
+                    self.achievements = save_data.get("achievements", [])
 
                     # Load boss kill cooldowns
                     if self.player:
