@@ -18,6 +18,8 @@ import io
 from utilities.settings import ModManager as UtilsModManager, get_setting, set_setting, get_settings_manager
 import requests
 
+REQUESTS_AVAILABLE = True
+
 
 class ModManager(UtilsModManager):
     """Manages mod loading and data merging"""
@@ -2191,7 +2193,7 @@ class Game:
         print(
             f"{Colors.CYAN}15.{Colors.END} {self.lang.get('settings', 'Settings')}"
         )
-        print(f"{Colors.CYAN}16.{Colors.END} Pet Shop")
+        print(f"{Colors.CYAN}16.{Colors.END} {self.lang.get('pet_shop', 'Pet Shop')}")
 
         # Show Build options only in your_land
         menu_max = "20"
@@ -2323,6 +2325,10 @@ class Game:
 
         elif choice == "15":
             self.change_language_menu()
+
+        elif choice == "16" and self.current_area != "your_land":
+            # Pet Shop option when not in your_land
+            self.pet_shop()
 
         elif choice == "16" and self.current_area == "your_land":
             # Furnish Home option only in your_land
@@ -5668,33 +5674,12 @@ class Game:
         )
         print(f"Gold remaining: {Colors.GOLD}{self.player.gold}{Colors.END}")
 
-    def _load_pets_data(self):
-        """Load pet data from data/pets.json"""
-        try:
-            with open('data/pets.json', 'r') as f:
-                self.pets_data = json.load(f)
-        except Exception:
-            self.pets_data = {}
-
-    def get_pet_boost(self, stat: str) -> float:
-        """Get the current pet's boost for a given stat, scaled by land comfort."""
-        if not self.active_pet or self.active_pet not in self.pets_data:
-            return 0.0
-        
-        pet = self.pets_data[self.active_pet]
-        boosts = pet.get('boosts', {})
-        base_boost = boosts.get(stat, 0.0)
-        
-        # Scale boost by comfort points: 1% increase per 10 comfort points
-        comfort_multiplier = 1.0 + (getattr(self, 'comfort_points', 0) / 1000.0)
-        return base_boost * comfort_multiplier
-
     def pet_shop(self):
         """Menu for buying and managing pets."""
         while True:
             clear_screen()
-            print(create_section_header("PET SHOP"))
-            print(f"Your Gold: {Colors.GOLD}{self.player.gold}g{Colors.END}")
+            print(create_section_header(self.lang.get("pet_shop_header", "PET SHOP")))
+            print(f"{self.lang.get('your_gold', 'Your Gold')}: {Colors.GOLD}{self.player.gold}g{Colors.END}")
             
             # Using localized pet names if possible, else fallback
             active_pet_name = "None"
@@ -7528,75 +7513,6 @@ class Game:
                     print(self.lang.get("invalid_item_number"))
             else:
                 print(self.lang.get("invalid_choice"))
-        """Build structures - alias for build_home for now"""
-        self.build_home()
-
-    def pet_shop(self):
-        """Visit the pet shop to buy and manage pets."""
-        if not self.player:
-            return
-
-        while True:
-            clear_screen()
-            print(f"{Colors.BOLD}{Colors.MAGENTA}=== PET SHOP ==={Colors.END}")
-            print(f"Gold: {Colors.GOLD}{self.player.gold}g{Colors.END}")
-            print(f"Current Pet: {Colors.CYAN}{self.player.active_pet or 'None'}{Colors.END}")
-            print(f"Comfort Points: {Colors.GREEN}{getattr(self.player, 'comfort_points', 0)}{Colors.END}")
-            print("-" * 30)
-            print("1. Buy a new pet")
-            print("2. Change active pet")
-            print("B. Back")
-
-            choice = ask("Choose an option: ").strip().upper()
-
-            if choice == '1':
-                available_pets = {k: v for k, v in self.player.pets_data.items() if k not in self.player.pets_owned}
-                if not available_pets:
-                    print("You already own all available pets!")
-                    ask("Press Enter to continue...")
-                    continue
-
-                print("\nAvailable Pets:")
-                pet_list = list(available_pets.items())
-                for i, (pet_id, data) in enumerate(pet_list, 1):
-                    print(f"{i}. {data['name']} ({data['price']}g) - {data['description']}")
-                
-                sel = ask(f"Select a pet to buy (1-{len(pet_list)}) or press Enter: ")
-                if sel and sel.isdigit():
-                    idx = int(sel) - 1
-                    if 0 <= idx < len(pet_list):
-                        pet_id, data = pet_list[idx]
-                        if self.player.gold >= data['price']:
-                            self.player.gold -= data['price']
-                            self.player.pets_owned.append(pet_id)
-                            self.player.active_pet = pet_id
-                            print(f"You bought {data['name']}! It is now your active pet.")
-                        else:
-                            print("Not enough gold!")
-                        ask("Press Enter to continue...")
-
-            elif choice == '2':
-                if not self.player.pets_owned:
-                    print("You don't own any pets yet!")
-                    ask("Press Enter to continue...")
-                    continue
-
-                print("\nYour Pets:")
-                for i, pet_id in enumerate(self.player.pets_owned, 1):
-                    pet_name = self.player.pets_data.get(pet_id, {}).get('name', pet_id)
-                    status = "(Active)" if pet_id == self.player.active_pet else ""
-                    print(f"{i}. {pet_name} {status}")
-                
-                sel = ask(f"Select pet to activate (1-{len(self.player.pets_owned)}) or press Enter: ")
-                if sel and sel.isdigit():
-                    idx = int(sel) - 1
-                    if 0 <= idx < len(self.player.pets_owned):
-                        self.player.active_pet = self.player.pets_owned[idx]
-                        print(f"{self.player.pets_data[self.player.active_pet]['name']} is now active!")
-                        ask("Press Enter to continue...")
-
-            elif choice == 'B':
-                break
 
     def run(self):
         """Main game loop"""
