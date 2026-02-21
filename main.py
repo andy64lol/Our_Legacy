@@ -2217,39 +2217,31 @@ class Game:
         print(f"{Colors.CYAN}12.{Colors.END} {self.lang.get('companions')}")
         print(f"{Colors.CYAN}13.{Colors.END} {self.lang.get('dungeons')}")
         print(f"{Colors.CYAN}14.{Colors.END} {self.lang.get('challenges')}")
-        print(
-            f"{Colors.CYAN}15.{Colors.END} {self.lang.get('settings', 'Settings')}"
-        )
-        print(f"{Colors.CYAN}16.{Colors.END} {self.lang.get('pet_shop', 'Pet Shop')}")
+        print(f"{Colors.CYAN}15.{Colors.END} {self.lang.get('pet_shop', 'Pet Shop')}")
+        print(f"{Colors.CYAN}16.{Colors.END} {self.lang.get('settings', 'Settings')}")
 
         # Show Build options only in your_land
         menu_max = "20"
         if self.current_area == "your_land":
-            print(self.lang.get("16_furnish_home"))
-            print(self.lang.get("17_build_structures"))
-            print(self.lang.get("18_farm"))
-            print(self.lang.get("19_training"))
+            print(f"{Colors.CYAN}17.{Colors.END} {self.lang.get('furnish_home', 'Furnish Home')}")
+            print(f"{Colors.CYAN}18.{Colors.END} {self.lang.get('build_structures', 'Build Structures')}")
+            print(f"{Colors.CYAN}19.{Colors.END} {self.lang.get('farm', 'Farm')}")
+            print(f"{Colors.CYAN}20.{Colors.END} {self.lang.get('training', 'Training')}")
             print(f"{Colors.CYAN}21.{Colors.END} {self.lang.get('save_game')}")
             print(f"{Colors.CYAN}22.{Colors.END} {self.lang.get('load_game')}")
-            print(
-                f"{Colors.CYAN}23.{Colors.END} {self.lang.get('claim_rewards')}"
-            )
+            print(f"{Colors.CYAN}23.{Colors.END} {self.lang.get('claim_rewards')}")
             print(f"{Colors.CYAN}24.{Colors.END} {self.lang.get('quit')}")
             menu_max = "24"
-            choice = ask(
-                f"{Colors.CYAN}Choose an option (1-{menu_max}): {Colors.END}",
-                allow_empty=False)
         else:
             print(f"{Colors.CYAN}17.{Colors.END} {self.lang.get('save_game')}")
             print(f"{Colors.CYAN}18.{Colors.END} {self.lang.get('load_game')}")
-            print(
-                f"{Colors.CYAN}19.{Colors.END} {self.lang.get('claim_rewards')}"
-            )
+            print(f"{Colors.CYAN}19.{Colors.END} {self.lang.get('claim_rewards')}")
             print(f"{Colors.CYAN}20.{Colors.END} {self.lang.get('quit')}")
             menu_max = "20"
-            choice = ask(
-                f"{Colors.CYAN}Choose an option (1-{menu_max}): {Colors.END}",
-                allow_empty=False)
+        
+        choice = ask(
+            f"{Colors.CYAN}Choose an option (1-{menu_max}): {Colors.END}",
+            allow_empty=False)
 
         # Normalize textual shortcuts to numbers for backward compatibility
         shortcut_map = {
@@ -2278,25 +2270,26 @@ class Game:
             'r': '11',
             'companions': '12',
             'comp': '12',
-            'settings': '15',
-            'lang': '15',
-            'language': '15',
-            'build_home': '16' if self.current_area == "your_land" else None,
-            'furnish_home': '16' if self.current_area == "your_land" else None,
-            'build_land': '17' if self.current_area == "your_land" else None,
+            'pet_shop': '15',
+            'settings': '16',
+            'lang': '16',
+            'language': '16',
+            'build_home': '17' if self.current_area == "your_land" else None,
+            'furnish_home': '17' if self.current_area == "your_land" else None,
+            'build_land': '18' if self.current_area == "your_land" else None,
             'build_structures':
-            '17' if self.current_area == "your_land" else None,
-            'land': '17' if self.current_area == "your_land" else None,
-            'farm': '18' if self.current_area == "your_land" else None,
-            'training': '19' if self.current_area == "your_land" else None,
-            'train': '19' if self.current_area == "your_land" else None,
-            'save': '20' if self.current_area == "your_land" else '16',
-            'load': '21' if self.current_area == "your_land" else '17',
-            'l': '21' if self.current_area == "your_land" else '17',
-            'claim': '22' if self.current_area == "your_land" else '18',
-            'c': '22' if self.current_area == "your_land" else '18',
-            'quit': '23' if self.current_area == "your_land" else '19',
-            'q': '23' if self.current_area == "your_land" else '19'
+            '18' if self.current_area == "your_land" else None,
+            'land': '18' if self.current_area == "your_land" else None,
+            'farm': '19' if self.current_area == "your_land" else None,
+            'training': '20' if self.current_area == "your_land" else None,
+            'train': '20' if self.current_area == "your_land" else None,
+            'save': '21' if self.current_area == "your_land" else '17',
+            'load': '22' if self.current_area == "your_land" else '18',
+            'l': '22' if self.current_area == "your_land" else '18',
+            'claim': '23' if self.current_area == "your_land" else '19',
+            'c': '23' if self.current_area == "your_land" else '19',
+            'quit': '24' if self.current_area == "your_land" else '20',
+            'q': '24' if self.current_area == "your_land" else '20'
         }
 
         # Remove None values from shortcut map
@@ -2308,7 +2301,6 @@ class Game:
 
         if choice == "1":
             self.explore()
-
         elif choice == "2":
             if self.player:
                 self.player.display_stats()
@@ -2316,99 +2308,48 @@ class Game:
                 print(self.lang.get("no_character"))
         elif choice == "3":
             self.travel()
-
         elif choice == "4":
             self.view_inventory()
-
         elif choice == "5":
             self.view_missions()
-
         elif choice == "6":
             self.fight_boss_menu()
-
         elif choice == "7":
             self.visit_tavern()
-
         elif choice == "8":
             self.visit_shop()
-
         elif choice == "9":
             self.visit_alchemy()
-
         elif choice == "10":
             self.visit_market()
-
         elif choice == "11":
             self.rest()
-
         elif choice == "12":
             self.manage_companions()
-
         elif choice == "13":
             self.visit_dungeons()
-
         elif choice == "14":
             self.view_challenges()
-
         elif choice == "15":
-            self.change_language_menu()
-
-        elif choice == "16" and self.current_area != "your_land":
-            # Pet Shop option when not in your_land
             self.pet_shop()
-
-        elif choice == "16" and self.current_area == "your_land":
-            # Furnish Home option only in your_land
-            self.build_home()
-
-        elif choice == "17" and self.current_area == "your_land":
-            # Build Structures option only in your_land
-            self.build_structures()
-
-        elif choice == "18" and self.current_area == "your_land":
-            # Farm option only in your_land
-            self.farm()
-
-        elif choice == "19" and self.current_area == "your_land":
-            # Training option only in your_land
-            self.training()
-
         elif choice == "16":
-            # Save Game (when not in your_land)
-            self.save_game()
-
+            self.change_language_menu()
+        elif choice == "17" and self.current_area == "your_land":
+            self.build_home()
+        elif choice == "18" and self.current_area == "your_land":
+            self.build_structures()
+        elif choice == "19" and self.current_area == "your_land":
+            self.farm()
         elif choice == "20" and self.current_area == "your_land":
-            # Save Game (when in your_land)
+            self.training()
+        elif (choice == "21" and self.current_area == "your_land") or (choice == "17" and self.current_area != "your_land"):
             self.save_game()
-
-        elif choice == "17":
-            # Load Game (when not in your_land)
+        elif (choice == "22" and self.current_area == "your_land") or (choice == "18" and self.current_area != "your_land"):
             self.load_game()
-
-        elif choice == "21" and self.current_area == "your_land":
-            # Load Game (when in your_land)
-            self.load_game()
-
-        elif choice == "18":
-            # Claim Rewards (when not in your_land)
+        elif (choice == "23" and self.current_area == "your_land") or (choice == "19" and self.current_area != "your_land"):
             self.claim_rewards()
-
-        elif choice == "22" and self.current_area == "your_land":
-            # Claim Rewards (when in your_land)
-            self.claim_rewards()
-
-        elif choice == "19":
-            # Quit (when not in your_land)
+        elif (choice == "24" and self.current_area == "your_land") or (choice == "20" and self.current_area != "your_land"):
             self.quit_game()
-
-        elif choice == "23" and self.current_area == "your_land":
-            # Quit (when in your_land)
-            self.quit_game()
-
-        elif choice == "21" and self.current_area == "your_land":
-            # Quit (when in your_land)
-            self.quit_game()
-
         else:
             print(self.lang.get("invalid_choice"))
 
