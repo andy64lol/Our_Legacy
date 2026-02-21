@@ -97,33 +97,42 @@ def upload_save():
     if file.filename == '':
         return jsonify({'error': 'Empty filename'}), 400
     
-    # Save the uploaded file as save.json (or whatever main.py expects)
-    # Based on main.py analysis, it seems to use various json files
-    save_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'save.json')
+    # Save the uploaded file to data/saves directory
+    saves_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'saves')
+    os.makedirs(saves_dir, exist_ok=True)
+    
+    # Use the original filename but ensure it's secure
+    filename = os.path.basename(file.filename)
+    if not filename.endswith('.json'):
+        filename += '.json'
+        
+    save_path = os.path.join(saves_dir, filename)
     file.save(save_path)
     
-    return jsonify({'status': 'File uploaded as save.json'})
+    return jsonify({'status': f'File uploaded as {filename}'})
 
 @app.route('/download_save')
 def download_save():
-    # Attempt to find the most recent/relevant save file
-    # Common names: save.json, player.json, etc.
+    # Attempt to find the most recent save file in data/saves
     root_dir = os.path.dirname(os.path.dirname(__file__))
-    save_files = ['save.json', 'player_data.json', 'game_state.json']
+    saves_dir = os.path.join(root_dir, 'data', 'saves')
     
-    target_file = None
-    for f in save_files:
-        path = os.path.join(root_dir, f)
-        if os.path.exists(path):
-            target_file = path
-            break
-            
-    if target_file:
-        return send_file(target_file, as_attachment=True)
-    else:
-        # If no file exists, return an empty template
+    if not os.path.exists(saves_dir):
+        # If no directory, return empty
         buffer = io.BytesIO(b'{}')
         return send_file(buffer, as_attachment=True, download_name='save.json', mimetype='application/json')
+
+    save_files = [f for f in os.listdir(saves_dir) if f.endswith('.json')]
+    
+    if not save_files:
+        buffer = io.BytesIO(b'{}')
+        return send_file(buffer, as_attachment=True, download_name='save.json', mimetype='application/json')
+        
+    # Get the most recent one by modification time
+    save_files.sort(key=lambda x: os.path.getmtime(os.path.join(saves_dir, x)), reverse=True)
+    target_file = os.path.join(saves_dir, save_files[0])
+            
+    return send_file(target_file, as_attachment=True, download_name=save_files[0])
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
