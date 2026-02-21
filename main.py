@@ -319,13 +319,20 @@ def ask(prompt: str,
         valid_choices: Optional[List[str]] = None,
         allow_empty: bool = True,
         case_sensitive: bool = False,
-        suggest: bool = True) -> str:
+        suggest: bool = True,
+        lang: Optional[Any] = None) -> str:
     """Prompt the user for input with optional validation and suggestions.
 
     - `valid_choices`: list of allowed responses (comparison controlled by `case_sensitive`).
     - `allow_empty`: if False, empty input will be rejected.
     - Returns the stripped input string.
     """
+    if lang is None:
+        class MockLang:
+            def get(self, key, default=None, **kwargs):
+                return key
+        lang = MockLang()
+
     while True:
         try:
             response = input(prompt)
@@ -348,7 +355,7 @@ def ask(prompt: str,
             clear_screen()
             return resp
         if not resp and not allow_empty:
-            print("Input cannot be empty.")
+            print(lang.get("input_empty_error", "Input cannot be empty."))
             continue
 
         # If no validation requested, accept
@@ -368,15 +375,15 @@ def ask(prompt: str,
                                               n=3,
                                               cutoff=0.4)
             if close:
-                print(f"Did you mean one of these? {', '.join(close)}")
+                print(lang.get("did_you_mean_msg", "Did you mean one of these? {close}").format(close=', '.join(close)))
             else:
                 print(
-                    f"Invalid input. Allowed choices: {', '.join(cmp_choices)}"
+                    lang.get("invalid_input_choices_msg", "Invalid input. Allowed choices: {choices}").format(choices=', '.join(cmp_choices))
                 )
         else:
             # Fallback to showing valid choices if available
             print(
-                f"Invalid input. Allowed choices: {', '.join(cmp_choices or [])}"
+                lang.get("invalid_input_choices_msg", "Invalid input. Allowed choices: {choices}").format(choices=', '.join(cmp_choices or []))
             )
 
         # Retry loop
@@ -464,12 +471,12 @@ class MarketAPI:
             mins = int(remaining.total_seconds() // 60)
             secs = int(remaining.total_seconds() % 60)
             print(
-                f"{Colors.YELLOW}Merchants have left and the market is closed! Please come back in {mins}m {secs}s{Colors.END}"
+                self.lang.get("market_closed_msg", "Merchants have left and the market is closed! Please come back in {mins}m {secs}s").format(mins=mins, secs=secs)
             )
             return None
 
         print(
-            f"{Colors.CYAN}Checking if merchants are in the market...{Colors.END}"
+            f"{Colors.CYAN}{self.lang.get('checking_merchants_msg', 'Checking if merchants are in the market...')}{Colors.END}"
         )
 
         # Try to fetch from API using requests
@@ -480,11 +487,11 @@ class MarketAPI:
                     data = response.json()
                     self.cache = data
                     self.last_fetch = datetime.now()
-                    print(f"{Colors.GREEN}{self.lang.get('market_open_msg')}{Colors.END}")
+                    print(f"{Colors.GREEN}{self.lang.get('market_open_msg', 'Market is open!')}{Colors.END}")
                     return data
                 else:
                     print(
-                        f"{Colors.RED}Failed to reach to the market: HTTP {response.status_code}{Colors.END}"
+                        f"{Colors.RED}{self.lang.get('market_reach_error', 'Failed to reach to the market: HTTP {code}').format(code=response.status_code)}{Colors.END}"
                     )
             except requests.exceptions.RequestException as e:
                 print(f"{Colors.RED}{self.lang.get('network_error_msg').format(error=e)}{Colors.END}")
@@ -497,10 +504,10 @@ class MarketAPI:
                     data = json.loads(response.read().decode())
                     self.cache = data
                     self.last_fetch = datetime.now()
-                    print(f"{Colors.GREEN}Market is open! {Colors.END}")
+                    print(f"{Colors.GREEN}{self.lang.get('market_open_msg', 'Market is open!')}{Colors.END}")
                     return data
             except Exception as e:
-                print(f"{Colors.RED}Network error: {e}{Colors.END}")
+                print(f"{Colors.RED}{self.lang.get('network_error_msg', 'Network error: {error}').format(error=e)}{Colors.END}")
 
         return None
 
@@ -569,7 +576,15 @@ class Character:
         self.name = name
         self.character_class = character_class
         self.uuid = player_uuid or str(uuid.uuid4())
-        self.lang = lang
+        
+        if lang is None:
+            class MockLangCharacter:
+                def get(self, key, default=None, **kwargs):
+                    return key
+            self.lang = MockLangCharacter()
+        else:
+            self.lang = lang
+
         # Rank system based on level
         self.rank = "F tier adventurer"
         self.level = 1
@@ -594,16 +609,14 @@ class Character:
             }
             stats = default_stats
 
-        if lang is None:
-            # Create a mock lang if None to avoid "get" on None errors
-            class MockLang:
-
+        if self.lang is None:
+            class MockLangCharacter:
                 def get(self, key, default=None, **kwargs):
                     return key
-
-            self.lang = MockLang()
+            self.lang = MockLangCharacter()
         else:
             self.lang = lang
+
         self.max_hp = stats.get("hp", 100)
         self.hp = self.max_hp
         self.max_mp = stats.get("mp", 50)
@@ -3231,7 +3244,7 @@ class Game:
                 print(self.lang.get("equip_from_inventory"))
                 print(self.lang.get("unequip_slot"))
             if consumables:
-                print("  C. Use a consumable item")
+                print(self.lang.get("use_consumable_option", "  C. Use a consumable item"))
             choice = ask("Choose option (E/U/C) or press Enter to return: ")
             if choice.lower() == 'e':
                 print(self.lang.get("equipable_items"))
@@ -3273,7 +3286,7 @@ class Game:
                         print(self.lang.get("nothing_to_unequip"))
             elif choice.lower() == 'c' and consumables:
                 # Use consumable item
-                print("\nConsumable items:")
+                print(f"\n{self.lang.get('consumable_items_header', 'Consumable items:')}")
                 for i, item in enumerate(consumables, 1):
                     item_data = self.items_data.get(item, {})
                     print(f"{i}. {item} - {item_data.get('description', '')}")
