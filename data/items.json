@@ -2617,6 +2617,68 @@
       "price": 500,
       "rarity": "rare"
    },
+   "High Priest's Scepter":{
+      "type":"weapon",
+      "description":"An ornate scepter that radiates holy light.",
+      "attack_bonus":15,
+      "magic_weapon":true,
+      "mp_bonus":50,
+      "price":350,
+      "rarity":"rare",
+      "requirements":{
+         "level":4,
+         "class":"Priest"
+      }
+   },
+   "Saintly Robes":{
+      "type":"armor",
+      "description":"Robes worn by saints, providing excellent magical defense.",
+      "defense_bonus":6,
+      "mp_bonus":40,
+      "price":200,
+      "rarity":"uncommon",
+      "requirements":{
+         "level":3,
+         "class":"Priest"
+      }
+   },
+   "Guardian Hammer":{
+      "type":"weapon",
+      "description":"A heavy hammer for Paladins who prefer blunt force with their divinity.",
+      "attack_bonus":18,
+      "defense_bonus":4,
+      "price":250,
+      "rarity":"uncommon",
+      "requirements":{
+         "level":3,
+         "class":"Paladin"
+      }
+   },
+   "Elder Wood Armor":{
+      "type":"armor",
+      "description":"Armor made from living elder wood, growing stronger with the wearer.",
+      "defense_bonus":10,
+      "hp_bonus":30,
+      "price":280,
+      "rarity":"rare",
+      "requirements":{
+         "level":4,
+         "class":"Druid"
+      }
+   },
+   "Ancient Oak Staff":{
+      "type":"weapon",
+      "description":"A staff carved from the heart of an ancient oak tree.",
+      "attack_bonus":20,
+      "magic_weapon":true,
+      "mp_bonus":40,
+      "price":400,
+      "rarity":"rare",
+      "requirements":{
+         "level":5,
+         "class":"Druid"
+      }
+   },
    "Holy Vestment":{
       "type": "armor",
       "description": "Sacred vestments that glow with inner light, granting protection and wisdom",
