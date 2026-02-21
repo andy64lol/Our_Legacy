@@ -327,7 +327,7 @@
     "speed": 20,
     "experience_reward": 50,
     "gold_reward": 30,
-    "loot_table": ["Dagger"]
+    "loot_table": ["Steel Dagger"]
   },
   "storm_elemental": {
     "name": "Storm Elemental",
