@@ -374,6 +374,20 @@
       "type": "damage",
       "description": "The ultimate performance, a crescendo of pure divine destruction.",
       "allowed_weapons": ["Dragonbone Lute", "Skyfall Lyre", "Hämmelson's Legendary Flute", "War Drum of The god of Thunder Zâesltral"]
+   },
+   "Nature's Embrace": {
+      "mp_cost": 25,
+      "power": 80,
+      "type": "damage",
+      "description": "Vines from the earth entangle and crush the enemy.",
+      "allowed_weapons": ["Druidic Staff"]
+   },
+   "Solar Flare": {
+      "mp_cost": 35,
+      "power": 120,
+      "type": "damage",
+      "description": "Concentrated sunlight burns through any foe.",
+      "allowed_weapons": ["Druidic Staff"]
    }
 }
 

@@ -34,5 +34,33 @@
       "hp": 50,
       "hp_regen": 2
     }
+  },
+  "dragon_hatchling": {
+    "name": "Dragon Hatchling",
+    "description": "A tiny dragon that breathes small sparks and boosts all stats.",
+    "price": 10000,
+    "boosts": {
+      "attack": 10,
+      "defense": 10,
+      "speed": 5,
+      "hp": 100
+    }
+  },
+  "shadow_cat": {
+    "name": "Shadow Cat",
+    "description": "A cat made of shadows that increases speed and critical chance.",
+    "price": 2500,
+    "boosts": {
+      "speed": 15,
+      "crit_chance": 0.1
+    }
+  },
+  "golden_retriever": {
+    "name": "Golden Retriever",
+    "description": "A very good boy who finds extra gold everywhere.",
+    "price": 1500,
+    "boosts": {
+      "gold_gain": 0.2
+    }
   }
 }

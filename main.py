@@ -112,6 +112,11 @@ class ModManager(UtilsModManager):
                         f"Warning: Failed to load {data_type} from mod {mod_name}: {e}"
                     )
 
+        # Merge pets from mods if they exist
+        if data_type == "pets.json":
+            mod_pets = self.load_mod_data("pets.json")
+            merged_data.update(mod_pets)
+
         return merged_data
 
     def get_mod_list(self) -> List[Dict[str, Any]]:
@@ -669,8 +674,29 @@ class Character:
         # Legacy single accessory points to accessory_1 for compatibility
         self.accessory = None
 
+        # Fix for None equipment error
+        self.equipment = {
+            "weapon": None,
+            "armor": None,
+            "offhand": None,
+            "accessory_1": None,
+            "accessory_2": None,
+            "accessory_3": None
+        }
+
         # Inventory and gold
         self.inventory = []
+        self.gold = 0
+        self.companions = []
+        self.active_buffs = []
+        self.bosses_killed = {}
+        self.building_slots = {}
+        self.housing_owned = []
+        self.comfort_points = 0
+        self.day = 1
+        self.hour = 8.0
+        self.weather = "sunny"
+
         self.gold = 100  # Starting gold
         # Save base stats so equipment bonuses can be recalculated
         self.base_max_hp = self.max_hp
@@ -1541,6 +1567,7 @@ class Game:
         self.housing_data: Dict[str, Any] = {}  # Housing items data
         self.shops_data: Dict[str, Any] = {}  # Shop data
         self.farming_data: Dict[str, Any] = {}  # Farming crops and foods data
+        self.pets_data: Dict[str, Any] = {}  # Pet data
 
         # Challenge tracking
         self.challenge_progress: Dict[str, int] = {
@@ -2385,8 +2412,43 @@ class Game:
         else:
             print(self.lang.get("invalid_choice"))
 
-    def fight_boss_menu(self):
-        """Menu to select and fight a boss in the current area"""
+    def pet_shop(self):
+        """Visit the pet shop to buy pets"""
+        if not self.player:
+            print(self.lang.get("no_character"))
+            return
+
+        print(f"\n{Colors.MAGENTA}{Colors.BOLD}=== PET SHOP ==={Colors.END}")
+        print("Welcome to the Pet Shop! Find a companion to help you on your journey.")
+        print(f"Your gold: {Colors.GOLD}{self.player.gold}{Colors.END}")
+
+        if not hasattr(self, 'pets_data') or not self.pets_data:
+            print("The pet shop is currently empty.")
+            return
+
+        pets = list(self.pets_data.items())
+        for i, (pet_id, pdata) in enumerate(pets, 1):
+            price = pdata.get('price', 0)
+            desc = pdata.get('description', '')
+            print(f"{i}. {pdata.get('name', pet_id)} - {Colors.GOLD}{price} gold{Colors.END}")
+            print(f"   {desc}")
+
+        choice = ask(f"\nBuy a pet (1-{len(pets)}) or Enter to leave: ")
+        if choice.isdigit():
+            idx = int(choice) - 1
+            if 0 <= idx < len(pets):
+                pet_id, pdata = pets[idx]
+                price = pdata.get('price', 0)
+                if self.player.gold >= price:
+                    self.player.gold -= price
+                    if not hasattr(self.player, 'pets'):
+                        self.player.pets = []
+                    self.player.pets.append(pet_id)
+                    print(f"You bought {pdata.get('name', pet_id)}!")
+                else:
+                    print(self.lang.get("not_enough_gold"))
+            else:
+                print(self.lang.get("invalid_choice"))
         if not self.player:
             print(self.lang.get("no_character"))
             return

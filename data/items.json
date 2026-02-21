@@ -742,14 +742,28 @@
          "class":"Bard"
       }
    },
-   "Leather Helm":{
-      "type":"armor",
-      "description":"A protective leather helmet",
-      "defense_bonus":2,
-      "price":30,
-      "rarity":"common",
+   "Paladin's Shortsword":{
+      "type":"weapon",
+      "description":"A balanced shortsword for holy warriors, slightly less powerful than its predecessor.",
+      "attack_bonus":10,
+      "price":100,
+      "rarity":"uncommon",
       "requirements":{
-         "level":1
+         "level":1,
+         "class":"Paladin"
+      }
+   },
+   "Druidic Staff":{
+      "type":"weapon",
+      "description":"A gnarled staff hums with nature's power, exclusive to Druids.",
+      "attack_bonus":12,
+      "magic_weapon":true,
+      "mp_bonus":20,
+      "price":120,
+      "rarity":"uncommon",
+      "requirements":{
+         "level":1,
+         "class":"Druid"
       }
    },
    "Crown of Wisdom":{
