@@ -35,7 +35,6 @@ mods/
 .vercel/
 node_modules/
 server.py
-replit.md
 # Generated scripts for fixing prints
 bash/fix_prints*.sh
 bash/backups/
