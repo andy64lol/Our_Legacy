@@ -441,7 +441,11 @@ def disable_tab_completion(prev_completer):
 game_api = None
 
 # Market API URL and cooldown
-MARKET_API_URL = "https://our-legacy.vercel.app/api/market"
+MARKET_API_URLS = [
+    "https://our-legacy.vercel.app/api/market",
+    "https://our-legacy-api.replit.app/api/market",  # Fallback 1
+    "http://localhost:5000/api/market"               # Fallback 2 (Local)
+]
 MARKET_COOLDOWN_MINUTES = 10
 
 
@@ -473,7 +477,7 @@ class MarketAPI:
     def fetch_market_data(self,
                           force_refresh: bool = False
                           ) -> Optional[Dict[str, Any]]:
-        """Fetch market data from the API with caching and cooldown"""
+        """Fetch market data from the API with caching, cooldown, and fallback endpoints"""
         # Check cache validity
         if not force_refresh and self._is_cache_valid():
             print(
@@ -497,44 +501,41 @@ class MarketAPI:
             f"{Colors.CYAN}{self.lang.get('checking_merchants_msg', 'Checking if merchants are in the market...')}{Colors.END}"
         )
 
-        # Try to fetch from API using requests
-        if REQUESTS_AVAILABLE and requests is not None:
-            try:
-                response = requests.get(MARKET_API_URL, timeout=10)
-                if response.status_code == 200:
-                    data = response.json()
-                    self.cache = data
-                    self.last_fetch = datetime.now()
-                    print(
-                        f"{Colors.GREEN}{self.lang.get('market_open_msg', 'Market is open!')}{Colors.END}"
-                    )
-                    return data
-                else:
-                    print(
-                        f"{Colors.RED}{self.lang.get('market_reach_error', 'Failed to reach to the market: HTTP {code}').format(code=response.status_code)}{Colors.END}"
-                    )
-            except requests.exceptions.RequestException as e:
-                print(
-                    f"{Colors.RED}{self.lang.get('network_error_msg').format(error=e)}{Colors.END}"
-                )
-        else:
-            # Fallback using urllib
-            try:
-                import urllib.request
-                req = urllib.request.Request(MARKET_API_URL)
-                with urllib.request.urlopen(req, timeout=10) as response:
-                    data = json.loads(response.read().decode())
-                    self.cache = data
-                    self.last_fetch = datetime.now()
-                    print(
-                        f"{Colors.GREEN}{self.lang.get('market_open_msg', 'Market is open!')}{Colors.END}"
-                    )
-                    return data
-            except Exception as e:
-                print(
-                    f"{Colors.RED}{self.lang.get('network_error_msg', 'Network error: {error}').format(error=e)}{Colors.END}"
-                )
+        # Try each endpoint in order
+        for url in MARKET_API_URLS:
+            # Try to fetch from API using requests
+            if REQUESTS_AVAILABLE and requests is not None:
+                try:
+                    response = requests.get(url, timeout=5)
+                    if response.status_code == 200:
+                        data = response.json()
+                        self.cache = data
+                        self.last_fetch = datetime.now()
+                        print(
+                            f"{Colors.GREEN}{self.lang.get('market_open_msg', 'Market is open!')}{Colors.END}"
+                        )
+                        return data
+                except requests.exceptions.RequestException:
+                    continue
+            else:
+                # Fallback using urllib
+                try:
+                    import urllib.request
+                    req = urllib.request.Request(url)
+                    with urllib.request.urlopen(req, timeout=5) as response:
+                        data = json.loads(response.read().decode())
+                        self.cache = data
+                        self.last_fetch = datetime.now()
+                        print(
+                            f"{Colors.GREEN}{self.lang.get('market_open_msg', 'Market is open!')}{Colors.END}"
+                        )
+                        return data
+                except Exception:
+                    continue
 
+        print(
+            f"{Colors.RED}{self.lang.get('market_reach_error', 'Failed to reach any market merchants at this time.')}{Colors.END}"
+        )
         return None
 
     def get_cooldown_remaining(self) -> Optional[timedelta]:
