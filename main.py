@@ -807,15 +807,18 @@ class Character:
 
     def get_pet_boost(self, stat: str) -> float:
         """Get the current pet's boost for a given stat, scaled by land comfort."""
-        if not hasattr(self, 'active_pet') or not self.active_pet or self.active_pet not in self.pets_data:
+        if not hasattr(
+                self, 'active_pet'
+        ) or not self.active_pet or self.active_pet not in self.pets_data:
             return 0.0
-        
+
         pet = self.pets_data[self.active_pet]
         boosts = pet.get('boosts', {})
         base_boost = boosts.get(stat, 0.0)
-        
+
         # Scale boost by comfort points: 1% increase per 10 comfort points
-        comfort_multiplier = 1.0 + (getattr(self, 'comfort_points', 0) / 1000.0)
+        comfort_multiplier = 1.0 + (getattr(self, 'comfort_points', 0) /
+                                    1000.0)
         return base_boost * comfort_multiplier
 
     def is_alive(self) -> bool:
@@ -2217,28 +2220,44 @@ class Game:
         print(f"{Colors.CYAN}12.{Colors.END} {self.lang.get('companions')}")
         print(f"{Colors.CYAN}13.{Colors.END} {self.lang.get('dungeons')}")
         print(f"{Colors.CYAN}14.{Colors.END} {self.lang.get('challenges')}")
-        print(f"{Colors.CYAN}15.{Colors.END} {self.lang.get('pet_shop', 'Pet Shop')}")
-        print(f"{Colors.CYAN}16.{Colors.END} {self.lang.get('settings', 'Settings')}")
+        print(
+            f"{Colors.CYAN}15.{Colors.END} {self.lang.get('pet_shop', 'Pet Shop')}"
+        )
+        print(
+            f"{Colors.CYAN}16.{Colors.END} {self.lang.get('settings', 'Settings')}"
+        )
 
         # Show Build options only in your_land
         menu_max = "20"
         if self.current_area == "your_land":
-            print(f"{Colors.CYAN}17.{Colors.END} {self.lang.get('furnish_home', 'Furnish Home')}")
-            print(f"{Colors.CYAN}18.{Colors.END} {self.lang.get('build_structures', 'Build Structures')}")
-            print(f"{Colors.CYAN}19.{Colors.END} {self.lang.get('farm', 'Farm')}")
-            print(f"{Colors.CYAN}20.{Colors.END} {self.lang.get('training', 'Training')}")
+            print(
+                f"{Colors.CYAN}17.{Colors.END} {self.lang.get('furnish_home', 'Furnish Home')}"
+            )
+            print(
+                f"{Colors.CYAN}18.{Colors.END} {self.lang.get('build_structures', 'Build Structures')}"
+            )
+            print(
+                f"{Colors.CYAN}19.{Colors.END} {self.lang.get('farm', 'Farm')}"
+            )
+            print(
+                f"{Colors.CYAN}20.{Colors.END} {self.lang.get('training', 'Training')}"
+            )
             print(f"{Colors.CYAN}21.{Colors.END} {self.lang.get('save_game')}")
             print(f"{Colors.CYAN}22.{Colors.END} {self.lang.get('load_game')}")
-            print(f"{Colors.CYAN}23.{Colors.END} {self.lang.get('claim_rewards')}")
+            print(
+                f"{Colors.CYAN}23.{Colors.END} {self.lang.get('claim_rewards')}"
+            )
             print(f"{Colors.CYAN}24.{Colors.END} {self.lang.get('quit')}")
             menu_max = "24"
         else:
             print(f"{Colors.CYAN}17.{Colors.END} {self.lang.get('save_game')}")
             print(f"{Colors.CYAN}18.{Colors.END} {self.lang.get('load_game')}")
-            print(f"{Colors.CYAN}19.{Colors.END} {self.lang.get('claim_rewards')}")
+            print(
+                f"{Colors.CYAN}19.{Colors.END} {self.lang.get('claim_rewards')}"
+            )
             print(f"{Colors.CYAN}20.{Colors.END} {self.lang.get('quit')}")
             menu_max = "20"
-        
+
         choice = ask(
             f"{Colors.CYAN}Choose an option (1-{menu_max}): {Colors.END}",
             allow_empty=False)
@@ -2342,13 +2361,17 @@ class Game:
             self.farm()
         elif choice == "20" and self.current_area == "your_land":
             self.training()
-        elif (choice == "21" and self.current_area == "your_land") or (choice == "17" and self.current_area != "your_land"):
+        elif (choice == "21" and self.current_area == "your_land") or (
+                choice == "17" and self.current_area != "your_land"):
             self.save_game()
-        elif (choice == "22" and self.current_area == "your_land") or (choice == "18" and self.current_area != "your_land"):
+        elif (choice == "22" and self.current_area == "your_land") or (
+                choice == "18" and self.current_area != "your_land"):
             self.load_game()
-        elif (choice == "23" and self.current_area == "your_land") or (choice == "19" and self.current_area != "your_land"):
+        elif (choice == "23" and self.current_area == "your_land") or (
+                choice == "19" and self.current_area != "your_land"):
             self.claim_rewards()
-        elif (choice == "24" and self.current_area == "your_land") or (choice == "20" and self.current_area != "your_land"):
+        elif (choice == "24" and self.current_area == "your_land") or (
+                choice == "20" and self.current_area != "your_land"):
             self.quit_game()
         else:
             print(self.lang.get("invalid_choice"))
@@ -2360,7 +2383,9 @@ class Game:
             return
 
         print(f"\n{Colors.MAGENTA}{Colors.BOLD}=== PET SHOP ==={Colors.END}")
-        print("Welcome to the Pet Shop! Find a companion to help you on your journey.")
+        print(
+            "Welcome to the Pet Shop! Find a companion to help you on your journey."
+        )
         print(f"Your gold: {Colors.GOLD}{self.player.gold}{Colors.END}")
 
         if not hasattr(self, 'pets_data') or not self.pets_data:
@@ -2371,7 +2396,9 @@ class Game:
         for i, (pet_id, pdata) in enumerate(pets, 1):
             price = pdata.get('price', 0)
             desc = pdata.get('description', '')
-            print(f"{i}. {pdata.get('name', pet_id)} - {Colors.GOLD}{price} gold{Colors.END}")
+            print(
+                f"{i}. {pdata.get('name', pet_id)} - {Colors.GOLD}{price} gold{Colors.END}"
+            )
             print(f"   {desc}")
 
         choice = ask(f"\nBuy a pet (1-{len(pets)}) or Enter to leave: ")
@@ -2390,6 +2417,12 @@ class Game:
                     print(self.lang.get("not_enough_gold"))
             else:
                 print(self.lang.get("invalid_choice"))
+        if not self.player:
+            print(self.lang.get("no_character"))
+            return
+
+    def fight_boss_menu(self):
+        """Menu to select and fight a boss in the current area"""
         if not self.player:
             print(self.lang.get("no_character"))
             return
@@ -5681,36 +5714,48 @@ class Game:
         """Menu for buying and managing pets."""
         while True:
             clear_screen()
-            print(create_section_header(self.lang.get("pet_shop_header", "PET SHOP")))
-            print(f"{self.lang.get('your_gold', 'Your Gold')}: {Colors.GOLD}{self.player.gold}g{Colors.END}")
-            
+            print(
+                create_section_header(
+                    self.lang.get("pet_shop_header", "PET SHOP")))
+            print(
+                f"{self.lang.get('your_gold', 'Your Gold')}: {Colors.GOLD}{self.player.gold}g{Colors.END}"
+            )
+
             # Using localized pet names if possible, else fallback
             active_pet_name = "None"
             if self.player.active_pet:
-                active_pet_name = self.player.pets_data.get(self.player.active_pet, {}).get('name', self.player.active_pet)
-            
-            print(f"Current Pet: {Colors.MAGENTA}{active_pet_name}{Colors.END}\n")
-            
+                active_pet_name = self.player.pets_data.get(
+                    self.player.active_pet, {}).get('name',
+                                                    self.player.active_pet)
+
+            print(
+                f"Current Pet: {Colors.MAGENTA}{active_pet_name}{Colors.END}\n"
+            )
+
             print(f"{Colors.CYAN}1.{Colors.END} Buy Pet")
             print(f"{Colors.CYAN}2.{Colors.END} Manage Pets")
             print(f"{Colors.CYAN}3.{Colors.END} Back")
-            
+
             choice = ask("Select an option: ")
-            
+
             if choice == '1':
                 print("\nAvailable Pets:")
                 available = []
                 for pet_id, pet in self.player.pets_data.items():
                     if pet_id not in self.player.pets_owned:
-                        print(f"- {pet['name']} ({pet['price']}g): {pet['description']}")
+                        print(
+                            f"- {pet['name']} ({pet['price']}g): {pet['description']}"
+                        )
                         available.append(pet_id)
-                
+
                 if not available:
                     print("You already own all available pets!")
                     ask("Press Enter to continue...")
                     continue
 
-                pet_input = ask("\nEnter pet name to buy or press Enter to cancel: ").lower().strip().replace(' ', '_')
+                pet_input = ask(
+                    "\nEnter pet name to buy or press Enter to cancel: "
+                ).lower().strip().replace(' ', '_')
                 if not pet_input:
                     continue
 
@@ -5719,13 +5764,15 @@ class Game:
                     if self.player.gold >= price:
                         self.player.gold -= price
                         self.player.pets_owned.append(pet_input)
-                        print(f"You bought a {self.player.pets_data[pet_input]['name']}!")
+                        print(
+                            f"You bought a {self.player.pets_data[pet_input]['name']}!"
+                        )
                     else:
                         print("Not enough gold!")
                 else:
                     print("Invalid pet or already owned.")
                 ask("Press Enter to continue...")
-            
+
             elif choice == '2':
                 if not self.player.pets_owned:
                     print("You don't own any pets yet.")
@@ -5734,16 +5781,21 @@ class Game:
 
                 print("\nYour Pets:")
                 for i, pet_id in enumerate(self.player.pets_owned, 1):
-                    pet_name = self.player.pets_data.get(pet_id, {}).get('name', pet_id)
+                    pet_name = self.player.pets_data.get(pet_id, {}).get(
+                        'name', pet_id)
                     status = "(Active)" if pet_id == self.player.active_pet else ""
                     print(f"{i}. {pet_name} {status}")
-                
-                sel = ask(f"Select pet to activate (1-{len(self.player.pets_owned)}) or press Enter: ")
+
+                sel = ask(
+                    f"Select pet to activate (1-{len(self.player.pets_owned)}) or press Enter: "
+                )
                 if sel and sel.isdigit():
                     idx = int(sel) - 1
                     if 0 <= idx < len(self.player.pets_owned):
                         self.player.active_pet = self.player.pets_owned[idx]
-                        print(f"{self.player.pets_data[self.player.active_pet]['name']} is now active!")
+                        print(
+                            f"{self.player.pets_data[self.player.active_pet]['name']} is now active!"
+                        )
                         ask("Press Enter to continue...")
 
             elif choice == '3':
@@ -5790,7 +5842,8 @@ class Game:
                 "farm_plots": getattr(self.player, 'farm_plots', {}),
                 "hour": getattr(self.player, 'hour', 8),
                 "day": getattr(self.player, 'day', 1),
-                "current_weather": getattr(self.player, 'current_weather', "sunny"),
+                "current_weather": getattr(self.player, 'current_weather',
+                                           "sunny"),
                 "active_pet": getattr(self.player, 'active_pet', None),
                 "pets_owned": getattr(self.player, 'pets_owned', [])
             },
@@ -5933,12 +5986,13 @@ class Game:
                     self.completed_missions = save_data.get(
                         "completed_missions", [])
                     self.achievements = save_data.get("achievements", [])
-                    
+
                     # Load Pet data
                     player_save = save_data.get("player", {})
                     if self.player:
                         self.player.active_pet = player_save.get("active_pet")
-                        self.player.pets_owned = player_save.get("pets_owned", [])
+                        self.player.pets_owned = player_save.get(
+                            "pets_owned", [])
 
                     # Load boss kill cooldowns
                     if self.player:
