@@ -5667,6 +5667,10 @@ class Game:
 
     def pet_shop(self):
         """Menu for buying and managing pets."""
+        if not self.player:
+            print(self.lang.get("no_character"))
+            return
+
         if not hasattr(self.player, 'pets_owned'):
             self.player.pets_owned = []
         if not hasattr(self.player, 'active_pet'):
@@ -5676,6 +5680,8 @@ class Game:
 
         while True:
             clear_screen()
+            if not self.player:
+                break
             print(
                 create_section_header(
                     self.lang.get("pet_shop_header", "PET SHOP")))
