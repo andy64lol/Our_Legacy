@@ -16,6 +16,7 @@ import signal
 import traceback
 import io
 from utilities.settings import ModManager as UtilsModManager, get_setting, set_setting, get_settings_manager
+import utilities.dice
 import requests
 
 REQUESTS_AVAILABLE = True
