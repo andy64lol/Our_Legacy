@@ -143,10 +143,37 @@
     "possible_bosses": ["void_tyrant"],
     "shops": [],
     "missions_available": false,
-    "connections": ["void_cavern"],
+    "connections": ["void_cavern", "echoing_void"],
     "difficulty": 5,
-    "boss_area": true,
-    "can_rest": false
+    "rest_cost": 25,
+    "can_rest": false,
+    "boss_area": true
+  },
+  "echoing_void": {
+    "name": "Echoing Void",
+    "description": "A silent dimension where shadows move on their own.",
+    "possible_enemies": ["shadow_wraith", "void_spirit"],
+    "possible_bosses": ["shadow_overlord"],
+    "shops": [],
+    "missions_available": false,
+    "connections": ["abyss_gate", "void_gateway"],
+    "difficulty": 6,
+    "rest_cost": 40,
+    "can_rest": false,
+    "boss_area": false
+  },
+  "crystal_peaks": {
+    "name": "Crystal Peaks",
+    "description": "Snow-capped mountains gleaming with magical resonance. The air is thin and cold.",
+    "possible_enemies": ["ice_elemental", "mountain_goat"],
+    "possible_bosses": ["ice_queen"],
+    "shops": [],
+    "missions_available": true,
+    "connections": ["thunder_peak", "sky_sanctuary"],
+    "difficulty": 4,
+    "rest_cost": 20,
+    "can_rest": true,
+    "boss_area": false
   },
   "tavern": {
     "name": "The Rusty Tankard",

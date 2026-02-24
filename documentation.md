@@ -8,9 +8,10 @@ This comprehensive guide covers the complete structure of Our Legacy RPG, includ
 1. [File Overview](#file-overview)
 2. [Data Files Structure](#data-files-structure)
 3. [Mod System](#mod-system)
-4. [Complete Parameter Reference](#complete-parameter-reference)
-5. [Examples](#examples)
-6. [Tips & Best Practices](#tips--best-practices)
+4. [Pet System](#pet-system)
+5. [Complete Parameter Reference](#complete-parameter-reference)
+6. [Examples](#examples)
+7. [Tips & Best Practices](#tips--best-practices)
 
 ---
 
@@ -19,6 +20,7 @@ This comprehensive guide covers the complete structure of Our Legacy RPG, includ
 ### Base Game Data (`data/` directory)
 - **classes.json** - Player character classes with stats and progression
 - **items.json** - All equipment, weapons, consumables, and accessories
+- **pets.json** - Collectible pets with passive stat boosts ⭐ NEW
 - **companions.json** - Hireable companions with abilities
 - **enemies.json** - Regular enemies and encounter data
 - **bosses.json** - Boss encounters with multi-phase mechanics
@@ -715,6 +717,51 @@ Mods can override or extend any base game data files. Each mod folder can contai
       "description": "string",
       "damage": number,
       "mp_cost": number
+    }
+  }
+}
+```
+
+---
+
+## Pet System
+
+### PETS.JSON ⭐ NEW
+
+**Purpose**: Define collectible pets that provide passive stat boosts.
+
+**Parameters**:
+```json
+{
+  "pet_id": {
+    "name": "string",                          // Display name
+    "description": "string",                   // Pet flavor text
+    "price": number,                           // Purchase cost in gold
+    "boosts": {
+      "hp": number,                            // Flat HP increase
+      "mp": number,                            // Flat MP increase
+      "attack": number,                        // Flat attack increase
+      "defense": number,                       // Flat defense increase
+      "speed": number,                         // Flat speed increase
+      "hp_regen": number,                      // HP restored per turn
+      "gold_gain": number,                     // Percentage multiplier (0.2 = +20%)
+      "item_find_chance": number,              // Flat probability bonus (0.05 = +5%)
+      "crit_chance": number                    // Flat probability bonus (0.1 = +10%)
+    }
+  }
+}
+```
+
+**Example**:
+```json
+{
+  "wolf_pup": {
+    "name": "Wolf Pup",
+    "description": "A loyal wolf pup that increases your attack.",
+    "price": 1200,
+    "boosts": {
+      "attack": 5,
+      "speed": 2
     }
   }
 }

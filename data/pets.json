@@ -141,5 +141,34 @@
       "attack": 8,
       "speed": 10
     }
+  },
+  "dragon_turtle": {
+    "name": "Dragon Turtle",
+    "description": "An ancient hybrid beast that provides immense physical protection.",
+    "price": 6000,
+    "boosts": {
+      "defense": 15,
+      "hp": 80,
+      "hp_regen": 3
+    }
+  },
+  "void_stalker": {
+    "name": "Void Stalker",
+    "description": "A creature from the abyss that sharpens your critical strikes.",
+    "price": 7500,
+    "boosts": {
+      "crit_chance": 0.15,
+      "speed": 10,
+      "attack": 5
+    }
+  },
+  "lucky_cat": {
+    "name": "Lucky Cat",
+    "description": "A waving cat figurine come to life, attracting luck and fortune.",
+    "price": 4500,
+    "boosts": {
+      "gold_gain": 0.25,
+      "item_find_chance": 0.15
+    }
   }
 }
