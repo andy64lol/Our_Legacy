@@ -2376,51 +2376,6 @@ class Game:
         else:
             print(self.lang.get("invalid_choice"))
 
-    def old_pet_shop(self):
-        """Visit the pet shop to buy pets"""
-        if not self.player:
-            print(self.lang.get("no_character"))
-            return
-
-        print(f"\n{Colors.MAGENTA}{Colors.BOLD}=== PET SHOP ==={Colors.END}")
-        print(
-            "Welcome to the Pet Shop! Find a companion to help you on your journey."
-        )
-        print(f"Your gold: {Colors.GOLD}{self.player.gold}{Colors.END}")
-
-        if not hasattr(self, 'pets_data') or not self.pets_data:
-            print("The pet shop is currently empty.")
-            return
-
-        pets = list(self.pets_data.items())
-        for i, (pet_id, pdata) in enumerate(pets, 1):
-            price = pdata.get('price', 0)
-            desc = pdata.get('description', '')
-            print(
-                f"{i}. {pdata.get('name', pet_id)} - {Colors.GOLD}{price} gold{Colors.END}"
-            )
-            print(f"   {desc}")
-
-        choice = ask(f"\nBuy a pet (1-{len(pets)}) or Enter to leave: ")
-        if choice.isdigit():
-            idx = int(choice) - 1
-            if 0 <= idx < len(pets):
-                pet_id, pdata = pets[idx]
-                price = pdata.get('price', 0)
-                if self.player.gold >= price:
-                    self.player.gold -= price
-                    if not hasattr(self.player, 'pets'):
-                        self.player.pets = []
-                    self.player.pets.append(pet_id)
-                    print(f"You bought {pdata.get('name', pet_id)}!")
-                else:
-                    print(self.lang.get("not_enough_gold"))
-            else:
-                print(self.lang.get("invalid_choice"))
-        if not self.player:
-            print(self.lang.get("no_character"))
-            return
-
     def fight_boss_menu(self):
         """Menu to select and fight a boss in the current area"""
         if not self.player:
@@ -5712,6 +5667,13 @@ class Game:
 
     def pet_shop(self):
         """Menu for buying and managing pets."""
+        if not hasattr(self.player, 'pets_owned'):
+            self.player.pets_owned = []
+        if not hasattr(self.player, 'active_pet'):
+            self.player.active_pet = None
+        if not hasattr(self.player, 'pets_data'):
+            self.player.pets_data = getattr(self, 'pets_data', {})
+
         while True:
             clear_screen()
             print(
