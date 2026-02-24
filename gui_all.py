@@ -23,7 +23,6 @@ from launcher import LauncherExit
 import main
 import storyland
 import storywrite
-import chat
 
 # Color code patterns for stripping
 COLOR_PATTERN = re.compile(r'\x1b\[[0-9;]*m')
@@ -70,7 +69,7 @@ class NoColors:
 
 
 # Apply patches to all modules
-modules_to_patch = [main, storyland, storywrite, chat, launcher]
+modules_to_patch = [main, storyland, storywrite, launcher]
 for mod in modules_to_patch:
     if hasattr(mod, 'clear_screen'):
         setattr(mod, 'clear_screen', clear)
@@ -123,20 +122,6 @@ def gui_run_storywrite():
     clear()
 
 
-def gui_run_chat():
-    clear()
-    display("=== Starting Chat Client ===\n")
-    try:
-        chat_client = chat.EnhancedChatClient()
-        chat_client.run()
-    except (SystemExit, KeyboardInterrupt):
-        pass
-    except Exception as e:
-        display(f"\nError in Chat: {str(e)}\n")
-    display("\nReturning to launcher...")
-    clear()
-
-
 def gui_show_credits():
     clear()
     display("===============================================\n")
@@ -152,7 +137,6 @@ def gui_show_credits():
 launcher.run_main = gui_run_main
 launcher.run_storyland = gui_run_storyland
 launcher.run_storywrite = gui_run_storywrite
-launcher.run_chat = gui_run_chat
 launcher.show_credits = gui_show_credits
 
 

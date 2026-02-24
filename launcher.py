@@ -31,10 +31,6 @@ def run_storywrite():
     # Just execute storywrite.py directly
     subprocess.run(["python3", "storywrite.py"])
 
-def run_chat():
-    # Execute chat.py directly
-    subprocess.run([sys.executable, "chat.py"])
-
 def show_credits():
     print(BLUE + "===============================================")
     print("                Our Legacy Team")
@@ -57,11 +53,10 @@ def main_menu():
         print(f"{BLUE}1.{RESET} Main game")
         print(f"{BLUE}2.{RESET} Browse mods")
         print(f"{BLUE}3.{RESET} Upload mod")
-        print(f"{BLUE}4.{RESET} Chat")
-        print(f"{BLUE}5.{RESET} Credits")
-        print(f"{BLUE}6.{RESET} Exit")
+        print(f"{BLUE}4.{RESET} Credits")
+        print(f"{BLUE}5.{RESET} Exit")
         print("_______________________________________________")
-        choice = input("Please enter (1-6): ").strip()
+        choice = input("Please enter (1-5): ").strip()
 
         if choice == "1":
             run_main()
@@ -70,11 +65,9 @@ def main_menu():
         elif choice == "3":
             run_storywrite()
         elif choice == "4":
-            run_chat()
-        elif choice == "5":
             clear()
             show_credits()
-        elif choice == "6":
+        elif choice == "5":
             clear()
             raise LauncherExit()
         else:
