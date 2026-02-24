@@ -10,7 +10,7 @@
     "rest_cost": 5,
     "can_rest": true
   },
-  "your_land":{
+  "your_land": {
     "name": "Your Land",
     "description": "A personal plot of land where you can build and customize your home. The possibilities are endless.",
     "possible_enemies": [],
@@ -37,7 +37,7 @@
   "deep_woods": {
     "name": "Deep Woods",
     "description": "The heart of the forest where ancient magic still lingers. Dangerous creatures prowl these shadows.",
-    "possible_enemies": ["goblin", "orc", "dark_mage", "wolf","Bandit"],
+    "possible_enemies": ["goblin", "orc", "dark_mage", "wolf", "Bandit"],
     "possible_bosses": ["orc_chieftain"],
     "shops": [],
     "missions_available": false,
@@ -48,7 +48,12 @@
   "ancient_ruins": {
     "name": "Ancient Ruins",
     "description": "Remnants of a forgotten civilization. These crumbling structures hold both treasure and peril.",
-    "possible_enemies": ["skeleton", "bandit", "shadow_knight", "ancient_golem"],
+    "possible_enemies": [
+      "skeleton",
+      "bandit",
+      "shadow_knight",
+      "ancient_golem"
+    ],
     "possible_bosses": ["shadow_lord"],
     "shops": ["equipment_shop"],
     "missions_available": false,
@@ -264,7 +269,12 @@
     "possible_bosses": [],
     "shops": ["equipment_shop"],
     "missions_available": true,
-    "connections": ["starting_village", "ancient_ruins", "thunder_peak", "port_lesben"],
+    "connections": [
+      "starting_village",
+      "ancient_ruins",
+      "thunder_peak",
+      "port_lesben"
+    ],
     "difficulty": 2,
     "rest_cost": 12,
     "can_rest": true
@@ -367,7 +377,14 @@
   "forgotten_oasis": {
     "name": "Forgotten Oasis",
     "description": "A hidden sanctuary in the desert, with crystal clear water and lush palm trees.",
-    "possible_enemies": ["swamp_rat", "poison_elemental", "storm_elemental", "thunder_bird", "evil_sorcerer", "dragon"],
+    "possible_enemies": [
+      "swamp_rat",
+      "poison_elemental",
+      "storm_elemental",
+      "thunder_bird",
+      "evil_sorcerer",
+      "dragon"
+    ],
     "possible_bosses": [],
     "shops": ["general_store"],
     "missions_available": true,
@@ -388,7 +405,7 @@
     "rest_cost": 15,
     "can_rest": true
   },
-  "outlaw_lands_of_bridagrak_oblast":{
+  "outlaw_lands_of_bridagrak_oblast": {
     "name": "Outlaw Lands of Brïdagrak Oblast",
     "description": "A lawless region where bandits and mercenaries vie for control. Danger lurks around every corner.",
     "possible_enemies": ["thief"],
@@ -400,7 +417,7 @@
     "rest_cost": 20,
     "can_rest": true
   },
-  "port_nova_terrabla":{
+  "port_nova_terrabla": {
     "name": "Port Nova Terrabla",
     "description": "A vibrant port city known for its exotic goods and diverse population. Adventurers gather here before setting sail towards the continent of Yixuan.",
     "possible_enemies": ["bandit", "thief"],
@@ -412,7 +429,7 @@
     "rest_cost": 15,
     "can_rest": true
   },
-  "port_lianghai":{
+  "port_lianghai": {
     "name": "Port Liãnghǎi",
     "description": "A bustling harbor city on the eastern coast of the continent of Yixuan, known for its seafood markets and skilled shipbuilders. From here, adventurers can embark on voyages to distant lands across the sea.",
     "possible_enemies": ["bandit", "thief"],
@@ -567,7 +584,11 @@
   "paradise_sanctum": {
     "name": "Sanctum of Enlightenment",
     "description": "The highest sanctuary in Yixuan where masters seek enlightenment. The final test for true heroes.",
-    "possible_enemies": ["enlightened_one", "celestial_guardian", "master_disciple"],
+    "possible_enemies": [
+      "enlightened_one",
+      "celestial_guardian",
+      "master_disciple"
+    ],
     "possible_bosses": ["grand_master"],
     "shops": [],
     "missions_available": true,
@@ -637,7 +658,11 @@
   "heavenly_gate": {
     "name": "Heavenly Gate",
     "description": "The gateway to the celestial realm where gods reside. The final destination for worthy heroes.",
-    "possible_enemies": ["divine_guardian", "heavenly_warrior", "light_messenger"],
+    "possible_enemies": [
+      "divine_guardian",
+      "heavenly_warrior",
+      "light_messenger"
+    ],
     "possible_bosses": ["celestial_emperor"],
     "shops": [],
     "missions_available": true,
@@ -679,7 +704,11 @@
   "mountain_treasury": {
     "name": "Hidden Treasury",
     "description": "A vast underground treasury filled with the accumulated wealth of countless dynasties.",
-    "possible_enemies": ["diamond_golem", "treasure_sentinel", "gemstone_elemental"],
+    "possible_enemies": [
+      "diamond_golem",
+      "treasure_sentinel",
+      "gemstone_elemental"
+    ],
     "possible_bosses": ["treasure_lord"],
     "shops": [],
     "missions_available": true,
@@ -705,7 +734,7 @@
     "description": "A magnificent cathedral where the most powerful holy warriors and priests used to gather.",
     "possible_enemies": ["fallen_paladin", "void_acolyte", "shadow_priest"],
     "possible_bosses": ["high_inquisitor_whitemane", "uther_the_fallen"],
-    "shops": ["divine_shop"],
+    "shops": [],
     "connections": ["sacred_grove", "celestial_realm"],
     "difficulty": 7,
     "can_rest": true,
