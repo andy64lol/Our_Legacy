@@ -2221,9 +2221,13 @@ class Game:
         print(f"{Colors.CYAN}12.{Colors.END} {self.lang.get('companions')}")
         print(f"{Colors.CYAN}13.{Colors.END} {self.lang.get('dungeons')}")
         print(f"{Colors.CYAN}14.{Colors.END} {self.lang.get('challenges')}")
-        print(
-            f"{Colors.CYAN}15.{Colors.END} {self.lang.get('pet_shop', 'Pet Shop')}" if self.current_area == "your_land" else ""
-        )
+
+        # Pet Shop only in your_land
+        if self.current_area == "your_land":
+            print(
+                f"{Colors.CYAN}15.{Colors.END} {self.lang.get('pet_shop', 'Pet Shop')}"
+            )
+
         print(
             f"{Colors.CYAN}16.{Colors.END} {self.lang.get('settings', 'Settings')}"
         )
