@@ -2236,16 +2236,16 @@ class Game:
         menu_max = "20"
         if self.current_area == "your_land":
             print(
-                f"{Colors.CYAN}17.{Colors.END} {self.lang.get('furnish_home', 'Furnish Home')}"
+                f"{Colors.YELLOW}17.{Colors.END} {self.lang.get('furnish_home', 'Furnish Home')}"
             )
             print(
-                f"{Colors.CYAN}18.{Colors.END} {self.lang.get('build_structures', 'Build Structures')}"
+                f"{Colors.YELLOW}18.{Colors.END} {self.lang.get('build_structures', 'Build Structures')}"
             )
             print(
-                f"{Colors.CYAN}19.{Colors.END} {self.lang.get('farm', 'Farm')}"
+                f"{Colors.YELLOW}19.{Colors.END} {self.lang.get('farm', 'Farm')}"
             )
             print(
-                f"{Colors.CYAN}20.{Colors.END} {self.lang.get('training', 'Training')}"
+                f"{Colors.YELLOW}20.{Colors.END} {self.lang.get('training', 'Training')}"
             )
             print(f"{Colors.CYAN}21.{Colors.END} {self.lang.get('save_game')}")
             print(f"{Colors.CYAN}22.{Colors.END} {self.lang.get('load_game')}")
