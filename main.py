@@ -2753,9 +2753,11 @@ class Game:
             # approximate( player final damage * 1d(20) / 10 )
             roll = dice_util.roll_1d(20)
             if roll == 1:
-                print(self.lang.get("roll_1"))
+                meme_key = f"roll_1_meme_{random.randint(1, 3)}"
+                print(self.lang.get(meme_key))
             elif roll == 20:
-                print(self.lang.get("roll_20"))
+                meme_key = f"roll_20_meme_{random.randint(1, 3)}"
+                print(self.lang.get(meme_key))
             else:
                 print(self.lang.get("roll_msg", roll=roll))
             
@@ -3194,9 +3196,11 @@ class Game:
             dice_util = utilities.dice.Dice()
             roll = dice_util.roll_1d(20)
             if roll == 1:
-                print(self.lang.get("roll_1"))
+                meme_key = f"roll_1_meme_{random.randint(1, 3)}"
+                print(self.lang.get(meme_key))
             elif roll == 20:
-                print(self.lang.get("roll_20"))
+                meme_key = f"roll_20_meme_{random.randint(1, 3)}"
+                print(self.lang.get(meme_key))
             else:
                 print(self.lang.get("roll_msg", roll=roll))
             
