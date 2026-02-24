@@ -825,6 +825,160 @@
          "class":"Rogue"
       }
    },
+   "Nature's Embrace":{
+      "type":"weapon",
+      "description":"A staff woven from living roots that pulses with the heartbeat of the forest.",
+      "attack_bonus":45,
+      "magic_weapon":true,
+      "mp_bonus":40,
+      "hp_bonus":20,
+      "price":250,
+      "rarity":"rare",
+      "requirements":{
+         "level":4,
+         "class":"Druid"
+      }
+   },
+   "Gaea's Wrath":{
+      "type":"weapon",
+      "description":"A legendary scythe forged from petrified world-tree wood, capable of rending the earth.",
+      "attack_bonus":160,
+      "magic_weapon":true,
+      "mp_bonus":60,
+      "speed_bonus":5,
+      "price":450,
+      "rarity":"legendary",
+      "requirements":{
+         "level":6,
+         "class":"Druid"
+      }
+   },
+   "Sun-Blessed Mace":{
+      "type":"weapon",
+      "description":"A heavy mace that glows with the intensity of the midday sun, scorching the wicked.",
+      "attack_bonus":55,
+      "defense_bonus":5,
+      "price":240,
+      "rarity":"rare",
+      "requirements":{
+         "level":4,
+         "class":"Paladin"
+      }
+   },
+   "Aegis of the Eternal Light":{
+      "type":"weapon",
+      "description":"The ultimate holy hammer, said to be a shard of the heavens themselves.",
+      "attack_bonus":170,
+      "defense_bonus":15,
+      "hp_bonus":50,
+      "price":500,
+      "rarity":"legendary",
+      "requirements":{
+         "level":7,
+         "class":"Paladin"
+      }
+   },
+   "Scepter of Divine Grace":{
+      "type":"weapon",
+      "description":"An ornate scepter that amplifies the purity of the wielder's prayers.",
+      "attack_bonus":35,
+      "magic_weapon":true,
+      "mp_bonus":70,
+      "price":260,
+      "rarity":"rare",
+      "requirements":{
+         "level":4,
+         "class":"Priest"
+      }
+   },
+   "Relic of the First Saint":{
+      "type":"weapon",
+      "description":"A legendary artifact that bridges the gap between the mortal realm and the divine.",
+      "attack_bonus":140,
+      "magic_weapon":true,
+      "mp_bonus":100,
+      "hp_bonus":30,
+      "price":480,
+      "rarity":"legendary",
+      "requirements":{
+         "level":6,
+         "class":"Priest"
+      }
+   },
+   "Ironwood Barkskin":{
+      "type":"armor",
+      "description":"Armor made from the toughest ironwood trees, as hard as steel but light as a leaf.",
+      "defense_bonus":10,
+      "hp_bonus":15,
+      "price":180,
+      "rarity":"uncommon",
+      "requirements":{
+         "level":3,
+         "class":"Druid"
+      }
+   },
+   "Elder Grove Vestments":{
+      "type":"armor",
+      "description":"Sacred robes worn by the protectors of the oldest forests, radiating natural energy.",
+      "defense_bonus":14,
+      "mp_bonus":40,
+      "hp_bonus":30,
+      "price":350,
+      "rarity":"rare",
+      "requirements":{
+         "level":5,
+         "class":"Druid"
+      }
+   },
+   "Consecrated Plate":{
+      "type":"armor",
+      "description":"Heavy plate mail blessed by high priests to withstand even the darkest magics.",
+      "defense_bonus":16,
+      "speed_penalty":1,
+      "price":200,
+      "rarity":"uncommon",
+      "requirements":{
+         "level":3,
+         "class":"Paladin"
+      }
+   },
+   "Champion's Holy Bulwark":{
+      "type":"armor",
+      "description":"Legendary armor that reflects the light of justice, making the wearer nearly invincible.",
+      "defense_bonus":22,
+      "hp_bonus":40,
+      "price":420,
+      "rarity":"rare",
+      "requirements":{
+         "level":5,
+         "class":"Paladin"
+      }
+   },
+   "Vestments of the Seraph":{
+      "type":"armor",
+      "description":"Robes woven from ethereal threads that offer protection through divine intervention.",
+      "defense_bonus":8,
+      "mp_bonus":50,
+      "price":190,
+      "rarity":"uncommon",
+      "requirements":{
+         "level":3,
+         "class":"Priest"
+      }
+   },
+   "High Oracle's Regalia":{
+      "type":"armor",
+      "description":"The most sacred attire of the priesthood, granting unparalleled connection to the divine.",
+      "defense_bonus":12,
+      "mp_bonus":80,
+      "hp_bonus":25,
+      "price":380,
+      "rarity":"rare",
+      "requirements":{
+         "level":5,
+         "class":"Priest"
+      }
+   },
    "Gauntlets of Strength":{
       "type":"accessory",
       "description":"Heavy gauntlets that enhance melee power",
