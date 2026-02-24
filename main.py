@@ -2751,7 +2751,15 @@ class Game:
         if choice == "1":
             base_damage = self.player.get_effective_attack()
             # approximate( player final damage * 1d(20) / 10 )
-            damage = int(base_damage * dice_util.roll_1d(20) / 10)
+            roll = dice_util.roll_1d(20)
+            if roll == 1:
+                print(self.lang.get("roll_1"))
+            elif roll == 20:
+                print(self.lang.get("roll_20"))
+            else:
+                print(self.lang.get("roll_msg", roll=roll))
+            
+            damage = int(base_damage * roll / 10)
             actual_damage = enemy.take_damage(damage)
             print(f"You attack for {actual_damage} damage!")
         elif choice == "2":
@@ -3019,7 +3027,12 @@ class Game:
 
         base_damage = enemy.attack
         # approximate( monster damage * 1d(user_level) / 10 )
-        damage = int(base_damage * dice_util.roll_1d(max(1, self.player.level)) / 10)
+        roll = dice_util.roll_1d(max(1, self.player.level))
+        print(f"{enemy.name} rolls the dice...")
+        # Since user_level can be anything, 1 or max might not always be 20, but we can still show the roll
+        print(f"{enemy.name} rolled a {roll}!")
+        
+        damage = int(base_damage * roll / 10)
         if self.player.defending:
             damage = damage // 2
             self.player.defending = False
@@ -3179,7 +3192,15 @@ class Game:
             power = sdata.get('power', 0)
             base_damage = power + (self.player.get_effective_attack() // 2)
             dice_util = utilities.dice.Dice()
-            damage = int(base_damage * dice_util.roll_1d(20) / 10)
+            roll = dice_util.roll_1d(20)
+            if roll == 1:
+                print(self.lang.get("roll_1"))
+            elif roll == 20:
+                print(self.lang.get("roll_20"))
+            else:
+                print(self.lang.get("roll_msg", roll=roll))
+            
+            damage = int(base_damage * roll / 10)
             actual = enemy.take_damage(damage)
             print(f"You cast {sname} for {actual} damage!")
 
