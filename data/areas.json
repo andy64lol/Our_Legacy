@@ -689,5 +689,26 @@
     "can_rest": false,
     "has_dungeon": true,
     "dungeon_type": "treasure"
+  },
+  "sacred_grove": {
+    "name": "Sacred Grove",
+    "description": "A pristine sanctuary of nature, now tainted by a dark presence.",
+    "possible_enemies": ["corrupted_druid", "forest_guardian", "nature_wraith"],
+    "possible_bosses": ["archdruid_malfurion"],
+    "shops": [],
+    "connections": ["deep_woods", "cathedral_of_light"],
+    "difficulty": 6,
+    "can_rest": false
+  },
+  "cathedral_of_light": {
+    "name": "Cathedral of Light",
+    "description": "A magnificent cathedral where the most powerful holy warriors and priests used to gather.",
+    "possible_enemies": ["fallen_paladin", "void_acolyte", "shadow_priest"],
+    "possible_bosses": ["high_inquisitor_whitemane", "uther_the_fallen"],
+    "shops": ["divine_shop"],
+    "connections": ["sacred_grove", "celestial_realm"],
+    "difficulty": 7,
+    "can_rest": true,
+    "rest_cost": 30
   }
 }

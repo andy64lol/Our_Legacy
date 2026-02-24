@@ -1268,5 +1268,41 @@
       "level": 10,
       "missions_required": ["celestial_guardian_defeat", "all_dungeons_clear", "legend_achieved"]
     }
+  },
+  "archdruid_malfurion": {
+    "name": "Corrupted Archdruid Malfurion",
+    "hp": 450,
+    "attack": 42,
+    "defense": 25,
+    "speed": 18,
+    "description": "A legendary druid fallen to the nightmare. He commands the very soul of the forest to crush intruders.",
+    "experience_reward": 800,
+    "gold_reward": 400,
+    "unique_loot": ["Gaea's Wrath", "Elder Grove Vestments", "Nature Stone"],
+    "unlock_conditions": {"level": 6}
+  },
+  "high_inquisitor_whitemane": {
+    "name": "High Inquisitor Whitemane",
+    "hp": 400,
+    "attack": 38,
+    "defense": 20,
+    "speed": 22,
+    "description": "The leader of a fanatical sect, she uses her divine powers to judge and purify all who cross her path.",
+    "experience_reward": 750,
+    "gold_reward": 350,
+    "unique_loot": ["Relic of the First Saint", "High Oracle's Regalia", "Divine Focus"],
+    "unlock_conditions": {"level": 6}
+  },
+  "uther_the_fallen": {
+    "name": "Uther the Fallen",
+    "hp": 500,
+    "attack": 45,
+    "defense": 35,
+    "speed": 12,
+    "description": "A once-great paladin whose light has been extinguished. He remains a formidable guardian of the sacred halls.",
+    "experience_reward": 900,
+    "gold_reward": 500,
+    "unique_loot": ["Aegis of the Eternal Light", "Champion's Holy Bulwark", "Divine Essence"],
+    "unlock_conditions": {"level": 7}
   }
 }

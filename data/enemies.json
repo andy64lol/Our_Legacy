@@ -437,5 +437,35 @@
     "experience_reward": 72,
     "gold_reward": 44,
     "loot_table": ["Divine Focus", "Sacred Armor", "Holy Vestment"]
+  },
+  "corrupted_druid": {
+    "name": "Corrupted Druid",
+    "hp": 95,
+    "attack": 18,
+    "defense": 8,
+    "speed": 12,
+    "experience_reward": 75,
+    "gold_reward": 40,
+    "loot_table": ["Nature Stone", "Ironwood Barkskin", "Nature's Embrace"]
+  },
+  "fallen_paladin": {
+    "name": "Fallen Paladin",
+    "hp": 110,
+    "attack": 22,
+    "defense": 15,
+    "speed": 8,
+    "experience_reward": 85,
+    "gold_reward": 50,
+    "loot_table": ["Divine Essence", "Consecrated Plate", "Sun-Blessed Mace"]
+  },
+  "void_acolyte": {
+    "name": "Void Acolyte",
+    "hp": 70,
+    "attack": 20,
+    "defense": 6,
+    "speed": 14,
+    "experience_reward": 65,
+    "gold_reward": 35,
+    "loot_table": ["Divine Focus", "Vestments of the Seraph", "Scepter of Divine Grace"]
   }
 }
