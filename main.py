@@ -2730,6 +2730,8 @@ class Game:
         if not self.player:
             return True
 
+        dice_util = utilities.dice.Dice()
+
         print(self.lang.get("nyour_turn"))
         print(f"1. {self.lang.get('attack')}")
         print(f"2. {self.lang.get('use_item')}")
@@ -2747,7 +2749,9 @@ class Game:
             "Choose action (1-5): " if can_cast else "Choose action (1-4): ")
 
         if choice == "1":
-            damage = self.player.get_effective_attack()
+            base_damage = self.player.get_effective_attack()
+            # approximate( player final damage * 1d(20) / 10 )
+            damage = int(base_damage * dice_util.roll_1d(20) / 10)
             actual_damage = enemy.take_damage(damage)
             print(f"You attack for {actual_damage} damage!")
         elif choice == "2":
@@ -2952,6 +2956,8 @@ class Game:
         if not self.player:
             return
 
+        dice_util = utilities.dice.Dice()
+
         # Handle boss special abilities if it's a boss
         if isinstance(enemy, Boss):
             # Reduce cooldowns
@@ -3011,7 +3017,9 @@ class Game:
 
                 return  # Skip regular attack if ability used
 
-        damage = enemy.attack
+        base_damage = enemy.attack
+        # approximate( monster damage * 1d(user_level) / 10 )
+        damage = int(base_damage * dice_util.roll_1d(max(1, self.player.level)) / 10)
         if self.player.defending:
             damage = damage // 2
             self.player.defending = False
@@ -3169,7 +3177,9 @@ class Game:
 
         if sdata.get('type') == 'damage':
             power = sdata.get('power', 0)
-            damage = power + (self.player.get_effective_attack() // 2)
+            base_damage = power + (self.player.get_effective_attack() // 2)
+            dice_util = utilities.dice.Dice()
+            damage = int(base_damage * dice_util.roll_1d(20) / 10)
             actual = enemy.take_damage(damage)
             print(f"You cast {sname} for {actual} damage!")
 
