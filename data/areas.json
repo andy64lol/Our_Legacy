@@ -15,7 +15,7 @@
     "description": "A personal plot of land where you can build and customize your home. The possibilities are endless.",
     "possible_enemies": [],
     "possible_bosses": [],
-    "shops": [],
+    "shops": ["pet_shop"],
     "missions_available": false,
     "connections": ["starting_village"],
     "rest_cost": 0,

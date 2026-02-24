@@ -2221,7 +2221,7 @@ class Game:
         print(f"{Colors.CYAN}13.{Colors.END} {self.lang.get('dungeons')}")
         print(f"{Colors.CYAN}14.{Colors.END} {self.lang.get('challenges')}")
         print(
-            f"{Colors.CYAN}15.{Colors.END} {self.lang.get('pet_shop', 'Pet Shop')}"
+            f"{Colors.CYAN}15.{Colors.END} {self.lang.get('pet_shop', 'Pet Shop')}" if self.current_area == "your_land" else ""
         )
         print(
             f"{Colors.CYAN}16.{Colors.END} {self.lang.get('settings', 'Settings')}"
@@ -2349,7 +2349,7 @@ class Game:
             self.visit_dungeons()
         elif choice == "14":
             self.view_challenges()
-        elif choice == "15":
+        elif choice == "15" and self.current_area == "your_land":
             self.pet_shop()
         elif choice == "16":
             self.change_language_menu()
@@ -2376,7 +2376,7 @@ class Game:
         else:
             print(self.lang.get("invalid_choice"))
 
-    def pet_shop(self):
+    def old_pet_shop(self):
         """Visit the pet shop to buy pets"""
         if not self.player:
             print(self.lang.get("no_character"))
