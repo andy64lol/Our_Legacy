@@ -31,22 +31,20 @@ def start_terminal():
     env['PYTHONIOENCODING'] = 'utf-8'
     env['PYTHONUNBUFFERED'] = '1'
     
+    # Run with --json-api if supported or detect it
     process = subprocess.Popen(
-        [sys.executable, main_path],
-        stdin=slave_fd,
-        stdout=slave_fd,
-        stderr=slave_fd,
+        [sys.executable, main_path, "--json-api"],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
         text=True,
-        close_fds=True,
         cwd=os.path.dirname(main_path),
         env=env
     )
     
     session_id = str(process.pid)
     active_processes[session_id] = {
-        'process': process,
-        'master_fd': master_fd,
-        'slave_fd': slave_fd
+        'process': process
     }
     
     return jsonify({'session_id': session_id})
@@ -56,22 +54,19 @@ def read_output(session_id):
     if session_id not in active_processes:
         return jsonify({'error': 'Invalid session'}), 404
     
-    master_fd = active_processes[session_id]['master_fd']
+    process = active_processes[session_id]['process']
     
-    # Non-blocking read from pty
-    r, w, e = select.select([master_fd], [], [], 0.05)
     output = ""
-    if r:
-        try:
-            # Read up to 10KB at a time
-            output_bytes = os.read(master_fd, 10240)
-            output = output_bytes.decode('utf-8', errors='replace')
-        except OSError:
-            pass
+    # Use select for non-blocking read from pipe
+    if process.stdout:
+        import select
+        r, w, e = select.select([process.stdout], [], [], 0.05)
+        if r:
+            output = process.stdout.readline()
             
     return jsonify({
         'output': output,
-        'is_alive': active_processes[session_id]['process'].poll() is None
+        'is_alive': process.poll() is None
     })
 
 @app.route('/send_input/<session_id>', methods=['POST'])
@@ -80,10 +75,11 @@ def send_input(session_id):
         return jsonify({'error': 'Invalid session'}), 404
     
     input_text = (request.json or {}).get('input', '')
-    master_fd = active_processes[session_id]['master_fd']
+    process = active_processes[session_id]['process']
     try:
-        os.write(master_fd, input_text.encode('utf-8'))
-    except OSError:
+        process.stdin.write(input_text + '\n')
+        process.stdin.flush()
+    except (OSError, BrokenPipeError):
         return jsonify({'error': 'Process closed'}), 500
     
     return jsonify({'status': 'ok'})

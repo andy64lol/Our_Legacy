@@ -274,7 +274,28 @@
             const data = await response.json();
 
             if (data.output) {
-              term.write(data.output);
+              let processedOutput = data.output;
+              // Clean up potential trailing newlines from JSON output
+              if (processedOutput.endsWith('\n')) {
+                processedOutput = processedOutput.slice(0, -1);
+              }
+              
+              try {
+                // Try to parse as JSON if it looks like JSON
+                const jsonData = JSON.parse(processedOutput);
+                if (jsonData.type === "input_request") {
+                  term.write("\x1b[36m" + jsonData.prompt + "\x1b[0m ");
+                } else if (jsonData.message) {
+                  term.writeln(jsonData.message);
+                } else if (jsonData.type === "loading") {
+                    term.writeln("\x1b[33m" + jsonData.message + "...\x1b[0m");
+                } else {
+                  term.writeln(JSON.stringify(jsonData, null, 2));
+                }
+              } catch (e) {
+                // Fallback to raw output if not valid JSON
+                term.write(data.output);
+              }
             }
 
             if (!data.is_alive) {

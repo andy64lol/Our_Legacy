@@ -9,6 +9,20 @@ import random
 import sys
 import time
 import uuid
+
+# Check for JSON API mode
+JSON_API_MODE = "--json-api" in sys.argv
+
+def json_print(data):
+    if JSON_API_MODE:
+        if isinstance(data, str):
+            data = {"message": data}
+        print(json.dumps(data), flush=True)
+    else:
+        if isinstance(data, dict) and "message" in data:
+            print(data["message"])
+        else:
+            print(data)
 from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional
 import difflib
@@ -294,6 +308,9 @@ def create_section_header(title: str, char: str = "=", width: int = 60) -> str:
 
 def loading_indicator(message: str = "Loading"):
     """Display a loading indicator."""
+    if JSON_API_MODE:
+        json_print({"type": "loading", "message": message})
+        return
     print(f"\n{Colors.wrap(message, Colors.YELLOW)}", end="", flush=True)
     for i in range(3):
         time.sleep(0.5)
@@ -331,6 +348,14 @@ def ask(prompt: str,
     - `allow_empty`: if False, empty input will be rejected.
     - Returns the stripped input string.
     """
+    if JSON_API_MODE:
+        json_print({"type": "input_request", "prompt": prompt, "choices": valid_choices})
+        try:
+            response = sys.stdin.readline().strip()
+            return response
+        except EOFError:
+            return ""
+
     if lang is None:
 
         class MockLang:
