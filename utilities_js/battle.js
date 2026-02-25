@@ -4,6 +4,7 @@
 
 import { Dice } from './dice.js';
 import { Colors } from './settings.js';
+import { SpellCastingSystem } from './spellcasting.js';
 
 /**
  * Create an HP/MP bar string for display
@@ -61,6 +62,7 @@ export class BattleSystem {
     this.spellsData = gameInstance.spellsData;
     this.effectsData = gameInstance.effectsData;
     this.diceUtil = new Dice();
+    this.spellCasting = new SpellCastingSystem(gameInstance);
   }
 
   /**
@@ -251,7 +253,10 @@ export class BattleSystem {
     } else if (choice === "2") {
       await this.game.useItemInBattle();
     } else if (choice === "5" && canCast) {
-      await this.game.castSpell(enemy, weaponName);
+      const selectedSpell = await this.spellCasting.selectSpell(weaponName);
+      if (selectedSpell) {
+        this.spellCasting.castSpell(enemy, selectedSpell.name, selectedSpell.data);
+      }
     } else if (choice === "3") {
       console.log(`%c${this.lang.get("you_defend", "You defend!")}%c`, Colors.BLUE, Colors.END);
       this.player.defending = true;
