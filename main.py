@@ -28,31 +28,11 @@ class ModManager(UtilsModManager):
     """Manages mod loading and data merging"""
 
     def __init__(self, lang=None):
+        super().__init__(lang=lang)
         self.mods_dir = "mods"
         self.mods: Dict[str, Dict[str, Any]] = {}
         self.enabled_mods: List[str] = []
-        self.settings_manager = get_settings_manager()
-        self.settings = self.settings_manager.settings
-        if lang is None:
-
-            class MockLang:
-
-                def get(self, key, default=None, **kwargs):
-                    return key
-
-            self.lang = MockLang()
-        else:
-            self.lang = lang
         self.discover_mods()
-
-    def load_settings(self):
-        """Load settings using the global settings manager"""
-        self.settings_manager.load_settings()
-        self.settings = self.settings_manager.settings
-
-    def save_settings(self):
-        """Save settings using the global settings manager"""
-        self.settings_manager.save_settings()
 
     def discover_mods(self):
         """Discover all mods in the mods directory"""

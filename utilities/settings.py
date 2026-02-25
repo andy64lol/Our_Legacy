@@ -72,15 +72,50 @@ class SettingsManager:
         return self.save_settings()
 
 
+class Colors:
+    """ANSI color codes for terminal output"""
+    RED = '\033[91m'
+    GREEN = '\033[92m'
+    YELLOW = '\033[93m'
+    BLUE = '\033[94m'
+    MAGENTA = '\033[95m'
+    CYAN = '\033[96m'
+    WHITE = '\033[97m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+    END = '\033[0m'
+    GOLD = '\033[93m'
+    ORANGE = '\033[38;5;208m'
+    PURPLE = '\033[95m'
+    DARK_GRAY = '\033[90m'
+    LIGHT_GRAY = '\033[37m'
+    GRAY = '\033[90m'
+
+    @staticmethod
+    def _color(code: str) -> str:
+        return code
+
+    @classmethod
+    def wrap(cls, text: str, color_code: str) -> str:
+        return f"{cls._color(color_code)}{text}{cls._color(cls.END)}"
+
+
 class ModManager:
     """Manages mod loading and data merging - Settings Only"""
     
-    def __init__(self):
+    def __init__(self, lang=None):
         self.mods_dir = "mods"
         self.mods: Dict[str, Dict[str, Any]] = {}
         self.enabled_mods: List[str] = []
         self.settings_file = "data/mod_settings.json"
         self.settings = DEFAULT_SETTINGS.copy()
+        if lang is None:
+            class MockLang:
+                def get(self, key, default=None, **kwargs):
+                    return key
+            self.lang = MockLang()
+        else:
+            self.lang = lang
         self.load_settings()
 
     def load_settings(self):
@@ -117,10 +152,10 @@ class ModManager:
 
         if folder_name in disabled:
             disabled.remove(folder_name)
-            print(f"Mod enabled: {folder_name}")
+            print(self.lang.get("mod_enabled_msg", "Mod enabled: {folder_name}").format(folder_name=folder_name))
         else:
             disabled.add(folder_name)
-            print(f"Mod disabled: {folder_name}")
+            print(self.lang.get("mod_disabled_msg", "Mod disabled: {folder_name}").format(folder_name=folder_name))
 
         self.settings["disabled_mods"] = list(disabled)
         self.save_settings()
@@ -130,7 +165,7 @@ class ModManager:
         self.settings["mods_enabled"] = not self.settings.get(
             "mods_enabled", True)
         status = "enabled" if self.settings["mods_enabled"] else "disabled"
-        print(f"Mod system {status}!")
+        print(self.lang.get("mod_system_status_msg", "Mod system {status}!").format(status=status))
         self.save_settings()
         return self.settings["mods_enabled"]
 

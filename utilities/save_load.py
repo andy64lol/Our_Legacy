@@ -1,10 +1,12 @@
 import json
 import os
 from datetime import datetime
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 from utilities.settings import Colors
 
+
 class SaveLoadSystem:
+
     def __init__(self, game_instance):
         self.game = game_instance
         self.player = game_instance.player
@@ -77,14 +79,18 @@ class SaveLoadSystem:
         os.makedirs(saves_dir, exist_ok=True)
         safe_prefix = (filename_prefix or "").replace('/', '_')
 
-        overwrite_by_uuid = self.game.mod_manager.settings.get("overwrite_save_by_uuid", False)
+        overwrite_by_uuid = self.game.mod_manager.settings.get(
+            "overwrite_save_by_uuid", False)
         if overwrite_by_uuid and not filename_prefix:
             existing_save = None
             for f in os.listdir(saves_dir):
-                if f.endswith('.json') and f"{p.uuid[:8]}" in f and not f.startswith('err_save'):
+                if f.endswith(
+                        '.json'
+                ) and f"{p.uuid[:8]}" in f and not f.startswith('err_save'):
                     existing_save = f
                     break
-            filename = os.path.join(saves_dir, existing_save) if existing_save else None
+            filename = os.path.join(saves_dir,
+                                    existing_save) if existing_save else None
         else:
             filename = None
 
@@ -112,7 +118,8 @@ class SaveLoadSystem:
         for i, save_file in enumerate(save_files, 1):
             print(f"{i}. {save_file.replace('_save.json', '')}")
 
-        choice = self.game.ask(f"Load save (1-{len(save_files)}) or press Enter to cancel: ")
+        choice = self.game.ask(
+            f"Load save (1-{len(save_files)}) or press Enter to cancel: ")
         if choice and choice.isdigit():
             idx = int(choice) - 1
             if 0 <= idx < len(save_files):
@@ -128,13 +135,11 @@ class SaveLoadSystem:
         from main import Character
         save_version = save_data.get("save_version", "1.0")
         player_data = save_data["player"]
-        
-        self.game.player = Character(
-            player_data["name"],
-            player_data["character_class"],
-            self.game.classes_data,
-            player_uuid=player_data.get("uuid")
-        )
+
+        self.game.player = Character(player_data["name"],
+                                     player_data["character_class"],
+                                     self.game.classes_data,
+                                     player_uuid=player_data.get("uuid"))
         p = self.game.player
         p.level = player_data["level"]
         p.experience = player_data["experience"]
@@ -154,13 +159,17 @@ class SaveLoadSystem:
         p.housing_owned = player_data.get("housing_owned", [])
         p.comfort_points = player_data.get("comfort_points", 0)
         p.building_slots = player_data.get("building_slots", {})
-        p.farm_plots = player_data.get("farm_plots", {"farm_1": [], "farm_2": []})
+        p.farm_plots = player_data.get("farm_plots", {
+            "farm_1": [],
+            "farm_2": []
+        })
         p.active_pet = player_data.get("active_pet")
         p.pets_owned = player_data.get("pets_owned", [])
         p.bosses_killed = save_data.get("bosses_killed", {})
         p.hour = save_data.get("hour", player_data.get("hour", 8))
         p.day = save_data.get("day", player_data.get("day", 1))
-        p.current_weather = save_data.get("current_weather", player_data.get("current_weather", "sunny"))
+        p.current_weather = save_data.get(
+            "current_weather", player_data.get("current_weather", "sunny"))
 
         self._load_equipment_data(player_data, save_version)
 
@@ -178,26 +187,39 @@ class SaveLoadSystem:
                     tcount = mission.get('target_count', 1)
                     if mtype == 'collect' and isinstance(tcount, dict):
                         self.game.mission_progress[mid] = {
-                            'current_counts': {item: 0 for item in tcount.keys()},
-                            'target_counts': tcount, 'completed': False, 'type': mtype
+                            'current_counts': {
+                                item: 0
+                                for item in tcount.keys()
+                            },
+                            'target_counts': tcount,
+                            'completed': False,
+                            'type': mtype
                         }
                     else:
                         self.game.mission_progress[mid] = {
-                            'current_count': 0, 'target_count': tcount, 'completed': False, 'type': mtype
+                            'current_count': 0,
+                            'target_count': tcount,
+                            'completed': False,
+                            'type': mtype
                         }
 
         try:
             p._update_rank()
         except:
             pass
-        p.update_stats_from_equipment(self.game.items_data, self.game.companions_data)
+        p.update_stats_from_equipment(self.game.items_data,
+                                      self.game.companions_data)
         print(f"Game loaded successfully! Welcome back, {p.name}!")
         p.display_stats()
 
     def _load_equipment_data(self, player_data: Dict, save_version: str):
         p = self.game.player
         if save_version >= "2.0":
-            p.equipment = player_data.get("equipment", {"weapon": None, "armor": None, "accessory": None})
+            p.equipment = player_data.get("equipment", {
+                "weapon": None,
+                "armor": None,
+                "accessory": None
+            })
             bs = player_data.get("base_stats", {})
             if bs:
                 p.base_max_hp = bs.get("base_max_hp", p.base_max_hp)
@@ -210,7 +232,9 @@ class SaveLoadSystem:
                 p.class_data = cd
                 p.level_up_bonuses = cd.get("level_up_bonuses", {})
         else:
-            print(f"{Colors.YELLOW}Loading legacy save. Equipment may not be restored.{Colors.END}")
+            print(
+                f"{Colors.YELLOW}Loading legacy save. Equipment may not be restored.{Colors.END}"
+            )
             eq = {"weapon": None, "armor": None, "accessory": None}
             for item in player_data.get("inventory", []):
                 it = self.game.items_data.get(item, {})
@@ -247,5 +271,8 @@ class SaveLoadSystem:
                 invalid.append((slot, item_name, f"{creq} class required"))
                 p.equipment[slot] = None
         if invalid:
-            print(f"\n{Colors.YELLOW}Some items were auto-unequipped:{Colors.END}")
-            for s, n, r in invalid: print(f"  - {s.title()}: {n} ({r})")
+            print(
+                f"\n{Colors.YELLOW}Some items were auto-unequipped:{Colors.END}"
+            )
+            for s, n, r in invalid:
+                print(f"  - {s.title()}: {n} ({r})")
