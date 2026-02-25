@@ -17,12 +17,22 @@ def json_print(data):
     if JSON_API_MODE:
         if isinstance(data, str):
             data = {"message": data}
-        print(json.dumps(data), flush=True)
+        _original_print(json.dumps(data), flush=True)
     else:
         if isinstance(data, dict) and "message" in data:
             print(data["message"])
         else:
             print(data)
+
+# Global print override for JSON API mode
+if JSON_API_MODE:
+    import builtins
+    _original_print = builtins.print
+    def builtins_print(*args, **kwargs):
+        sep = kwargs.get('sep', ' ')
+        message = sep.join(map(str, args))
+        json_print({"message": message})
+    builtins.print = builtins_print
 from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional
 import difflib
@@ -239,6 +249,9 @@ class Colors:
 
 def clear_screen():
     """Clear the terminal screen in a cross-platform way."""
+    if JSON_API_MODE:
+        json_print({"type": "clear"})
+        return
     time.sleep(1)
     command = 'cls' if os.name == 'nt' else 'clear'
     os.system(command)

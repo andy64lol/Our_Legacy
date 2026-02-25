@@ -56,16 +56,22 @@ def read_output(session_id):
     
     process = active_processes[session_id]['process']
     
-    output = ""
-    # Use select for non-blocking read from pipe
-    if process.stdout:
-        import select
-        r, w, e = select.select([process.stdout], [], [], 0.05)
+    outputs = []
+    # Read as much as possible without blocking
+    import select
+    while True:
+        r, w, e = select.select([process.stdout], [], [], 0.01)
         if r:
-            output = process.stdout.readline()
+            line = process.stdout.readline()
+            if line:
+                outputs.append(line)
+            else:
+                break
+        else:
+            break
             
     return jsonify({
-        'output': output,
+        'outputs': outputs,
         'is_alive': process.poll() is None
     })
 
