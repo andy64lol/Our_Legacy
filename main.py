@@ -17,10 +17,10 @@ import traceback
 import io
 from utilities.settings import ModManager as UtilsModManager, get_setting, set_setting, get_settings_manager
 import utilities.dice
+from utilities.detect_flask import running_in_flask as rif, get_flask_upload_path, get_flask_save_path, save_to_flask, load_from_flask
 import requests
 
 REQUESTS_AVAILABLE = True
-
 
 class ModManager(UtilsModManager):
     """Manages mod loading and data merging"""
@@ -5869,6 +5869,19 @@ class Game:
             "current_weather": getattr(self.player, 'current_weather', "sunny")
         }
 
+        # Check if running in Flask context
+        if rif():
+            flask_save_path = get_flask_save_path()
+            if flask_save_path:
+                try:
+                    with open(flask_save_path, 'w') as f:
+                        json.dump(save_data, f, indent=2)
+                    print(f"Game saved successfully (Flask): {flask_save_path}")
+                    return
+                except Exception as e:
+                    print(f"Error saving to Flask path: {e}")
+                    # Continue to normal save
+
         saves_dir = "data/saves"
         os.makedirs(saves_dir, exist_ok=True)
 
@@ -5908,6 +5921,22 @@ class Game:
 
     def load_game(self):
         """Load a saved game with enhanced equipment handling and backward compatibility"""
+        # Check if running in Flask context and there's an uploaded save
+        if rif():
+            flask_upload_path = get_flask_upload_path()
+            if flask_upload_path and os.path.exists(flask_upload_path):
+                try:
+                    with open(flask_upload_path, 'r') as f:
+                        save_data = json.load(f)
+                    self._load_save_data_internal(save_data)
+                    print(f"Game loaded successfully from Flask upload!")
+                    # Remove the uploaded save after loading
+                    os.remove(flask_upload_path)
+                    return
+                except Exception as e:
+                    print(f"Error loading from Flask upload: {e}")
+                    # Continue to normal load
+
         saves_dir = "data/saves"
         if not os.path.exists(saves_dir):
             print(self.lang.get('no_save_files'))
@@ -6058,6 +6087,129 @@ class Game:
 
                 except Exception as e:
                     print(f"Error loading save file: {e}")
+
+    def _load_save_data_internal(self, save_data: Dict[str, Any]):
+        """Internal helper to load save data into the game instance"""
+        # Check save version for compatibility
+        save_version = save_data.get("save_version", "1.0")
+
+        # Recreate player
+        player_data = save_data["player"]
+        player_uuid = player_data.get("uuid")
+        self.player = Character(player_data["name"],
+                                player_data["character_class"],
+                                self.classes_data,
+                                player_uuid=player_uuid)
+
+        # Restore stats
+        self.player.level = player_data["level"]
+        self.player.experience = player_data["experience"]
+        self.player.experience_to_next = player_data[
+            "experience_to_next"]
+        self.player.max_hp = player_data["max_hp"]
+        self.player.hp = player_data["hp"]
+        self.player.max_mp = player_data["max_mp"]
+        self.player.mp = player_data["mp"]
+        self.player.attack = player_data["attack"]
+        self.player.defense = player_data["defense"]
+        self.player.speed = player_data["speed"]
+        self.player.inventory = player_data["inventory"]
+        self.player.gold = player_data["gold"]
+        # Restore rank and active buffs if present
+        self.player.rank = player_data.get("rank",
+                                           self.player.rank)
+        self.player.active_buffs = player_data.get(
+            "active_buffs", self.player.active_buffs)
+
+        # NEW: Load companions with backward compatibility
+        self.player.companions = player_data.get("companions", [])
+
+        # NEW: Load housing data with backward compatibility
+        self.player.housing_owned = player_data.get(
+            "housing_owned", [])
+        self.player.comfort_points = player_data.get(
+            "comfort_points", 0)
+        self.player.building_slots = player_data.get(
+            "building_slots", {})
+        self.player.farm_plots = player_data.get(
+            "farm_plots", {
+                "farm_1": [],
+                "farm_2": []
+            })
+
+        # NEW: Enhanced equipment loading with validation
+        self._load_equipment_data(player_data, save_version)
+
+        self.current_area = save_data["current_area"]
+        self.visited_areas = set(save_data.get(
+            "visited_areas", []))
+
+        # Mission system load with backward compatibility
+        self.mission_progress = save_data.get(
+            "mission_progress", {})
+        self.completed_missions = save_data.get(
+            "completed_missions", [])
+        self.achievements = save_data.get("achievements", [])
+
+        # Load Pet data
+        player_save = save_data.get("player", {})
+        if self.player:
+            self.player.active_pet = player_save.get("active_pet")
+            self.player.pets_owned = player_save.get(
+                "pets_owned", [])
+
+        # Load boss kill cooldowns
+        if self.player:
+            self.player.bosses_killed = save_data.get(
+                "bosses_killed", {})
+            # Check both top-level and player-level for backward compatibility
+            self.player.hour = save_data.get(
+                "hour", player_data.get("hour", 8))
+            self.player.day = save_data.get(
+                "day", player_data.get("day", 1))
+            self.player.current_weather = save_data.get(
+                "current_weather",
+                player_data.get("current_weather", "sunny"))
+
+        # Backward compatibility for old saves using current_missions
+        if not self.mission_progress and "current_missions" in save_data:
+            for mid in save_data["current_missions"]:
+                mission = self.missions_data.get(mid)
+                if mission:
+                    mission_type = mission.get('type', 'kill')
+                    target_count = mission.get('target_count', 1)
+                    if mission_type == 'collect' and isinstance(
+                            target_count, dict):
+                        self.mission_progress[mid] = {
+                            'current_counts': {
+                                item: 0
+                                for item in target_count.keys()
+                            },
+                            'target_counts': target_count,
+                            'completed': False,
+                            'type': mission_type
+                        }
+                    else:
+                        self.mission_progress[mid] = {
+                            'current_count': 0,
+                            'target_count': target_count,
+                            'completed': False,
+                            'type': mission_type
+                        }
+
+        # Recalculate stats with equipment and companions
+        if self.player:
+            # Ensure rank matches loaded level
+            try:
+                self.player._update_rank()
+            except Exception:
+                pass
+            self.player.update_stats_from_equipment(
+                self.items_data, self.companions_data)
+            print(
+                f"Game loaded successfully! Welcome back, {self.player.name}!"
+            )
+            self.player.display_stats()
 
     def _load_equipment_data(self, player_data: Dict, save_version: str):
         """Load and validate equipment data with backward compatibility"""

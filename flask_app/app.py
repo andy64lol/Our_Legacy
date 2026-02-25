@@ -79,7 +79,7 @@ def send_input(session_id):
     if session_id not in active_processes:
         return jsonify({'error': 'Invalid session'}), 404
     
-    input_text = request.json.get('input', '')
+    input_text = (request.json or {}).get('input', '')
     master_fd = active_processes[session_id]['master_fd']
     try:
         os.write(master_fd, input_text.encode('utf-8'))
@@ -97,27 +97,31 @@ def upload_save():
     if file.filename == '':
         return jsonify({'error': 'Empty filename'}), 400
     
-    # Save the uploaded file as save.json (or whatever main.py expects)
-    # Based on main.py analysis, it seems to use various json files
-    save_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'save.json')
+    # Save the uploaded file to data/saves/ directory for main.py access
+    saves_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'saves')
+    os.makedirs(saves_dir, exist_ok=True)
+    
+    # Save as uploaded_save.json so main.py can detect and load it
+    save_path = os.path.join(saves_dir, 'uploaded_save.json')
     file.save(save_path)
     
-    return jsonify({'status': 'File uploaded as save.json'})
+    return jsonify({'status': 'File uploaded to data/saves/uploaded_save.json'})
 
 @app.route('/download_save')
 def download_save():
-    # Attempt to find the most recent/relevant save file
-    # Common names: save.json, player.json, etc.
-    root_dir = os.path.dirname(os.path.dirname(__file__))
-    save_files = ['save.json', 'player_data.json', 'game_state.json']
+    # Look for save files in data/saves/ directory where main.py saves them
+    saves_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'saves')
     
     target_file = None
-    for f in save_files:
-        path = os.path.join(root_dir, f)
-        if os.path.exists(path):
-            target_file = path
-            break
-            
+    if os.path.exists(saves_dir):
+        # Get the most recent save file (excluding uploaded_save.json and flask_save.json)
+        save_files = [f for f in os.listdir(saves_dir) if f.endswith('.json') 
+                      and f not in ['uploaded_save.json', 'flask_save.json']]
+        if save_files:
+            # Sort by modification time, most recent first
+            save_files.sort(key=lambda f: os.path.getmtime(os.path.join(saves_dir, f)), reverse=True)
+            target_file = os.path.join(saves_dir, save_files[0])
+    
     if target_file:
         return send_file(target_file, as_attachment=True)
     else:
