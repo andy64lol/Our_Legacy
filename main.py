@@ -9,30 +9,6 @@ import random
 import sys
 import time
 import uuid
-
-# Check for JSON API mode
-JSON_API_MODE = "--json-api" in sys.argv
-
-def json_print(data):
-    if JSON_API_MODE:
-        if isinstance(data, str):
-            data = {"message": data}
-        _original_print(json.dumps(data), flush=True)
-    else:
-        if isinstance(data, dict) and "message" in data:
-            print(data["message"])
-        else:
-            print(data)
-
-# Global print override for JSON API mode
-if JSON_API_MODE:
-    import builtins
-    _original_print = builtins.print
-    def builtins_print(*args, **kwargs):
-        sep = kwargs.get('sep', ' ')
-        message = sep.join(map(str, args))
-        json_print({"message": message})
-    builtins.print = builtins_print
 from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional
 import difflib
@@ -41,10 +17,10 @@ import traceback
 import io
 from utilities.settings import ModManager as UtilsModManager, get_setting, set_setting, get_settings_manager
 import utilities.dice
-from utilities.detect_flask import running_in_flask as rif, get_flask_upload_path, get_flask_save_path, save_to_flask, load_from_flask
 import requests
 
 REQUESTS_AVAILABLE = True
+
 
 class ModManager(UtilsModManager):
     """Manages mod loading and data merging"""
@@ -249,9 +225,6 @@ class Colors:
 
 def clear_screen():
     """Clear the terminal screen in a cross-platform way."""
-    if JSON_API_MODE:
-        json_print({"type": "clear"})
-        return
     time.sleep(1)
     command = 'cls' if os.name == 'nt' else 'clear'
     os.system(command)
@@ -321,9 +294,6 @@ def create_section_header(title: str, char: str = "=", width: int = 60) -> str:
 
 def loading_indicator(message: str = "Loading"):
     """Display a loading indicator."""
-    if JSON_API_MODE:
-        json_print({"type": "loading", "message": message})
-        return
     print(f"\n{Colors.wrap(message, Colors.YELLOW)}", end="", flush=True)
     for i in range(3):
         time.sleep(0.5)
@@ -361,14 +331,6 @@ def ask(prompt: str,
     - `allow_empty`: if False, empty input will be rejected.
     - Returns the stripped input string.
     """
-    if JSON_API_MODE:
-        json_print({"type": "input_request", "prompt": prompt, "choices": valid_choices})
-        try:
-            response = sys.stdin.readline().strip()
-            return response
-        except EOFError:
-            return ""
-
     if lang is None:
 
         class MockLang:
@@ -483,7 +445,7 @@ game_api = None
 MARKET_API_URLS = [
     "https://our-legacy.vercel.app/api/market",
     "https://our-legacy-api.replit.app/api/market",  # Fallback 1
-    "http://localhost:5000/api/market"               # Fallback 2 (Local)
+    "http://localhost:5000/api/market"  # Fallback 2 (Local)
 ]
 MARKET_COOLDOWN_MINUTES = 10
 
@@ -2798,7 +2760,7 @@ class Game:
                 print(self.lang.get(meme_key))
             else:
                 print(self.lang.get("roll_msg", roll=roll))
-            
+
             damage = int(base_damage * roll / 10)
             actual_damage = enemy.take_damage(damage)
             print(f"You attack for {actual_damage} damage!")
@@ -3071,7 +3033,7 @@ class Game:
         print(f"{enemy.name} rolls the dice...")
         # Since user_level can be anything, 1 or max might not always be 20, but we can still show the roll
         print(f"{enemy.name} rolled a {roll}!")
-        
+
         damage = int(base_damage * roll / 10)
         if self.player.defending:
             damage = damage // 2
@@ -3241,7 +3203,7 @@ class Game:
                 print(self.lang.get(meme_key))
             else:
                 print(self.lang.get("roll_msg", roll=roll))
-            
+
             damage = int(base_damage * roll / 10)
             actual = enemy.take_damage(damage)
             print(f"You cast {sname} for {actual} damage!")
@@ -5907,19 +5869,6 @@ class Game:
             "current_weather": getattr(self.player, 'current_weather', "sunny")
         }
 
-        # Check if running in Flask context
-        if rif():
-            flask_save_path = get_flask_save_path()
-            if flask_save_path:
-                try:
-                    with open(flask_save_path, 'w') as f:
-                        json.dump(save_data, f, indent=2)
-                    print(f"Game saved successfully (Flask): {flask_save_path}")
-                    return
-                except Exception as e:
-                    print(f"Error saving to Flask path: {e}")
-                    # Continue to normal save
-
         saves_dir = "data/saves"
         os.makedirs(saves_dir, exist_ok=True)
 
@@ -5959,21 +5908,6 @@ class Game:
 
     def load_game(self):
         """Load a saved game with enhanced equipment handling and backward compatibility"""
-        # Check if running in Flask context and there's an uploaded save
-        if rif():
-            flask_upload_path = get_flask_upload_path()
-            if flask_upload_path and os.path.exists(flask_upload_path):
-                try:
-                    with open(flask_upload_path, 'r') as f:
-                        save_data = json.load(f)
-                    self._load_save_data_internal(save_data)
-                    print(f"Game loaded successfully from Flask upload!")
-                    # Remove the uploaded save after loading
-                    os.remove(flask_upload_path)
-                    return
-                except Exception as e:
-                    print(f"Error loading from Flask upload: {e}")
-                    # Continue to normal load
 
         saves_dir = "data/saves"
         if not os.path.exists(saves_dir):
@@ -6142,8 +6076,7 @@ class Game:
         # Restore stats
         self.player.level = player_data["level"]
         self.player.experience = player_data["experience"]
-        self.player.experience_to_next = player_data[
-            "experience_to_next"]
+        self.player.experience_to_next = player_data["experience_to_next"]
         self.player.max_hp = player_data["max_hp"]
         self.player.hp = player_data["hp"]
         self.player.max_mp = player_data["max_mp"]
@@ -6154,60 +6087,48 @@ class Game:
         self.player.inventory = player_data["inventory"]
         self.player.gold = player_data["gold"]
         # Restore rank and active buffs if present
-        self.player.rank = player_data.get("rank",
-                                           self.player.rank)
-        self.player.active_buffs = player_data.get(
-            "active_buffs", self.player.active_buffs)
+        self.player.rank = player_data.get("rank", self.player.rank)
+        self.player.active_buffs = player_data.get("active_buffs",
+                                                   self.player.active_buffs)
 
         # NEW: Load companions with backward compatibility
         self.player.companions = player_data.get("companions", [])
 
         # NEW: Load housing data with backward compatibility
-        self.player.housing_owned = player_data.get(
-            "housing_owned", [])
-        self.player.comfort_points = player_data.get(
-            "comfort_points", 0)
-        self.player.building_slots = player_data.get(
-            "building_slots", {})
-        self.player.farm_plots = player_data.get(
-            "farm_plots", {
-                "farm_1": [],
-                "farm_2": []
-            })
+        self.player.housing_owned = player_data.get("housing_owned", [])
+        self.player.comfort_points = player_data.get("comfort_points", 0)
+        self.player.building_slots = player_data.get("building_slots", {})
+        self.player.farm_plots = player_data.get("farm_plots", {
+            "farm_1": [],
+            "farm_2": []
+        })
 
         # NEW: Enhanced equipment loading with validation
         self._load_equipment_data(player_data, save_version)
 
         self.current_area = save_data["current_area"]
-        self.visited_areas = set(save_data.get(
-            "visited_areas", []))
+        self.visited_areas = set(save_data.get("visited_areas", []))
 
         # Mission system load with backward compatibility
-        self.mission_progress = save_data.get(
-            "mission_progress", {})
-        self.completed_missions = save_data.get(
-            "completed_missions", [])
+        self.mission_progress = save_data.get("mission_progress", {})
+        self.completed_missions = save_data.get("completed_missions", [])
         self.achievements = save_data.get("achievements", [])
 
         # Load Pet data
         player_save = save_data.get("player", {})
         if self.player:
             self.player.active_pet = player_save.get("active_pet")
-            self.player.pets_owned = player_save.get(
-                "pets_owned", [])
+            self.player.pets_owned = player_save.get("pets_owned", [])
 
         # Load boss kill cooldowns
         if self.player:
-            self.player.bosses_killed = save_data.get(
-                "bosses_killed", {})
+            self.player.bosses_killed = save_data.get("bosses_killed", {})
             # Check both top-level and player-level for backward compatibility
-            self.player.hour = save_data.get(
-                "hour", player_data.get("hour", 8))
-            self.player.day = save_data.get(
-                "day", player_data.get("day", 1))
+            self.player.hour = save_data.get("hour",
+                                             player_data.get("hour", 8))
+            self.player.day = save_data.get("day", player_data.get("day", 1))
             self.player.current_weather = save_data.get(
-                "current_weather",
-                player_data.get("current_weather", "sunny"))
+                "current_weather", player_data.get("current_weather", "sunny"))
 
         # Backward compatibility for old saves using current_missions
         if not self.mission_progress and "current_missions" in save_data:
@@ -6242,11 +6163,10 @@ class Game:
                 self.player._update_rank()
             except Exception:
                 pass
-            self.player.update_stats_from_equipment(
-                self.items_data, self.companions_data)
+            self.player.update_stats_from_equipment(self.items_data,
+                                                    self.companions_data)
             print(
-                f"Game loaded successfully! Welcome back, {self.player.name}!"
-            )
+                f"Game loaded successfully! Welcome back, {self.player.name}!")
             self.player.display_stats()
 
     def _load_equipment_data(self, player_data: Dict, save_version: str):
