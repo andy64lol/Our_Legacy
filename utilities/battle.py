@@ -101,12 +101,12 @@ class BattleSystem:
                     self.items_data, self.companions_data)
 
         if player_fled:
-            print(self.lang.get("nyou_fled_from_the_battle"))
+            print(self.lang.get("nyou_fled_from_the_battle", "You fled from the battle!"))
             return
 
         if self.player.is_alive():
             print(
-                f"\n{Colors.GREEN}You defeated the {enemy.name}!{Colors.END}")
+                f"\n{Colors.GREEN}{self.lang.get('defeat_enemy_msg', 'You defeated the {enemy_name}!').format(enemy_name=enemy.name)}{Colors.END}")
             if hasattr(self.game, 'Boss') and isinstance(
                     enemy, self.game.Boss):
                 self.player.bosses_killed[
@@ -118,17 +118,17 @@ class BattleSystem:
             if self.player.current_weather == "sunny":
                 exp_reward = int(exp_reward * 1.1)
                 print(
-                    f"{Colors.YELLOW}Sunny weather bonus: +10% EXP!{Colors.END}"
+                    f"{Colors.YELLOW}{self.lang.get('sunny_weather_bonus', 'Sunny weather bonus: +10% EXP!')}{Colors.END}"
                 )
             elif self.player.current_weather == "stormy":
                 gold_reward = int(gold_reward * 1.2)
                 print(
-                    f"{Colors.CYAN}Stormy weather bonus: +20% Gold (hazardous conditions)!{Colors.END}"
+                    f"{Colors.CYAN}{self.lang.get('stormy_weather_bonus', 'Stormy weather bonus: +20% Gold (hazardous conditions)!')}{Colors.END}"
                 )
 
             print(
-                f"Gained {Colors.MAGENTA}{exp_reward} experience{Colors.END}")
-            print(f"Gained {Colors.GOLD}{gold_reward} gold{Colors.END}")
+                f"{self.lang.get('gain_exp_msg', 'Gained {Colors.MAGENTA}{exp_reward} experience{Colors.END}').format(exp_reward=exp_reward, Colors=Colors)}")
+            print(f"{self.lang.get('gain_gold_msg', 'Gained {Colors.GOLD}{gold_reward} gold{Colors.END}').format(gold_reward=gold_reward, Colors=Colors)}")
 
             self.player.gain_experience(exp_reward)
             self.player.gold += gold_reward
@@ -138,7 +138,7 @@ class BattleSystem:
             if enemy.loot_table and random.random() < 0.5:
                 loot = random.choice(enemy.loot_table)
                 self.player.inventory.append(loot)
-                print(f"{Colors.YELLOW}Loot acquired: {loot}!{Colors.END}")
+                print(f"{Colors.YELLOW}{self.lang.get('loot_acquired_msg', 'Loot acquired: {loot}!').format(loot=loot)}{Colors.END}")
                 self.game.update_mission_progress('collect', loot)
 
             if self.player.companions:
@@ -161,11 +161,11 @@ class BattleSystem:
                         if amt > 0:
                             self.player.heal(amt)
                             print(
-                                f"{Colors.GREEN}{comp_data.get('name')} restores {amt} HP after battle!{Colors.END}"
+                                f"{Colors.GREEN}{self.lang.get('companion_heal_msg', '{comp_name} restores {amt} HP after battle!').format(comp_name=comp_data.get('name'), amt=amt)}{Colors.END}"
                             )
         else:
             print(
-                f"\n{Colors.RED}You were defeated by the {enemy.name}...{Colors.END}"
+                f"\n{Colors.RED}{self.lang.get('defeat_player_msg', 'You were defeated by the {enemy_name}...').format(enemy_name=enemy.name)}{Colors.END}"
             )
             self.player.hp = self.player.max_hp // 2
             self.player.mp = self.player.max_mp // 2
@@ -207,25 +207,25 @@ class BattleSystem:
 
             damage = int(base_damage * roll / 10)
             actual_damage = enemy.take_damage(damage)
-            print(f"You attack for {actual_damage} damage!")
+            print(self.lang.get("player_attack_msg", "You attack for {damage} damage!").format(damage=actual_damage))
         elif choice == "2":
             self.game.use_item_in_battle()
         elif choice == "5" and can_cast:
             self.game.cast_spell(enemy, weapon_name)
         elif choice == "3":
-            print(Colors.wrap(self.lang.get("you_defend"), Colors.BLUE))
+            print(Colors.wrap(self.lang.get("you_defend", "You defend!"), Colors.BLUE))
             self.player.defending = True
         elif choice == "4":
             flee_chance = 0.7 if self.player.get_effective_speed(
             ) > enemy.speed else 0.4
             if random.random() < flee_chance:
-                print(self.lang.get("you_successfully_fled"))
+                print(self.lang.get("you_successfully_fled", "You successfully fled!"))
                 return False
             else:
-                print(self.lang.get("failed_to_flee"))
+                print(self.lang.get("failed_to_flee", "Failed to flee!"))
                 return True
         else:
-            print(self.lang.get("invalid_choice_turn_lost"))
+            print(self.lang.get("invalid_choice_turn_lost", "Invalid choice, turn lost!"))
 
         return True
 
@@ -282,7 +282,7 @@ class BattleSystem:
                                        bonus)
                 actual_damage = enemy.take_damage(companion_damage)
                 print(
-                    f"{Colors.CYAN}{comp_name} uses {ability.get('name')} for {actual_damage} damage!{Colors.END}"
+                    f"{Colors.CYAN}{self.lang.get('companion_ability_attack_msg', '{comp_name} uses {ability_name} for {damage} damage!').format(comp_name=comp_name, ability_name=ability.get('name'), damage=actual_damage)}{Colors.END}"
                 )
             elif atype == 'taunt':
                 dur = int(ability.get('duration', 1))
@@ -292,7 +292,7 @@ class BattleSystem:
                 self.player.apply_buff(ability.get('name'), dur,
                                        {'defense_bonus': dbonus})
                 print(
-                    f"{Colors.BLUE}{comp_name} uses {ability.get('name')} and draws enemy attention!{Colors.END}"
+                    f"{Colors.BLUE}{self.lang.get('companion_taunt_msg', '{comp_name} uses {ability_name} and draws enemy attention!').format(comp_name=comp_name, ability_name=ability.get('name'))}{Colors.END}"
                 )
             elif atype == 'heal':
                 heal_amt = int(
@@ -302,7 +302,7 @@ class BattleSystem:
                         or 0))
                 self.player.heal(heal_amt)
                 print(
-                    f"{Colors.GREEN}{comp_name} uses {ability.get('name')} and heals you for {heal_amt} HP!{Colors.END}"
+                    f"{Colors.GREEN}{self.lang.get('companion_ability_heal_msg', '{comp_name} uses {ability_name} and heals you for {heal_amt} HP!').format(comp_name=comp_name, ability_name=ability.get('name'), heal_amt=heal_amt)}{Colors.END}"
                 )
             elif atype == 'mp_regen':
                 dur = int(ability.get('duration', 3))
@@ -311,7 +311,7 @@ class BattleSystem:
                     self.player.apply_buff(ability.get('name'), dur,
                                            {'mp_per_turn': mp_per})
                     print(
-                        f"{Colors.CYAN}{comp_name} grants {mp_per} MP/turn for {dur} turns!{Colors.END}"
+                        f"{Colors.CYAN}{self.lang.get('companion_mp_regen_msg', '{comp_name} grants {mp_per} MP/turn for {dur} turns!').format(comp_name=comp_name, mp_per=mp_per, dur=dur)}{Colors.END}"
                     )
             elif atype == 'spell_power':
                 dur = int(ability.get('duration', 3))
@@ -320,7 +320,7 @@ class BattleSystem:
                     self.player.apply_buff(ability.get('name'), dur,
                                            {'spell_power_bonus': sp})
                     print(
-                        f"{Colors.CYAN}{comp_name} increases spell power by {sp} for {dur} turns!{Colors.END}"
+                        f"{Colors.CYAN}{self.lang.get('companion_spell_power_msg', '{comp_name} increases spell power by {sp} for {dur} turns!').format(comp_name=comp_name, sp=sp, dur=dur)}{Colors.END}"
                     )
             elif atype == 'party_buff':
                 dur = int(ability.get('duration', 3))
@@ -331,7 +331,7 @@ class BattleSystem:
                 if mods:
                     self.player.apply_buff(ability.get('name'), dur, mods)
                     print(
-                        f"{Colors.CYAN}{comp_name} uses {ability.get('name')}, granting party buffs: {mods}!{Colors.END}"
+                        f"{Colors.CYAN}{self.lang.get('companion_party_buff_msg', '{comp_name} uses {ability_name}, granting party buffs: {mods}!').format(comp_name=comp_name, ability_name=ability.get('name'), mods=mods)}{Colors.END}"
                     )
             break
 
@@ -343,19 +343,19 @@ class BattleSystem:
                                        0.6 + comp_data.get('attack_bonus', 0))
                 actual_damage = enemy.take_damage(companion_damage)
                 print(
-                    f"{Colors.CYAN}{comp_name} attacks for {actual_damage} damage!{Colors.END}"
+                    f"{Colors.CYAN}{self.lang.get('companion_attack_msg', '{comp_name} attacks for {damage} damage!').format(comp_name=comp_name, damage=actual_damage)}{Colors.END}"
                 )
             elif action_type == 'heal' and comp_data.get('healing_bonus',
                                                          0) > 0:
                 heal_amount = comp_data.get('healing_bonus', 0)
                 self.player.heal(heal_amount)
                 print(
-                    f"{Colors.GREEN}{comp_name} heals you for {heal_amount} HP!{Colors.END}"
+                    f"{Colors.GREEN}{self.lang.get('companion_heal_msg_simple', '{comp_name} heals you for {heal_amount} HP!').format(comp_name=comp_name, heal_amount=heal_amount)}{Colors.END}"
                 )
             elif action_type == 'defend' and comp_data.get('defense_bonus',
                                                            0) > 0:
                 print(
-                    f"{Colors.BLUE}{comp_name} helps you defend, reducing incoming damage!{Colors.END}"
+                    f"{Colors.BLUE}{self.lang.get('companion_defend_msg', '{comp_name} helps you defend, reducing incoming damage!').format(comp_name=comp_name)}{Colors.END}"
                 )
                 self.player.defending = True
 
@@ -400,7 +400,7 @@ class BattleSystem:
             if available_abilities and random.random() < 0.4:
                 ability = random.choice(available_abilities)
                 print(
-                    f"\n{Colors.RED}{enemy.name} uses {ability['name']}!{Colors.END}"
+                    f"\n{Colors.RED}{self.lang.get('enemy_ability_msg', '{enemy_name} uses {ability_name}!').format(enemy_name=enemy.name, ability_name=ability['name'])}{Colors.END}"
                 )
                 print(
                     f"{Colors.DARK_GRAY}{ability.get('description')}{Colors.END}"
@@ -413,25 +413,25 @@ class BattleSystem:
                     if self.player.defending:
                         dmg //= 2
                     actual = self.player.take_damage(dmg)
-                    print(f"It deals {actual} damage!")
+                    print(self.lang.get("enemy_ability_damage_msg", "It deals {damage} damage!").format(damage=actual))
 
                 if 'stun_chance' in ability and random.random(
                 ) < ability['stun_chance']:
                     print(
-                        f"{Colors.YELLOW}You are stunned and skip your next turn!{Colors.END}"
+                        f"{Colors.YELLOW}{self.lang.get('stun_msg', 'You are stunned and skip your next turn!')}{Colors.END}"
                     )
                     self.player.apply_buff("Stunned", 1, {"speed_bonus": -999})
 
                 if 'heal_amount' in ability:
                     heal = ability['heal_amount']
                     enemy.hp = min(enemy.max_hp, enemy.hp + heal)
-                    print(f"{enemy.name} heals for {heal} HP!")
+                    print(self.lang.get("enemy_heal_msg", "{enemy_name} heals for {heal} HP!").format(enemy_name=enemy.name, heal=heal))
                 return
 
         base_damage = enemy.attack
         roll = dice_util.roll_1d(max(1, self.player.level))
-        print(f"{enemy.name} rolls the dice...")
-        print(f"{enemy.name} rolled a {roll}!")
+        print(self.lang.get("enemy_roll_msg", "{enemy_name} rolls the dice...").format(enemy_name=enemy.name))
+        print(self.lang.get("enemy_rolled_val_msg", "{enemy_name} rolled a {roll}!").format(enemy_name=enemy.name, roll=roll))
 
         damage = int(base_damage * roll / 10)
         if self.player.defending:
@@ -439,7 +439,7 @@ class BattleSystem:
             self.player.defending = False
 
         actual_damage = self.player.take_damage(damage)
-        print(f"{enemy.name} attacks for {actual_damage} damage!")
+        print(self.lang.get("enemy_attack_msg", "{enemy_name} attacks for {damage} damage!").format(enemy_name=enemy.name, damage=actual_damage))
 
         if self.player.companions:
             companion_defense_bonus = 0
@@ -461,5 +461,5 @@ class BattleSystem:
                 damage_reduction = int(companion_defense_bonus * 0.5)
                 self.player.heal(damage_reduction)
                 print(
-                    f"{Colors.BLUE}Companions mitigate {damage_reduction} damage!{Colors.END}"
+                    f"{Colors.BLUE}{self.lang.get('companions_mitigate_msg', 'Companions mitigate {damage} damage!').format(damage=damage_reduction)}{Colors.END}"
                 )

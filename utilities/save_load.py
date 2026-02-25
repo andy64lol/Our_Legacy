@@ -100,26 +100,26 @@ class SaveLoadSystem:
 
         with open(filename, 'w') as f:
             json.dump(save_data, f, indent=2)
-        print(f"Game saved successfully: {filename}")
+        print(self.lang.get("game_saved_success", "Game saved successfully: {filename}").format(filename=filename))
 
     def load_game(self):
         """Load a saved game."""
         saves_dir = "data/saves"
         if not os.path.exists(saves_dir):
-            print(self.lang.get('no_save_files'))
+            print(self.lang.get('no_save_files', "No save files found."))
             return
 
         save_files = [f for f in os.listdir(saves_dir) if f.endswith('.json')]
         if not save_files:
-            print(self.lang.get('no_save_files'))
+            print(self.lang.get('no_save_files', "No save files found."))
             return
 
-        print(self.lang.get('available_save_files'))
+        print(self.lang.get('available_save_files', "Available save files:"))
         for i, save_file in enumerate(save_files, 1):
             print(f"{i}. {save_file.replace('_save.json', '')}")
 
         choice = self.game.ask(
-            f"Load save (1-{len(save_files)}) or press Enter to cancel: ")
+            self.lang.get("load_save_prompt", "Load save (1-{count}) or press Enter to cancel: ").format(count=len(save_files)))
         if choice and choice.isdigit():
             idx = int(choice) - 1
             if 0 <= idx < len(save_files):
@@ -129,7 +129,7 @@ class SaveLoadSystem:
                         save_data = json.load(f)
                     self._load_save_data_internal(save_data)
                 except Exception as e:
-                    print(f"Error loading save file: {e}")
+                    print(self.lang.get("error_loading_save", "Error loading save file: {error}").format(error=e))
 
     def _load_save_data_internal(self, save_data: Dict[str, Any]):
         from main import Character
@@ -209,7 +209,7 @@ class SaveLoadSystem:
             pass
         p.update_stats_from_equipment(self.game.items_data,
                                       self.game.companions_data)
-        print(f"Game loaded successfully! Welcome back, {p.name}!")
+        print(self.lang.get("game_loaded_welcome", "Game loaded successfully! Welcome back, {player_name}!").format(player_name=p.name))
         p.display_stats()
 
     def _load_equipment_data(self, player_data: Dict, save_version: str):
@@ -233,7 +233,7 @@ class SaveLoadSystem:
                 p.level_up_bonuses = cd.get("level_up_bonuses", {})
         else:
             print(
-                f"{Colors.YELLOW}Loading legacy save. Equipment may not be restored.{Colors.END}"
+                f"{Colors.YELLOW}{self.lang.get('legacy_save_warning', 'Loading legacy save. Equipment may not be restored.')}{Colors.END}"
             )
             eq = {"weapon": None, "armor": None, "accessory": None}
             for item in player_data.get("inventory", []):
@@ -272,7 +272,7 @@ class SaveLoadSystem:
                 p.equipment[slot] = None
         if invalid:
             print(
-                f"\n{Colors.YELLOW}Some items were auto-unequipped:{Colors.END}"
+                f"\n{Colors.YELLOW}{self.lang.get('invalid_items_unequipped', 'Some items were auto-unequipped:')}{Colors.END}"
             )
             for s, n, r in invalid:
                 print(f"  - {s.title()}: {n} ({r})")
