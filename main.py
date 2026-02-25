@@ -362,7 +362,7 @@ def ask(prompt: str,
             clear_screen()
             return resp
         if not resp and not allow_empty:
-            print(lang.get("input_empty_error", "Input cannot be empty."))
+            clear_screen()
             continue
 
         # If no validation requested, accept

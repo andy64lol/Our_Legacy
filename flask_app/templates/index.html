@@ -1,200 +1,410 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RPG Terminal Engine</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css" />
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Our Legacy Flask Engine v1.0</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css"
+    />
     <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.js"></script>
     <style>
-        body {
-            background: #000;
-            margin: 0;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            color: #0f0;
-            font-family: 'Courier New', Courier, monospace;
-            overflow: hidden;
-        }
-        #terminal-container {
-            flex-grow: 1;
-            padding: 5px;
-            background: #000;
-        }
-        .toolbar {
-            padding: 8px 15px;
-            background: #111;
-            border-top: 1px solid #333;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            font-size: 14px;
-        }
-        .btn {
-            background: #222;
-            color: #0f0;
-            border: 1px solid #0f0;
-            padding: 4px 12px;
-            cursor: pointer;
-            font-family: inherit;
-            font-size: 12px;
-            text-transform: uppercase;
-            transition: all 0.2s;
-        }
-        .btn:hover {
-            background: #0f0;
-            color: #000;
-        }
-        .btn-start {
-            border-color: #0f0;
-            color: #0f0;
-        }
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            display: inline-block;
-            background: #444;
-        }
-        .status-online { background: #0f0; box-shadow: 0 0 5px #0f0; }
-        input[type="file"] { display: none; }
+      :root {
+        --bg: #000;
+        --text: #fff;
+        --border: #222;
+      }
+
+      body.light {
+        --bg: #fff;
+        --text: #000;
+        --border: #ccc;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family: Consolas, Monaco, "Courier New", monospace;
+      }
+
+      body {
+        background: var(--bg);
+        color: var(--text);
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      header {
+        padding: 10px 16px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 14px;
+      }
+
+      #terminal-container {
+        flex: 1;
+        padding: 8px;
+      }
+
+      footer {
+        padding: 8px 16px;
+        border-top: 1px solid var(--border);
+        display: flex;
+        gap: 10px;
+      }
+
+      button {
+        background: none;
+        border: 1px solid var(--border);
+        color: var(--text);
+        padding: 6px 12px;
+        cursor: pointer;
+        font-size: 12px;
+      }
+
+      button:hover {
+        background: var(--text);
+        color: var(--bg);
+      }
+
+      input[type="file"] {
+        display: none;
+      }
+
+      .status {
+        font-size: 12px;
+        opacity: 0.7;
+      }
+
+      /* Toast Notifications */
+      #toast-container {
+        position: fixed;
+        top: 60px;
+        right: 20px;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .toast {
+        padding: 14px 20px;
+        border-radius: 4px;
+        color: #fff;
+        font-size: 13px;
+        min-width: 250px;
+        max-width: 350px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        opacity: 0;
+        transform: translateX(100%);
+        transition: all 0.3s ease;
+      }
+
+      .toast.show {
+        opacity: 1;
+        transform: translateX(0);
+      }
+
+      .toast.info {
+        background: #0099cc;
+      }
+
+      .toast.success {
+        background: #28a745;
+      }
+
+      .toast.warning {
+        background: #ffc107;
+        color: #000;
+      }
+
+      .toast.error {
+        background: #dc3545;
+      }
     </style>
-</head>
-<body>
-    <div id="terminal-container"></div>
-    
-    <div class="toolbar">
-        <div style="display: flex; align-items: center; gap: 8px;">
-            <span id="status-dot" class="status-dot"></span>
-            <span id="status-text">OFFLINE</span>
-        </div>
-        
-        <button class="btn btn-start" onclick="startEngine()">Initialize Engine</button>
-        
-        <div style="border-left: 1px solid #333; height: 20px;"></div>
-        
-        <button class="btn" onclick="document.getElementById('save-upload').click()">Upload Save</button>
-        <button class="btn" onclick="downloadSave()">Download Save</button>
-        
-        <input type="file" id="save-upload" onchange="uploadSave(this)">
-    </div>
+  </head>
+  <body>
+    <header>
+      <div>Our Legacy Engine</div>
+      <button onclick="toggleTheme()">Toggle Theme</button>
+    </header>
+
+    <main id="terminal-container"></main>
+
+    <footer>
+      <button id="btn-init" onclick="engineController.initialize()">
+        Start
+      </button>
+      <button
+        id="btn-upload"
+        onclick="document.getElementById('save-upload').click()"
+        disabled
+      >
+        Upload
+      </button>
+      <button
+        id="btn-download"
+        onclick="engineController.downloadSave()"
+        disabled
+      >
+        Download
+      </button>
+
+      <span class="status" id="status-text">Offline</span>
+
+      <input
+        type="file"
+        id="save-upload"
+        accept=".json"
+        onchange="engineController.handleFileUpload(this)"
+      />
+    </footer>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container"></div>
 
     <script>
-        // Terminal Setup
-        const term = new Terminal({
-            cursorBlink: true,
-            theme: {
-                background: '#000',
-                foreground: '#0f0',
-                cursor: '#0f0'
-            },
-            fontFamily: '"Courier New", Courier, monospace',
-            fontSize: 14,
-            allowProposedApi: true
-        });
+      // --- Toast Notification System ---
+      const toastContainer = document.getElementById('toast-container');
+      
+      function showToast(message, type = 'info', duration = 4000) {
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.textContent = message;
         
-        const fitAddon = new FitAddon.FitAddon();
-        term.loadAddon(fitAddon);
-        term.open(document.getElementById('terminal-container'));
-        fitAddon.fit();
+        toastContainer.appendChild(toast);
+        
+        // Trigger animation
+        setTimeout(() => toast.classList.add('show'), 10);
+        
+        // Auto-remove after duration
+        setTimeout(() => {
+          toast.classList.remove('show');
+          setTimeout(() => toast.remove(), 300);
+        }, duration);
+      }
 
-        let sessionId = null;
-        let pollInterval = null;
+      // --- XTerm.js Initialization ---
+      const term = new Terminal({
+        cursorBlink: true,
+        fontFamily: 'Consolas, Monaco, "Courier New", monospace',
+        fontSize: 15,
+        convertEol: true,
+      });
 
-        function updateStatus(online) {
-            const dot = document.getElementById('status-dot');
-            const text = document.getElementById('status-text');
-            if (online) {
-                dot.className = 'status-dot status-online';
-                text.textContent = 'RUNNING';
-            } else {
-                dot.className = 'status-dot';
-                text.textContent = 'OFFLINE';
+      const fitAddon = new FitAddon.FitAddon();
+      term.loadAddon(fitAddon);
+      term.open(document.getElementById("terminal-container"));
+      applyTerminalTheme();
+      fitAddon.fit();
+
+      // --- Engine Controller Object ---
+      // Encapsulates all logic for a cleaner, more organized codebase.
+      const engineController = {
+        sessionId: null,
+        pollInterval: null,
+        isRunning: false,
+
+        elements: {
+          statusText: document.getElementById("status-text"),
+          btnInit: document.getElementById("btn-init"),
+          btnUpload: document.getElementById("btn-upload"),
+          btnDownload: document.getElementById("btn-download"),
+        },
+
+        initialize: async function () {
+          if (this.isRunning) {
+            if (!confirm("Engine is already active. Re-initialize?")) return;
+            this.shutdown();
+          }
+
+          this._setUIRunning(false);
+          this._updateStatus(false);
+          term.clear();
+          showToast("Initializing core systems...", "info");
+
+          try {
+            const response = await fetch("/start_terminal", { method: "POST" });
+            if (!response.ok) throw new Error("Server returned an error.");
+
+            const data = await response.json();
+            this.sessionId = data.session_id;
+            this.isRunning = true;
+
+            this._setUIRunning(true);
+            this._updateStatus(true);
+            showToast("Engine online. Session ID: " + this.sessionId, "success");
+
+            // Start polling for output
+            this.pollInterval = setInterval(() => this._pollOutput(), 50);
+          } catch (err) {
+            showToast("[CRITICAL FAILURE] Unable to initialize engine.", "error");
+            showToast(err.message, "error");
+            this._setUIRunning(false);
+          }
+        },
+
+        shutdown: function () {
+          if (this.pollInterval) {
+            clearInterval(this.pollInterval);
+            this.pollInterval = null;
+          }
+          this.sessionId = null;
+          this.isRunning = false;
+          this._setUIRunning(false);
+          this._updateStatus(false);
+        },
+
+        _pollOutput: async function () {
+          if (!this.sessionId) return;
+
+          try {
+            const response = await fetch(`/read_output/${this.sessionId}`);
+            if (!response.ok) {
+              this._handleDisconnect();
+              return;
             }
-        }
 
-        async function startEngine() {
-            if (sessionId) {
-                if (!confirm("Engine already running. Restart?")) return;
-                clearInterval(pollInterval);
-            }
-            
-            term.clear();
-            term.writeln('\x1b[1;32m>>> INITIALIZING CORE ENGINE...\x1b[0m');
-            
-            try {
-                const response = await fetch('/start_terminal', { method: 'POST' });
-                const data = await response.json();
-                sessionId = data.session_id;
-                
-                updateStatus(true);
-                
-                if (pollInterval) clearInterval(pollInterval);
-                pollInterval = setInterval(pollOutput, 50);
-            } catch (err) {
-                term.writeln('\x1b[1;31m[CRITICAL ERROR] FAILED TO INITIALIZE ENGINE\x1b[0m');
-            }
-        }
+            const data = await response.json();
 
-        async function pollOutput() {
-            if (!sessionId) return;
-            try {
-                const response = await fetch(`/read_output/${sessionId}`);
-                const data = await response.json();
-                
-                if (data.output) {
-                    term.write(data.output);
-                }
-                
-                if (!data.is_alive) {
-                    clearInterval(pollInterval);
-                    sessionId = null;
-                    updateStatus(false);
-                    term.writeln('\r\n\x1b[1;33m[ENGINE HALTED]\x1b[0m');
-                }
-            } catch (err) {
-                console.error("Poll error:", err);
+            if (data.output) {
+              term.write(data.output);
             }
-        }
 
-        // Handle user input
-        term.onData(data => {
-            if (sessionId) {
-                fetch(`/send_input/${sessionId}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ input: data })
-                });
+            if (!data.is_alive) {
+              this._handleDisconnect();
             }
-        });
+          } catch (err) {
+            console.error("Polling error:", err);
+            this._handleDisconnect();
+          }
+        },
 
-        async function uploadSave(input) {
-            if (!input.files.length) return;
-            
-            const formData = new FormData();
-            formData.append('file', input.files[0]);
-            
-            term.writeln('\x1b[1;34m>>> UPLOADING DATA STRATUM...\x1b[0m');
-            
-            const response = await fetch('/upload_save', {
-                method: 'POST',
-                body: formData
+        _handleDisconnect: function () {
+          if (this.pollInterval) clearInterval(this.pollInterval);
+          this.pollInterval = null;
+          this.sessionId = null;
+          this.isRunning = false;
+          this._setUIRunning(false);
+          this._updateStatus(false);
+          showToast("[SYSTEM HALTED] Connection lost or process terminated.", "warning");
+        },
+
+        _updateStatus: function (isOnline) {
+          this.elements.statusText.textContent = isOnline
+            ? "Running"
+            : "Offline";
+        },
+
+        _setUIRunning: function (isRunning) {
+          this.elements.btnInit.disabled = isRunning;
+          this.elements.btnUpload.disabled = !isRunning;
+          this.elements.btnDownload.disabled = !isRunning;
+        },
+
+        _writeLine: function (message, type = "default") {
+          // Simple helper to write a line with a color code
+          const colors = {
+            default: "\x1b[37m",
+            info: "\x1b[36m", // Cyan
+            success: "\x1b[32m", // Green
+            warning: "\x1b[33m", // Yellow
+            error: "\x1b[31m", // Red
+          };
+          const reset = "\x1b[0m";
+          term.writeln(`${colors[type] || colors.default}${message}${reset}`);
+        },
+
+        sendInput: function (data) {
+          if (this.sessionId) {
+            fetch(`/send_input/${this.sessionId}`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ input: data }),
+            }).catch((err) => console.error("Send input error:", err));
+          }
+        },
+
+        handleFileUpload: async function (input) {
+          if (!input.files.length) return;
+
+          const file = input.files[0];
+
+          const formData = new FormData();
+          formData.append("file", file);
+
+          try {
+            const response = await fetch("/upload_save", {
+              method: "POST",
+              body: formData,
             });
             const data = await response.json();
-            term.writeln('\x1b[1;32m>>> ' + data.status + '\x1b[0m');
-        }
+            showToast("File uploaded to data/saves/uploaded_save.json", "success");
+          } catch (err) {
+            showToast("Upload failed: " + err.message, "error");
+          }
 
-        function downloadSave() {
-            window.location.href = '/download_save';
-        }
+          // Reset input so same file can be selected again if needed
+          input.value = "";
+        },
 
-        window.onresize = () => fitAddon.fit();
-        
-        // Initial message
-        term.writeln('RPG TERMINAL INTERFACE v2.0');
-        term.writeln('READY FOR INITIALIZATION.');
+        downloadSave: function () {
+          if (!this.isRunning) return;
+          showToast("Requesting data export...", "info");
+          window.location.href = "/download_save";
+        },
+      };
+
+      function applyTerminalTheme() {
+        const isLight = document.body.classList.contains("light");
+
+        term.options.theme = isLight
+          ? {
+              background: "#ffffff",
+              foreground: "#000000",
+              cursor: "#000000",
+              selectionBackground: "#00000020",
+            }
+          : {
+              background: "#000000",
+              foreground: "#ffffff",
+              cursor: "#ffffff",
+              selectionBackground: "#ffffff20",
+            };
+      }
+
+      function toggleTheme() {
+        document.body.classList.toggle("light");
+        applyTerminalTheme();
+      }
+
+      // --- Event Listeners ---
+      term.onData((data) => engineController.sendInput(data));
+      window.addEventListener("resize", () => fitAddon.fit());
+
+      // --- Initial Boot Message ---
+      term.writeln("");
+      term.writeln(
+        "╔══════════════════════════════════════════════════════════╗",
+      );
+      term.writeln(
+        "║       WELCOME TO OUR LEGACY FLASK ENGINE v1.0            ║",
+      );
+      term.writeln(
+        "║         INTERACTIVE RPG TERMINAL INTERFACE               ║",
+      );
+      term.writeln(
+        "╚══════════════════════════════════════════════════════════╝",
+      );
+      term.writeln("");
+      term.writeln("AWAITING USER COMMAND TO INITIALIZE CORE SYSTEMS...");
+      term.writeln("");
     </script>
-</body>
+  </body>
 </html>
