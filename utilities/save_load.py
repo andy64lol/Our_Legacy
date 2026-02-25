@@ -100,7 +100,10 @@ class SaveLoadSystem:
 
         with open(filename, 'w') as f:
             json.dump(save_data, f, indent=2)
-        print(self.lang.get("game_saved_success", "Game saved successfully: {filename}").format(filename=filename))
+        print(
+            self.lang.get("game_saved_success",
+                          "Game saved successfully: {filename}").format(
+                              filename=filename))
 
     def load_game(self):
         """Load a saved game."""
@@ -119,7 +122,10 @@ class SaveLoadSystem:
             print(f"{i}. {save_file.replace('_save.json', '')}")
 
         choice = self.game.ask(
-            self.lang.get("load_save_prompt", "Load save (1-{count}) or press Enter to cancel: ").format(count=len(save_files)))
+            self.lang.get(
+                "load_save_prompt",
+                "Load save (1-{count}) or press Enter to cancel: ").format(
+                    count=len(save_files)))
         if choice and choice.isdigit():
             idx = int(choice) - 1
             if 0 <= idx < len(save_files):
@@ -129,7 +135,11 @@ class SaveLoadSystem:
                         save_data = json.load(f)
                     self._load_save_data_internal(save_data)
                 except Exception as e:
-                    print(self.lang.get("error_loading_save", "Error loading save file: {error}").format(error=e))
+                    print(
+                        self.lang.get(
+                            "error_loading_save",
+                            "Error loading save file: {error}").format(
+                                error=e))
 
     def _load_save_data_internal(self, save_data: Dict[str, Any]):
         from main import Character
@@ -205,12 +215,54 @@ class SaveLoadSystem:
 
         try:
             p._update_rank()
-        except:
+        except Exception:
             pass
         p.update_stats_from_equipment(self.game.items_data,
                                       self.game.companions_data)
-        print(self.lang.get("game_loaded_welcome", "Game loaded successfully! Welcome back, {player_name}!").format(player_name=p.name))
+        print(
+            self.lang.get(
+                "game_loaded_welcome",
+                "Game loaded successfully! Welcome back, {player_name}!").
+            format(player_name=p.name))
         p.display_stats()
+
+    def _validate_and_fix_equipment(self):
+        p = self.game.player
+        invalid = []
+
+        for slot in ("weapon", "armor", "accessory"):
+            item_name = p.equipment.get(slot)
+            if not item_name:
+                continue
+
+            if item_name not in self.game.items_data:
+                invalid.append((slot, item_name, "Item no longer exists"))
+                p.equipment[slot] = None
+                continue
+
+            it = self.game.items_data[item_name]
+            if it.get("type") != slot:
+                invalid.append((slot, item_name, "Item type mismatch"))
+                p.equipment[slot] = None
+                continue
+
+            reqs = it.get("requirements", {})
+            lreq = reqs.get("level", 0)
+            creq = reqs.get("class")
+
+            if p.level < lreq:
+                invalid.append((slot, item_name, f"Level {lreq} required"))
+                p.equipment[slot] = None
+            elif creq and creq != p.character_class:
+                invalid.append((slot, item_name, f"{creq} class required"))
+                p.equipment[slot] = None
+
+        if invalid:
+            print(
+                f"\n{Colors.YELLOW}{self.lang.get('invalid_items_unequipped', 'Some items were auto-unequipped:')}{Colors.END}"
+            )
+            for s, n, r in invalid:
+                print(f"  - {s.title()}: {n} ({r})")
 
     def _load_equipment_data(self, player_data: Dict, save_version: str):
         p = self.game.player
@@ -245,34 +297,3 @@ class SaveLoadSystem:
 
         self._validate_and_fix_equipment()
         p.update_stats_from_equipment(self.game.items_data)
-
-    def _validate_and_fix_equipment(self):
-        p = self.game.player
-        invalid = []
-        for slot in ("weapon", "armor", "accessory"):
-            item_name = p.equipment.get(slot)
-            if not item_name: continue
-            if item_name not in self.game.items_data:
-                invalid.append((slot, item_name, "Item no longer exists"))
-                p.equipment[slot] = None
-                continue
-            it = self.game.items_data[item_name]
-            if it.get("type") != slot:
-                invalid.append((slot, item_name, "Item type mismatch"))
-                p.equipment[slot] = None
-                continue
-            reqs = it.get("requirements", {})
-            lreq = reqs.get("level", 0)
-            creq = reqs.get("class")
-            if p.level < lreq:
-                invalid.append((slot, item_name, f"Level {lreq} required"))
-                p.equipment[slot] = None
-            elif creq and creq != p.character_class:
-                invalid.append((slot, item_name, f"{creq} class required"))
-                p.equipment[slot] = None
-        if invalid:
-            print(
-                f"\n{Colors.YELLOW}{self.lang.get('invalid_items_unequipped', 'Some items were auto-unequipped:')}{Colors.END}"
-            )
-            for s, n, r in invalid:
-                print(f"  - {s.title()}: {n} ({r})")

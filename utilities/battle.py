@@ -101,12 +101,15 @@ class BattleSystem:
                     self.items_data, self.companions_data)
 
         if player_fled:
-            print(self.lang.get("nyou_fled_from_the_battle", "You fled from the battle!"))
+            print(
+                self.lang.get("nyou_fled_from_the_battle",
+                              "You fled from the battle!"))
             return
 
         if self.player.is_alive():
             print(
-                f"\n{Colors.GREEN}{self.lang.get('defeat_enemy_msg', 'You defeated the {enemy_name}!').format(enemy_name=enemy.name)}{Colors.END}")
+                f"\n{Colors.GREEN}{self.lang.get('defeat_enemy_msg', 'You defeated the {enemy_name}!').format(enemy_name=enemy.name)}{Colors.END}"
+            )
             if hasattr(self.game, 'Boss') and isinstance(
                     enemy, self.game.Boss):
                 self.player.bosses_killed[
@@ -127,8 +130,11 @@ class BattleSystem:
                 )
 
             print(
-                f"{self.lang.get('gain_exp_msg', 'Gained {Colors.MAGENTA}{exp_reward} experience{Colors.END}').format(exp_reward=exp_reward, Colors=Colors)}")
-            print(f"{self.lang.get('gain_gold_msg', 'Gained {Colors.GOLD}{gold_reward} gold{Colors.END}').format(gold_reward=gold_reward, Colors=Colors)}")
+                f"{self.lang.get('gain_exp_msg', 'Gained {Colors.MAGENTA}{exp_reward} experience{Colors.END}').format(exp_reward=exp_reward, Colors=Colors)}"
+            )
+            print(
+                f"{self.lang.get('gain_gold_msg', 'Gained {Colors.GOLD}{gold_reward} gold{Colors.END}').format(gold_reward=gold_reward, Colors=Colors)}"
+            )
 
             self.player.gain_experience(exp_reward)
             self.player.gold += gold_reward
@@ -138,7 +144,9 @@ class BattleSystem:
             if enemy.loot_table and random.random() < 0.5:
                 loot = random.choice(enemy.loot_table)
                 self.player.inventory.append(loot)
-                print(f"{Colors.YELLOW}{self.lang.get('loot_acquired_msg', 'Loot acquired: {loot}!').format(loot=loot)}{Colors.END}")
+                print(
+                    f"{Colors.YELLOW}{self.lang.get('loot_acquired_msg', 'Loot acquired: {loot}!').format(loot=loot)}{Colors.END}"
+                )
                 self.game.update_mission_progress('collect', loot)
 
             if self.player.companions:
@@ -207,25 +215,34 @@ class BattleSystem:
 
             damage = int(base_damage * roll / 10)
             actual_damage = enemy.take_damage(damage)
-            print(self.lang.get("player_attack_msg", "You attack for {damage} damage!").format(damage=actual_damage))
+            print(
+                self.lang.get("player_attack_msg",
+                              "You attack for {damage} damage!").format(
+                                  damage=actual_damage))
         elif choice == "2":
             self.game.use_item_in_battle()
         elif choice == "5" and can_cast:
             self.game.cast_spell(enemy, weapon_name)
         elif choice == "3":
-            print(Colors.wrap(self.lang.get("you_defend", "You defend!"), Colors.BLUE))
+            print(
+                Colors.wrap(self.lang.get("you_defend", "You defend!"),
+                            Colors.BLUE))
             self.player.defending = True
         elif choice == "4":
             flee_chance = 0.7 if self.player.get_effective_speed(
             ) > enemy.speed else 0.4
             if random.random() < flee_chance:
-                print(self.lang.get("you_successfully_fled", "You successfully fled!"))
+                print(
+                    self.lang.get("you_successfully_fled",
+                                  "You successfully fled!"))
                 return False
             else:
                 print(self.lang.get("failed_to_flee", "Failed to flee!"))
                 return True
         else:
-            print(self.lang.get("invalid_choice_turn_lost", "Invalid choice, turn lost!"))
+            print(
+                self.lang.get("invalid_choice_turn_lost",
+                              "Invalid choice, turn lost!"))
 
         return True
 
@@ -413,7 +430,10 @@ class BattleSystem:
                     if self.player.defending:
                         dmg //= 2
                     actual = self.player.take_damage(dmg)
-                    print(self.lang.get("enemy_ability_damage_msg", "It deals {damage} damage!").format(damage=actual))
+                    print(
+                        self.lang.get(
+                            "enemy_ability_damage_msg",
+                            "It deals {damage} damage!").format(damage=actual))
 
                 if 'stun_chance' in ability and random.random(
                 ) < ability['stun_chance']:
@@ -425,13 +445,23 @@ class BattleSystem:
                 if 'heal_amount' in ability:
                     heal = ability['heal_amount']
                     enemy.hp = min(enemy.max_hp, enemy.hp + heal)
-                    print(self.lang.get("enemy_heal_msg", "{enemy_name} heals for {heal} HP!").format(enemy_name=enemy.name, heal=heal))
+                    print(
+                        self.lang.get(
+                            "enemy_heal_msg",
+                            "{enemy_name} heals for {heal} HP!").format(
+                                enemy_name=enemy.name, heal=heal))
                 return
 
         base_damage = enemy.attack
         roll = dice_util.roll_1d(max(1, self.player.level))
-        print(self.lang.get("enemy_roll_msg", "{enemy_name} rolls the dice...").format(enemy_name=enemy.name))
-        print(self.lang.get("enemy_rolled_val_msg", "{enemy_name} rolled a {roll}!").format(enemy_name=enemy.name, roll=roll))
+        print(
+            self.lang.get("enemy_roll_msg",
+                          "{enemy_name} rolls the dice...").format(
+                              enemy_name=enemy.name))
+        print(
+            self.lang.get("enemy_rolled_val_msg",
+                          "{enemy_name} rolled a {roll}!").format(
+                              enemy_name=enemy.name, roll=roll))
 
         damage = int(base_damage * roll / 10)
         if self.player.defending:
@@ -439,7 +469,10 @@ class BattleSystem:
             self.player.defending = False
 
         actual_damage = self.player.take_damage(damage)
-        print(self.lang.get("enemy_attack_msg", "{enemy_name} attacks for {damage} damage!").format(enemy_name=enemy.name, damage=actual_damage))
+        print(
+            self.lang.get("enemy_attack_msg",
+                          "{enemy_name} attacks for {damage} damage!").format(
+                              enemy_name=enemy.name, damage=actual_damage))
 
         if self.player.companions:
             companion_defense_bonus = 0
