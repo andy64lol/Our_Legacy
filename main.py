@@ -21,6 +21,7 @@ from utilities.battle import BattleSystem
 from utilities.spellcasting import SpellCastingSystem
 from utilities.save_load import SaveLoadSystem
 from utilities.market import MarketAPI
+from utilities.language import LanguageManager
 import requests
 
 REQUESTS_AVAILABLE = True
@@ -1289,137 +1290,10 @@ class Boss(Enemy):
                 break
 
 
-class LanguageManager:
-    """Manages language loading and translation"""
-
-    def __init__(self):
-        self.config: Dict[str, Any] = {}
-        self.translations: Dict[str, str] = {}
-        # Get language from settings, fallback to 'en'
-        self.current_language = get_setting("language", "en")
-        self.load_config()
-        self.load_translations()
-
-    def load_config(self):
-        """Load language configuration"""
-        try:
-            with open('data/languages/config.json', 'r') as f:
-                self.config = json.load(f)
-                # Ensure current_language matches settings
-                self.current_language = get_setting(
-                    "language", self.config.get('default_language', 'en'))
-        except (FileNotFoundError, json.JSONDecodeError):
-            # Fallback defaults
-            self.config = {
-                "default_language": "en",
-                "available_languages": {
-                    "en": "English",
-                    "es": "Español",
-                    "zh_simp": "简体中文"
-                },
-                "fallback_language": "en",
-                "overwrite_save_files": True
-            }
-
-    def change_language(self, lang_code: str):
-        """Change current language and save to settings"""
-        if lang_code in self.config.get("available_languages", {}):
-            self.current_language = lang_code
-            set_setting("language", lang_code)
-            self.load_translations()
-            print(
-                self.get("language_changed_msg").format(
-                    language=self.config['available_languages'][lang_code]))
-            return True
-        return False
-
-    def load_translations(self):
-        """Load translation strings for current language"""
-        try:
-            lang_file = f'data/languages/{self.current_language}.json'
-            with open(lang_file, 'r') as f:
-                self.translations = json.load(f)
-        except (FileNotFoundError, json.JSONDecodeError):
-            # Fallback to English if current language fails
-            if self.current_language != 'en':
-                try:
-                    with open('data/languages/en.json', 'r') as f:
-                        self.translations = json.load(f)
-                except (FileNotFoundError, json.JSONDecodeError):
-                    self.translations = {}
-
-    def get(self, key: str, default: Optional[str] = None, **kwargs) -> str:
-        """Get translated string with robust formatting and escape handling"""
-        # Get translation, fallback to default or key if not found
-        text = self.translations.get(key,
-                                     default if default is not None else key)
-
-        # Handle literal escape sequences found in JSON files
-        text = text.replace("\\n", "\n").replace("\\033", "\033").replace(
-            "\\x1b", "\x1b").replace("\\r", "\r")
-
-        if kwargs:
-            try:
-                # Ensure all values in kwargs are strings for .format() if they are numbers
-                formatted_kwargs = {k: str(v) for k, v in kwargs.items()}
-                text = text.format(**formatted_kwargs)
-            except (KeyError, ValueError, IndexError):
-                # Fallback for missing placeholders in translation strings
-                if key == "current_location" and "area" in kwargs and "{area}" not in text:
-                    text = f"{text} {kwargs['area']}"
-                elif key == "welcome_adventurer" and "name" in kwargs and "{name}" not in text:
-                    text = f"{text} {kwargs['name']}"
-
-        return text
-
-    def should_overwrite_saves(self) -> bool:
-        """Check if save files should be overwritten"""
-        return self.config.get('overwrite_save_files', True)
-
-
-class Game:
-    """Main game class"""
-
-    def __init__(self):
-        self.player: Optional[Character] = None
-        self.current_area = "starting_village"
-        self.visited_areas: set = set()  # Track visited areas for cutscenes
-        self.enemies_data: Dict[str, Any] = {}
-        self.areas_data: Dict[str, Any] = {}
-        self.items_data: Dict[str, Any] = {}
-        self.missions_data: Dict[str, Any] = {}
-        self.bosses_data: Dict[str, Any] = {}
-        self.classes_data: Dict[str, Any] = {}
-        self.spells_data: Dict[str, Any] = {}
-        self.effects_data: Dict[str, Any] = {}
-        self.companions_data: Dict[str, Any] = {}
-        self.dialogues_data: Dict[str, Any] = {}
-        self.dungeons_data: Dict[str, Any] = {}
-        self.cutscenes_data: Dict[str, Any] = {}
-        self.mission_progress: Dict[str, Any] = {
-        }  # mission_id -> {current_count, target_count, completed, type}
-        self.completed_missions: List[str] = []
-        self.market_api: Optional[MarketAPI] = None
-        self.crafting_data: Dict[str, Any] = {}
-        self.weekly_challenges_data: Dict[str, Any] = {}
-        self.housing_data: Dict[str, Any] = {}  # Housing items data
-        self.shops_data: Dict[str, Any] = {}  # Shop data
-        self.farming_data: Dict[str, Any] = {}  # Farming crops and foods data
-        self.pets_data: Dict[str, Any] = {}  # Pet data
-
-        # Challenge tracking
-        self.challenge_progress: Dict[str, int] = {
-        }  # challenge_id -> progress count
-        self.completed_challenges: List[str] = []
-
-        # Dungeon state tracking
-        self.current_dungeon: Optional[Dict[str, Any]] = None
-        self.dungeon_progress: int = 0
-        self.dungeon_rooms: List[Dict[str, Any]] = []
-        self.dungeon_state: Dict[str, Any] = {}
-
         # Initialize Language Manager
-        self.lang = LanguageManager()
+        self.lang = LanguageManager(get_setting_func=get_setting, set_setting_func=set_setting)
+
+        # Initialize ModManager with translation support
 
         # Initialize ModManager with translation support
         self.mod_manager = ModManager(lang=self.lang)
