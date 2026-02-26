@@ -24,7 +24,11 @@ from utilities.market import MarketAPI
 from utilities.language import LanguageManager
 import requests
 
-REQUESTS_AVAILABLE = True
+try:
+    import requests
+    REQUESTS_AVAILABLE = True
+except ImportError:
+    REQUESTS_AVAILABLE = False
 
 
 class ModManager(UtilsModManager):
@@ -1290,10 +1294,49 @@ class Boss(Enemy):
                 break
 
 
+class Game:
+    """Main game class"""
+
+    def __init__(self):
+        self.player: Optional[Character] = None
+        self.current_area = "starting_village"
+        self.visited_areas: set = set()  # Track visited areas for cutscenes
+        self.enemies_data: Dict[str, Any] = {}
+        self.areas_data: Dict[str, Any] = {}
+        self.items_data: Dict[str, Any] = {}
+        self.missions_data: Dict[str, Any] = {}
+        self.bosses_data: Dict[str, Any] = {}
+        self.classes_data: Dict[str, Any] = {}
+        self.spells_data: Dict[str, Any] = {}
+        self.effects_data: Dict[str, Any] = {}
+        self.companions_data: Dict[str, Any] = {}
+        self.dialogues_data: Dict[str, Any] = {}
+        self.dungeons_data: Dict[str, Any] = {}
+        self.cutscenes_data: Dict[str, Any] = {}
+        self.mission_progress: Dict[str, Any] = {
+        }  # mission_id -> {current_count, target_count, completed, type}
+        self.completed_missions: List[str] = []
+        self.market_api: Optional[MarketAPI] = None
+        self.crafting_data: Dict[str, Any] = {}
+        self.weekly_challenges_data: Dict[str, Any] = {}
+        self.housing_data: Dict[str, Any] = {}  # Housing items data
+        self.shops_data: Dict[str, Any] = {}  # Shop data
+        self.farming_data: Dict[str, Any] = {}  # Farming crops and foods data
+        self.pets_data: Dict[str, Any] = {}  # Pet data
+
+        # Challenge tracking
+        self.challenge_progress: Dict[str, int] = {
+        }  # challenge_id -> progress count
+        self.completed_challenges: List[str] = []
+
+        # Dungeon state tracking
+        self.current_dungeon: Optional[Dict[str, Any]] = None
+        self.dungeon_progress: int = 0
+        self.dungeon_rooms: List[Dict[str, Any]] = []
+        self.dungeon_state: Dict[str, Any] = {}
+
         # Initialize Language Manager
         self.lang = LanguageManager(get_setting_func=get_setting, set_setting_func=set_setting)
-
-        # Initialize ModManager with translation support
 
         # Initialize ModManager with translation support
         self.mod_manager = ModManager(lang=self.lang)
