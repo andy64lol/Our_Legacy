@@ -15,9 +15,10 @@ import difflib
 import signal
 import traceback
 import io
-from utilities.settings import ModManager as UtilsModManager, get_setting, set_setting, get_settings_manager
+from utilities.settings import ModManager as UtilsModManager, get_setting, set_setting
 import utilities.dice
 from utilities.battle import BattleSystem
+from utilities.spellcasting import SpellCastingSystem
 from utilities.save_load import SaveLoadSystem
 import requests
 
@@ -1805,6 +1806,7 @@ class Game:
         # Initialize Market API
         self.market_api = MarketAPI()
         self.battle_system = BattleSystem(self)
+        self.spell_casting_system = SpellCastingSystem(self)
         self.save_load_system = SaveLoadSystem(self)
 
     def play_cutscene(self, cutscene_id: str):
@@ -2606,221 +2608,17 @@ class Game:
         except ValueError:
             print(self.lang.get("invalid_input"))
 
-    def cast_spell(self, enemy: Enemy, weapon_name: Optional[str] = None):
+    def cast_spell(self, enemy, weapon_name: Optional[str] = None):
         """Cast a spell from the player's equipped magic weapon."""
         if not self.player:
             return
+        
+        # Use the spell casting system to select and cast a spell
+        selected = self.spell_casting_system.select_spell(weapon_name)
+        if selected:
+            spell_name, spell_data = selected
+            self.spell_casting_system.cast_spell(enemy, spell_name, spell_data)
 
-        # Handle case where no weapon is equipped
-        if not weapon_name:
-            print(self.lang.get("need_magic_weapon"))
-            return
-
-        # Gather spells allowed by the equipped weapon
-        available = []
-        for sname, sdata in self.spells_data.items():
-            allowed = sdata.get('allowed_weapons', [])
-            if weapon_name in allowed:
-                available.append((sname, sdata))
-
-        if not available:
-            print(self.lang.get("no_spells_available"))
-            return
-
-        # Pagination for spells
-        page = 0
-        per_page = 10
-
-        while True:
-            clear_screen()
-            total_pages = (len(available) + per_page - 1) // per_page
-            if total_pages == 0:
-                total_pages = 1
-            start_idx = page * per_page
-            end_idx = start_idx + per_page
-            current_spells = available[start_idx:end_idx]
-
-            print(
-                f"\n{Colors.BOLD}=== SPELLS (Page {page + 1}/{total_pages}) ==={Colors.END}"
-            )
-            print(
-                f"MP: {Colors.BLUE}{self.player.mp}/{self.player.max_mp}{Colors.END}\n"
-            )
-
-            for i, (sname, sdata) in enumerate(current_spells, 1):
-                cost = sdata.get('mp_cost', 0)
-                mp_color = Colors.BLUE if self.player.mp >= cost else Colors.RED
-                print(
-                    f"{i}. {Colors.CYAN}{sname}{Colors.END} - Cost: {mp_color}{cost} MP{Colors.END}"
-                )
-                print(f"   {sdata.get('description', '')}")
-
-            print(self.lang.get("noptions_1"))
-            if total_pages > 1:
-                if page > 0:
-                    print(f"P. {self.lang.get('ui_previous_page')}")
-                if page < total_pages - 1:
-                    print(f"N. {self.lang.get('ui_next_page')}")
-
-            print(f"1-{len(current_spells)}. Cast Spell")
-            print(f"B. {self.lang.get('back')}")
-
-            choice = ask("\nChoose an option: ").upper()
-
-            if choice == 'B' or not choice:
-                return
-            elif choice == 'N' and page < total_pages - 1:
-                page += 1
-            elif choice == 'P' and page > 0:
-                page -= 1
-            elif choice.isdigit():
-                idx = int(choice) - 1
-                if 0 <= idx < len(current_spells):
-                    sname, sdata = current_spells[idx]
-                    break
-                else:
-                    print(self.lang.get('invalid_selection'))
-                    time.sleep(1)
-            else:
-                print(self.lang.get("invalid_choice"))
-                time.sleep(1)
-
-        cost = sdata.get('mp_cost', 0)
-        if self.player.mp < cost:
-            print(self.lang.get("not_enough_mp"))
-            return
-
-        # Pay cost
-        self.player.mp -= cost
-
-        if sdata.get('type') == 'damage':
-            power = sdata.get('power', 0)
-            base_damage = power + (self.player.get_effective_attack() // 2)
-            dice_util = utilities.dice.Dice()
-            roll = dice_util.roll_1d(20)
-            if roll == 1:
-                meme_key = f"roll_1_meme_{random.randint(1, 3)}"
-                print(self.lang.get(meme_key))
-            elif roll == 20:
-                meme_key = f"roll_20_meme_{random.randint(1, 3)}"
-                print(self.lang.get(meme_key))
-            else:
-                print(self.lang.get("roll_msg", roll=roll))
-
-            damage = int(base_damage * roll / 10)
-            actual = enemy.take_damage(damage)
-            print(f"You cast {sname} for {actual} damage!")
-
-            # Apply effects if any
-            effects = sdata.get('effects', [])
-            for effect_name in effects:
-                effect_data = self.effects_data.get(effect_name, {})
-                effect_type = effect_data.get('type', '')
-
-                if effect_type == 'damage_over_time':
-                    print(
-                        f"{Colors.RED}{enemy.name} is afflicted with {effect_name}!{Colors.END}"
-                    )
-                elif effect_type == 'stun':
-                    if random.random() < effect_data.get('chance', 0.5):
-                        print(
-                            f"{Colors.YELLOW}{enemy.name} is stunned!{Colors.END}"
-                        )
-                elif effect_type == 'mixed_effect':
-                    if random.random() < effect_data.get('chance', 0.5):
-                        print(
-                            f"{Colors.CYAN}{enemy.name} is frozen!{Colors.END}"
-                        )
-
-        elif sdata.get('type') == 'heal':
-            heal_amount = sdata.get('power', 0)
-            old_hp = self.player.hp
-            self.player.heal(heal_amount)
-            print(f"You cast {sname} and healed {self.player.hp - old_hp} HP!")
-
-            # Apply healing effects if any
-            effects = sdata.get('effects', [])
-            for effect_name in effects:
-                effect_data = self.effects_data.get(effect_name, {})
-                if effect_data.get('type') == 'healing_over_time':
-                    print(
-                        f"{Colors.GREEN}You are affected by regeneration!{Colors.END}"
-                    )
-
-        elif sdata.get('type') == 'buff':
-            power = sdata.get('power', 0)
-            effects = sdata.get('effects', [])
-
-            for effect_name in effects:
-                effect_data = self.effects_data.get(effect_name, {})
-                effect_type = effect_data.get('type', '')
-
-                # Collect numeric modifiers from effect_data (keys that end with _bonus or known keys)
-                modifiers: Dict[str, int] = {}
-                for k, v in effect_data.items():
-                    if isinstance(v, (int, float)) and (
-                            k.endswith('_bonus')
-                            or k in ('hp_bonus', 'mp_bonus', 'absorb_amount',
-                                     'critical_bonus')):
-                        modifiers[k] = int(v)
-
-                duration = int(
-                    effect_data.get('duration', max(3, int(power or 3))))
-                # Apply as temporary buff
-                if modifiers:
-                    self.player.apply_buff(effect_name, duration, modifiers)
-                    print(
-                        f"{Colors.GREEN}Applied buff: {effect_name} (+{', '.join(str(v) + ' ' + k for k, v in modifiers.items())}) for {duration} turns{Colors.END}"
-                    )
-                else:
-                    # Non-numeric effects (like reconnaissance) still applied as a marker buff
-                    self.player.apply_buff(effect_name, duration, {})
-                    if effect_type == 'damage_absorb':
-                        print(
-                            f"{Colors.BLUE}You create a magical shield!{Colors.END}"
-                        )
-                    elif effect_type == 'reconnaissance':
-                        print(
-                            f"{Colors.CYAN}You can see enemy weaknesses!{Colors.END}"
-                        )
-
-        elif sdata.get('type') == 'debuff':
-            power = sdata.get('power', 0)
-            effects = sdata.get('effects', [])
-
-            for effect_name in effects:
-                effect_data = self.effects_data.get(effect_name, {})
-                effect_type = effect_data.get('type', '')
-
-                if effect_type == 'action_block':
-                    if random.random() < effect_data.get('chance', 0.5):
-                        print(
-                            f"{Colors.YELLOW}{enemy.name} is stunned and cannot act!{Colors.END}"
-                        )
-
-                elif effect_type == 'accuracy_reduction':
-                    print(
-                        f"{Colors.RED}{enemy.name}'s accuracy is reduced!{Colors.END}"
-                    )
-
-                elif effect_type == 'speed_reduction':
-                    print(
-                        f"{Colors.YELLOW}{enemy.name} is slowed!{Colors.END}")
-
-                elif effect_type == 'stat_reduction':
-                    print(
-                        f"{Colors.RED}{enemy.name}'s stats are cursed!{Colors.END}"
-                    )
-
-        else:
-            print(f"Unknown spell type: {sdata.get('type')}")
-            # Refund MP for unknown spell types
-            self.player.mp += cost
-
-        # Check for cast cutscene
-        cast_cutscene = sdata.get('cast_cutscene')
-        if cast_cutscene and cast_cutscene in self.cutscenes_data:
-            self.play_cutscene(cast_cutscene)
 
     def use_item(self, item: str):
         """Use an item"""
