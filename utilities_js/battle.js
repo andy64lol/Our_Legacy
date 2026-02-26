@@ -14,7 +14,7 @@ import { SpellCastingSystem } from './spellcasting.js';
  * @param {string} color - Color style (default Colors.RED)
  * @returns {string} Formatted bar string
  */
-export function createHpMpBar(current, maximum, width = 15, color = Colors.RED) {
+export function create_hp_mp_bar(current, maximum, width = 15, color = Colors.RED) {
   if (maximum <= 0) {
     return "[" + " ".repeat(width) + "]";
   }
@@ -32,7 +32,7 @@ export function createHpMpBar(current, maximum, width = 15, color = Colors.RED) 
  * @param {string} color - Color style (default Colors.RED)
  * @returns {string} Formatted boss HP bar
  */
-export function createBossHpBar(current, maximum, width = 40, color = Colors.RED) {
+export function create_boss_hp_bar(current, maximum, width = 40, color = Colors.RED) {
   if (maximum <= 0) {
     return "[" + " ".repeat(width) + "]";
   }
@@ -48,6 +48,7 @@ export function createBossHpBar(current, maximum, width = 40, color = Colors.RED
 
 /**
  * Battle system class for handling turn-based combat
+ * Ported from utilities/battle.py
  */
 export class BattleSystem {
   /**
@@ -83,40 +84,40 @@ export class BattleSystem {
 
     while (this.player.isAlive() && enemy.isAlive()) {
       if (playerFirst) {
-        const continueBattle = await this.playerTurn(enemy);
+        const continueBattle = await this.player_turn(enemy);
         if (!continueBattle) {
           playerFled = true;
           break;
         }
         if (enemy.isAlive() && this.player.companions) {
-          this.companionsAct(enemy);
+          this.companions_act(enemy);
         }
         if (enemy.isAlive()) {
-          this.enemyTurn(enemy);
+          this.enemy_turn(enemy);
         }
       } else {
-        this.enemyTurn(enemy);
+        this.enemy_turn(enemy);
         if (this.player.isAlive()) {
-          const continueBattle = await this.playerTurn(enemy);
+          const continueBattle = await this.player_turn(enemy);
           if (!continueBattle) {
             playerFled = true;
             break;
           }
           if (enemy.isAlive() && this.player.companions) {
-            this.companionsAct(enemy);
+            this.companions_act(enemy);
           }
         }
       }
 
       // Display current HP/MP
-      const playerHpBar = createHpMpBar(this.player.hp, this.player.maxHp, 20, Colors.RED);
-      const playerMpBar = createHpMpBar(this.player.mp, this.player.maxMp, 20, Colors.BLUE);
+      const playerHpBar = create_hp_mp_bar(this.player.hp, this.player.maxHp, 20, Colors.RED);
+      const playerMpBar = create_hp_mp_bar(this.player.mp, this.player.maxMp, 20, Colors.BLUE);
 
       let enemyHpBar;
       if (enemy.isBoss) {
-        enemyHpBar = createBossHpBar(enemy.hp, enemy.maxHp);
+        enemyHpBar = create_boss_hp_bar(enemy.hp, enemy.maxHp);
       } else {
-        enemyHpBar = createHpMpBar(enemy.hp, enemy.maxHp, 20, Colors.RED);
+        enemyHpBar = create_hp_mp_bar(enemy.hp, enemy.maxHp, 20, Colors.RED);
       }
 
       console.log(`\n%c${this.player.name}%c`, Colors.BOLD, Colors.END);
@@ -215,7 +216,7 @@ export class BattleSystem {
    * @param {Object} enemy - The enemy being fought
    * @returns {Promise<boolean>} True to continue battle, false if fled
    */
-  async playerTurn(enemy) {
+  async player_turn(enemy) {
     if (!this.player) {
       return true;
     }
@@ -238,7 +239,7 @@ export class BattleSystem {
 
     if (choice === "1") {
       const baseDamage = this.player.getEffectiveAttack();
-      const roll = this.diceUtil.roll1d(20);
+      const roll = this.diceUtil.roll_1d(20);
       if (roll === 1) {
         console.log(this.lang.get(`roll_1_meme_${Math.floor(Math.random() * 3) + 1}`));
       } else if (roll === 20) {
@@ -281,7 +282,7 @@ export class BattleSystem {
    * @param {Object|string} companion - Companion data or name
    * @param {Object} enemy - The enemy being fought
    */
-  companionActionFor(companion, enemy) {
+  companion_action_for(companion, enemy) {
     if (!this.player) {
       return;
     }
@@ -399,7 +400,7 @@ export class BattleSystem {
    * Each companion has a chance to act on their own each turn
    * @param {Object} enemy - The enemy being fought
    */
-  companionsAct(enemy) {
+  companions_act(enemy) {
     if (!this.player) {
       return;
     }
@@ -409,7 +410,7 @@ export class BattleSystem {
         chance = companion.actionChance || 0.5;
       }
       if (Math.random() < chance) {
-        this.companionActionFor(companion, enemy);
+        this.companion_action_for(companion, enemy);
       }
     }
   }
@@ -418,7 +419,7 @@ export class BattleSystem {
    * Enemy's turn in battle
    * @param {Object} enemy - The enemy taking their turn
    */
-  enemyTurn(enemy) {
+  enemy_turn(enemy) {
     if (!this.player) {
       return;
     }
@@ -473,7 +474,7 @@ export class BattleSystem {
     }
 
     const baseDamage = enemy.attack;
-    const roll = this.diceUtil.roll1d(Math.max(1, this.player.level));
+    const roll = this.diceUtil.roll_1d(Math.max(1, this.player.level));
     console.log(this.lang.get("enemy_roll_msg", "{enemy_name} rolls the dice...").replace("{enemy_name}", enemy.name));
     console.log(this.lang.get("enemy_rolled_val_msg", "{enemy_name} rolled a {roll}!").replace("{enemy_name}", enemy.name).replace("{roll}", roll));
 
@@ -514,3 +515,6 @@ export class BattleSystem {
     }
   }
 }
+
+export { BattleSystem, create_hp_mp_bar, create_boss_hp_bar };
+export default BattleSystem;

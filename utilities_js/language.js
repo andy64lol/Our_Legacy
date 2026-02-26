@@ -1,15 +1,26 @@
+/**
+ * LanguageManager class for managing language loading and translation
+ * Ported from utilities/language.py
+ */
 class LanguageManager {
+    /**
+     * @param {Function} getSettingFunc - Function to get settings
+     * @param {Function} setSettingFunc - Function to set settings
+     */
     constructor(getSettingFunc, setSettingFunc) {
         this.config = {};
         this.translations = {};
         this.getSetting = getSettingFunc;
         this.setSetting = setSettingFunc;
         this.currentLanguage = getSettingFunc ? getSettingFunc("language", "en") : "en";
-        this.loadConfig();
-        this.loadTranslations();
+        this.load_config();
+        this.load_translations();
     }
 
-    async loadConfig() {
+    /**
+     * Load language configuration
+     */
+    async load_config() {
         try {
             const response = await fetch('data/languages/config.json');
             this.config = await response.json();
@@ -30,19 +41,27 @@ class LanguageManager {
         }
     }
 
-    async changeLanguage(langCode) {
+    /**
+     * Change current language and save to settings
+     * @param {string} langCode - Language code to change to
+     * @returns {boolean} True if language was changed successfully
+     */
+    async change_language(langCode) {
         if (this.config.available_languages && this.config.available_languages[langCode]) {
             this.currentLanguage = langCode;
             if (this.setSetting) {
                 this.setSetting("language", langCode);
             }
-            await this.loadTranslations();
+            await this.load_translations();
             return true;
         }
         return false;
     }
 
-    async loadTranslations() {
+    /**
+     * Load translation strings for current language
+     */
+    async load_translations() {
         try {
             const response = await fetch(`data/languages/${this.currentLanguage}.json`);
             this.translations = await response.json();
@@ -58,11 +77,18 @@ class LanguageManager {
         }
     }
 
+    /**
+     * Get translated string with robust formatting and escape handling
+     * @param {string} key - Translation key
+     * @param {string} defaultValue - Default value if key not found
+     * @param {Object} params - Parameters for string formatting
+     * @returns {string} Translated and formatted string
+     */
     get(key, defaultValue = null, params = {}) {
         let text = this.translations[key] || (defaultValue !== null ? defaultValue : key);
 
-        // Handle escapes if necessary (JS strings already handle most)
-        // text = text.replace(/\\n/g, "\n"); 
+        // Handle literal escape sequences found in JSON files
+        text = text.replace(/\\n/g, "\n").replace(/\\033/g, "\u001b").replace(/\\x1b/g, "\u001b").replace(/\\r/g, "\r");
 
         if (params && Object.keys(params).length > 0) {
             for (const [k, v] of Object.entries(params)) {
@@ -73,9 +99,14 @@ class LanguageManager {
         return text;
     }
 
-    shouldOverwriteSaves() {
+    /**
+     * Check if save files should be overwritten
+     * @returns {boolean} True if save files should be overwritten
+     */
+    should_overwrite_saves() {
         return this.config.overwrite_save_files !== false;
     }
 }
 
+export { LanguageManager };
 export default LanguageManager;

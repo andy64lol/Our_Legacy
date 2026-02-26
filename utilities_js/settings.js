@@ -9,6 +9,10 @@ const DEFAULT_SETTINGS = {
   language: "en"
 };
 
+/**
+ * CSS color styles for browser console output
+ * Ported from utilities/settings.py
+ */
 export class Colors {
   static RED = 'color: #ff0000';
   static GREEN = 'color: #00ff00';
@@ -18,11 +22,33 @@ export class Colors {
   static CYAN = 'color: #00ffff';
   static WHITE = 'color: #ffffff';
   static BOLD = 'font-weight: bold';
+  static UNDERLINE = 'text-decoration: underline';
   static END = '';
+  static GOLD = 'color: #ffd700';
+  static ORANGE = 'color: #ffa500';
+  static PURPLE = 'color: #800080';
+  static DARK_GRAY = 'color: #666666';
+  static LIGHT_GRAY = 'color: #cccccc';
+  static GRAY = 'color: #666666';
 
-  static wrap(text, color_style) {
-    // For browser console, we usually use %c
-    return [`%c${text}`, color_style];
+  /**
+   * Wrap text with color style for browser console
+   * @param {string} text - Text to wrap
+   * @param {string} color_code - CSS color style
+   * @returns {string} Formatted string with color
+   */
+  static _color(color_code) {
+    return color_code;
+  }
+
+  /**
+   * Wrap text with color style
+   * @param {string} text - Text to wrap
+   * @param {string} color_code - CSS color style
+   * @returns {string} Formatted string
+   */
+  static wrap(text, color_code) {
+    return `${this._color(color_code)}${text}${this._color(this.END)}`;
   }
 }
 
@@ -131,3 +157,5 @@ export class ModManager {
 }
 
 export const settingsManager = new SettingsManager();
+
+export { SettingsManager, ModManager, settingsManager };

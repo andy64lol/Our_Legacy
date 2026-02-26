@@ -7,6 +7,7 @@ import { Colors } from './settings.js';
 
 /**
  * SaveLoadSystem class for handling game saves in browser
+ * Ported from utilities/save_load.py
  */
 export class SaveLoadSystem {
   /**
@@ -28,7 +29,7 @@ export class SaveLoadSystem {
    * @param {string} filenamePrefix - Optional prefix for the save name
    * @returns {boolean} True if save was successful
    */
-  saveGame(filenamePrefix = "") {
+  save_game(filenamePrefix = "") {
     if (!this.game.player) {
       console.log(this.lang.get('no_character_save'));
       return false;
@@ -125,7 +126,7 @@ export class SaveLoadSystem {
    * Load a saved game
    * @returns {Promise<boolean>} True if load was successful
    */
-  async loadGame() {
+  async load_game() {
     const saves = this._getAllSaves();
     const saveKeys = Object.keys(saves);
 
@@ -149,7 +150,7 @@ export class SaveLoadSystem {
         const saveKey = saveKeys[idx];
         const saveData = saves[saveKey];
         try {
-          this._loadSaveDataInternal(saveData);
+          this._load_save_data_internal(saveData);
           return true;
         } catch (e) {
           console.log(this.lang.get("error_loading_save", "Error loading save file: {error}").replace("{error}", e.message));
@@ -165,7 +166,7 @@ export class SaveLoadSystem {
    * @param {Object} saveData - The save data to load
    * @private
    */
-  _loadSaveDataInternal(saveData) {
+  _load_save_data_internal(saveData) {
     const saveVersion = saveData.saveVersion || "1.0";
     const playerData = saveData.player;
 
@@ -203,7 +204,7 @@ export class SaveLoadSystem {
     p.day = saveData.day || playerData.day || 1;
     p.currentWeather = saveData.currentWeather || playerData.currentWeather || "sunny";
 
-    this._loadEquipmentData(playerData, saveVersion);
+    this._load_equipment_data(playerData, saveVersion);
 
     this.game.currentArea = saveData.currentArea;
     this.game.visitedAreas = new Set(saveData.visitedAreas || []);
@@ -262,7 +263,7 @@ export class SaveLoadSystem {
    * Validate and fix equipment
    * @private
    */
-  _validateAndFixEquipment() {
+  _validate_and_fix_equipment() {
     const p = this.game.player;
     const invalid = [];
 
@@ -312,7 +313,7 @@ export class SaveLoadSystem {
    * @param {string} saveVersion - Version of the save
    * @private
    */
-  _loadEquipmentData(playerData, saveVersion) {
+  _load_equipment_data(playerData, saveVersion) {
     const p = this.game.player;
 
     if (saveVersion >= "2.0") {
@@ -354,7 +355,7 @@ export class SaveLoadSystem {
       p.equipment = eq;
     }
 
-    this._validateAndFixEquipment();
+    this._validate_and_fix_equipment();
 
     if (typeof p.updateStatsFromEquipment === 'function') {
       p.updateStatsFromEquipment(this.game.itemsData);
@@ -366,7 +367,7 @@ export class SaveLoadSystem {
    * @returns {Object} Object with save keys and data
    * @private
    */
-  _getAllSaves() {
+  _get_all_saves() {
     try {
       const saved = localStorage.getItem(this.storageKey);
       return saved ? JSON.parse(saved) : {};
@@ -381,8 +382,8 @@ export class SaveLoadSystem {
    * @param {string} saveKey - The key of the save to delete
    * @returns {boolean} True if deletion was successful
    */
-  deleteSave(saveKey) {
-    const saves = this._getAllSaves();
+  delete_save(saveKey) {
+    const saves = this._get_all_saves();
     if (saves[saveKey]) {
       delete saves[saveKey];
       try {
@@ -401,8 +402,8 @@ export class SaveLoadSystem {
    * Get list of all save names
    * @returns {string[]} Array of save keys
    */
-  listSaves() {
-    return Object.keys(this._getAllSaves());
+  list_saves() {
+    return Object.keys(this._get_all_saves());
   }
 
   /**
@@ -410,8 +411,8 @@ export class SaveLoadSystem {
    * @param {string} saveKey - The key of the save to export
    * @returns {string|null} JSON string or null if save not found
    */
-  exportSaveToJson(saveKey) {
-    const saves = this._getAllSaves();
+  export_save_to_json(saveKey) {
+    const saves = this._get_all_saves();
     if (saves[saveKey]) {
       return JSON.stringify(saves[saveKey], null, 2);
     }
@@ -424,10 +425,10 @@ export class SaveLoadSystem {
    * @param {string} jsonData - The JSON string to import
    * @returns {boolean} True if import was successful
    */
-  importSaveFromJson(saveKey, jsonData) {
+  import_save_from_json(saveKey, jsonData) {
     try {
       const saveData = JSON.parse(jsonData);
-      const saves = this._getAllSaves();
+      const saves = this._get_all_saves();
       saves[saveKey] = saveData;
       localStorage.setItem(this.storageKey, JSON.stringify(saves));
       return true;

@@ -8,6 +8,7 @@ import { Colors } from './settings.js';
 
 /**
  * SpellCastingSystem class for handling spell casting
+ * Ported from utilities/spellcasting.py
  */
 export class SpellCastingSystem {
   /**
@@ -28,7 +29,7 @@ export class SpellCastingSystem {
    * @param {string} weaponName - The weapon name to check
    * @returns {Array} Array of [spellName, spellData] tuples
    */
-  getAvailableSpells(weaponName) {
+  get_available_spells(weaponName) {
     if (!weaponName) {
       return [];
     }
@@ -48,7 +49,7 @@ export class SpellCastingSystem {
    * @param {string} weaponName - The weapon name to check
    * @returns {boolean} True if weapon can cast spells
    */
-  canCastSpells(weaponName) {
+  can_cast_spells(weaponName) {
     if (!weaponName) return false;
     const weaponData = this.itemsData[weaponName] || {};
     return Boolean(weaponData.magicWeapon || weaponData.magic_weapon);
@@ -61,7 +62,7 @@ export class SpellCastingSystem {
    * @param {Object} spellData - The spell data
    * @returns {Object} Result of the spell cast
    */
-  castSpell(enemy, spellName, spellData) {
+  cast_spell(enemy, spellName, spellData) {
     if (!this.player) {
       return { success: false, error: 'No player' };
     }
@@ -81,16 +82,16 @@ export class SpellCastingSystem {
 
     switch (spellType) {
       case 'damage':
-        this._castDamageSpell(enemy, spellName, spellData, result);
+        this._cast_damage_spell(enemy, spellName, spellData, result);
         break;
       case 'heal':
-        this._castHealSpell(spellName, spellData, result);
+        this._cast_heal_spell(spellName, spellData, result);
         break;
       case 'buff':
-        this._castBuffSpell(spellName, spellData, result);
+        this._cast_buff_spell(spellName, spellData, result);
         break;
       case 'debuff':
-        this._castDebuffSpell(enemy, spellName, spellData, result);
+        this._cast_debuff_spell(enemy, spellName, spellData, result);
         break;
       default:
         console.log(`Unknown spell type: ${spellType}`);
@@ -115,11 +116,11 @@ export class SpellCastingSystem {
    * Cast a damage spell
    * @private
    */
-  _castDamageSpell(enemy, spellName, spellData, result) {
+  _cast_damage_spell(enemy, spellName, spellData, result) {
     const power = spellData.power || 0;
     const baseDamage = power + Math.floor(this.player.getEffectiveAttack() / 2);
     
-    const roll = this.diceUtil.roll1d(20);
+    const roll = this.diceUtil.roll_1d(20);
     
     if (roll === 1) {
       const memeKey = `roll_1_meme_${Math.floor(Math.random() * 3) + 1}`;
@@ -161,7 +162,7 @@ export class SpellCastingSystem {
    * Cast a heal spell
    * @private
    */
-  _castHealSpell(spellName, spellData, result) {
+  _cast_heal_spell(spellName, spellData, result) {
     const healAmount = spellData.power || 0;
     const oldHp = this.player.hp;
     this.player.heal(healAmount);
@@ -184,7 +185,7 @@ export class SpellCastingSystem {
    * Cast a buff spell
    * @private
    */
-  _castBuffSpell(spellName, spellData, result) {
+  _cast_buff_spell(spellName, spellData, result) {
     const power = spellData.power || 0;
     const effects = spellData.effects || [];
 
@@ -228,7 +229,7 @@ export class SpellCastingSystem {
    * Cast a debuff spell
    * @private
    */
-  _castDebuffSpell(enemy, spellName, spellData, result) {
+  _cast_debuff_spell(enemy, spellName, spellData, result) {
     const power = spellData.power || 0;
     const effects = spellData.effects || [];
 
@@ -257,8 +258,8 @@ export class SpellCastingSystem {
    * @param {string} weaponName - The weapon to get spells for
    * @returns {Promise<Object|null>} Selected spell or null if cancelled
    */
-  async selectSpell(weaponName) {
-    const available = this.getAvailableSpells(weaponName);
+  async select_spell(weaponName) {
+    const available = this.get_available_spells(weaponName);
     
     if (available.length === 0) {
       console.log(this.lang.get("no_spells_available", "No spells available for this weapon."));
@@ -275,7 +276,7 @@ export class SpellCastingSystem {
       const currentSpells = available.slice(startIdx, endIdx);
 
       console.log(`\n%c=== SPELLS (Page ${page + 1}/${totalPages}) ===%c`, Colors.BOLD, Colors.END);
-      console.log(`MP: %c${this.player.mp}/${this.player.max_mp}%c\n`, Colors.BLUE, Colors.END);
+      console.log(`MP: %c${this.player.mp}/${this.player.maxMp}%c\n`, Colors.BLUE, Colors.END);
 
       for (let i = 0; i < currentSpells.length; i++) {
         const [sname, sdata] = currentSpells[i];
@@ -318,4 +319,5 @@ export class SpellCastingSystem {
   }
 }
 
+export { SpellCastingSystem };
 export default SpellCastingSystem;
