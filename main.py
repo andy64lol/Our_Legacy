@@ -1578,6 +1578,17 @@ class Game:
         self.spell_casting_system = SpellCastingSystem(self)
         self.save_load_system = SaveLoadSystem(self)
 
+
+    def ask(self, prompt: str,
+            valid_choices: Optional[List[str]] = None,
+            allow_empty: bool = True,
+            case_sensitive: bool = False,
+            suggest: bool = True) -> str:
+        """Wrapper for the global ask function to allow Game object to use it.
+        
+        This method delegates to the global ask function defined in main.py.
+        """
+        return ask(prompt, valid_choices, allow_empty, case_sensitive, suggest, self.lang)
     def play_cutscene(self, cutscene_id: str):
         """Play a cutscene by ID"""
         if cutscene_id not in self.cutscenes_data:
