@@ -9,21 +9,18 @@ import random
 import sys
 import time
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Dict, List, Any, Optional
 import difflib
 import signal
 import traceback
 import io
 from utilities.settings import ModManager as UtilsModManager, get_setting, set_setting
-import utilities.dice
 from utilities.battle import BattleSystem
 from utilities.spellcasting import SpellCastingSystem
 from utilities.save_load import SaveLoadSystem
 from utilities.market import MarketAPI
 from utilities.language import LanguageManager
-import requests
-
 try:
     import requests
     REQUESTS_AVAILABLE = True
@@ -429,6 +426,7 @@ def disable_tab_completion(prev_completer):
 
 # Market API URL and cooldown (set by Game class when game starts)
 game_api = None
+
 
 class Character:
     """Player character class"""
@@ -1336,13 +1334,16 @@ class Game:
         self.dungeon_state: Dict[str, Any] = {}
 
         # Initialize Language Manager
-        self.lang = LanguageManager(get_setting_func=get_setting, set_setting_func=set_setting)
+        self.lang = LanguageManager(get_setting_func=get_setting,
+                                    set_setting_func=set_setting)
 
         # Initialize ModManager with translation support
         self.mod_manager = ModManager(lang=self.lang)
 
         # Initialize Market API with translation support
-        self.market_api = MarketAPI(lang=self.lang, colors=Colors, requests_available=REQUESTS_AVAILABLE)
+        self.market_api = MarketAPI(lang=self.lang,
+                                    colors=Colors,
+                                    requests_available=REQUESTS_AVAILABLE)
 
         # Load game data
         self.load_game_data()
@@ -1571,7 +1572,8 @@ class Game:
         COLORS_ENABLED = True
 
         # Initialize Market API
-        self.market_api = MarketAPI(colors=Colors, requests_available=REQUESTS_AVAILABLE)
+        self.market_api = MarketAPI(colors=Colors,
+                                    requests_available=REQUESTS_AVAILABLE)
         self.battle_system = BattleSystem(self)
         self.spell_casting_system = SpellCastingSystem(self)
         self.save_load_system = SaveLoadSystem(self)
@@ -2379,13 +2381,12 @@ class Game:
         """Cast a spell from the player's equipped magic weapon."""
         if not self.player:
             return
-        
+
         # Use the spell casting system to select and cast a spell
         selected = self.spell_casting_system.select_spell(weapon_name)
         if selected:
             spell_name, spell_data = selected
             self.spell_casting_system.cast_spell(enemy, spell_name, spell_data)
-
 
     def use_item(self, item: str):
         """Use an item"""
