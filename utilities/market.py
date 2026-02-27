@@ -14,12 +14,11 @@ MARKET_COOLDOWN_MINUTES = 10
 class MarketAPI:
     """API for accessing the Elite Market with 10-minute cooldown"""
 
-    def __init__(self, lang=None, colors=None, requests_available=True):
+    def __init__(self, lang=None, colors=None):
         self.cache = None
         self.last_fetch = None
         self.cooldown_minutes = MARKET_COOLDOWN_MINUTES
-        self.requests_available = requests_available
-        
+
         if colors:
             self.Colors = colors
         else:
@@ -74,35 +73,18 @@ class MarketAPI:
 
         # Try each endpoint in order
         for url in MARKET_API_URLS:
-            # Try to fetch from API using requests
-            if self.requests_available:
-                try:
-                    response = requests.get(url, timeout=5)
-                    if response.status_code == 200:
-                        data = response.json()
-                        self.cache = data
-                        self.last_fetch = datetime.now()
-                        print(
-                            f"{self.Colors.GREEN}{self.lang.get('market_open_msg', 'Market is open!')}{self.Colors.END}"
-                        )
-                        return data
-                except Exception:
-                    continue
-            else:
-                # Fallback using urllib
-                try:
-                    import urllib.request
-                    req = urllib.request.Request(url)
-                    with urllib.request.urlopen(req, timeout=5) as response:
-                        data = json.loads(response.read().decode())
-                        self.cache = data
-                        self.last_fetch = datetime.now()
-                        print(
-                            f"{self.Colors.GREEN}{self.lang.get('market_open_msg', 'Market is open!')}{self.Colors.END}"
-                        )
-                        return data
-                except Exception:
-                    continue
+            try:
+                response = requests.get(url, timeout=5)
+                if response.status_code == 200:
+                    data = response.json()
+                    self.cache = data
+                    self.last_fetch = datetime.now()
+                    print(
+                        f"{self.Colors.GREEN}{self.lang.get('market_open_msg', 'Market is open!')}{self.Colors.END}"
+                    )
+                    return data
+            except Exception:
+                continue
 
         print(
             f"{self.Colors.RED}{self.lang.get('market_reach_error', 'Failed to reach any market merchants at this time.')}{self.Colors.END}"

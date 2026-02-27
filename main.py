@@ -329,7 +329,8 @@ class Boss(Enemy):
         self.dialogues = dialogues_data.get(boss_data.get("name", ""), {})
         self.loot_table = boss_data.get("loot_table", [])
         self.description = boss_data.get("description", "A powerful foe.")
-        self.experience_reward = boss_data.get("experience_reward", boss_data.get("exp_reward", 100))
+        self.experience_reward = boss_data.get(
+            "experience_reward", boss_data.get("exp_reward", 100))
 
     def get_dialogue(self, key: str) -> Optional[str]:
         return self.dialogues.get(key)
@@ -385,8 +386,7 @@ class Game:
 
         # Initialize Market API with translation support
         self.market_api = MarketAPI(lang=self.lang,
-                                    colors=Colors,
-                                    requests_available=REQUESTS_AVAILABLE)
+                                    colors=Colors)
 
         # Load game data
         self.load_game_data()
@@ -615,8 +615,7 @@ class Game:
         COLORS_ENABLED = True
 
         # Initialize Market API
-        self.market_api = MarketAPI(colors=Colors,
-                                    requests_available=REQUESTS_AVAILABLE)
+        self.market_api = MarketAPI(colors=Colors)
         self.battle_system = BattleSystem(self)
         self.spell_casting_system = SpellCastingSystem(self)
         self.save_load_system = SaveLoadSystem(self)
@@ -647,6 +646,7 @@ class Game:
 
         new_weather = random.choices(weathers, weights=probs, k=1)[0]
         self.player.current_weather = new_weather
+
     def play_cutscene(self, cutscene_id: str):
         """Play a cutscene by ID"""
         if cutscene_id not in self.cutscenes_data:
