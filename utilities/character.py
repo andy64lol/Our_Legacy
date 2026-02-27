@@ -380,6 +380,43 @@ class Character:
             "modifiers": modifiers
         })
 
+    def equip(self, item_name: str, items_data: Dict[str, Any]):
+        """Equip an item from inventory"""
+        if item_name not in self.inventory:
+            return False
+
+        item = items_data.get(item_name)
+        if not item:
+            return False
+
+        slot = item.get("type")
+        if slot not in self.equipment:
+            return False
+
+        # Unequip existing if any
+        self.unequip(slot, items_data)
+
+        self.equipment[slot] = item_name
+        self.inventory.remove(item_name)
+        self._update_equipment_slots()
+        self.update_stats_from_equipment(items_data)
+        return True
+
+    def unequip(self, slot: str, items_data: Dict[str, Any]):
+        """Unequip an item from a slot"""
+        if slot not in self.equipment:
+            return False
+
+        item_name = self.equipment.get(slot)
+        if not item_name:
+            return False
+
+        self.equipment[slot] = None
+        self.inventory.append(item_name)
+        self._update_equipment_slots()
+        self.update_stats_from_equipment(items_data)
+        return True
+
     def tick_buffs(self) -> bool:
         """Tick active buffs, return True if any expired or changed stats"""
         changed = False

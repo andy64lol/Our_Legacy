@@ -327,6 +327,7 @@ class Boss(Enemy):
                                                                        Any]):
         super().__init__(boss_data)
         self.dialogues = dialogues_data.get(boss_data.get("name", ""), {})
+        self.loot_table = boss_data.get("loot_table", [])
 
     def get_dialogue(self, key: str) -> Optional[str]:
         return self.dialogues.get(key)
@@ -631,6 +632,19 @@ class Game:
         return ask(prompt, valid_choices, allow_empty, case_sensitive, suggest,
                    self.lang)
 
+    def update_weather(self):
+        """Update current weather based on area data and probabilities."""
+        if not self.player:
+            return
+
+        area_data = self.areas_data.get(self.player.current_area, {})
+        weather_probs = area_data.get("weather_probabilities", {"sunny": 1.0})
+
+        weathers = list(weather_probs.keys())
+        probs = list(weather_probs.values())
+
+        new_weather = random.choices(weathers, weights=probs, k=1)[0]
+        self.player.current_weather = new_weather
     def play_cutscene(self, cutscene_id: str):
         """Play a cutscene by ID"""
         if cutscene_id not in self.cutscenes_data:
@@ -1768,7 +1782,9 @@ class Game:
         if self.player:
             self.player.display_stats()
         else:
-            print(self.lang.get("no_player_to_display", "No player character created yet."))
+            print(
+                self.lang.get("no_player_to_display",
+                              "No player character created yet."))
 
     def update_mission_progress(self,
                                 update_type: str,
@@ -4793,7 +4809,7 @@ class Game:
                 print(f"Gained {Colors.GOLD}{gold_reward} gold{Colors.END}")
 
                 # Boss loot
-                if boss.loot_table:
+                if hasattr(boss, 'loot_table') and boss.loot_table:
                     loot = random.choice(boss.loot_table)
                     self.player.inventory.append(loot)
                     print(f"{Colors.YELLOW}Boss loot: {loot}!{Colors.END}")
