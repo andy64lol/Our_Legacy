@@ -8,7 +8,6 @@ import os
 import random
 import sys
 import time
-import uuid
 from datetime import datetime
 from typing import Dict, List, Any, Optional
 import difflib
@@ -28,7 +27,6 @@ try:
     REQUESTS_AVAILABLE = True
 except ImportError:
     REQUESTS_AVAILABLE = False
-
 
 # Optional readline for tab-completion (best-effort)
 try:
@@ -299,9 +297,9 @@ def disable_tab_completion(prev_completer):
 game_api = None
 
 
-
 class Enemy:
     """Enemy class for battle system"""
+
     def __init__(self, enemy_data: Dict[str, Any]):
         self.name = enemy_data.get("name", "Unknown Enemy")
         self.max_hp = enemy_data.get("hp", 50)
@@ -321,14 +319,18 @@ class Enemy:
         self.hp = max(0, self.hp - damage_taken)
         return damage_taken
 
+
 class Boss(Enemy):
     """Boss class with additional logic"""
-    def __init__(self, boss_data: Dict[str, Any], dialogues_data: Dict[str, Any]):
+
+    def __init__(self, boss_data: Dict[str, Any], dialogues_data: Dict[str,
+                                                                       Any]):
         super().__init__(boss_data)
         self.dialogues = dialogues_data.get(boss_data.get("name", ""), {})
 
     def get_dialogue(self, key: str) -> Optional[str]:
         return self.dialogues.get(key)
+
 
 class Game:
     """Main game class"""
@@ -616,8 +618,8 @@ class Game:
         self.spell_casting_system = SpellCastingSystem(self)
         self.save_load_system = SaveLoadSystem(self)
 
-
-    def ask(self, prompt: str,
+    def ask(self,
+            prompt: str,
             valid_choices: Optional[List[str]] = None,
             allow_empty: bool = True,
             case_sensitive: bool = False,
@@ -626,7 +628,9 @@ class Game:
         
         This method delegates to the global ask function defined in main.py.
         """
-        return ask(prompt, valid_choices, allow_empty, case_sensitive, suggest, self.lang)
+        return ask(prompt, valid_choices, allow_empty, case_sensitive, suggest,
+                   self.lang)
+
     def play_cutscene(self, cutscene_id: str):
         """Play a cutscene by ID"""
         if cutscene_id not in self.cutscenes_data:
