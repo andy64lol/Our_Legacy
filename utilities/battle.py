@@ -86,8 +86,12 @@ class BattleSystem:
                                                 Colors.RED)
 
             print(f"\n{Colors.BOLD}{self.game.player.name}{Colors.END}")
-            print(f"HP: {player_hp_bar} {self.game.player.hp}/{self.game.player.max_hp}")
-            print(f"MP: {player_mp_bar} {self.game.player.mp}/{self.game.player.max_mp}")
+            print(
+                f"HP: {player_hp_bar} {self.game.player.hp}/{self.game.player.max_hp}"
+            )
+            print(
+                f"MP: {player_mp_bar} {self.game.player.mp}/{self.game.player.max_mp}"
+            )
 
             print(f"\n{Colors.BOLD}{enemy.name}{Colors.END}")
             if hasattr(self.game, 'Boss') and isinstance(
@@ -297,9 +301,9 @@ class BattleSystem:
                 bonus = int(
                     ability.get('attack_bonus', 0)
                     or ability.get('crit_damage_bonus', 0) or 0)
-                companion_damage = int(self.game.player.get_effective_attack() *
-                                       0.6 + comp_data.get('attack_bonus', 0) +
-                                       bonus)
+                companion_damage = int(
+                    self.game.player.get_effective_attack() * 0.6 +
+                    comp_data.get('attack_bonus', 0) + bonus)
                 actual_damage = enemy.take_damage(companion_damage)
                 print(
                     f"{Colors.CYAN}{self.lang.get('companion_ability_attack_msg', '{comp_name} uses {ability_name} for {damage} damage!').format(comp_name=comp_name, ability_name=ability.get('name'), damage=actual_damage)}{Colors.END}"
@@ -310,7 +314,7 @@ class BattleSystem:
                     ability.get('defense_bonus',
                                 comp_data.get('defense_bonus', 0)))
                 self.game.player.apply_buff(ability.get('name'), dur,
-                                       {'defense_bonus': dbonus})
+                                            {'defense_bonus': dbonus})
                 print(
                     f"{Colors.BLUE}{self.lang.get('companion_taunt_msg', '{comp_name} uses {ability_name} and draws enemy attention!').format(comp_name=comp_name, ability_name=ability.get('name'))}{Colors.END}"
                 )
@@ -329,7 +333,7 @@ class BattleSystem:
                 mp_per = int(ability.get('mp_per_turn', 0))
                 if mp_per > 0:
                     self.game.player.apply_buff(ability.get('name'), dur,
-                                           {'mp_per_turn': mp_per})
+                                                {'mp_per_turn': mp_per})
                     print(
                         f"{Colors.CYAN}{self.lang.get('companion_mp_regen_msg', '{comp_name} grants {mp_per} MP/turn for {dur} turns!').format(comp_name=comp_name, mp_per=mp_per, dur=dur)}{Colors.END}"
                     )
@@ -338,7 +342,7 @@ class BattleSystem:
                 sp = int(ability.get('spell_power_bonus', 0))
                 if sp:
                     self.game.player.apply_buff(ability.get('name'), dur,
-                                           {'spell_power_bonus': sp})
+                                                {'spell_power_bonus': sp})
                     print(
                         f"{Colors.CYAN}{self.lang.get('companion_spell_power_msg', '{comp_name} increases spell power by {sp} for {dur} turns!').format(comp_name=comp_name, sp=sp, dur=dur)}{Colors.END}"
                     )
@@ -359,8 +363,9 @@ class BattleSystem:
             action_type = random.choice(['attack', 'defend', 'heal'])
             if action_type == 'attack' and comp_data.get('attack_bonus',
                                                          0) > 0:
-                companion_damage = int(self.game.player.get_effective_attack() *
-                                       0.6 + comp_data.get('attack_bonus', 0))
+                companion_damage = int(
+                    self.game.player.get_effective_attack() * 0.6 +
+                    comp_data.get('attack_bonus', 0))
                 actual_damage = enemy.take_damage(companion_damage)
                 print(
                     f"{Colors.CYAN}{self.lang.get('companion_attack_msg', '{comp_name} attacks for {damage} damage!').format(comp_name=comp_name, damage=actual_damage)}{Colors.END}"
@@ -443,7 +448,8 @@ class BattleSystem:
                     print(
                         f"{Colors.YELLOW}{self.lang.get('stun_msg', 'You are stunned and skip your next turn!')}{Colors.END}"
                     )
-                    self.game.player.apply_buff("Stunned", 1, {"speed_bonus": -999})
+                    self.game.player.apply_buff("Stunned", 1,
+                                                {"speed_bonus": -999})
 
                 if 'heal_amount' in ability:
                     heal = ability['heal_amount']

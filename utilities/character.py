@@ -7,6 +7,7 @@ import json
 import uuid
 from typing import Dict, List, Any, Optional
 
+
 class Character:
     """Player character class"""
 
@@ -21,9 +22,12 @@ class Character:
         self.uuid = player_uuid or str(uuid.uuid4())
 
         if lang is None:
+
             class MockLangCharacterAttr:
+
                 def get(self, key, default=None, **kwargs):
                     return key
+
             self.lang = MockLangCharacterAttr()
         else:
             self.lang = lang
@@ -83,18 +87,33 @@ class Character:
         self.companions: List[Dict[str, Any]] = []
         self.active_buffs: List[Dict[str, Any]] = []
         self.bosses_killed: Dict[str, str] = {}
-        
+
         # Housing and Building
         self.housing_owned: List[str] = []
         self.comfort_points: int = 0
         self.building_slots: Dict[str, Optional[str]] = {
-            "house_1": None, "house_2": None, "house_3": None,
-            "decoration_1": None, "decoration_2": None, "decoration_3": None,
-            "decoration_4": None, "decoration_5": None, "decoration_6": None,
-            "decoration_7": None, "decoration_8": None, "decoration_9": None,
-            "decoration_10": None, "fencing_1": None, "garden_1": None,
-            "garden_2": None, "garden_3": None, "farm_1": None, "farm_2": None,
-            "training_place_1": None, "training_place_2": None, "training_place_3": None,
+            "house_1": None,
+            "house_2": None,
+            "house_3": None,
+            "decoration_1": None,
+            "decoration_2": None,
+            "decoration_3": None,
+            "decoration_4": None,
+            "decoration_5": None,
+            "decoration_6": None,
+            "decoration_7": None,
+            "decoration_8": None,
+            "decoration_9": None,
+            "decoration_10": None,
+            "fencing_1": None,
+            "garden_1": None,
+            "garden_2": None,
+            "garden_3": None,
+            "farm_1": None,
+            "farm_2": None,
+            "training_place_1": None,
+            "training_place_2": None,
+            "training_place_3": None,
         }
         self.farm_plots: Dict[str, List[Dict[str, Any]]] = {
             "farm_1": [],
@@ -174,7 +193,8 @@ class Character:
                 use = min(avail, remaining)
                 remaining -= use
                 mods['absorb_amount'] = avail - use
-                if all((not isinstance(v, (int, float)) or v == 0) for v in mods.values()):
+                if all((not isinstance(v, (int, float)) or v == 0)
+                       for v in mods.values()):
                     try:
                         self.active_buffs.remove(b)
                     except ValueError:
@@ -211,17 +231,28 @@ class Character:
 
     def _update_rank(self):
         """Simple rank tiers based on level"""
-        if self.level >= 100: self.rank = "SSR tier adventurer"
-        elif self.level >= 90: self.rank = "SR tier adventurer"
-        elif self.level >= 80: self.rank = "SSS tier adventurer"
-        elif self.level >= 70: self.rank = "SS tier adventurer"
-        elif self.level >= 50: self.rank = "S tier adventurer"
-        elif self.level >= 30: self.rank = "A tier adventurer"
-        elif self.level >= 20: self.rank = "B tier adventurer"
-        elif self.level >= 15: self.rank = "C tier adventurer"
-        elif self.level >= 10: self.rank = "D tier adventurer"
-        elif self.level >= 5: self.rank = "E tier adventurer"
-        else: self.rank = "F tier adventurer"
+        if self.level >= 100:
+            self.rank = "SSR tier adventurer"
+        elif self.level >= 90:
+            self.rank = "SR tier adventurer"
+        elif self.level >= 80:
+            self.rank = "SSS tier adventurer"
+        elif self.level >= 70:
+            self.rank = "SS tier adventurer"
+        elif self.level >= 50:
+            self.rank = "S tier adventurer"
+        elif self.level >= 30:
+            self.rank = "A tier adventurer"
+        elif self.level >= 20:
+            self.rank = "B tier adventurer"
+        elif self.level >= 15:
+            self.rank = "C tier adventurer"
+        elif self.level >= 10:
+            self.rank = "D tier adventurer"
+        elif self.level >= 5:
+            self.rank = "E tier adventurer"
+        else:
+            self.rank = "F tier adventurer"
 
     def get_time_period(self) -> str:
         """Get current time period"""
@@ -243,14 +274,16 @@ class Character:
     def get_weather_description(self, language_manager: Any) -> str:
         """Get translated weather description"""
         weather_info = self.weather_data.get(self.current_weather, {})
-        desc_key = weather_info.get("description", f"weather_{self.current_weather}_desc")
+        desc_key = weather_info.get("description",
+                                    f"weather_{self.current_weather}_desc")
         is_night = self.hour < 6 or self.hour >= 18
         if is_night:
             night_desc_key = f"{desc_key}_night"
             description = language_manager.get(night_desc_key)
             if description != night_desc_key:
                 return description
-        return language_manager.get(desc_key, self.current_weather.capitalize())
+        return language_manager.get(desc_key,
+                                    self.current_weather.capitalize())
 
     def advance_time(self, minutes: float = 10.0):
         """Advance game time"""
@@ -262,35 +295,55 @@ class Character:
 
     def get_effective_attack(self) -> int:
         """Calculate attack with all bonuses"""
-        bonus = sum(b.get('modifiers', {}).get('attack_bonus', 0) for b in self.active_buffs)
+        bonus = sum(
+            b.get('modifiers', {}).get('attack_bonus', 0)
+            for b in self.active_buffs)
         pet_boost = self.get_pet_boost('attack')
         return int((self.attack + bonus) * (1.0 + pet_boost))
 
     def get_effective_defense(self) -> int:
         """Calculate defense with all bonuses"""
-        bonus = sum(b.get('modifiers', {}).get('defense_bonus', 0) for b in self.active_buffs)
+        bonus = sum(
+            b.get('modifiers', {}).get('defense_bonus', 0)
+            for b in self.active_buffs)
         pet_boost = self.get_pet_boost('defense')
         base_def = (self.defense + bonus) * (1.0 + pet_boost)
         return int(base_def * 1.5) if self.defending else int(base_def)
 
+    def get_effective_speed(self) -> int:
+        """Calculate speed with all bonuses"""
+        bonus = sum(
+            b.get('modifiers', {}).get('speed_bonus', 0)
+            for b in self.active_buffs)
+        pet_boost = self.get_pet_boost('speed')
+        return int((self.speed + bonus) * (1.0 + pet_boost))
+
     def display_stats(self):
         """Display character stats"""
         from main import Colors, create_hp_mp_bar
-        print(f"\n{Colors.wrap(f'--- {self.name} ({self.character_class}) ---', Colors.CYAN)}")
+        print(
+            f"\n{Colors.wrap(f'--- {self.name} ({self.character_class}) ---', Colors.CYAN)}"
+        )
         print(f"Level: {self.level} ({self.rank})")
         print(f"HP: {create_hp_mp_bar(self.hp, self.max_hp, 20, Colors.RED)}")
         print(f"MP: {create_hp_mp_bar(self.mp, self.max_mp, 20, Colors.BLUE)}")
-        print(f"EXP: {create_hp_mp_bar(self.experience, self.experience_to_next, 20, Colors.GREEN)}")
+        print(
+            f"EXP: {create_hp_mp_bar(self.experience, self.experience_to_next, 20, Colors.GREEN)}"
+        )
         print(f"Gold: {Colors.wrap(str(self.gold), Colors.GOLD)}")
         print(f"Attack: {self.get_effective_attack()} (Base: {self.attack})")
-        print(f"Defense: {self.get_effective_defense()} (Base: {self.defense})")
+        print(
+            f"Defense: {self.get_effective_defense()} (Base: {self.defense})")
         print(f"Speed: {self.get_effective_speed()} (Base: {self.speed})")
         if self.equipment:
             print("\nEquipment:")
             for slot, item in self.equipment.items():
                 print(f"  {slot.replace('_', ' ').title()}: {item or 'None'}")
 
-    def update_stats_from_equipment(self, items_data: Dict[str, Any], companions_data: Optional[Dict[str, Any]] = None):
+    def update_stats_from_equipment(
+            self,
+            items_data: Dict[str, Any],
+            companions_data: Optional[Dict[str, Any]] = None):
         """Update character stats based on current equipment and companions"""
         self.attack = self.base_attack
         self.defense = self.base_defense
@@ -310,8 +363,10 @@ class Character:
 
         if companions_data and self.companions:
             for companion in self.companions:
-                comp_name = companion.get('name') if isinstance(companion, dict) else companion
-                comp_data = next((c for c in companions_data.values() if c.get('name') == comp_name), None)
+                comp_name = companion.get('name') if isinstance(
+                    companion, dict) else companion
+                comp_data = next((c for c in companions_data.values()
+                                  if c.get('name') == comp_name), None)
                 if comp_data:
                     self.attack += comp_data.get("attack_bonus", 0)
                     self.defense += comp_data.get("defense_bonus", 0)
