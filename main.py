@@ -328,6 +328,8 @@ class Boss(Enemy):
         super().__init__(boss_data)
         self.dialogues = dialogues_data.get(boss_data.get("name", ""), {})
         self.loot_table = boss_data.get("loot_table", [])
+        self.description = boss_data.get("description", "A powerful foe.")
+        self.experience_reward = boss_data.get("experience_reward", boss_data.get("exp_reward", 100))
 
     def get_dialogue(self, key: str) -> Optional[str]:
         return self.dialogues.get(key)

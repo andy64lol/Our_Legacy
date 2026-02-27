@@ -293,6 +293,15 @@ class Character:
             self.hour -= 24
             self.day += 1
 
+    def update_weather(self, area_data: Dict[str, Any]):
+        """Update current weather based on area data and probabilities."""
+        import random
+        weather_chances = area_data.get("weather_chances", {"sunny": 1.0})
+        weathers = list(weather_chances.keys())
+        weights = list(weather_chances.values())
+        if weathers:
+            self.current_weather = random.choices(weathers, weights=weights, k=1)[0]
+
     def get_effective_attack(self) -> int:
         """Calculate attack with all bonuses"""
         bonus = sum(
