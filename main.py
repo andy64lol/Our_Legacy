@@ -22,17 +22,7 @@ from utilities.spellcasting import SpellCastingSystem
 from utilities.save_load import SaveLoadSystem
 from utilities.market import MarketAPI
 from utilities.language import LanguageManager
-try:
-    import requests
-    REQUESTS_AVAILABLE = True
-except ImportError:
-    REQUESTS_AVAILABLE = False
-
-# Optional readline for tab-completion (best-effort)
-try:
-    import readline
-except Exception:
-    readline = None
+import readline
 
 # Global color toggle
 COLORS_ENABLED = True
@@ -385,8 +375,7 @@ class Game:
         self.mod_manager = ModManager(lang=self.lang)
 
         # Initialize Market API with translation support
-        self.market_api = MarketAPI(lang=self.lang,
-                                    colors=Colors)
+        self.market_api = MarketAPI(lang=self.lang, colors=Colors)
 
         # Load game data
         self.load_game_data()
