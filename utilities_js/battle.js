@@ -84,27 +84,27 @@ export class BattleSystem {
 
     while (this.player.isAlive() && enemy.isAlive()) {
       if (playerFirst) {
-        const continueBattle = await this.player_turn(enemy);
+        const continueBattle = await this.playerTurn(enemy);
         if (!continueBattle) {
           playerFled = true;
           break;
         }
         if (enemy.isAlive() && this.player.companions) {
-          this.companions_act(enemy);
+          this.companionsAct(enemy);
         }
         if (enemy.isAlive()) {
-          this.enemy_turn(enemy);
+          this.enemyTurn(enemy);
         }
       } else {
-        this.enemy_turn(enemy);
+        this.enemyTurn(enemy);
         if (this.player.isAlive()) {
-          const continueBattle = await this.player_turn(enemy);
+          const continueBattle = await this.playerTurn(enemy);
           if (!continueBattle) {
             playerFled = true;
             break;
           }
           if (enemy.isAlive() && this.player.companions) {
-            this.companions_act(enemy);
+            this.companionsAct(enemy);
           }
         }
       }
@@ -216,7 +216,7 @@ export class BattleSystem {
    * @param {Object} enemy - The enemy being fought
    * @returns {Promise<boolean>} True to continue battle, false if fled
    */
-  async player_turn(enemy) {
+  async playerTurn(enemy) {
     if (!this.player) {
       return true;
     }
@@ -282,7 +282,7 @@ export class BattleSystem {
    * @param {Object|string} companion - Companion data or name
    * @param {Object} enemy - The enemy being fought
    */
-  companion_action_for(companion, enemy) {
+  companionActionFor(companion, enemy) {
     if (!this.player) {
       return;
     }
@@ -400,7 +400,7 @@ export class BattleSystem {
    * Each companion has a chance to act on their own each turn
    * @param {Object} enemy - The enemy being fought
    */
-  companions_act(enemy) {
+  companionsAct(enemy) {
     if (!this.player) {
       return;
     }
@@ -410,7 +410,7 @@ export class BattleSystem {
         chance = companion.actionChance || 0.5;
       }
       if (Math.random() < chance) {
-        this.companion_action_for(companion, enemy);
+        this.companionActionFor(companion, enemy);
       }
     }
   }
@@ -419,7 +419,7 @@ export class BattleSystem {
    * Enemy's turn in battle
    * @param {Object} enemy - The enemy taking their turn
    */
-  enemy_turn(enemy) {
+  enemyTurn(enemy) {
     if (!this.player) {
       return;
     }

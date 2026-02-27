@@ -29,7 +29,7 @@ export class SpellCastingSystem {
    * @param {string} weaponName - The weapon name to check
    * @returns {Array} Array of [spellName, spellData] tuples
    */
-  get_available_spells(weaponName) {
+  getAvailableSpells(weaponName) {
     if (!weaponName) {
       return [];
     }
@@ -49,7 +49,7 @@ export class SpellCastingSystem {
    * @param {string} weaponName - The weapon name to check
    * @returns {boolean} True if weapon can cast spells
    */
-  can_cast_spells(weaponName) {
+  canCastSpells(weaponName) {
     if (!weaponName) return false;
     const weaponData = this.itemsData[weaponName] || {};
     return Boolean(weaponData.magicWeapon || weaponData.magic_weapon);
@@ -62,7 +62,7 @@ export class SpellCastingSystem {
    * @param {Object} spellData - The spell data
    * @returns {Object} Result of the spell cast
    */
-  cast_spell(enemy, spellName, spellData) {
+  castSpell(enemy, spellName, spellData) {
     if (!this.player) {
       return { success: false, error: 'No player' };
     }
@@ -82,16 +82,16 @@ export class SpellCastingSystem {
 
     switch (spellType) {
       case 'damage':
-        this._cast_damage_spell(enemy, spellName, spellData, result);
+        this._castDamageSpell(enemy, spellName, spellData, result);
         break;
       case 'heal':
-        this._cast_heal_spell(spellName, spellData, result);
+        this._castHealSpell(spellName, spellData, result);
         break;
       case 'buff':
-        this._cast_buff_spell(spellName, spellData, result);
+        this._castBuffSpell(spellName, spellData, result);
         break;
       case 'debuff':
-        this._cast_debuff_spell(enemy, spellName, spellData, result);
+        this._castDebuffSpell(enemy, spellName, spellData, result);
         break;
       default:
         console.log(`Unknown spell type: ${spellType}`);
@@ -116,7 +116,7 @@ export class SpellCastingSystem {
    * Cast a damage spell
    * @private
    */
-  _cast_damage_spell(enemy, spellName, spellData, result) {
+  _castDamageSpell(enemy, spellName, spellData, result) {
     const power = spellData.power || 0;
     const baseDamage = power + Math.floor(this.player.getEffectiveAttack() / 2);
     
@@ -162,7 +162,7 @@ export class SpellCastingSystem {
    * Cast a heal spell
    * @private
    */
-  _cast_heal_spell(spellName, spellData, result) {
+  _castHealSpell(spellName, spellData, result) {
     const healAmount = spellData.power || 0;
     const oldHp = this.player.hp;
     this.player.heal(healAmount);
@@ -185,7 +185,7 @@ export class SpellCastingSystem {
    * Cast a buff spell
    * @private
    */
-  _cast_buff_spell(spellName, spellData, result) {
+  _castBuffSpell(spellName, spellData, result) {
     const power = spellData.power || 0;
     const effects = spellData.effects || [];
 
@@ -229,7 +229,7 @@ export class SpellCastingSystem {
    * Cast a debuff spell
    * @private
    */
-  _cast_debuff_spell(enemy, spellName, spellData, result) {
+  _castDebuffSpell(enemy, spellName, spellData, result) {
     const power = spellData.power || 0;
     const effects = spellData.effects || [];
 
@@ -258,8 +258,8 @@ export class SpellCastingSystem {
    * @param {string} weaponName - The weapon to get spells for
    * @returns {Promise<Object|null>} Selected spell or null if cancelled
    */
-  async select_spell(weaponName) {
-    const available = this.get_available_spells(weaponName);
+  async selectSpell(weaponName) {
+    const available = this.getAvailableSpells(weaponName);
     
     if (available.length === 0) {
       console.log(this.lang.get("no_spells_available", "No spells available for this weapon."));

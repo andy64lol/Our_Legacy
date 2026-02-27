@@ -367,7 +367,7 @@ export class SaveLoadSystem {
    * @returns {Object} Object with save keys and data
    * @private
    */
-  _get_all_saves() {
+  _getAllSaves() {
     try {
       const saved = localStorage.getItem(this.storageKey);
       return saved ? JSON.parse(saved) : {};
@@ -383,7 +383,7 @@ export class SaveLoadSystem {
    * @returns {boolean} True if deletion was successful
    */
   delete_save(saveKey) {
-    const saves = this._get_all_saves();
+    const saves = this._getAllSaves();
     if (saves[saveKey]) {
       delete saves[saveKey];
       try {
@@ -403,7 +403,7 @@ export class SaveLoadSystem {
    * @returns {string[]} Array of save keys
    */
   list_saves() {
-    return Object.keys(this._get_all_saves());
+    return Object.keys(this._getAllSaves());
   }
 
   /**
@@ -412,7 +412,7 @@ export class SaveLoadSystem {
    * @returns {string|null} JSON string or null if save not found
    */
   export_save_to_json(saveKey) {
-    const saves = this._get_all_saves();
+    const saves = this._getAllSaves();
     if (saves[saveKey]) {
       return JSON.stringify(saves[saveKey], null, 2);
     }
@@ -428,7 +428,7 @@ export class SaveLoadSystem {
   import_save_from_json(saveKey, jsonData) {
     try {
       const saveData = JSON.parse(jsonData);
-      const saves = this._get_all_saves();
+      const saves = this._getAllSaves();
       saves[saveKey] = saveData;
       localStorage.setItem(this.storageKey, JSON.stringify(saves));
       return true;
