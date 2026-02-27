@@ -1763,6 +1763,13 @@ class Game:
             print(self.lang.get("mission_already_accepted"))
             time.sleep(1)
 
+    def display_player_stats(self):
+        """Display current player stats"""
+        if self.player:
+            self.player.display_stats()
+        else:
+            print(self.lang.get("no_player_to_display", "No player character created yet."))
+
     def update_mission_progress(self,
                                 update_type: str,
                                 target: str,

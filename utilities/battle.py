@@ -54,7 +54,7 @@ class BattleSystem:
 
         while self.game.player.is_alive() and enemy.is_alive():
             if player_first:
-                if not self.game.player_turn(enemy):
+                if not self.player_turn(enemy):
                     player_fled = True
                     break
                 if enemy.is_alive() and self.game.player.companions:
@@ -64,7 +64,7 @@ class BattleSystem:
             else:
                 self.enemy_turn(enemy)
                 if self.game.player.is_alive():
-                    if not self.game.player_turn(enemy):
+                    if not self.player_turn(enemy):
                         player_fled = True
                         break
                     if enemy.is_alive() and self.game.player.companions:
@@ -98,7 +98,7 @@ class BattleSystem:
 
             if self.game.player.tick_buffs():
                 self.game.player.update_stats_from_equipment(
-                    self.items_data, self.companions_data)
+                    self.game.items_data, self.game.companions_data)
 
         if player_fled:
             print(
@@ -222,7 +222,10 @@ class BattleSystem:
         elif choice == "2":
             self.game.use_item_in_battle()
         elif choice == "5" and can_cast:
-            self.game.cast_spell(enemy, weapon_name)
+            spell = self.game.spell_casting_system.select_spell(weapon_name)
+            if spell:
+                sname, sdata = spell
+                self.game.spell_casting_system.cast_spell(enemy, sname, sdata)
         elif choice == "3":
             print(
                 Colors.wrap(self.lang.get("you_defend", "You defend!"),

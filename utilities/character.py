@@ -273,8 +273,64 @@ class Character:
         base_def = (self.defense + bonus) * (1.0 + pet_boost)
         return int(base_def * 1.5) if self.defending else int(base_def)
 
-    def get_effective_speed(self) -> int:
-        """Calculate speed with all bonuses"""
-        bonus = sum(b.get('modifiers', {}).get('speed_bonus', 0) for b in self.active_buffs)
-        pet_boost = self.get_pet_boost('speed')
-        return int((self.speed + bonus) * (1.0 + pet_boost))
+    def display_stats(self):
+        """Display character stats"""
+        from main import Colors, create_hp_mp_bar
+        print(f"\n{Colors.wrap(f'--- {self.name} ({self.character_class}) ---', Colors.CYAN)}")
+        print(f"Level: {self.level} ({self.rank})")
+        print(f"HP: {create_hp_mp_bar(self.hp, self.max_hp, 20, Colors.RED)}")
+        print(f"MP: {create_hp_mp_bar(self.mp, self.max_mp, 20, Colors.BLUE)}")
+        print(f"EXP: {create_hp_mp_bar(self.experience, self.experience_to_next, 20, Colors.GREEN)}")
+        print(f"Gold: {Colors.wrap(str(self.gold), Colors.GOLD)}")
+        print(f"Attack: {self.get_effective_attack()} (Base: {self.attack})")
+        print(f"Defense: {self.get_effective_defense()} (Base: {self.defense})")
+        print(f"Speed: {self.get_effective_speed()} (Base: {self.speed})")
+        if self.equipment:
+            print("\nEquipment:")
+            for slot, item in self.equipment.items():
+                print(f"  {slot.replace('_', ' ').title()}: {item or 'None'}")
+
+    def update_stats_from_equipment(self, items_data: Dict[str, Any], companions_data: Optional[Dict[str, Any]] = None):
+        """Update character stats based on current equipment and companions"""
+        self.attack = self.base_attack
+        self.defense = self.base_defense
+        self.speed = self.base_speed
+        self.max_hp = self.base_max_hp
+        self.max_mp = self.base_max_mp
+
+        for slot, item_name in self.equipment.items():
+            if item_name and item_name in items_data:
+                item = items_data[item_name]
+                stats = item.get("stats", {})
+                self.attack += stats.get("attack", 0)
+                self.defense += stats.get("defense", 0)
+                self.speed += stats.get("speed", 0)
+                self.max_hp += stats.get("hp", 0)
+                self.max_mp += stats.get("mp", 0)
+
+        if companions_data and self.companions:
+            for companion in self.companions:
+                comp_name = companion.get('name') if isinstance(companion, dict) else companion
+                comp_data = next((c for c in companions_data.values() if c.get('name') == comp_name), None)
+                if comp_data:
+                    self.attack += comp_data.get("attack_bonus", 0)
+                    self.defense += comp_data.get("defense_bonus", 0)
+                    self.speed += comp_data.get("speed_bonus", 0)
+
+    def apply_buff(self, name: str, duration: int, modifiers: Dict[str, Any]):
+        """Apply a buff to the character"""
+        self.active_buffs.append({
+            "name": name,
+            "duration": duration,
+            "modifiers": modifiers
+        })
+
+    def tick_buffs(self) -> bool:
+        """Tick active buffs, return True if any expired or changed stats"""
+        changed = False
+        for buff in list(self.active_buffs):
+            buff["duration"] -= 1
+            if buff["duration"] <= 0:
+                self.active_buffs.remove(buff)
+                changed = True
+        return changed

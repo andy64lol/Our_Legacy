@@ -142,7 +142,7 @@ class SaveLoadSystem:
                                 error=e))
 
     def _load_save_data_internal(self, save_data: Dict[str, Any]):
-        from main import Character
+        from utilities.character import Character
         save_version = save_data.get("save_version", "1.0")
         player_data = save_data["player"]
 
