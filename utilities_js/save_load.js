@@ -171,10 +171,12 @@ export class SaveLoadSystem {
     const playerData = saveData.player;
 
     // Create new character
-    this.game.player = this.game.createCharacter(
+    this.game.player = new this.game.CharacterClass(
       playerData.name,
       playerData.characterClass,
-      playerData.uuid
+      this.game.classesData,
+      playerData.uuid,
+      this.game.lang
     );
 
     const p = this.game.player;

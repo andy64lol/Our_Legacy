@@ -13,8 +13,15 @@ class LanguageManager {
         this.getSetting = getSettingFunc;
         this.setSetting = setSettingFunc;
         this.currentLanguage = getSettingFunc ? getSettingFunc("language", "en") : "en";
-        this.load_config();
-        this.load_translations();
+        this.init();
+    }
+
+    /**
+     * Initialize language manager
+     */
+    async init() {
+        await this.load_config();
+        await this.load_translations();
     }
 
     /**
@@ -39,6 +46,10 @@ class LanguageManager {
                 "overwrite_save_files": true
             };
         }
+    }
+
+    async changeLanguage(langCode) {
+        return await this.change_language(langCode);
     }
 
     /**

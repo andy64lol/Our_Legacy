@@ -269,29 +269,36 @@ export class SpellCastingSystem {
     let page = 0;
     const perPage = 10;
 
-    this.game.print(`\n=== SPELLS (Page ${page + 1}/${totalPages}) ===`);
-    this.game.print(`MP: ${this.player.mp}/${this.player.maxMp}\n`);
+    while (true) {
+      const totalPages = Math.ceil(available.length / perPage);
+      const start = page * perPage;
+      const currentSpells = available.slice(start, start + perPage);
 
-    for (let i = 0; i < currentSpells.length; i++) {
-      const [sname, sdata] = currentSpells[i];
-      const cost = sdata.mpCost || sdata.mp_cost || 0;
-      this.game.print(`${i + 1}. ${sname} - Cost: ${cost} MP`);
-      this.game.print(`   ${sdata.description || ''}`);
-    }
+      this.game.print(`\n=== SPELLS (Page ${page + 1}/${totalPages}) ===`);
+      this.game.print(`MP: ${this.player.mp}/${this.player.maxMp}\n`);
 
-    this.game.print("\nOptions:");
-    if (totalPages > 1) {
-      if (page > 0) this.game.print("P. Previous Page");
-      if (page < totalPages - 1) this.game.print("N. Next Page");
-    }
-    this.game.print(`1-${currentSpells.length}. Cast Spell`);
-    this.game.print("B. Back");
+      for (let i = 0; i < currentSpells.length; i++) {
+        const [sname, sdata] = currentSpells[i];
+        const cost = sdata.mpCost || sdata.mp_cost || 0;
+        this.game.print(`${i + 1}. ${sname} - Cost: ${cost} MP`);
+        this.game.print(`   ${sdata.description || ''}`);
+      }
 
-    // In browser, this would use a prompt or UI element
-    const choice = await this.game.ask("Choose an option: ");
+      this.game.print("\nOptions:");
+      if (totalPages > 1) {
+        if (page > 0) this.game.print("P. Previous Page");
+        if (page < totalPages - 1) this.game.print("N. Next Page");
+      }
+      this.game.print(`1-${currentSpells.length}. Cast Spell`);
+      this.game.print("B. Back");
+
+      // In browser, this would use a prompt or UI element
+      const choice = await this.game.ask("Choose an option: ");
+      if (!choice) return null;
+      
       const upperChoice = choice.toUpperCase();
 
-      if (upperChoice === 'B' || !choice) {
+      if (upperChoice === 'B') {
         return null;
       } else if (upperChoice === 'N' && page < totalPages - 1) {
         page++;

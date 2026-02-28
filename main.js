@@ -110,6 +110,11 @@ export class Game {
         await this.loadGameData();
         this.loadConfig();
         
+        // Expose classes for SaveLoadSystem
+        this.CharacterClass = Character;
+        this.EnemyClass = Enemy;
+        this.BossClass = Boss;
+
         // Initialize systems that need game instance
         this.battleSystem = new BattleSystem(this);
         this.spellCastingSystem = new SpellCastingSystem(this);
@@ -523,7 +528,7 @@ export class Game {
         this.print(`\n=== ${this.player.name} - Level ${this.player.level} ${this.player.rank} ===`);
         this.print(`HP: ${this.player.hp}/${this.player.maxHp}`);
         this.print(`MP: ${this.player.mp}/${this.player.maxMp}`);
-        this.print(`Attack: ${this.player.attack} | Defense: ${this.player.defense} | Speed: ${this.player.speed}`);
+        this.print(`Attack: ${this.player.getEffectiveAttack()} | Defense: ${this.player.getEffectiveDefense()} | Speed: ${this.player.getEffectiveSpeed()}`);
         this.print(`Gold: ${this.player.gold}`);
         this.print(`Level: ${this.player.level} | XP: ${this.player.experience}/${this.player.experienceToNext}`);
     }
@@ -628,21 +633,21 @@ export class Game {
             case "10": await this.manageCompanions(); break;
             case "11":
                 if (this.currentArea === "your_land") {
-                    await this.petShop();
+                    if (typeof this.petShop === 'function') await this.petShop();
                 } else {
-                    await this.saveGame();
+                    await this.saveLoadSystem.save_game();
                 }
                 break;
             case "12":
                 if (this.currentArea === "your_land") {
-                    await this.buildHome();
+                    if (typeof this.buildHome === 'function') await this.buildHome();
                 } else {
-                    await this.loadGame();
+                    await this.saveLoadSystem.load_game();
                 }
                 break;
             case "13":
                 if (this.currentArea === "your_land") {
-                    await this.saveGame();
+                    await this.saveLoadSystem.save_game();
                 } else {
                     this.print(this.lang.get('thank_exit', 'Thanks for playing!'));
                     return;
@@ -650,7 +655,7 @@ export class Game {
                 break;
             case "14":
                 if (this.currentArea === "your_land") {
-                    await this.loadGame();
+                    await this.saveLoadSystem.load_game();
                 }
                 break;
             case "15":
@@ -1331,32 +1336,17 @@ export class Game {
      * Load a saved game
      */
     async loadGame() {
-        this.print("\nLoading game...");
-        const saveData = await this.saveLoadSystem.load_game();
-        
-        if (saveData) {
-            this.player = saveData.player;
-            this.currentArea = saveData.currentArea || "starting_village";
-            this.print(`Game loaded successfully! Welcome back, ${this.player.name}!`);
+        if (this.saveLoadSystem) {
+            return await this.saveLoadSystem.load_game();
         }
     }
-    
+
     /**
      * Save the current game
      */
     async saveGame() {
-        if (!this.player) {
-            this.print(this.lang.get('no_character', 'No character'));
-            return;
-        }
-        
-        this.print("\nSaving game...");
-        const success = await this.saveLoadSystem.save_game();
-        
-        if (success) {
-            this.print(`Game saved successfully!`);
-        } else {
-            this.print(`Failed to save game`);
+        if (this.saveLoadSystem) {
+            return await this.saveLoadSystem.save_game();
         }
     }
     

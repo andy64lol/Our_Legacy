@@ -159,8 +159,8 @@ export class BattleSystem {
         this.game.print(this.lang.get('stormy_weather_bonus', 'Stormy weather bonus: +20% Gold (hazardous conditions)!'));
       }
 
-      this.game.print(this.lang.get('gain_exp_msg', 'Gained {exp_reward} experience').replace('{exp_reward}', expReward).replace('{Colors.MAGENTA}', '').replace('{Colors.END}', ''));
-      this.game.print(this.lang.get('gain_gold_msg', 'Gained {gold_reward} gold').replace('{gold_reward}', goldReward).replace('{Colors.GOLD}', '').replace('{Colors.END}', ''));
+      this.game.print(this.lang.get('gain_exp_msg', 'Gained {exp_reward} experience', {exp_reward: expReward}));
+      this.game.print(this.lang.get('gain_gold_msg', 'Gained {gold_reward} gold', {gold_reward: goldReward}));
 
       this.player.gainExperience(expReward);
       this.player.gold += goldReward;

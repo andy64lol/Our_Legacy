@@ -48,25 +48,23 @@ export class Character {
       this.classData = classesData[characterClass];
       const stats = this.classData.base_stats || {};
       this.levelUpBonuses = this.classData.level_up_bonuses || {};
+      this.maxHp = stats.hp || 100;
+      this.hp = this.maxHp;
+      this.maxMp = stats.mp || 50;
+      this.mp = this.maxMp;
+      this.attack = stats.attack || 10;
+      this.defense = stats.defense || 8;
+      this.speed = stats.speed || 10;
     } else {
       // Fallback defaults
-      const defaultStats = {
-        hp: 100,
-        mp: 50,
-        attack: 10,
-        defense: 8,
-        speed: 10
-      };
-      var stats = defaultStats;
+      this.maxHp = 100;
+      this.hp = this.maxHp;
+      this.maxMp = 50;
+      this.mp = this.maxMp;
+      this.attack = 10;
+      this.defense = 8;
+      this.speed = 10;
     }
-
-    this.maxHp = stats.hp || 100;
-    this.hp = this.maxHp;
-    this.maxMp = stats.mp || 50;
-    this.mp = this.maxMp;
-    this.attack = stats.attack || 10;
-    this.defense = stats.defense || 8;
-    this.speed = stats.speed || 10;
     this.defending = false;
 
     // Equipment slots
