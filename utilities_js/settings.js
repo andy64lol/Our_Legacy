@@ -282,5 +282,3 @@ export class ModManager {
 }
 
 export const settingsManager = new SettingsManager();
-
-export { SettingsManager, ModManager, settingsManager };

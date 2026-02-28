@@ -515,6 +515,3 @@ export class BattleSystem {
     }
   }
 }
-
-export { BattleSystem, create_hp_mp_bar, create_boss_hp_bar };
-export default BattleSystem;

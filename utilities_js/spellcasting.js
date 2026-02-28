@@ -318,6 +318,3 @@ export class SpellCastingSystem {
     }
   }
 }
-
-export { SpellCastingSystem };
-export default SpellCastingSystem;
