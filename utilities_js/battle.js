@@ -76,8 +76,8 @@ export class BattleSystem {
       return;
     }
 
-    console.log(this.lang.get("n_battle"));
-    console.log(`VS ${enemy.name}`);
+    this.game.print(this.lang.get("n_battle"));
+    this.game.print(`VS ${enemy.name}`);
 
     let playerFled = false;
     const playerFirst = this.player.getEffectiveSpeed() >= enemy.speed;
@@ -120,15 +120,15 @@ export class BattleSystem {
         enemyHpBar = create_hp_mp_bar(enemy.hp, enemy.maxHp, 20, Colors.RED);
       }
 
-      console.log(`\n%c${this.player.name}%c`, Colors.BOLD, Colors.END);
-      console.log(`HP: ${playerHpBar} ${this.player.hp}/${this.player.maxHp}`);
-      console.log(`MP: ${playerMpBar} ${this.player.mp}/${this.player.maxMp}`);
+      this.game.print(`\n${this.player.name}`);
+      this.game.print(`HP: ${playerHpBar} ${this.player.hp}/${this.player.maxHp}`);
+      this.game.print(`MP: ${playerMpBar} ${this.player.mp}/${this.player.maxMp}`);
 
-      console.log(`\n%c${enemy.name}%c`, Colors.BOLD, Colors.END);
+      this.game.print(`\n${enemy.name}`);
       if (enemy.isBoss) {
-        console.log(enemyHpBar);
+        this.game.print(enemyHpBar);
       } else {
-        console.log(`HP: ${enemyHpBar} ${enemy.hp}/${enemy.maxHp}`);
+        this.game.print(`HP: ${enemyHpBar} ${enemy.hp}/${enemy.maxHp}`);
       }
 
       if (this.player.tickBuffs()) {
@@ -137,12 +137,12 @@ export class BattleSystem {
     }
 
     if (playerFled) {
-      console.log(this.lang.get("nyou_fled_from_the_battle", "You fled from the battle!"));
+      this.game.print(this.lang.get("nyou_fled_from_the_battle", "You fled from the battle!"));
       return;
     }
 
     if (this.player.isAlive()) {
-      console.log(`\n%c${this.lang.get('defeat_enemy_msg', 'You defeated the {enemy_name}!').replace('{enemy_name}', enemy.name)}%c`, Colors.GREEN, Colors.END);
+      this.game.print(`\n${this.lang.get('defeat_enemy_msg', 'You defeated the {enemy_name}!').replace('{enemy_name}', enemy.name)}`);
       
       if (enemy.isBoss) {
         this.player.bossesKilled[enemy.name] = new Date().toISOString();
@@ -153,14 +153,14 @@ export class BattleSystem {
 
       if (this.player.currentWeather === "sunny") {
         expReward = Math.floor(expReward * 1.1);
-        console.log(`%c${this.lang.get('sunny_weather_bonus', 'Sunny weather bonus: +10% EXP!')}%c`, Colors.YELLOW, Colors.END);
+        this.game.print(this.lang.get('sunny_weather_bonus', 'Sunny weather bonus: +10% EXP!'));
       } else if (this.player.currentWeather === "stormy") {
         goldReward = Math.floor(goldReward * 1.2);
-        console.log(`%c${this.lang.get('stormy_weather_bonus', 'Stormy weather bonus: +20% Gold (hazardous conditions)!')}%c`, Colors.CYAN, Colors.END);
+        this.game.print(this.lang.get('stormy_weather_bonus', 'Stormy weather bonus: +20% Gold (hazardous conditions)!'));
       }
 
-      console.log(this.lang.get('gain_exp_msg', 'Gained {exp_reward} experience').replace('{exp_reward}', expReward).replace('{Colors.MAGENTA}', '').replace('{Colors.END}', ''));
-      console.log(this.lang.get('gain_gold_msg', 'Gained {gold_reward} gold').replace('{gold_reward}', goldReward).replace('{Colors.GOLD}', '').replace('{Colors.END}', ''));
+      this.game.print(this.lang.get('gain_exp_msg', 'Gained {exp_reward} experience').replace('{exp_reward}', expReward).replace('{Colors.MAGENTA}', '').replace('{Colors.END}', ''));
+      this.game.print(this.lang.get('gain_gold_msg', 'Gained {gold_reward} gold').replace('{gold_reward}', goldReward).replace('{Colors.GOLD}', '').replace('{Colors.END}', ''));
 
       this.player.gainExperience(expReward);
       this.player.gold += goldReward;
@@ -170,7 +170,7 @@ export class BattleSystem {
       if (enemy.lootTable && Math.random() < 0.5) {
         const loot = enemy.lootTable[Math.floor(Math.random() * enemy.lootTable.length)];
         this.player.inventory.push(loot);
-        console.log(`%c${this.lang.get('loot_acquired_msg', 'Loot acquired: {loot}!').replace('{loot}', loot)}%c`, Colors.YELLOW, Colors.END);
+        this.game.print(this.lang.get('loot_acquired_msg', 'Loot acquired: {loot}!').replace('{loot}', loot));
         this.game.updateMissionProgress('collect', loot);
       }
 
@@ -197,16 +197,16 @@ export class BattleSystem {
             const amt = parseInt(compData.postBattleHeal) || 0;
             if (amt > 0) {
               this.player.heal(amt);
-              console.log(`%c${this.lang.get('companion_heal_msg', '{comp_name} restores {amt} HP after battle!').replace('{comp_name}', compData.name).replace('{amt}', amt)}%c`, Colors.GREEN, Colors.END);
+              this.game.print(this.lang.get('companion_heal_msg', '{comp_name} restores {amt} HP after battle!').replace('{comp_name}', compData.name).replace('{amt}', amt));
             }
           }
         }
       }
     } else {
-      console.log(`\n%c${this.lang.get('defeat_player_msg', 'You were defeated by the {enemy_name}...').replace('{enemy_name}', enemy.name)}%c`, Colors.RED, Colors.END);
+      this.game.print(`\n${this.lang.get('defeat_player_msg', 'You were defeated by the {enemy_name}...').replace('{enemy_name}', enemy.name)}`);
       this.player.hp = Math.floor(this.player.maxHp / 2);
       this.player.mp = Math.floor(this.player.maxMp / 2);
-      console.log(this.lang.get("respawn"));
+      this.game.print(this.lang.get("respawn"));
       this.game.currentArea = "starting_village";
     }
   }
@@ -221,17 +221,17 @@ export class BattleSystem {
       return true;
     }
 
-    console.log(this.lang.get("nyour_turn"));
-    console.log(`1. ${this.lang.get('attack')}`);
-    console.log(`2. ${this.lang.get('use_item')}`);
-    console.log(`3. ${this.lang.get('defend')}`);
-    console.log(`4. ${this.lang.get('flee')}`);
+    this.game.print(this.lang.get("nyour_turn"));
+    this.game.print(`1. ${this.lang.get('attack')}`);
+    this.game.print(`2. ${this.lang.get('use_item')}`);
+    this.game.print(`3. ${this.lang.get('defend')}`);
+    this.game.print(`4. ${this.lang.get('flee')}`);
 
     const weaponName = this.player.equipment?.weapon;
     const weaponData = weaponName ? this.itemsData[weaponName] : {};
     const canCast = Boolean(weaponData.magicWeapon);
     if (canCast) {
-      console.log(`5. ${this.lang.get('cast_spell')}`);
+      this.game.print(`5. ${this.lang.get('cast_spell')}`);
     }
 
     // In browser, we need to get input asynchronously
@@ -241,16 +241,16 @@ export class BattleSystem {
       const baseDamage = this.player.getEffectiveAttack();
       const roll = this.diceUtil.roll_1d(20);
       if (roll === 1) {
-        console.log(this.lang.get(`roll_1_meme_${Math.floor(Math.random() * 3) + 1}`));
+        this.game.print(this.lang.get(`roll_1_meme_${Math.floor(Math.random() * 3) + 1}`));
       } else if (roll === 20) {
-        console.log(this.lang.get(`roll_20_meme_${Math.floor(Math.random() * 3) + 1}`));
+        this.game.print(this.lang.get(`roll_20_meme_${Math.floor(Math.random() * 3) + 1}`));
       } else {
-        console.log(this.lang.get("roll_msg", { roll: roll }));
+        this.game.print(this.lang.get("roll_msg", { roll: roll }));
       }
 
       const damage = Math.floor(baseDamage * roll / 10);
       const actualDamage = enemy.takeDamage(damage);
-      console.log(this.lang.get("player_attack_msg", "You attack for {damage} damage!").replace("{damage}", actualDamage));
+      this.game.print(this.lang.get("player_attack_msg", "You attack for {damage} damage!").replace("{damage}", actualDamage));
     } else if (choice === "2") {
       await this.game.useItemInBattle();
     } else if (choice === "5" && canCast) {
@@ -259,19 +259,19 @@ export class BattleSystem {
         this.spellCasting.castSpell(enemy, selectedSpell.name, selectedSpell.data);
       }
     } else if (choice === "3") {
-      console.log(`%c${this.lang.get("you_defend", "You defend!")}%c`, Colors.BLUE, Colors.END);
+      this.game.print(this.lang.get("you_defend", "You defend!"));
       this.player.defending = true;
     } else if (choice === "4") {
       const fleeChance = this.player.getEffectiveSpeed() > enemy.speed ? 0.7 : 0.4;
       if (Math.random() < fleeChance) {
-        console.log(this.lang.get("you_successfully_fled", "You successfully fled!"));
+        this.game.print(this.lang.get("you_successfully_fled", "You successfully fled!"));
         return false;
       } else {
-        console.log(this.lang.get("failed_to_flee", "Failed to flee!"));
+        this.game.print(this.lang.get("failed_to_flee", "Failed to flee!"));
         return true;
       }
     } else {
-      console.log(this.lang.get("invalid_choice_turn_lost", "Invalid choice, turn lost!"));
+      this.game.print(this.lang.get("invalid_choice_turn_lost", "Invalid choice, turn lost!"));
     }
 
     return true;
@@ -339,29 +339,29 @@ export class BattleSystem {
         const bonus = parseInt(ability.attackBonus || ability.critDamageBonus || 0);
         const companionDamage = Math.floor(this.player.getEffectiveAttack() * 0.6 + (compData.attackBonus || 0) + bonus);
         const actualDamage = enemy.takeDamage(companionDamage);
-        console.log(`%c${this.lang.get('companion_ability_attack_msg', '{comp_name} uses {ability_name} for {damage} damage!').replace('{comp_name}', compName).replace('{ability_name}', ability.name).replace('{damage}', actualDamage)}%c`, Colors.CYAN, Colors.END);
+        this.game.print(this.lang.get('companion_ability_attack_msg', '{comp_name} uses {ability_name} for {damage} damage!').replace('{comp_name}', compName).replace('{ability_name}', ability.name).replace('{damage}', actualDamage));
       } else if (atype === 'taunt') {
         const dur = parseInt(ability.duration) || 1;
         const dbonus = parseInt(ability.defenseBonus || compData.defenseBonus || 0);
         this.player.applyBuff(ability.name, dur, { defenseBonus: dbonus });
-        console.log(`%c${this.lang.get('companion_taunt_msg', '{comp_name} uses {ability_name} and draws enemy attention!').replace('{comp_name}', compName).replace('{ability_name}', ability.name)}%c`, Colors.BLUE, Colors.END);
+        this.game.print(this.lang.get('companion_taunt_msg', '{comp_name} uses {ability_name} and draws enemy attention!').replace('{comp_name}', compName).replace('{ability_name}', ability.name));
       } else if (atype === 'heal') {
         const healAmt = parseInt(ability.healing || ability.heal || compData.healingBonus || 0) || 0;
         this.player.heal(healAmt);
-        console.log(`%c${this.lang.get('companion_ability_heal_msg', '{comp_name} uses {ability_name} and heals you for {heal_amt} HP!').replace('{comp_name}', compName).replace('{ability_name}', ability.name).replace('{heal_amt}', healAmt)}%c`, Colors.GREEN, Colors.END);
+        this.game.print(this.lang.get('companion_ability_heal_msg', '{comp_name} uses {ability_name} and heals you for {heal_amt} HP!').replace('{comp_name}', compName).replace('{ability_name}', ability.name).replace('{heal_amt}', healAmt));
       } else if (atype === 'mp_regen') {
         const dur = parseInt(ability.duration) || 3;
         const mpPer = parseInt(ability.mpPerTurn) || 0;
         if (mpPer > 0) {
           this.player.applyBuff(ability.name, dur, { mpPerTurn: mpPer });
-          console.log(`%c${this.lang.get('companion_mp_regen_msg', '{comp_name} grants {mp_per} MP/turn for {dur} turns!').replace('{comp_name}', compName).replace('{mp_per}', mpPer).replace('{dur}', dur)}%c`, Colors.CYAN, Colors.END);
+          this.game.print(this.lang.get('companion_mp_regen_msg', '{comp_name} grants {mp_per} MP/turn for {dur} turns!').replace('{comp_name}', compName).replace('{mp_per}', mpPer).replace('{dur}', dur));
         }
       } else if (atype === 'spell_power') {
         const dur = parseInt(ability.duration) || 3;
         const sp = parseInt(ability.spellPowerBonus) || 0;
         if (sp) {
           this.player.applyBuff(ability.name, dur, { spellPowerBonus: sp });
-          console.log(`%c${this.lang.get('companion_spell_power_msg', '{comp_name} increases spell power by {sp} for {dur} turns!').replace('{comp_name}', compName).replace('{sp}', sp).replace('{dur}', dur)}%c`, Colors.CYAN, Colors.END);
+          this.game.print(this.lang.get('companion_spell_power_msg', '{comp_name} increases spell power by {sp} for {dur} turns!').replace('{comp_name}', compName).replace('{sp}', sp).replace('{dur}', dur));
         }
       } else if (atype === 'party_buff') {
         const dur = parseInt(ability.duration) || 3;
@@ -373,7 +373,7 @@ export class BattleSystem {
         }
         if (Object.keys(mods).length > 0) {
           this.player.applyBuff(ability.name, dur, mods);
-          console.log(`%c${this.lang.get('companion_party_buff_msg', '{comp_name} uses {ability_name}, granting party buffs: {mods}!').replace('{comp_name}', compName).replace('{ability_name}', ability.name).replace('{mods}', JSON.stringify(mods))}%c`, Colors.CYAN, Colors.END);
+          this.game.print(this.lang.get('companion_party_buff_msg', '{comp_name} uses {ability_name}, granting party buffs: {mods}!').replace('{comp_name}', compName).replace('{ability_name}', ability.name).replace('{mods}', JSON.stringify(mods)));
         }
       }
       break;
@@ -384,13 +384,13 @@ export class BattleSystem {
       if (actionType === 'attack' && (compData.attackBonus || 0) > 0) {
         const companionDamage = Math.floor(this.player.getEffectiveAttack() * 0.6 + (compData.attackBonus || 0));
         const actualDamage = enemy.takeDamage(companionDamage);
-        console.log(`%c${this.lang.get('companion_attack_msg', '{comp_name} attacks for {damage} damage!').replace('{comp_name}', compName).replace('{damage}', actualDamage)}%c`, Colors.CYAN, Colors.END);
+        this.game.print(this.lang.get('companion_attack_msg', '{comp_name} attacks for {damage} damage!').replace('{comp_name}', compName).replace('{damage}', actualDamage));
       } else if (actionType === 'heal' && (compData.healingBonus || 0) > 0) {
         const healAmount = compData.healingBonus || 0;
         this.player.heal(healAmount);
-        console.log(`%c${this.lang.get('companion_heal_msg_simple', '{comp_name} heals you for {heal_amount} HP!').replace('{comp_name}', compName).replace('{heal_amount}', healAmount)}%c`, Colors.GREEN, Colors.END);
+        this.game.print(this.lang.get('companion_heal_msg_simple', '{comp_name} heals you for {heal_amount} HP!').replace('{comp_name}', compName).replace('{heal_amount}', healAmount));
       } else if (actionType === 'defend' && (compData.defenseBonus || 0) > 0) {
-        console.log(`%c${this.lang.get('companion_defend_msg', '{comp_name} helps you defend, reducing incoming damage!').replace('{comp_name}', compName)}%c`, Colors.BLUE, Colors.END);
+        this.game.print(this.lang.get('companion_defend_msg', '{comp_name} helps you defend, reducing incoming damage!').replace('{comp_name}', compName));
         this.player.defending = true;
       }
     }
@@ -444,8 +444,8 @@ export class BattleSystem {
 
       if (availableAbilities.length > 0 && Math.random() < 0.4) {
         const ability = availableAbilities[Math.floor(Math.random() * availableAbilities.length)];
-        console.log(`\n%c${this.lang.get('enemy_ability_msg', '{enemy_name} uses {ability_name}!').replace('{enemy_name}', enemy.name).replace('{ability_name}', ability.name)}%c`, Colors.RED, Colors.END);
-        console.log(`%c${ability.description}%c`, Colors.DARK_GRAY || 'color: #666', Colors.END);
+        this.game.print(`\n${this.lang.get('enemy_ability_msg', '{enemy_name} uses {ability_name}!').replace('{enemy_name}', enemy.name).replace('{ability_name}', ability.name)}`);
+        this.game.print(`${ability.description}`);
 
         enemy.mp -= ability.mpCost || 0;
         enemy.cooldowns[ability.name] = ability.cooldown || 0;
@@ -456,18 +456,18 @@ export class BattleSystem {
             dmg = Math.floor(dmg / 2);
           }
           const actual = this.player.takeDamage(dmg);
-          console.log(this.lang.get("enemy_ability_damage_msg", "It deals {damage} damage!").replace("{damage}", actual));
+          this.game.print(this.lang.get("enemy_ability_damage_msg", "It deals {damage} damage!").replace("{damage}", actual));
         }
 
         if (ability.stunChance && Math.random() < ability.stunChance) {
-          console.log(`%c${this.lang.get('stun_msg', 'You are stunned and skip your next turn!')}%c`, Colors.YELLOW, Colors.END);
+          this.game.print(this.lang.get('stun_msg', 'You are stunned and skip your next turn!'));
           this.player.applyBuff("Stunned", 1, { speedBonus: -999 });
         }
 
         if (ability.healAmount) {
           const heal = ability.healAmount;
           enemy.hp = Math.min(enemy.maxHp, enemy.hp + heal);
-          console.log(this.lang.get("enemy_heal_msg", "{enemy_name} heals for {heal} HP!").replace("{enemy_name}", enemy.name).replace("{heal}", heal));
+          this.game.print(this.lang.get("enemy_heal_msg", "{enemy_name} heals for {heal} HP!").replace("{enemy_name}", enemy.name).replace("{heal}", heal));
         }
         return;
       }
@@ -475,8 +475,8 @@ export class BattleSystem {
 
     const baseDamage = enemy.attack;
     const roll = this.diceUtil.roll_1d(Math.max(1, this.player.level));
-    console.log(this.lang.get("enemy_roll_msg", "{enemy_name} rolls the dice...").replace("{enemy_name}", enemy.name));
-    console.log(this.lang.get("enemy_rolled_val_msg", "{enemy_name} rolled a {roll}!").replace("{enemy_name}", enemy.name).replace("{roll}", roll));
+    this.game.print(this.lang.get("enemy_roll_msg", "{enemy_name} rolls the dice...").replace("{enemy_name}", enemy.name));
+    this.game.print(this.lang.get("enemy_rolled_val_msg", "{enemy_name} rolled a {roll}!").replace("{enemy_name}", enemy.name).replace("{roll}", roll));
 
     let damage = Math.floor(baseDamage * roll / 10);
     if (this.player.defending) {
@@ -485,7 +485,7 @@ export class BattleSystem {
     }
 
     const actualDamage = this.player.takeDamage(damage);
-    console.log(this.lang.get("enemy_attack_msg", "{enemy_name} attacks for {damage} damage!").replace("{enemy_name}", enemy.name).replace("{damage}", actualDamage));
+    this.game.print(this.lang.get("enemy_attack_msg", "{enemy_name} attacks for {damage} damage!").replace("{enemy_name}", enemy.name).replace("{damage}", actualDamage));
 
     if (this.player.companions) {
       let companionDefenseBonus = 0;
@@ -510,7 +510,7 @@ export class BattleSystem {
       if (companionDefenseBonus > 0) {
         const damageReduction = Math.floor(companionDefenseBonus * 0.5);
         this.player.heal(damageReduction);
-        console.log(`%c${this.lang.get('companions_mitigate_msg', 'Companions mitigate {damage} damage!').replace('{damage}', damageReduction)}%c`, Colors.BLUE, Colors.END);
+        this.game.print(this.lang.get('companions_mitigate_msg', 'Companions mitigate {damage} damage!').replace('{damage}', damageReduction));
       }
     }
   }

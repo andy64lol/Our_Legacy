@@ -53,7 +53,7 @@ class MarketAPI {
     async fetchMarketData(forceRefresh = false) {
         // Check cache validity
         if (!forceRefresh && this.isCacheValid()) {
-            console.log(`${this.Colors.CYAN}${this.lang.get('visiting_market')}${this.Colors.END}`);
+            this.game?.print(this.lang.get('visiting_market'));
             return this.cache;
         }
 
@@ -63,7 +63,7 @@ class MarketAPI {
             const remaining = this.cooldownMinutes - elapsed;
             const mins = Math.floor(remaining);
             const secs = Math.floor((remaining - mins) * 60);
-            console.log(
+            this.game?.print(
                 this.lang.get(
                     "market_closed_msg",
                     "Merchants have left and the market is closed! Please come back in {mins}m {secs}s",
@@ -73,8 +73,8 @@ class MarketAPI {
             return null;
         }
 
-        console.log(
-            `${this.Colors.CYAN}${this.lang.get('checking_merchants_msg', 'Checking if merchants are in the market...')}${this.Colors.END}`
+        this.game?.print(
+            this.lang.get('checking_merchants_msg', 'Checking if merchants are in the market...')
         );
 
         // Try each endpoint in order
@@ -85,8 +85,8 @@ class MarketAPI {
                     const data = await response.json();
                     this.cache = data;
                     this.lastFetch = new Date();
-                    console.log(
-                        `${this.Colors.GREEN}${this.lang.get('market_open_msg', 'Market is open!')}${this.Colors.END}`
+                    this.game?.print(
+                        this.lang.get('market_open_msg', 'Market is open!')
                     );
                     return data;
                 }
@@ -95,8 +95,8 @@ class MarketAPI {
             }
         }
 
-        console.log(
-            `${this.Colors.RED}${this.lang.get('market_reach_error', 'Failed to reach any market merchants at this time.')}${this.Colors.END}`
+        this.game?.print(
+            this.lang.get('market_reach_error', 'Failed to reach any market merchants at this time.')
         );
         return null;
     }

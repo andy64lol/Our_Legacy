@@ -31,7 +31,7 @@ export class SaveLoadSystem {
    */
   save_game(filenamePrefix = "") {
     if (!this.game.player) {
-      console.log(this.lang.get('no_character_save'));
+      this.game.print(this.lang.get('no_character_save'));
       return false;
     }
 
@@ -114,7 +114,7 @@ export class SaveLoadSystem {
 
     try {
       localStorage.setItem(this.storageKey, JSON.stringify(saves));
-      console.log(this.lang.get("game_saved_success", "Game saved successfully: {filename}").replace("{filename}", Object.keys(saves).pop()));
+      this.game.print(this.lang.get("game_saved_success", "Game saved successfully: {filename}").replace("{filename}", Object.keys(saves).pop()));
       return true;
     } catch (e) {
       console.error("Error saving game:", e);
@@ -131,13 +131,13 @@ export class SaveLoadSystem {
     const saveKeys = Object.keys(saves);
 
     if (saveKeys.length === 0) {
-      console.log(this.lang.get('no_save_files', "No save files found."));
+      this.game.print(this.lang.get('no_save_files', "No save files found."));
       return false;
     }
 
-    console.log(this.lang.get('available_save_files', "Available save files:"));
+    this.game.print(this.lang.get('available_save_files', "Available save files:"));
     saveKeys.forEach((key, i) => {
-      console.log(`${i + 1}. ${key.replace('_save.json', '')}`);
+      this.game.print(`${i + 1}. ${key.replace('_save.json', '')}`);
     });
 
     const choice = await this.game.ask(
@@ -153,7 +153,7 @@ export class SaveLoadSystem {
           this._load_save_data_internal(saveData);
           return true;
         } catch (e) {
-          console.log(this.lang.get("error_loading_save", "Error loading save file: {error}").replace("{error}", e.message));
+          this.game.print(this.lang.get("error_loading_save", "Error loading save file: {error}").replace("{error}", e.message));
           return false;
         }
       }
@@ -250,12 +250,12 @@ export class SaveLoadSystem {
       p.updateStatsFromEquipment(this.game.itemsData, this.game.companionsData);
     }
 
-    console.log(
+    this.game.print(
       this.lang.get("game_loaded_welcome", "Game loaded successfully! Welcome back, {player_name}!").replace("{player_name}", p.name)
     );
 
     if (typeof p.displayStats === 'function') {
-      p.displayStats();
+      p.displayStats((c, m, w, col) => this.game.print(create_hp_mp_bar(c, m, w, col)));
     }
   }
 
@@ -300,9 +300,9 @@ export class SaveLoadSystem {
     }
 
     if (invalid.length > 0) {
-      console.log(`\n%c${this.lang.get('invalid_items_unequipped', 'Some items were auto-unequipped:')}%c`, Colors.YELLOW, Colors.END);
+      this.game.print(this.lang.get('invalid_items_unequipped', 'Some items were auto-unequipped:'));
       for (const [s, n, r] of invalid) {
-        console.log(`  - ${s.charAt(0).toUpperCase() + s.slice(1)}: ${n} (${r})`);
+        this.game.print(`  - ${s.charAt(0).toUpperCase() + s.slice(1)}: ${n} (${r})`);
       }
     }
   }
@@ -338,11 +338,7 @@ export class SaveLoadSystem {
         p.levelUpBonuses = cd.levelUpBonuses || {};
       }
     } else {
-      console.log(
-        `%c${this.lang.get('legacy_save_warning', 'Loading legacy save. Equipment may not be restored.')}%c`,
-        Colors.YELLOW,
-        Colors.END
-      );
+      this.game.print(this.lang.get('legacy_save_warning', 'Loading legacy save. Equipment may not be restored.'));
 
       const eq = { weapon: null, armor: null, accessory: null };
       for (const item of (playerData.inventory || [])) {
@@ -388,7 +384,7 @@ export class SaveLoadSystem {
       delete saves[saveKey];
       try {
         localStorage.setItem(this.storageKey, JSON.stringify(saves));
-        console.log(`Save deleted: ${saveKey}`);
+        this.game.print(`Save deleted: ${saveKey}`);
         return true;
       } catch (e) {
         console.error("Error deleting save:", e);

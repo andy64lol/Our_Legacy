@@ -445,29 +445,25 @@ export class Character {
    * Display character stats
    * @param {Function} createHpMpBar - Optional function to create HP/MP bars
    */
-  displayStats(createHpMpBar = null) {
-    console.log(`\n%c--- ${this.name} (${this.characterClass}) ---%c`, Colors.CYAN, Colors.END);
-    console.log(`Level: ${this.level} (${this.rank})`);
+  displayStats(printFunc = null) {
+    const output = printFunc || ((text) => {});
+    output(`\n--- ${this.name} (${this.characterClass}) ---`);
+    output(`Level: ${this.level} (${this.rank})`);
     
-    if (createHpMpBar) {
-      console.log(`HP: ${createHpMpBar(this.hp, this.maxHp, 20, Colors.RED)}`);
-      console.log(`MP: ${createHpMpBar(this.mp, this.maxMp, 20, Colors.BLUE)}`);
-    } else {
-      console.log(`HP: ${this.hp}/${this.maxHp}`);
-      console.log(`MP: ${this.mp}/${this.maxMp}`);
-    }
+    output(`HP: ${this.hp}/${this.maxHp}`);
+    output(`MP: ${this.mp}/${this.maxMp}`);
     
-    console.log(`EXP: ${this.experience}/${this.experienceToNext}`);
-    console.log(`Gold: %c${this.gold}%c`, Colors.GOLD, Colors.END);
-    console.log(`Attack: ${this.getEffectiveAttack()} (Base: ${this.attack})`);
-    console.log(`Defense: ${this.getEffectiveDefense()} (Base: ${this.defense})`);
-    console.log(`Speed: ${this.getEffectiveSpeed()} (Base: ${this.speed})`);
+    output(`EXP: ${this.experience}/${this.experienceToNext}`);
+    output(`Gold: ${this.gold}`);
+    output(`Attack: ${this.getEffectiveAttack()} (Base: ${this.attack})`);
+    output(`Defense: ${this.getEffectiveDefense()} (Base: ${this.defense})`);
+    output(`Speed: ${this.getEffectiveSpeed()} (Base: ${this.speed})`);
     
     if (this.equipment && Object.values(this.equipment).some(v => v !== null)) {
-      console.log("\nEquipment:");
+      output("\nEquipment:");
       for (const [slot, item] of Object.entries(this.equipment)) {
         if (item) {
-          console.log(`  ${slot.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${item}`);
+          output(`  ${slot.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${item}`);
         }
       }
     }

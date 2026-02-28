@@ -128,6 +128,10 @@ function updateStats() {
 
 window.addEventListener("load", async () => {
     game = new Game();
+    game.printCallback = (text, color) => {
+        print(text);
+        updateStats();
+    };
     await game.init();
     output.innerHTML = "";
     await game.run();

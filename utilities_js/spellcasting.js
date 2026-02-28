@@ -70,7 +70,7 @@ export class SpellCastingSystem {
     const cost = spellData.mpCost || spellData.mp_cost || 0;
     
     if (this.player.mp < cost) {
-      console.log(this.lang.get("not_enough_mp", "Not enough MP!"));
+      this.game.print(this.lang.get("not_enough_mp", "Not enough MP!"));
       return { success: false, error: 'Not enough MP' };
     }
 
@@ -94,7 +94,7 @@ export class SpellCastingSystem {
         this._castDebuffSpell(enemy, spellName, spellData, result);
         break;
       default:
-        console.log(`Unknown spell type: ${spellType}`);
+        this.game.print(`Unknown spell type: ${spellType}`);
         // Refund MP for unknown spell types
         this.player.mp += cost;
         result.success = false;
@@ -124,18 +124,18 @@ export class SpellCastingSystem {
     
     if (roll === 1) {
       const memeKey = `roll_1_meme_${Math.floor(Math.random() * 3) + 1}`;
-      console.log(this.lang.get(memeKey));
+      this.game.print(this.lang.get(memeKey));
     } else if (roll === 20) {
       const memeKey = `roll_20_meme_${Math.floor(Math.random() * 3) + 1}`;
-      console.log(this.lang.get(memeKey));
+      this.game.print(this.lang.get(memeKey));
     } else {
-      console.log(this.lang.get("roll_msg", { roll: roll }));
+      this.game.print(this.lang.get("roll_msg", { roll: roll }));
     }
 
     const damage = Math.floor(baseDamage * roll / 10);
     const actual = enemy.takeDamage(damage);
     
-    console.log(`You cast ${spellName} for ${actual} damage!`);
+    this.game.print(`You cast ${spellName} for ${actual} damage!`);
     result.damage = actual;
 
     // Apply effects if any
@@ -145,14 +145,14 @@ export class SpellCastingSystem {
       const effectType = effectData.type || '';
 
       if (effectType === 'damage_over_time') {
-        console.log(`%c${enemy.name} is afflicted with ${effectName}!%c`, Colors.RED, Colors.END);
+        this.game.print(`${enemy.name} is afflicted with ${effectName}!`);
       } else if (effectType === 'stun') {
         if (Math.random() < (effectData.chance || 0.5)) {
-          console.log(`%c${enemy.name} is stunned!%c`, Colors.YELLOW, Colors.END);
+          this.game.print(`${enemy.name} is stunned!`);
         }
       } else if (effectType === 'mixed_effect') {
         if (Math.random() < (effectData.chance || 0.5)) {
-          console.log(`%c${enemy.name} is frozen!%c`, Colors.CYAN, Colors.END);
+          this.game.print(`${enemy.name} is frozen!`);
         }
       }
     }
@@ -168,7 +168,7 @@ export class SpellCastingSystem {
     this.player.heal(healAmount);
     const healed = this.player.hp - oldHp;
     
-    console.log(`You cast ${spellName} and healed ${healed} HP!`);
+    this.game.print(`You cast ${spellName} and healed ${healed} HP!`);
     result.healed = healed;
 
     // Apply healing effects if any
@@ -176,7 +176,7 @@ export class SpellCastingSystem {
     for (const effectName of effects) {
       const effectData = this.effectsData[effectName] || {};
       if (effectData.type === 'healing_over_time') {
-        console.log(`%cYou are affected by regeneration!%c`, Colors.GREEN, Colors.END);
+        this.game.print(`You are affected by regeneration!`);
       }
     }
   }
@@ -210,14 +210,14 @@ export class SpellCastingSystem {
       if (Object.keys(modifiers).length > 0) {
         this.player.applyBuff(effectName, duration, modifiers);
         const modStr = Object.entries(modifiers).map(([k, v]) => `${v} ${k}`).join(', ');
-        console.log(`%cApplied buff: ${effectName} (+${modStr}) for ${duration} turns%c`, Colors.GREEN, Colors.END);
+        this.game.print(`Applied buff: ${effectName} (+${modStr}) for ${duration} turns`);
       } else {
         // Non-numeric effects still applied as a marker buff
         this.player.applyBuff(effectName, duration, {});
         if (effectType === 'damage_absorb') {
-          console.log(`%cYou create a magical shield!%c`, Colors.BLUE, Colors.END);
+          this.game.print(`You create a magical shield!`);
         } else if (effectType === 'reconnaissance') {
-          console.log(`%cYou can see enemy weaknesses!%c`, Colors.CYAN, Colors.END);
+          this.game.print(`You can see enemy weaknesses!`);
         }
       }
     }
@@ -239,14 +239,14 @@ export class SpellCastingSystem {
 
       if (effectType === 'action_block') {
         if (Math.random() < (effectData.chance || 0.5)) {
-          console.log(`%c${enemy.name} is stunned and cannot act!%c`, Colors.YELLOW, Colors.END);
+          this.game.print(`${enemy.name} is stunned and cannot act!`);
         }
       } else if (effectType === 'accuracy_reduction') {
-        console.log(`%c${enemy.name}'s accuracy is reduced!%c`, Colors.RED, Colors.END);
+        this.game.print(`${enemy.name}'s accuracy is reduced!`);
       } else if (effectType === 'speed_reduction') {
-        console.log(`%c${enemy.name} is slowed!%c`, Colors.YELLOW, Colors.END);
+        this.game.print(`${enemy.name} is slowed!`);
       } else if (effectType === 'stat_reduction') {
-        console.log(`%c${enemy.name}'s stats are cursed!%c`, Colors.RED, Colors.END);
+        this.game.print(`${enemy.name}'s stats are cursed!`);
       }
     }
     
@@ -262,40 +262,33 @@ export class SpellCastingSystem {
     const available = this.getAvailableSpells(weaponName);
     
     if (available.length === 0) {
-      console.log(this.lang.get("no_spells_available", "No spells available for this weapon."));
+      this.game.print(this.lang.get("no_spells_available", "No spells available for this weapon."));
       return null;
     }
 
     let page = 0;
     const perPage = 10;
 
-    while (true) {
-      const totalPages = Math.max(1, Math.ceil(available.length / perPage));
-      const startIdx = page * perPage;
-      const endIdx = startIdx + perPage;
-      const currentSpells = available.slice(startIdx, endIdx);
+    this.game.print(`\n=== SPELLS (Page ${page + 1}/${totalPages}) ===`);
+    this.game.print(`MP: ${this.player.mp}/${this.player.maxMp}\n`);
 
-      console.log(`\n%c=== SPELLS (Page ${page + 1}/${totalPages}) ===%c`, Colors.BOLD, Colors.END);
-      console.log(`MP: %c${this.player.mp}/${this.player.maxMp}%c\n`, Colors.BLUE, Colors.END);
+    for (let i = 0; i < currentSpells.length; i++) {
+      const [sname, sdata] = currentSpells[i];
+      const cost = sdata.mpCost || sdata.mp_cost || 0;
+      this.game.print(`${i + 1}. ${sname} - Cost: ${cost} MP`);
+      this.game.print(`   ${sdata.description || ''}`);
+    }
 
-      for (let i = 0; i < currentSpells.length; i++) {
-        const [sname, sdata] = currentSpells[i];
-        const cost = sdata.mpCost || sdata.mp_cost || 0;
-        const mpColor = this.player.mp >= cost ? Colors.BLUE : Colors.RED;
-        console.log(`${i + 1}. %c${sname}%c - Cost: %c${cost} MP%c`, Colors.CYAN, Colors.END, mpColor, Colors.END);
-        console.log(`   ${sdata.description || ''}`);
-      }
+    this.game.print("\nOptions:");
+    if (totalPages > 1) {
+      if (page > 0) this.game.print("P. Previous Page");
+      if (page < totalPages - 1) this.game.print("N. Next Page");
+    }
+    this.game.print(`1-${currentSpells.length}. Cast Spell`);
+    this.game.print("B. Back");
 
-      console.log("\nOptions:");
-      if (totalPages > 1) {
-        if (page > 0) console.log("P. Previous Page");
-        if (page < totalPages - 1) console.log("N. Next Page");
-      }
-      console.log(`1-${currentSpells.length}. Cast Spell`);
-      console.log("B. Back");
-
-      // In browser, this would use a prompt or UI element
-      const choice = await this.game.ask("Choose an option: ");
+    // In browser, this would use a prompt or UI element
+    const choice = await this.game.ask("Choose an option: ");
       const upperChoice = choice.toUpperCase();
 
       if (upperChoice === 'B' || !choice) {
@@ -310,10 +303,10 @@ export class SpellCastingSystem {
           const [sname, sdata] = currentSpells[idx];
           return { name: sname, data: sdata };
         } else {
-          console.log(this.lang.get('invalid_selection', "Invalid selection"));
+          this.game.print(this.lang.get('invalid_selection', "Invalid selection"));
         }
       } else {
-        console.log(this.lang.get("invalid_choice", "Invalid choice"));
+        this.game.print(this.lang.get("invalid_choice", "Invalid choice"));
       }
     }
   }

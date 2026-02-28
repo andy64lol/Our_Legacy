@@ -161,7 +161,7 @@ export class ModManager {
       }
     } catch (e) {
       // If no manifest, try to discover via API or use empty list
-      console.log("No mods manifest found, mods discovery may be limited in browser");
+      this.game?.print("No mods manifest found, mods discovery may be limited in browser");
     }
     
     return this.mods;
@@ -258,10 +258,10 @@ export class ModManager {
     
     if (disabled.has(folderName)) {
       disabled.delete(folderName);
-      console.log(this.lang.get("mod_enabled_msg", "Mod enabled: {folder_name}").replace("{folder_name}", folderName));
+      this.game?.print(this.lang.get("mod_enabled_msg", "Mod enabled: {folder_name}").replace("{folder_name}", folderName));
     } else {
       disabled.add(folderName);
-      console.log(this.lang.get("mod_disabled_msg", "Mod disabled: {folder_name}").replace("{folder_name}", folderName));
+      this.game?.print(this.lang.get("mod_disabled_msg", "Mod disabled: {folder_name}").replace("{folder_name}", folderName));
     }
     
     this.settings.disabled_mods = Array.from(disabled);
@@ -275,7 +275,7 @@ export class ModManager {
   toggleModsSystem() {
     this.settings.mods_enabled = !this.settings.mods_enabled;
     const status = this.settings.mods_enabled ? "enabled" : "disabled";
-    console.log(this.lang.get("mod_system_status_msg", "Mod system {status}!").replace("{status}", status));
+    this.game?.print(this.lang.get("mod_system_status_msg", "Mod system {status}!").replace("{status}", status));
     this.saveSettings();
     return this.settings.mods_enabled;
   }

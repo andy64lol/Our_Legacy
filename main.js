@@ -104,8 +104,8 @@ export class Game {
      * Initialize the game - load all data
      */
     async init() {
-        console.log(`%cOur Legacy - Browser RPG%c`, Colors.CYAN + Colors.BOLD, Colors.END);
-        console.log("Loading game data...");
+        this.print(`Our Legacy - Browser RPG`);
+        this.print("Loading game data...");
         
         await this.loadGameData();
         this.loadConfig();
@@ -115,7 +115,37 @@ export class Game {
         this.spellCastingSystem = new SpellCastingSystem(this);
         this.saveLoadSystem = new SaveLoadSystem(this);
         
-        console.log("%cGame loaded successfully!%c", Colors.GREEN, Colors.END);
+        this.print("Game loaded successfully!");
+    }
+
+    /**
+     * Print text to the game output
+     */
+    this.print = (text, color = null) => {
+        if (this.printCallback) {
+            this.printCallback(text, color);
+        }
+    };
+
+    /**
+     * Ask for user input
+     */
+    ask(question) {
+        this.print(question);
+        return new Promise((resolve) => {
+            this.resolveInput = resolve;
+        });
+    }
+
+    /**
+     * Handle input from UI
+     */
+    handleInput(input) {
+        if (this.resolveInput) {
+            const resolve = this.resolveInput;
+            this.resolveInput = null;
+            resolve(input);
+        }
     }
     
     /**
@@ -192,7 +222,7 @@ export class Game {
         const enabledMods = this.modManager.getEnabledMods();
         if (!enabledMods || enabledMods.length === 0) return;
         
-        console.log("%cLoading mods...%c", Colors.YELLOW, Colors.END);
+        this.print("Loading mods...");
         
         const modDataTypes = [
             'areas.json', 'enemies.json', 'items.json', 'missions.json',
@@ -258,25 +288,24 @@ export class Game {
      * Display welcome screen
      */
     async displayWelcome() {
-        console.clear();
-        console.log(`%c${'='.repeat(60)}%c`, Colors.CYAN, Colors.END);
-        console.log(`%c       ${this.lang.get('game_title_display', 'Our Legacy')}%c`, Colors.CYAN + Colors.BOLD, Colors.END);
-        console.log(`%c       ${this.lang.get('game_subtitle_display', 'A Text-Based RPG')}%c`, Colors.YELLOW, Colors.END);
-        console.log(`%c${'='.repeat(60)}%c`, Colors.CYAN, Colors.END);
-        console.log();
-        console.log(this.lang.get('welcome_message', 'Welcome to Our Legacy!'));
-        console.log('Choose your path wisely, for every decision shapes your destiny.');
-        console.log();
+        this.print("=".repeat(60));
+        this.print(`       ${this.lang.get('game_title_display', 'Our Legacy')}`);
+        this.print(`       ${this.lang.get('game_subtitle_display', 'A Text-Based RPG')}`);
+        this.print("=".repeat(60));
+        this.print("");
+        this.print(this.lang.get('welcome_message', 'Welcome to Our Legacy!'));
+        this.print('Choose your path wisely, for every decision shapes your destiny.');
+        this.print("");
         
-        console.log(`%c=== ${this.lang.get('main_menu', 'MAIN MENU')} ===%c`, Colors.CYAN + Colors.BOLD, Colors.END);
-        console.log(`${Colors.CYAN}1.${Colors.END} ${this.lang.get('new_game', 'New Game')}`);
-        console.log(`${Colors.CYAN}2.${Colors.END} ${this.lang.get('load_game', 'Load Game')}`);
-        console.log(`${Colors.CYAN}3.${Colors.END} ${this.lang.get('settings', 'Settings')}`);
-        console.log(`${Colors.CYAN}4.${Colors.END} ${this.lang.get('mods', 'Mods')}`);
-        console.log(`${Colors.CYAN}5.${Colors.END} ${this.lang.get('quit', 'Quit')}`);
-        console.log();
+        this.print(`=== ${this.lang.get('main_menu', 'MAIN MENU')} ===`);
+        this.print(`1. ${this.lang.get('new_game', 'New Game')}`);
+        this.print(`2. ${this.lang.get('load_game', 'Load Game')}`);
+        this.print(`3. ${this.lang.get('settings', 'Settings')}`);
+        this.print(`4. ${this.lang.get('mods', 'Mods')}`);
+        this.print(`5. ${this.lang.get('quit', 'Quit')}`);
+        this.print("");
         
-        const choice = await this.ask(`${Colors.CYAN}Choose an option (1-5): ${Colors.END}`);
+        const choice = await this.ask(`Choose an option (1-5): `);
         
         if (choice === "1") {
             return "new_game";
@@ -289,10 +318,10 @@ export class Game {
             await this.modsWelcome();
             return await this.displayWelcome();
         } else if (choice === "5") {
-            console.log(this.lang.get('thank_exit', 'Thank you for playing!'));
+            this.print(this.lang.get('thank_exit', 'Thank you for playing!'));
             return "quit";
         } else {
-            console.log(this.lang.get('invalid_choice', 'Invalid choice'));
+            this.print(this.lang.get('invalid_choice', 'Invalid choice'));
             return await this.displayWelcome();
         }
     }
@@ -301,19 +330,19 @@ export class Game {
      * Settings menu
      */
     async settingsWelcome() {
-        console.log(`\n%c=== SETTINGS ===%c`, Colors.CYAN + Colors.BOLD, Colors.END);
+        this.print(`\n=== SETTINGS ===`);
         
         const modsEnabled = this.modManager.settings.mods_enabled;
         
-        console.log(`\n1. Mod System: ${modsEnabled ? Colors.GREEN + 'Enabled' + Colors.END : Colors.RED + 'Disabled' + Colors.END}`);
-        console.log(`2. Language`);
-        console.log(`3. ${this.lang.get('back', 'Back')}`);
+        this.print(`\n1. Mod System: ${modsEnabled ? 'Enabled' : 'Disabled'}`);
+        this.print(`2. Language`);
+        this.print(`3. ${this.lang.get('back', 'Back')}`);
         
         const choice = await this.ask("\nChoose an option: ");
         
         if (choice === "1") {
             this.modManager.toggleModsSystem();
-            console.log(`Mod system ${this.modManager.settings.mods_enabled ? 'enabled' : 'disabled'}!`);
+            this.print(`Mod system ${this.modManager.settings.mods_enabled ? 'enabled' : 'disabled'}!`);
         } else if (choice === "2") {
             await this.changeLanguageMenu();
         }
@@ -323,24 +352,24 @@ export class Game {
      * Change language menu
      */
     async changeLanguageMenu() {
-        console.log(`\n%c=== LANGUAGE ===%c`, Colors.CYAN + Colors.BOLD, Colors.END);
+        this.print(`\n=== LANGUAGE ===`);
         
         const available = this.lang.config.available_languages || { en: "English" };
         const langs = Object.entries(available);
         
         for (let i = 0; i < langs.length; i++) {
             const [code, name] = langs[i];
-            console.log(`${Colors.CYAN}${i + 1}.${Colors.END} ${name}`);
+            this.print(`${i + 1}. ${name}`);
         }
-        console.log(`${Colors.CYAN}${langs.length + 1}.${Colors.END} Back`);
+        this.print(`${langs.length + 1}. Back`);
         
-        const choice = await this.ask(`${Colors.CYAN}Choose a language: ${Colors.END}`);
+        const choice = await this.ask(`Choose a language: `);
         
         if (choice.isDigit()) {
             const idx = parseInt(choice) - 1;
             if (idx >= 0 && idx < langs.length) {
                 await this.lang.changeLanguage(langs[idx][0]);
-                console.log(`Language changed to ${langs[idx][1]}!`);
+                this.print(`Language changed to ${langs[idx][1]}!`);
             }
         }
     }
@@ -349,38 +378,37 @@ export class Game {
      * Mods menu
      */
     async modsWelcome() {
-        console.log(`\n%c=== MODS ===%c`, Colors.CYAN + Colors.BOLD, Colors.END);
+        this.print(`\n=== MODS ===`);
         
         await this.modManager.discoverMods();
         const modsList = this.modManager.getModList();
         
         if (!modsList || modsList.length === 0) {
-            console.log(`\n%c${this.lang.get('no_mods_found', 'No mods found')}%c`, Colors.YELLOW, Colors.END);
-            console.log(this.lang.get('place_mods_instruction', 'Place mods in the mods/ folder'));
+            this.print(`\n${this.lang.get('no_mods_found', 'No mods found')}`);
+            this.print(this.lang.get('place_mods_instruction', 'Place mods in the mods/ folder'));
             await this.ask("\nPress Enter to go back...");
             return;
         }
         
         const modsSystemEnabled = this.modManager.settings.mods_enabled;
-        const statusColor = modsSystemEnabled ? Colors.GREEN : Colors.RED;
-        console.log(`\nMod System Status: ${statusColor}${modsSystemEnabled ? 'Enabled' : 'Disabled'}${Colors.END}`);
+        this.print(`\nMod System Status: ${modsSystemEnabled ? 'Enabled' : 'Disabled'}`);
         
-        console.log(`\n%cInstalled Mods (${modsList.length}):%c`, Colors.CYAN, Colors.END);
+        this.print(`\nInstalled Mods (${modsList.length}):`);
         
         for (let i = 0; i < modsList.length; i++) {
             const mod = modsList[i];
-            const status = mod.enabled ? Colors.GREEN + '[ENABLED]' + Colors.END : Colors.RED + '[DISABLED]' + Colors.END;
-            console.log(`\n${i + 1}. %c${mod.name || mod.folder_name}%c ${status}`);
-            console.log(`   Version: ${mod.version || '1.0'}`);
-            console.log(`   Author: ${mod.author || 'Unknown'}`);
+            const status = mod.enabled ? '[ENABLED]' : '[DISABLED]';
+            this.print(`\n${i + 1}. ${mod.name || mod.folder_name} ${status}`);
+            this.print(`   Version: ${mod.version || '1.0'}`);
+            this.print(`   Author: ${mod.author || 'Unknown'}`);
             if (mod.description) {
-                console.log(`   ${mod.description.substring(0, 100)}`);
+                this.print(`   ${mod.description.substring(0, 100)}`);
             }
         }
         
-        console.log(`\nOptions:`);
-        console.log(`1-${modsList.length}. Toggle Mod`);
-        console.log(`B. Back`);
+        this.print(`\nOptions:`);
+        this.print(`1-${modsList.length}. Toggle Mod`);
+        this.print(`B. Back`);
         
         const choice = await this.ask("\nChoose an option: ");
         
@@ -391,7 +419,7 @@ export class Game {
             if (idx >= 0 && idx < modsList.length) {
                 const mod = modsList[idx];
                 this.modManager.toggleMod(mod.folder_name);
-                console.log(`Mod "${mod.name}" toggled. Changes take effect on restart.`);
+                this.print(`Mod "${mod.name}" toggled. Changes take effect on restart.`);
             }
         }
     }
@@ -400,23 +428,21 @@ export class Game {
      * Create a new character
      */
     async createCharacter() {
-        console.log(`%c${this.lang.get('character_creation', '=== CHARACTER CREATION ===')}%c`, Colors.BOLD, Colors.END);
-        console.log('-'.repeat(30));
+        this.print(`=== CHARACTER CREATION ===`);
+        this.print('-'.repeat(30));
         
         const name = await this.ask(this.lang.get('enter_name', 'Enter your name: '));
         const playerName = name.trim() || "Hero";
         
         // Display available classes
-        console.log(`\n${this.lang.get('ui_choose_class', 'Available Classes:')}`);
+        this.print(`\n${this.lang.get('ui_choose_class', 'Available Classes:')}`);
         
-        const colorMap = [Colors.RED, Colors.BLUE, Colors.GREEN, Colors.YELLOW, Colors.MAGENTA, Colors.CYAN];
         const classEntries = Object.entries(this.classesData);
         
         for (let i = 0; i < classEntries.length; i++) {
             const [className, classData] = classEntries[i];
-            const color = colorMap[i % colorMap.length];
             const description = classData.description || "No description available";
-            console.log(`${color}${i + 1}. ${className}${Colors.END} - ${description}`);
+            this.print(`${i + 1}. ${className} - ${description}`);
         }
         
         const choice = await this.ask(`\nEnter class choice (1-${classEntries.length}): `);
@@ -444,7 +470,7 @@ export class Game {
         // Give starting items
         this.giveStartingItems(selectedClass);
         
-        console.log(`\n%c${this.lang.get('welcome_adventurer', `Welcome, ${playerName} the ${selectedClass}!`)}%c`, Colors.GREEN, Colors.END);
+        this.print(`\n${this.lang.get('welcome_adventurer', `Welcome, ${playerName} the ${selectedClass}!`)}`);
         
         this.displayPlayerStats();
     }
@@ -466,9 +492,9 @@ export class Game {
         this.player.gold = startingGold;
         
         if (items.length > 0) {
-            console.log(`%cYou received starting equipment:%c`, Colors.YELLOW, Colors.END);
+            this.print(`You received starting equipment:`);
             for (const item of items) {
-                console.log(`  - ${item}`);
+                this.print(`  - ${item}`);
             }
             
             // Auto-equip first weapon and armor
@@ -477,7 +503,7 @@ export class Game {
                     const itemType = this.itemsData[item]?.type;
                     if (itemType === slot) {
                         this.player.equip(item, this.itemsData);
-                        console.log(`Equipped: ${item}`);
+                        this.print(`Equipped: ${item}`);
                         break;
                     }
                 }
@@ -490,16 +516,16 @@ export class Game {
      */
     displayPlayerStats() {
         if (!this.player) {
-            console.log(this.lang.get('no_character', 'No character created'));
+            this.print(this.lang.get('no_character', 'No character created'));
             return;
         }
         
-        console.log(`\n%c=== ${this.player.name} - Level ${this.player.level} ${this.player.rank} ===%c`, Colors.CYAN + Colors.BOLD, Colors.END);
-        console.log(`HP: ${create_hp_mp_bar(this.player.hp, this.player.maxHp, 15, Colors.RED)} ${this.player.hp}/${this.player.maxHp}`);
-        console.log(`MP: ${create_hp_mp_bar(this.player.mp, this.player.maxMp, 15, Colors.BLUE)} ${this.player.mp}/${this.player.maxMp}`);
-        console.log(`Attack: ${this.player.attack} | Defense: ${this.player.defense} | Speed: ${this.player.speed}`);
-        console.log(`Gold: ${Colors.GOLD}${this.player.gold}${Colors.END}`);
-        console.log(`Level: ${this.player.level} | XP: ${this.player.experience}/${this.player.experienceToNext}`);
+        this.print(`\n=== ${this.player.name} - Level ${this.player.level} ${this.player.rank} ===`);
+        this.print(`HP: ${this.player.hp}/${this.player.maxHp}`);
+        this.print(`MP: ${this.player.mp}/${this.player.maxMp}`);
+        this.print(`Attack: ${this.player.attack} | Defense: ${this.player.defense} | Speed: ${this.player.speed}`);
+        this.print(`Gold: ${this.player.gold}`);
+        this.print(`Level: ${this.player.level} | XP: ${this.player.experience}/${this.player.experienceToNext}`);
     }
     
     /**
@@ -513,11 +539,11 @@ export class Game {
         } else if (choice === "load_game") {
             await this.loadGame();
             if (!this.player) {
-                console.log(this.lang.get('ui_no_game_loaded', 'No game loaded'));
+                this.print(this.lang.get('ui_no_game_loaded', 'No game loaded'));
                 await this.createCharacter();
             }
         } else if (choice === "quit") {
-            console.log("Thanks for playing!");
+            this.print("Thanks for playing!");
             return;
         }
         
@@ -544,12 +570,12 @@ export class Game {
             this.updateChallengeProgress('level_reach', this.player.level);
         }
         
-        console.log(`\n%c=== ${this.lang.get('main_menu', 'MAIN MENU')} ===%c`, Colors.BOLD, Colors.END);
+        this.print(`\n=== ${this.lang.get('main_menu', 'MAIN MENU')} ===`);
         
         // Show current location
         const areaData = this.areasData[this.currentArea] || {};
         const areaName = areaData.name || this.currentArea;
-        console.log(this.lang.get('current_location', `Location: ${areaName}`));
+        this.print(this.lang.get('current_location', `Location: ${areaName}`));
         
         // Display time and weather
         if (this.player) {
@@ -559,35 +585,35 @@ export class Game {
             const dayStr = `Day ${this.player.day}`;
             const weatherDesc = this.player.getWeatherDescription ? this.player.getWeatherDescription(this.lang) : this.player.currentWeather;
             
-            console.log(`${Colors.YELLOW}${timeStr} | ${dayStr}${Colors.END}`);
-            console.log(`${Colors.CYAN}${weatherDesc}${Colors.END}`);
+            this.print(`${timeStr} | ${dayStr}`);
+            this.print(`${weatherDesc}`);
         }
         
-        console.log(`${Colors.CYAN}1.${Colors.END} ${this.lang.get('explore', 'Explore')}`);
-        console.log(`${Colors.CYAN}2.${Colors.END} ${this.lang.get('view_character', 'View Character')}`);
-        console.log(`${Colors.CYAN}3.${Colors.END} ${this.lang.get('travel', 'Travel')}`);
-        console.log(`${Colors.CYAN}4.${Colors.END} ${this.lang.get('inventory', 'Inventory')}`);
-        console.log(`${Colors.CYAN}5.${Colors.END} ${this.lang.get('missions', 'Missions')}`);
-        console.log(`${Colors.CYAN}6.${Colors.END} ${this.lang.get('fight_boss', 'Fight Boss')}`);
-        console.log(`${Colors.CYAN}7.${Colors.END} ${this.lang.get('tavern', 'Tavern')}`);
-        console.log(`${Colors.CYAN}8.${Colors.END} ${this.lang.get('shop', 'Shop')}`);
-        console.log(`${Colors.CYAN}9.${Colors.END} ${this.lang.get('rest', 'Rest')}`);
-        console.log(`${Colors.CYAN}10.${Colors.END} ${this.lang.get('companions', 'Companions')}`);
+        this.print(`1. ${this.lang.get('explore', 'Explore')}`);
+        this.print(`2. ${this.lang.get('view_character', 'View Character')}`);
+        this.print(`3. ${this.lang.get('travel', 'Travel')}`);
+        this.print(`4. ${this.lang.get('inventory', 'Inventory')}`);
+        this.print(`5. ${this.lang.get('missions', 'Missions')}`);
+        this.print(`6. ${this.lang.get('fight_boss', 'Fight Boss')}`);
+        this.print(`7. ${this.lang.get('tavern', 'Tavern')}`);
+        this.print(`8. ${this.lang.get('shop', 'Shop')}`);
+        this.print(`9. ${this.lang.get('rest', 'Rest')}`);
+        this.print(`10. ${this.lang.get('companions', 'Companions')}`);
         
         if (this.currentArea === "your_land") {
-            console.log(`${Colors.CYAN}11.${Colors.END} ${this.lang.get('pet_shop', 'Pet Shop')}`);
-            console.log(`${Colors.CYAN}12.${Colors.END} ${this.lang.get('build_home', 'Build Home')}`);
-            console.log(`${Colors.CYAN}13.${Colors.END} ${this.lang.get('save_game', 'Save Game')}`);
-            console.log(`${Colors.CYAN}14.${Colors.END} ${this.lang.get('load_game', 'Load Game')}`);
-            console.log(`${Colors.CYAN}15.${Colors.END} ${this.lang.get('quit', 'Quit')}`);
+            this.print(`11. ${this.lang.get('pet_shop', 'Pet Shop')}`);
+            this.print(`12. ${this.lang.get('build_home', 'Build Home')}`);
+            this.print(`13. ${this.lang.get('save_game', 'Save Game')}`);
+            this.print(`14. ${this.lang.get('load_game', 'Load Game')}`);
+            this.print(`15. ${this.lang.get('quit', 'Quit')}`);
         } else {
-            console.log(`${Colors.CYAN}11.${Colors.END} ${this.lang.get('save_game', 'Save Game')}`);
-            console.log(`${Colors.CYAN}12.${Colors.END} ${this.lang.get('load_game', 'Load Game')}`);
-            console.log(`${Colors.CYAN}13.${Colors.END} ${this.lang.get('quit', 'Quit')}`);
+            this.print(`11. ${this.lang.get('save_game', 'Save Game')}`);
+            this.print(`12. ${this.lang.get('load_game', 'Load Game')}`);
+            this.print(`13. ${this.lang.get('quit', 'Quit')}`);
         }
         
         const maxChoice = this.currentArea === "your_land" ? "15" : "13";
-        const choice = await this.ask(`${Colors.CYAN}Choose an option (1-${maxChoice}): ${Colors.END}`);
+        const choice = await this.ask(`Choose an option (1-${maxChoice}): `);
         
         switch (choice) {
             case "1": await this.explore(); break;
@@ -618,7 +644,7 @@ export class Game {
                 if (this.currentArea === "your_land") {
                     await this.saveGame();
                 } else {
-                    console.log(this.lang.get('thank_exit', 'Thanks for playing!'));
+                    this.print(this.lang.get('thank_exit', 'Thanks for playing!'));
                     return;
                 }
                 break;
@@ -629,12 +655,12 @@ export class Game {
                 break;
             case "15":
                 if (this.currentArea === "your_land") {
-                    console.log(this.lang.get('thank_exit', 'Thanks for playing!'));
+                    this.print(this.lang.get('thank_exit', 'Thanks for playing!'));
                     return;
                 }
                 break;
             default:
-                console.log(this.lang.get('invalid_choice', 'Invalid choice'));
+                this.print(this.lang.get('invalid_choice', 'Invalid choice'));
         }
     }
     
@@ -643,7 +669,7 @@ export class Game {
      */
     async explore() {
         if (!this.player) {
-            console.log(this.lang.get('no_character_created', 'No character created'));
+            this.print(this.lang.get('no_character_created', 'No character created'));
             return;
         }
         
@@ -653,19 +679,19 @@ export class Game {
         const areaData = this.areasData[this.currentArea] || {};
         const areaName = areaData.name || "Unknown Area";
         
-        console.log(this.lang.get('exploring_area_msg', `Exploring ${areaName}...`));
+        this.print(this.lang.get('exploring_area_msg', `Exploring ${areaName}...`));
         
         // 70% chance of encounter
         if (Math.random() < 0.7) {
             await this.randomEncounter();
         } else {
-            console.log(this.lang.get('explore_nothing_found', 'You explore the area but find nothing.'));
+            this.print(this.lang.get('explore_nothing_found', 'You explore the area but find nothing.'));
             
             // Small chance to find gold
             if (Math.random() < 0.3) {
                 const foundGold = Math.floor(Math.random() * 15) + 5;
                 this.player.gold += foundGold;
-                console.log(this.lang.get('found_gold_msg', `You found ${foundGold} gold!`));
+                this.print(this.lang.get('found_gold_msg', `You found ${foundGold} gold!`));
             }
         }
     }
@@ -680,7 +706,7 @@ export class Game {
         const possibleEnemies = areaData.possible_enemies || [];
         
         if (possibleEnemies.length === 0) {
-            console.log(this.lang.get('no_enemies_in_area', 'No enemies in this area'));
+            this.print(this.lang.get('no_enemies_in_area', 'No enemies in this area'));
             return;
         }
         
@@ -689,7 +715,7 @@ export class Game {
         
         if (enemyData) {
             const enemy = new Enemy(enemyData);
-            console.log(`\n%cA wild ${enemy.name} appears!%c`, Colors.RED + Colors.BOLD, Colors.END);
+            this.print(`\nA wild ${enemy.name} appears!`);
             await this.battle(enemy);
         }
     }
@@ -706,25 +732,25 @@ export class Game {
      */
     async travel() {
         if (!this.player) {
-            console.log(this.lang.get('no_character', 'No character'));
+            this.print(this.lang.get('no_character', 'No character'));
             return;
         }
         
         const areaData = this.areasData[this.currentArea] || {};
         const connections = areaData.connections || [];
         
-        console.log(`\n%c=== TRAVEL ===%c`, Colors.CYAN + Colors.BOLD, Colors.END);
-        console.log(`Current location: ${areaData.name || this.currentArea}`);
+        this.print(`\n=== TRAVEL ===`);
+        this.print(`Current location: ${areaData.name || this.currentArea}`);
         
         if (connections.length === 0) {
-            console.log(this.lang.get('no_connected_areas', 'No connected areas'));
+            this.print(this.lang.get('no_connected_areas', 'No connected areas'));
             return;
         }
         
-        console.log(this.lang.get('ui_connected_areas', 'Connected areas:'));
+        this.print(this.lang.get('ui_connected_areas', 'Connected areas:'));
         for (let i = 0; i < connections.length; i++) {
             const area = this.areasData[connections[i]] || {};
-            console.log(`${i + 1}. ${area.name || connections[i]} - ${area.description || ''}`);
+            this.print(`${i + 1}. ${area.name || connections[i]} - ${area.description || ''}`);
         }
         
         const choice = await this.ask(`\nTravel to (1-${connections.length}) or press Enter to cancel: `);
@@ -735,7 +761,7 @@ export class Game {
                 const newArea = connections[idx];
                 this.currentArea = newArea;
                 this.player.updateWeather(newArea);
-                console.log(`Traveling to ${this.areasData[newArea]?.name || newArea}...`);
+                this.print(`Traveling to ${this.areasData[newArea]?.name || newArea}...`);
                 
                 // Random encounter on travel
                 if (Math.random() < 0.3) {
@@ -750,15 +776,15 @@ export class Game {
      */
     async viewInventory() {
         if (!this.player) {
-            console.log(this.lang.get('no_character', 'No character'));
+            this.print(this.lang.get('no_character', 'No character'));
             return;
         }
         
-        console.log(`\n%c=== INVENTORY ===%c`, Colors.CYAN + Colors.BOLD, Colors.END);
-        console.log(`Gold: ${Colors.GOLD}${this.player.gold}${Colors.END}`);
+        this.print(`\n=== INVENTORY ===`);
+        this.print(`Gold: ${this.player.gold}`);
         
         if (this.player.inventory.length === 0) {
-            console.log(this.lang.get('inventory_empty', 'Your inventory is empty'));
+            this.print(this.lang.get('inventory_empty', 'Your inventory is empty'));
             return;
         }
         
@@ -771,12 +797,12 @@ export class Game {
         }
         
         for (const [type, items] of Object.entries(itemsByType)) {
-            console.log(`\n${Colors.CYAN}${type.charAt(0).toUpperCase() + type.slice(1)}:${Colors.END}`);
+            this.print(`\n${type.charAt(0).toUpperCase() + type.slice(1)}:`);
             for (const item of items) {
                 const itemData = this.itemsData[item] || {};
-                console.log(`  - ${item}`);
+                this.print(`  - ${item}`);
                 if (itemData.description) {
-                    console.log(`    ${itemData.description}`);
+                    this.print(`    ${itemData.description}`);
                 }
             }
         }
@@ -787,20 +813,20 @@ export class Game {
      */
     async viewMissions() {
         if (!this.player) {
-            console.log(this.lang.get('no_character', 'No character'));
+            this.print(this.lang.get('no_character', 'No character'));
             return;
         }
         
-        console.log(`\n%c=== MISSIONS ===%c`, Colors.CYAN + Colors.BOLD, Colors.END);
+        this.print(`\n=== MISSIONS ===`);
         
         const activeMissions = Object.keys(this.missionProgress).filter(
             mid => !this.missionProgress[mid]?.completed
         );
         
         if (activeMissions.length === 0) {
-            console.log(this.lang.get('no_active_missions', 'No active missions'));
-            console.log(`${Colors.CYAN}A.${Colors.END} Available Missions`);
-            console.log(`B. Back`);
+            this.print(this.lang.get('no_active_missions', 'No active missions'));
+            this.print(`A. Available Missions`);
+            this.print(`B. Back`);
             
             const choice = await this.ask("\nChoose an option: ");
             if (choice.toUpperCase() === 'A') {
@@ -809,7 +835,7 @@ export class Game {
             return;
         }
         
-        console.log(this.lang.get('n_active_missions', 'Active Missions:'));
+        this.print(this.lang.get('n_active_missions', 'Active Missions:'));
         for (let i = 0; i < activeMissions.length; i++) {
             const mid = activeMissions[i];
             const mission = this.missionsData[mid] || {};
@@ -817,8 +843,8 @@ export class Game {
             const target = progress.target_count || 1;
             const current = progress.current_count || 0;
             
-            console.log(`${i + 1}. ${mission.name || mid} - ${current}/${target}`);
-            console.log(`   ${mission.description || ''}`);
+            this.print(`${i + 1}. ${mission.name || mid} - ${current}/${target}`);
+            this.print(`   ${mission.description || ''}`);
         }
     }
     
@@ -826,27 +852,27 @@ export class Game {
      * Available missions menu
      */
     async availableMissionsMenu() {
-        console.log(`\n%c=== AVAILABLE MISSIONS ===%c`, Colors.CYAN + Colors.BOLD, Colors.END);
+        this.print(`\n=== AVAILABLE MISSIONS ===`);
         
         const availableMissions = Object.keys(this.missionsData).filter(
             mid => !this.missionProgress[mid] && !this.completedMissions.includes(mid)
         );
         
         if (availableMissions.length === 0) {
-            console.log(this.lang.get('no_new_missions', 'No new missions available'));
+            this.print(this.lang.get('no_new_missions', 'No new missions available'));
             return;
         }
         
         for (let i = 0; i < availableMissions.length; i++) {
             const mid = availableMissions[i];
             const mission = this.missionsData[mid] || {};
-            console.log(`${i + 1}. ${Colors.BOLD}${mission.name || mid}${Colors.END}`);
-            console.log(`   ${mission.description || ''}`);
+            this.print(`${i + 1}. ${mission.name || mid}`);
+            this.print(`   ${mission.description || ''}`);
             
             const levelReq = mission.unlock_level;
             if (levelReq) {
                 const hasLevel = this.player.level >= levelReq;
-                console.log(`   Level required: ${hasLevel ? Colors.GREEN : Colors.RED}${levelReq}${Colors.END}`);
+                this.print(`   Level required: ${levelReq}`);
             }
         }
         
@@ -866,13 +892,13 @@ export class Game {
      */
     async acceptMission(missionId) {
         if (this.missionProgress[missionId]) {
-            console.log(this.lang.get('mission_already_accepted', 'Mission already accepted'));
+            this.print(this.lang.get('mission_already_accepted', 'Mission already accepted'));
             return;
         }
         
         const mission = this.missionsData[missionId];
         if (!mission) {
-            console.log(this.lang.get('mission_data_not_found', 'Mission not found'));
+            this.print(this.lang.get('mission_data_not_found', 'Mission not found'));
             return;
         }
         
@@ -886,7 +912,7 @@ export class Game {
             type: missionType
         };
         
-        console.log(`Mission accepted: ${mission.name || missionId}`);
+        this.print(`Mission accepted: ${mission.name || missionId}`);
     }
     
     /**
@@ -894,7 +920,7 @@ export class Game {
      */
     async fightBossMenu() {
         if (!this.player) {
-            console.log(this.lang.get('no_character', 'No character'));
+            this.print(this.lang.get('no_character', 'No character'));
             return;
         }
         
@@ -902,11 +928,11 @@ export class Game {
         const possibleBosses = areaData.possible_bosses || [];
         
         if (possibleBosses.length === 0) {
-            console.log(`No bosses in ${areaData.name || this.currentArea}`);
+            this.print(`No bosses in ${areaData.name || this.currentArea}`);
             return;
         }
         
-        console.log(`\n%c=== BOSSES IN ${(areaData.name || this.currentArea).toUpperCase()} ===%c`, Colors.RED + Colors.BOLD, Colors.END);
+        this.print(`\n=== BOSSES IN ${(areaData.name || this.currentArea).toUpperCase()} ===`);
         
         for (let i = 0; i < possibleBosses.length; i++) {
             const bossName = possibleBosses[i];
@@ -914,10 +940,10 @@ export class Game {
             let status = "";
             
             if (this.player.bossesKilled && this.player.bossesKilled[bossName]) {
-                status = ` ${Colors.YELLOW}(Recently defeated)${Colors.END}`;
+                status = ` (Recently defeated)`;
             }
             
-            console.log(`${i + 1}. ${bossData.name || bossName}${status}`);
+            this.print(`${i + 1}. ${bossData.name || bossName}${status}`);
         }
         
         const choice = await this.ask(`\nChoose a boss (1-${possibleBosses.length}) or Enter to cancel: `);
@@ -930,7 +956,7 @@ export class Game {
                 
                 if (bossData) {
                     const boss = new Boss(bossData, this.dialoguesData);
-                    console.log(`\n%cChallenge accepted!%c`, Colors.RED + Colors.BOLD, Colors.END);
+                    this.print(`\nChallenge accepted!`);
                     await this.battle(boss);
                 }
             }
@@ -942,25 +968,25 @@ export class Game {
      */
     async visitTavern() {
         if (!this.player) {
-            console.log(this.lang.get('no_character', 'No character'));
+            this.print(this.lang.get('no_character', 'No character'));
             return;
         }
         
-        console.log(`\n%c=== THE TAVERN ===%c`, Colors.CYAN + Colors.BOLD, Colors.END);
-        console.log(`Your gold: ${Colors.GOLD}${this.player.gold}${Colors.END}`);
+        this.print(`\n=== THE TAVERN ===`);
+        this.print(`Your gold: ${this.player.gold}`);
         
         const companions = Object.entries(this.companionsData);
         if (companions.length === 0) {
-            console.log(this.lang.get('no_companions_available', 'No companions available'));
+            this.print(this.lang.get('no_companions_available', 'No companions available'));
             return;
         }
         
-        console.log(`\nAvailable Companions:`);
+        this.print(`\nAvailable Companions:`);
         for (let i = 0; i < companions.length; i++) {
             const [cid, cdata] = companions[i];
             const price = cdata.price || 0;
-            console.log(`${i + 1}. ${cdata.name || cid} - ${Colors.GOLD}${price} gold${Colors.END}`);
-            console.log(`   ${cdata.description || ''}`);
+            this.print(`${i + 1}. ${cdata.name || cid} - ${price} gold`);
+            this.print(`   ${cdata.description || ''}`);
         }
         
         const choice = await this.ask(`\nHire companion (1-${companions.length}) or Enter to leave: `);
@@ -973,7 +999,7 @@ export class Game {
                 
                 if (this.player.gold >= price) {
                     if (this.player.companions.length >= 4) {
-                        console.log("Maximum 4 companions allowed");
+                        this.print("Maximum 4 companions allowed");
                         return;
                     }
                     
@@ -985,10 +1011,10 @@ export class Game {
                         equipment: { weapon: null, armor: null, accessory: null }
                     });
                     
-                    console.log(`Hired ${cdata.name || cid} for ${price} gold!`);
+                    this.print(`Hired ${cdata.name || cid} for ${price} gold!`);
                     this.player.updateStatsFromEquipment(this.itemsData, this.companionsData);
                 } else {
-                    console.log(this.lang.get('not_enough_gold', 'Not enough gold'));
+                    this.print(this.lang.get('not_enough_gold', 'Not enough gold'));
                 }
             }
         }
@@ -999,7 +1025,7 @@ export class Game {
      */
     async visitShop() {
         if (!this.player) {
-            console.log(this.lang.get('no_character', 'No character'));
+            this.print(this.lang.get('no_character', 'No character'));
             return;
         }
         
@@ -1007,17 +1033,17 @@ export class Game {
         const areaShops = areaData.shops || [];
         
         if (areaShops.length === 0) {
-            console.log(`No shops in ${areaData.name || this.currentArea}`);
+            this.print(`No shops in ${areaData.name || this.currentArea}`);
             return;
         }
         
-        console.log(`\n%c=== SHOPS IN ${(areaData.name || this.currentArea).toUpperCase()} ===%c`, Colors.BOLD, Colors.END);
-        console.log(`Your gold: ${Colors.GOLD}${this.player.gold}${Colors.END}\n`);
+        this.print(`\n=== SHOPS IN ${(areaData.name || this.currentArea).toUpperCase()} ===`);
+        this.print(`Your gold: ${this.player.gold}\n`);
         
         for (let i = 0; i < areaShops.length; i++) {
             const shopId = areaShops[i];
             const shopData = this.shopsData[shopId] || {};
-            console.log(`${i + 1}. ${shopData.name || shopId}`);
+            this.print(`${i + 1}. ${shopData.name || shopId}`);
         }
         
         const choice = await this.ask("\nWhich shop? ");
@@ -1037,11 +1063,11 @@ export class Game {
         const shopData = this.shopsData[shopId];
         if (!shopData) return;
         
-        console.log(`\n%c=== ${shopData.name || shopId.toUpperCase()} ===%c`, Colors.CYAN + Colors.BOLD, Colors.END);
+        this.print(`\n=== ${shopData.name || shopId.toUpperCase()} ===`);
         
         const items = shopData.items || [];
         if (items.length === 0) {
-            console.log("This shop has no items");
+            this.print("This shop has no items");
             return;
         }
         
@@ -1049,10 +1075,9 @@ export class Game {
             const itemId = items[i];
             const itemData = this.itemsData[itemId] || {};
             const price = itemData.price || 0;
-            const rarityColor = this.getRarityColor(itemData.rarity || 'common');
             
-            console.log(`${i + 1}. ${rarityColor}${itemData.name || itemId}${Colors.END} - ${Colors.GOLD}${price} gold${Colors.END}`);
-            console.log(`   ${itemData.description || ''}`);
+            this.print(`${i + 1}. ${itemData.name || itemId} - ${price} gold`);
+            this.print(`   ${itemData.description || ''}`);
         }
         
         const choice = await this.ask(`\nBuy item (1-${items.length}) or Enter to leave: `);
@@ -1067,9 +1092,9 @@ export class Game {
                 if (this.player.gold >= price) {
                     this.player.gold -= price;
                     this.player.inventory.push(itemId);
-                    console.log(`Purchased ${itemData?.name || itemId} for ${price} gold!`);
+                    this.print(`Purchased ${itemData?.name || itemId} for ${price} gold!`);
                 } else {
-                    console.log(this.lang.get('not_enough_gold', 'Not enough gold'));
+                    this.print(this.lang.get('not_enough_gold', 'Not enough gold'));
                 }
             }
         }
@@ -1094,7 +1119,7 @@ export class Game {
      */
     async rest() {
         if (!this.player) {
-            console.log(this.lang.get('no_character', 'No character'));
+            this.print(this.lang.get('no_character', 'No character'));
             return;
         }
         
@@ -1103,17 +1128,17 @@ export class Game {
         const restCost = areaData.rest_cost || 10;
         
         if (!canRest) {
-            console.log(`${Colors.RED}You cannot rest here. It's too dangerous!${Colors.END}`);
+            this.print(`You cannot rest here. It's too dangerous!`);
             return;
         }
         
-        console.log(`\n%c=== REST ===%c`, Colors.CYAN + Colors.BOLD, Colors.END);
-        console.log(`Rest Cost: ${Colors.GOLD}${restCost} gold${Colors.END}`);
-        console.log(`HP: ${this.player.hp}/${this.player.maxHp}`);
-        console.log(`MP: ${this.player.mp}/${this.player.maxMp}`);
+        this.print(`\n=== REST ===`);
+        this.print(`Rest Cost: ${restCost} gold`);
+        this.print(`HP: ${this.player.hp}/${this.player.maxHp}`);
+        this.print(`MP: ${this.player.mp}/${this.player.maxMp}`);
         
         if (this.player.gold < restCost) {
-            console.log(`${Colors.RED}Not enough gold!${Colors.END}`);
+            this.print(`Not enough gold!`);
             return;
         }
         
@@ -1123,7 +1148,7 @@ export class Game {
             this.player.gold -= restCost;
             this.player.hp = this.player.maxHp;
             this.player.mp = this.player.maxMp;
-            console.log(`${Colors.GREEN}You rest and recover full health!${Colors.END}`);
+            this.print(`You rest and recover full health!`);
         }
     }
     
@@ -1132,15 +1157,15 @@ export class Game {
      */
     async manageCompanions() {
         if (!this.player) {
-            console.log(this.lang.get('no_character', 'No character'));
+            this.print(this.lang.get('no_character', 'No character'));
             return;
         }
         
-        console.log(`\n%c=== COMPANIONS ===%c`, Colors.CYAN + Colors.BOLD, Colors.END);
-        console.log(`Active companions: ${this.player.companions?.length || 0}/4`);
+        this.print(`\n=== COMPANIONS ===`);
+        this.print(`Active companions: ${this.player.companions?.length || 0}/4`);
         
         if (!this.player.companions || this.player.companions.length === 0) {
-            console.log("You have no companions. Visit the tavern to hire some!");
+            this.print("You have no companions. Visit the tavern to hire some!");
             return;
         }
         
@@ -1158,20 +1183,20 @@ export class Game {
                 }
             }
             
-            console.log(`\n${i + 1}. ${Colors.CYAN}${compName}${Colors.END} (Level ${compLevel})`);
+            this.print(`\n${i + 1}. ${compName} (Level ${compLevel})`);
             if (compData) {
                 const bonuses = [];
                 if (compData.attack_bonus) bonuses.push(`+${compData.attack_bonus} ATK`);
                 if (compData.defense_bonus) bonuses.push(`+${compData.defense_bonus} DEF`);
                 if (compData.speed_bonus) bonuses.push(`+${compData.speed_bonus} SPD`);
                 if (bonuses.length > 0) {
-                    console.log(`   Bonuses: ${bonuses.join(', ')}`);
+                    this.print(`   Bonuses: ${bonuses.join(', ')}`);
                 }
             }
         }
         
-        console.log(`\nD. Dismiss Companion`);
-        console.log(`B. Back`);
+        this.print(`\nD. Dismiss Companion`);
+        this.print(`B. Back`);
         
         const choice = await this.ask("\nChoose action: ");
         
@@ -1181,7 +1206,7 @@ export class Game {
                 const idx = parseInt(dismissChoice) - 1;
                 if (idx >= 0 && idx < this.player.companions.length) {
                     const dismissed = this.player.companions.splice(idx, 1)[0];
-                    console.log(`${Colors.RED}Dismissed ${dismissed.name || dismissed}.${Colors.END}`);
+                    this.print(`Dismissed ${dismissed.name || dismissed}.`);
                     this.player.updateStatsFromEquipment(this.itemsData, this.companionsData);
                 }
             }
@@ -1193,31 +1218,31 @@ export class Game {
      */
     async petShop() {
         if (!this.player) {
-            console.log(this.lang.get('no_character', 'No character'));
+            this.print(this.lang.get('no_character', 'No character'));
             return;
         }
         
-        console.log(`\n%c=== PET SHOP ===%c`, Colors.CYAN + Colors.BOLD, Colors.END);
-        console.log(`Your Gold: ${Colors.GOLD}${this.player.gold}${Colors.END}`);
+        this.print(`\n=== PET SHOP ===`);
+        this.print(`Your Gold: ${this.player.gold}`);
         
         const currentPet = this.player.activePet ? (this.petsData[this.player.activePet]?.name || this.player.activePet) : "None";
-        console.log(`Current Pet: ${Colors.MAGENTA}${currentPet}${Colors.END}\n`);
+        this.print(`Current Pet: ${currentPet}\n`);
         
-        console.log(`${Colors.CYAN}1.${Colors.END} Buy Pet`);
-        console.log(`${Colors.CYAN}2.${Colors.END} Manage Pets`);
-        console.log(`${Colors.CYAN}3.${Colors.END} Back`);
+        this.print(`1. Buy Pet`);
+        this.print(`2. Manage Pets`);
+        this.print(`3. Back`);
         
         const choice = await this.ask("Select an option: ");
         
         if (choice === "1") {
             const petEntries = Object.entries(this.petsData);
-            console.log("\nAvailable Pets:");
+            this.print("\nAvailable Pets:");
             
             for (let i = 0; i < petEntries.length; i++) {
                 const [petId, pet] = petEntries[i];
                 const isOwned = this.player.petsOwned?.includes(petId);
                 if (!isOwned) {
-                    console.log(`- ${pet.name || petId} (${pet.price}g): ${pet.description || ''}`);
+                    this.print(`- ${pet.name || petId} (${pet.price}g): ${pet.description || ''}`);
                 }
             }
             
@@ -1230,19 +1255,19 @@ export class Game {
                     this.player.gold -= price;
                     if (!this.player.petsOwned) this.player.petsOwned = [];
                     this.player.petsOwned.push(petId);
-                    console.log(`You bought a ${this.petsData[petId].name}!`);
+                    this.print(`You bought a ${this.petsData[petId].name}!`);
                 } else {
-                    console.log("Not enough gold!");
+                    this.print("Not enough gold!");
                 }
             }
         } else if (choice === "2") {
             if (this.player.petsOwned && this.player.petsOwned.length > 0) {
-                console.log("\nYour Pets:");
+                this.print("\nYour Pets:");
                 for (let i = 0; i < this.player.petsOwned.length; i++) {
                     const petId = this.player.petsOwned[i];
                     const petName = this.petsData[petId]?.name || petId;
                     const status = petId === this.player.activePet ? "(Active)" : "";
-                    console.log(`${i + 1}. ${petName} ${status}`);
+                    this.print(`${i + 1}. ${petName} ${status}`);
                 }
                 
                 const sel = await this.ask(`\nSelect pet to activate (1-${this.player.petsOwned.length}): `);
@@ -1250,11 +1275,11 @@ export class Game {
                     const idx = parseInt(sel) - 1;
                     if (idx >= 0 && idx < this.player.petsOwned.length) {
                         this.player.activePet = this.player.petsOwned[idx];
-                        console.log(`${this.petsData[this.player.activePet].name} is now active!`);
+                        this.print(`${this.petsData[this.player.activePet].name} is now active!`);
                     }
                 }
             } else {
-                console.log("You don't own any pets yet.");
+                this.print("You don't own any pets yet.");
             }
         }
     }
@@ -1264,18 +1289,18 @@ export class Game {
      */
     async buildHome() {
         if (!this.player) {
-            console.log(this.lang.get('no_character', 'No character'));
+            this.print(this.lang.get('no_character', 'No character'));
             return;
         }
         
         if (!this.player.housingOwned || this.player.housingOwned.length === 0) {
-            console.log(`${Colors.YELLOW}You haven't purchased any housing items! Visit the Housing Shop first.${Colors.END}`);
+            this.print(`You haven't purchased any housing items! Visit the Housing Shop first.`);
             return;
         }
         
-        console.log(`\n%c=== BUILD HOME ===%c`, Colors.CYAN + Colors.BOLD, Colors.END);
-        console.log(`Comfort Points: ${Colors.CYAN}${this.player.comfortPoints || 0}${Colors.END}`);
-        console.log(`Items owned: ${this.player.housingOwned.length}`);
+        this.print(`\n=== BUILD HOME ===`);
+        this.print(`Comfort Points: ${this.player.comfortPoints || 0}`);
+        this.print(`Items owned: ${this.player.housingOwned.length}`);
         
         // Show building slots
         const buildingTypes = {
@@ -1288,54 +1313,50 @@ export class Game {
         };
         
         for (const [bType, info] of Object.entries(buildingTypes)) {
-            console.log(`\n${Colors.BOLD}${info.label} Slots:${Colors.END}`);
+            this.print(`\n${info.label} Slots:`);
             for (let i = 1; i <= info.slots; i++) {
                 const slot = `${bType}_${i}`;
                 const itemId = this.player.buildingSlots?.[slot];
                 if (itemId && this.housingData[itemId]) {
                     const item = this.housingData[itemId];
-                    const rarityColor = this.getRarityColor(item.rarity);
-                    console.log(`  ${slot}: ${rarityColor}${item.name || itemId}${Colors.END}`);
+                    this.print(`  ${slot}: ${item.name || itemId}`);
                 } else {
-                    console.log(`  ${slot}: ${Colors.GRAY}Empty${Colors.END}`);
+                    this.print(`  ${slot}: Empty`);
                 }
             }
         }
     }
     
     /**
-     * Save game
+     * Load a saved game
      */
-    async saveGame() {
-        if (!this.player) {
-            console.log(this.lang.get('no_character', 'No character'));
-            return;
-        }
+    async loadGame() {
+        this.print("\nLoading game...");
+        const saveData = await this.saveLoadSystem.load_game();
         
-        console.log("\nSaving game...");
-        const success = await this.saveLoadSystem.saveGame();
-        
-        if (success) {
-            console.log(`%cGame saved successfully!%c`, Colors.GREEN, Colors.END);
-        } else {
-            console.log(`%cFailed to save game%c`, Colors.RED, Colors.END);
+        if (saveData) {
+            this.player = saveData.player;
+            this.currentArea = saveData.currentArea || "starting_village";
+            this.print(`Game loaded successfully! Welcome back, ${this.player.name}!`);
         }
     }
     
     /**
-     * Load game
+     * Save the current game
      */
-    async loadGame() {
-        console.log("\nLoading game...");
-        const saveData = await this.saveLoadSystem.loadGame();
+    async saveGame() {
+        if (!this.player) {
+            this.print(this.lang.get('no_character', 'No character'));
+            return;
+        }
         
-        if (saveData) {
-            await this.saveLoadSystem.loadSaveDataInternal(saveData);
-            this.player = saveData.player;
-            this.currentArea = saveData.currentArea || "starting_village";
-            console.log(`%cGame loaded successfully!%c`, Colors.GREEN, Colors.END);
+        this.print("\nSaving game...");
+        const success = await this.saveLoadSystem.save_game();
+        
+        if (success) {
+            this.print(`Game saved successfully!`);
         } else {
-            console.log("No saved game found");
+            this.print(`Failed to save game`);
         }
     }
     
@@ -1353,7 +1374,7 @@ export class Game {
                 const targetEnemy = (mission.target || '').toLowerCase();
                 if (targetEnemy === target.toLowerCase()) {
                     progress.current_count += count;
-                    console.log(`${Colors.CYAN}[Mission] ${mission.name}: ${progress.current_count}/${progress.target_count}${Colors.END}`);
+                    this.print(`[Mission] ${mission.name}: ${progress.current_count}/${progress.target_count}`);
                     
                     if (progress.current_count >= progress.target_count) {
                         this.completeMission(mid);
@@ -1383,8 +1404,8 @@ export class Game {
             this.missionProgress[missionId].completed = true;
             const mission = this.missionsData[missionId];
             
-            console.log(`\n%c!!! MISSION COMPLETE: ${mission?.name || missionId} !!!%c`, Colors.GOLD + Colors.BOLD, Colors.END);
-            console.log(`${Colors.YELLOW}You can now claim your rewards from the menu.${Colors.END}`);
+            this.print(`\n!!! MISSION COMPLETE: ${mission?.name || missionId} !!!`);
+            this.print(`You can now claim your rewards from the menu.`);
         }
     }
     
@@ -1419,10 +1440,13 @@ export class Game {
         this.player.gainExperience(rewardExp);
         this.player.gold += rewardGold;
         
-        console.log(`\n%c✓ Challenge Completed: ${challenge.name}!%c`, Colors.CYAN + Colors.BOLD, Colors.END);
-        console.log(`  Reward: ${rewardExp} EXP + ${rewardGold} Gold`);
+        this.print(`\n✓ Challenge Completed: ${challenge.name}!`);
+        this.print(`  Reward: ${rewardExp} EXP + ${rewardGold} Gold`);
     }
     
+    /**
+     * Use item in battle
+     */
     /**
      * Use item in battle
      */
@@ -1434,15 +1458,15 @@ export class Game {
         );
         
         if (consumables.length === 0) {
-            console.log("No consumable items!");
+            this.print("No consumable items!");
             return;
         }
         
-        console.log("\nAvailable Consumables:");
+        this.print("\nAvailable Consumables:");
         for (let i = 0; i < consumables.length; i++) {
             const item = consumables[i];
             const itemData = this.itemsData[item];
-            console.log(`${i + 1}. ${item} - ${itemData?.description || 'Unknown effect'}`);
+            this.print(`${i + 1}. ${item} - ${itemData?.description || 'Unknown effect'}`);
         }
         
         const choice = await this.ask(`Choose item (1-${consumables.length}): `);
@@ -1470,11 +1494,11 @@ export class Game {
             if (itemData.effect === "heal") {
                 const healAmount = itemData.value || 0;
                 this.player.heal(healAmount);
-                console.log(`Used ${item}, healed ${healAmount} HP!`);
+                this.print(`Used ${item}, healed ${healAmount} HP!`);
             } else if (itemData.effect === "mp_restore") {
                 const mpAmount = itemData.value || 0;
                 this.player.mp = Math.min(this.player.maxMp, this.player.mp + mpAmount);
-                console.log(`Used ${item}, restored ${mpAmount} MP!`);
+                this.print(`Used ${item}, restored ${mpAmount} MP!`);
             }
         }
     }
