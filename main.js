@@ -126,11 +126,11 @@ export class Game {
     /**
      * Print text to the game output
      */
-    this.print = (text, color = null) => {
+    print(text, color = null) {
         if (this.printCallback) {
             this.printCallback(text, color);
         }
-    };
+    }
 
     /**
      * Ask for user input
@@ -139,6 +139,11 @@ export class Game {
         this.print(question);
         return new Promise((resolve) => {
             this.resolveInput = resolve;
+            // Dispatch custom event for UI to handle
+            const event = new CustomEvent('gameAsk', { 
+                detail: { prompt: question, game: this } 
+            });
+            document.dispatchEvent(event);
         });
     }
 
@@ -1437,9 +1442,6 @@ export class Game {
     /**
      * Use item in battle
      */
-    /**
-     * Use item in battle
-     */
     async useItemInBattle() {
         if (!this.player) return;
         
@@ -1490,30 +1492,6 @@ export class Game {
                 this.player.mp = Math.min(this.player.maxMp, this.player.mp + mpAmount);
                 this.print(`Used ${item}, restored ${mpAmount} MP!`);
             }
-        }
-    }
-    
-    /**
-     * Ask for user input (browser-compatible)
-     */
-    ask(prompt) {
-        return new Promise((resolve) => {
-            this.resolveInput = resolve;
-            // Dispatch custom event for UI to handle
-            const event = new CustomEvent('gameAsk', { 
-                detail: { prompt, game: this } 
-            });
-            document.dispatchEvent(event);
-        });
-    }
-    
-    /**
-     * Handle user input from UI
-     */
-    handleInput(value) {
-        if (this.resolveInput) {
-            this.resolveInput(value);
-            this.resolveInput = null;
         }
     }
 }
