@@ -110,6 +110,7 @@ function handleInput() {
     if (!value) return;
     print("> " + value);
     input.value = "";
+    input.blur();
     game?.handleInput(value);
 }
 

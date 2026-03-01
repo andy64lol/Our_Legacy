@@ -139,6 +139,12 @@ export class Game {
      */
     ask(question) {
         this.print(question);
+        // Clear and focus input for the next question
+        const input = document.getElementById('gameInput');
+        if (input) {
+            input.value = '';
+            input.focus();
+        }
         return new Promise((resolve) => {
             this.resolveInput = resolve;
             // Dispatch custom event for UI to handle
