@@ -747,18 +747,20 @@ export class Game {
         this.print(`10. ${Colors.wrap(this.lang.get('companions', 'Companions'), Colors.PURPLE)}`);
         
         if (this.currentArea === "your_land") {
-            this.print(`11. ${Colors.wrap(this.lang.get('pet_shop', 'Pet Shop'), Colors.CYAN)}`);
-            this.print(`12. ${Colors.wrap(this.lang.get('build_home', 'Build Home'), Colors.GREEN)}`);
-            this.print(`13. ${Colors.wrap(this.lang.get('save_game', 'Save Game'), Colors.BLUE)}`);
-            this.print(`14. ${Colors.wrap(this.lang.get('load_game', 'Load Game'), Colors.BLUE)}`);
-            this.print(`15. ${Colors.wrap(this.lang.get('quit', 'Quit'), Colors.RED)}`);
+            this.print(`11. ${Colors.wrap(this.lang.get('alchemy', 'Alchemy'), Colors.MAGENTA)}`);
+            this.print(`12. ${Colors.wrap(this.lang.get('dungeons', 'Dungeons'), Colors.RED)}`);
+            this.print(`13. ${Colors.wrap(this.lang.get('pet_shop', 'Pet Shop'), Colors.CYAN)}`);
+            this.print(`14. ${Colors.wrap(this.lang.get('build_home', 'Build Home'), Colors.GREEN)}`);
+            this.print(`15. ${Colors.wrap(this.lang.get('save_game', 'Save Game'), Colors.BLUE)}`);
+            this.print(`16. ${Colors.wrap(this.lang.get('load_game', 'Load Game'), Colors.BLUE)}`);
+            this.print(`17. ${Colors.wrap(this.lang.get('quit', 'Quit'), Colors.RED)}`);
         } else {
             this.print(`11. ${Colors.wrap(this.lang.get('save_game', 'Save Game'), Colors.BLUE)}`);
             this.print(`12. ${Colors.wrap(this.lang.get('load_game', 'Load Game'), Colors.BLUE)}`);
             this.print(`13. ${Colors.wrap(this.lang.get('quit', 'Quit'), Colors.RED)}`);
         }
         
-        const maxChoice = this.currentArea === "your_land" ? "15" : "13";
+        const maxChoice = this.currentArea === "your_land" ? "17" : "13";
         const choice = await this.ask(`${this.lang.get('choose_option', 'Choose an option')} (1-${maxChoice}): `);
         
         switch (choice) {
@@ -774,21 +776,21 @@ export class Game {
             case "10": await this.manageCompanions(); break;
             case "11":
                 if (this.currentArea === "your_land") {
-                    await this.petShop();
+                    await this.visitAlchemy();
                 } else {
                     await this.saveLoadSystem.save_game();
                 }
                 break;
             case "12":
                 if (this.currentArea === "your_land") {
-                    await this.buildHome();
+                    await this.visitDungeons();
                 } else {
                     await this.saveLoadSystem.load_game();
                 }
                 break;
             case "13":
                 if (this.currentArea === "your_land") {
-                    await this.saveLoadSystem.save_game();
+                    await this.petShop();
                 } else {
                     this.print(Colors.wrap(this.lang.get('thank_exit', 'Thanks for playing!'), Colors.YELLOW));
                     return;
@@ -796,10 +798,25 @@ export class Game {
                 break;
             case "14":
                 if (this.currentArea === "your_land") {
+                    await this.buildHome();
+                } else {
                     await this.saveLoadSystem.load_game();
                 }
                 break;
             case "15":
+                if (this.currentArea === "your_land") {
+                    await this.saveLoadSystem.save_game();
+                } else {
+                    this.print(Colors.wrap(this.lang.get('thank_exit', 'Thanks for playing!'), Colors.YELLOW));
+                    return;
+                }
+                break;
+            case "16":
+                if (this.currentArea === "your_land") {
+                    await this.saveLoadSystem.load_game();
+                }
+                break;
+            case "17":
                 if (this.currentArea === "your_land") {
                     this.print(Colors.wrap(this.lang.get('thank_exit', 'Thanks for playing!'), Colors.YELLOW));
                     return;
@@ -1723,6 +1740,1006 @@ export class Game {
                 this.print(`${Colors.wrap(this.lang.get('used_item_msg', 'Used {item}').replace('{item}', itemData.name || item), Colors.BLUE)}, ${this.lang.get('restored_mp_msg', 'restored {amount} MP!').replace('{amount}', restored)}`);
             }
         }
+    }
+    
+    // =====================================================
+    // ALCHEMY/CRAFTING SYSTEM (1.1)
+    // =====================================================
+    
+    /**
+     * Visit the Alchemy workshop to craft items
+     */
+    async visitAlchemy() {
+        if (!this.player) {
+            this.print(this.lang.get('no_character', 'No character'));
+            return;
+        }
+        
+        if (!this.craftingData || !this.craftingData.recipes) {
+            this.print(Colors.wrap(this.lang.get('ui_no_crafting_recipes', 'No crafting recipes available!'), Colors.YELLOW));
+            return;
+        }
+        
+        this.print(this.createSectionHeader(this.lang.get('alchemy_title', 'ALCHEMY WORKSHOP'), "="));
+        this.print(`Welcome to the Alchemy Workshop! Here you can craft potions, elixirs, and items.`);
+        this.print(`${Colors.wrap(this.lang.get('your_gold', 'Your Gold:'), Colors.GOLD)} ${this.player.gold}\n`);
+        
+        // Display available materials from inventory
+        await this.displayCraftingMaterials();
+        
+        while (true) {
+            this.print(`\n${Colors.wrap(this.lang.get('alchemy_categories', 'Categories:'), Colors.BOLD)}`);
+            this.print(`P. ${Colors.wrap('Potions', Colors.CYAN)}`);
+            this.print(`E. ${Colors.wrap('Elixirs', Colors.BLUE)}`);
+            this.print(`N. ${Colors.wrap('Enchantments', Colors.PURPLE)}`);
+            this.print(`U. ${Colors.wrap('Utility', Colors.GREEN)}`);
+            this.print(`A. ${Colors.wrap('All Recipes', Colors.YELLOW)}`);
+            this.print(`C. ${Colors.wrap('Craft Item', Colors.RED)}`);
+            this.print(`M. ${Colors.wrap('View Materials', Colors.GRAY)}`);
+            this.print(`B. ${Colors.wrap(this.lang.get('back', 'Back'), Colors.RED)}`);
+            
+            const choice = await this.ask(`${this.lang.get('choose_option', 'Choose an option')}: `);
+            
+            if (choice.toUpperCase() === 'B') {
+                break;
+            } else if (choice.toUpperCase() === 'P') {
+                await this.displayRecipesByCategory('Potions');
+            } else if (choice.toUpperCase() === 'E') {
+                await this.displayRecipesByCategory('Elixirs');
+            } else if (choice.toUpperCase() === 'N') {
+                await this.displayRecipesByCategory('Enchantments');
+            } else if (choice.toUpperCase() === 'U') {
+                await this.displayRecipesByCategory('Utility');
+            } else if (choice.toUpperCase() === 'A') {
+                await this.displayAllRecipes();
+            } else if (choice.toUpperCase() === 'C') {
+                await this.craftItem();
+            } else if (choice.toUpperCase() === 'M') {
+                await this.displayCraftingMaterials();
+            }
+        }
+    }
+    
+    /**
+     * Display materials available in player's inventory for crafting
+     */
+    async displayCraftingMaterials() {
+        if (!this.player) return;
+        
+        this.print(`\n${Colors.wrap(this.lang.get('your_materials', 'Your Materials:'), Colors.BOLD)}`);
+        
+        // Get all material categories
+        const materialCategories = this.craftingData.material_categories || {};
+        
+        // Collect all possible materials
+        const allMaterials = new Set();
+        for (const materials of Object.values(materialCategories)) {
+            for (const material of materials) {
+                allMaterials.add(material);
+            }
+        }
+        
+        // Count materials in inventory
+        const materialCounts = {};
+        for (const item of this.player.inventory) {
+            if (allMaterials.has(item)) {
+                materialCounts[item] = (materialCounts[item] || 0) + 1;
+            }
+        }
+        
+        if (Object.keys(materialCounts).length === 0) {
+            this.print(Colors.wrap(this.lang.get('no_crafting_materials', 'No crafting materials in inventory!'), Colors.YELLOW));
+            this.print(Colors.wrap(this.lang.get('find_materials_hint', 'Materials can be found as drops from enemies.'), Colors.GRAY));
+            return;
+        }
+        
+        this.print(`${Colors.wrap('Material', Colors.CYAN).padEnd(25)} ${Colors.wrap('Qty', Colors.YELLOW)}`);
+        this.print("-".repeat(35));
+        for (const [material, count] of Object.entries(materialCounts)) {
+            this.print(`${material.padEnd(25)} ${count}`);
+        }
+    }
+    
+    /**
+     * Display recipes filtered by category
+     */
+    async displayRecipesByCategory(category) {
+        if (!this.craftingData) return;
+        
+        const recipes = this.craftingData.recipes || {};
+        const categoryRecipes = Object.entries(recipes).filter(
+            ([, rdata]) => rdata.category === category
+        );
+        
+        if (categoryRecipes.length === 0) {
+            this.print(Colors.wrap(`No recipes for ${category}`, Colors.YELLOW));
+            return;
+        }
+        
+        this.print(`\n${Colors.wrap(category.toUpperCase(), Colors.BOLD)}:`);
+        for (let i = 0; i < categoryRecipes.length; i++) {
+            const [rid, rdata] = categoryRecipes[i];
+            const name = rdata.name || rid;
+            const rarity = rdata.rarity || "common";
+            this.print(`${i + 1}. ${this.formatItemName(name, rarity)}`);
+        }
+        
+        await this.ask(`\n${this.lang.get('press_enter_back', 'Press Enter to go back...')}`);
+    }
+    
+    /**
+     * Display all available recipes
+     */
+    async displayAllRecipes() {
+        if (!this.craftingData) return;
+        
+        const recipes = this.craftingData.recipes || {};
+        if (Object.keys(recipes).length === 0) {
+            this.print(Colors.wrap(this.lang.get('no_recipes_available', 'No recipes available!'), Colors.YELLOW));
+            return;
+        }
+        
+        this.print(this.createSectionHeader(this.lang.get('all_recipes', 'ALL RECIPES'), "-"));
+        
+        const recipeEntries = Object.entries(recipes);
+        const pageSize = 10;
+        let currentPage = 0;
+        
+        while (true) {
+            const start = currentPage * pageSize;
+            const end = start + pageSize;
+            const pageItems = recipeEntries.slice(start, end);
+            
+            for (let i = 0; i < pageItems.length; i++) {
+                const [rid, rdata] = pageItems[i];
+                const name = rdata.name || rid;
+                const category = rdata.category || 'Unknown';
+                const rarity = rdata.rarity || "common";
+                this.print(`${start + i + 1}. ${this.formatItemName(name, rarity)} (${category})`);
+            }
+            
+            const totalPages = Math.ceil(recipeEntries.length / pageSize);
+            this.print(`\nPage ${currentPage + 1}/${totalPages}`);
+            
+            this.print(`C. ${Colors.wrap('Craft Item', Colors.RED)}`);
+            this.print(`B. ${Colors.wrap(this.lang.get('back', 'Back'), Colors.RED)}`);
+            
+            const choice = await this.ask(`${this.lang.get('choose_option', 'Choose an option')}: `);
+            
+            if (choice.toUpperCase() === 'B') {
+                break;
+            } else if (choice.toUpperCase() === 'C') {
+                await this.craftItem();
+                break;
+            } else if (choice.isDigit()) {
+                const idx = parseInt(choice) - 1;
+                if (idx >= 0 && idx < recipeEntries.length) {
+                    const [rid, rdata] = recipeEntries[idx];
+                    await this.showRecipeDetails(rid, rdata);
+                }
+            }
+            
+            if (currentPage < totalPages - 1 && choice.toUpperCase() !== 'C') {
+                currentPage++;
+            } else {
+                break;
+            }
+        }
+    }
+    
+    /**
+     * Show recipe details
+     */
+    async showRecipeDetails(recipeId, recipeData) {
+        const name = recipeData.name || recipeId;
+        const rarity = recipeData.rarity || "common";
+        const category = recipeData.category || "Unknown";
+        const description = recipeData.description || "";
+        
+        this.print(`\n${this.formatItemName(name, rarity)} (${category})`);
+        if (description) {
+            this.print(`  ${description}`);
+        }
+        
+        // Show required materials
+        const materials = recipeData.materials || {};
+        this.print(`\n${Colors.wrap('Required Materials:', Colors.BOLD)}`);
+        for (const [material, quantity] of Object.entries(materials)) {
+            const playerHas = this.player.inventory.filter(i => i === material).length;
+            const hasEnough = playerHas >= quantity;
+            const status = hasEnough ? Colors.wrap('✓', Colors.GREEN) : Colors.wrap('✗', Colors.RED);
+            this.print(`  ${status} ${material}: ${playerHas}/${quantity}`);
+        }
+        
+        // Show result
+        const result = recipeData.result || {};
+        this.print(`\n${Colors.wrap('Result:', Colors.BOLD)}`);
+        this.print(`  ${this.formatItemName(result.name || recipeId, rarity)} x${result.quantity || 1}`);
+        
+        await this.ask(`\n${this.lang.get('press_enter_back', 'Press Enter to go back...')}`);
+    }
+    
+    /**
+     * Craft an item
+     */
+    async craftItem() {
+        if (!this.player || !this.craftingData) return;
+        
+        const recipes = this.craftingData.recipes || {};
+        const recipeEntries = Object.entries(recipes);
+        
+        if (recipeEntries.length === 0) {
+            this.print(Colors.wrap(this.lang.get('no_recipes_available', 'No recipes available!'), Colors.YELLOW));
+            return;
+        }
+        
+        this.print(this.createSectionHeader(this.lang.get('craft_item', 'CRAFT ITEM'), "-"));
+        
+        // Show recipes with material availability
+        const craftableRecipes = [];
+        
+        for (let i = 0; i < recipeEntries.length; i++) {
+            const [rid, rdata] = recipeEntries[i];
+            const materials = rdata.materials || {};
+            
+            // Check if player has all materials
+            let canCraft = true;
+            for (const [material, quantity] of Object.entries(materials)) {
+                const playerHas = this.player.inventory.filter(item => item === material).length;
+                if (playerHas < quantity) {
+                    canCraft = false;
+                    break;
+                }
+            }
+            
+            const name = rdata.name || rid;
+            const rarity = rdata.rarity || "common";
+            const status = canCraft ? Colors.wrap('[CRAFTABLE]', Colors.GREEN) : Colors.wrap('[MISSING MATERIALS]', Colors.RED);
+            this.print(`${i + 1}. ${this.formatItemName(name, rarity)} ${status}`);
+            
+            if (canCraft) {
+                craftableRecipes.push([rid, rdata, i + 1]);
+            }
+        }
+        
+        if (craftableRecipes.length === 0) {
+            this.print(Colors.wrap(this.lang.get('no_craftable_items', 'No craftable items - missing materials!'), Colors.YELLOW));
+            return;
+        }
+        
+        const choice = await this.ask(`\n${this.lang.get('craft_prompt', 'Choose recipe to craft')} (1-${recipeEntries.length}) ${this.lang.get('or_cancel_prompt', 'or Enter to cancel')}: `);
+        
+        if (!choice.isDigit()) return;
+        
+        const idx = parseInt(choice) - 1;
+        if (idx < 0 || idx >= recipeEntries.length) return;
+        
+        const [rid, rdata] = recipeEntries[idx];
+        const materials = rdata.materials || {};
+        
+        // Verify materials again
+        for (const [material, quantity] of Object.entries(materials)) {
+            const playerHas = this.player.inventory.filter(item => item === material).length;
+            if (playerHas < quantity) {
+                this.print(Colors.wrap(this.lang.get('not_enough_materials', 'Not enough materials!'), Colors.RED));
+                return;
+            }
+        }
+        
+        // Consume materials
+        for (const [material, quantity] of Object.entries(materials)) {
+            for (let i = 0; i < quantity; i++) {
+                const index = this.player.inventory.indexOf(material);
+                if (index > -1) {
+                    this.player.inventory.splice(index, 1);
+                }
+            }
+        }
+        
+        // Add crafted item
+        const result = rdata.result || {};
+        const itemName = result.name || rid;
+        const itemQuantity = result.quantity || 1;
+        
+        for (let i = 0; i < itemQuantity; i++) {
+            this.player.inventory.push(itemName);
+        }
+        
+        const name = rdata.name || rid;
+        const rarity = rdata.rarity || "common";
+        
+        this.print(`${Colors.wrap(this.lang.get('crafted_msg', 'Crafted:'), Colors.GREEN)} ${this.formatItemName(name, rarity)} x${itemQuantity}!`);
+    }
+    
+    // =====================================================
+    // DUNGEONS SYSTEM (1.2)
+    // =====================================================
+    
+    /**
+     * Visit the dungeon menu to select and enter dungeons
+     */
+    async visitDungeons() {
+        if (!this.player) {
+            this.print(this.lang.get('no_character', 'No character'));
+            return;
+        }
+        
+        this.print(this.createSectionHeader(this.lang.get('dungeons_title', 'DUNGEONS'), "="));
+        this.print(Colors.wrap(this.lang.get('dungeon_portal', 'The dungeon portal awaits...'), Colors.YELLOW));
+        
+        // Check if player is in a dungeon
+        if (this.currentDungeon) {
+            this.print(`\n${Colors.wrap(this.lang.get('currently_in_dungeon', 'You are currently in:'), Colors.YELLOW)} ${this.currentDungeon.name}`);
+            this.print(`${Colors.wrap('Progress:', Colors.CYAN)} Room ${this.dungeonProgress + 1}/${this.dungeonRooms.length}`);
+            
+            this.print(`\nC. ${Colors.wrap(this.lang.get('continue_dungeon', 'Continue'), Colors.GREEN)}`);
+            this.print(`E. ${Colors.wrap(this.lang.get('exit_dungeon', 'Exit'), Colors.RED)}`);
+            
+            const choice = await this.ask(`${this.lang.get('choose_option', 'Choose an option')}: `);
+            
+            if (choice.toUpperCase() === 'C') {
+                await this.continueDungeon();
+            } else if (choice.toUpperCase() === 'E') {
+                await this.exitDungeon();
+            }
+            return;
+        }
+        
+        // Show available dungeons
+        const allDungeons = this.dungeonsData.dungeons || [];
+        if (allDungeons.length === 0) {
+            this.print(Colors.wrap(this.lang.get('no_dungeons', 'No dungeons available!'), Colors.YELLOW));
+            return;
+        }
+        
+        // Filter dungeons by allowed_areas
+        const dungeons = allDungeons.filter(dungeon => {
+            const allowedAreas = dungeon.allowed_areas || [];
+            return !allowedAreas.length || allowedAreas.includes(this.currentArea);
+        });
+        
+        if (dungeons.length === 0) {
+            this.print(Colors.wrap(this.lang.get('no_dungeons_here', 'No dungeons available in this area!'), Colors.YELLOW));
+            return;
+        }
+        
+        this.print(`\n${Colors.wrap(this.lang.get('available_dungeons', 'Available Dungeons:'), Colors.BOLD)}`);
+        for (let i = 0; i < dungeons.length; i++) {
+            const dungeon = dungeons[i];
+            const difficulty = dungeon.difficulty || [1, 3];
+            const rooms = dungeon.rooms || 5;
+            const minLevel = difficulty[0] * 5;
+            const levelOk = this.player.level >= minLevel;
+            
+            const status = levelOk ? Colors.wrap('Available', Colors.GREEN) : Colors.wrap(`Level ${minLevel}+ required`, Colors.RED);
+            
+            this.print(`${i + 1}. ${Colors.wrap(dungeon.name, Colors.BOLD)} (Difficulty ${difficulty[0]}-${difficulty[1]}, ${rooms} rooms)`);
+            this.print(`   ${dungeon.description || ''}`);
+            this.print(`   Status: ${status}`);
+        }
+        
+        const choice = await this.ask(`\n${this.lang.get('choose_dungeon_prompt', 'Choose dungeon')} (1-${dungeons.length}) ${this.lang.get('or_cancel_prompt', 'or Enter to cancel')}: `);
+        
+        if (!choice.isDigit()) return;
+        
+        const idx = parseInt(choice) - 1;
+        if (idx < 0 || idx >= dungeons.length) return;
+        
+        const dungeon = dungeons[idx];
+        const minLevel = (dungeon.difficulty || [1, 3])[0] * 5;
+        
+        if (this.player.level < minLevel) {
+            this.print(Colors.wrap(this.lang.get('level_too_low', `You need to be at least level ${minLevel} to enter this dungeon!`), Colors.RED));
+            return;
+        }
+        
+        await this.enterDungeon(dungeon);
+    }
+    
+    /**
+     * Enter a dungeon and generate rooms
+     */
+    async enterDungeon(dungeon) {
+        this.print(`\n${Colors.wrap(this.lang.get('entering_dungeon', 'Entering') + ' ' + dungeon.name + '!', Colors.MAGENTA + Colors.BOLD)}`);
+        this.print(dungeon.description || '');
+        
+        // Set dungeon state
+        this.currentDungeon = dungeon;
+        this.dungeonProgress = 0;
+        this.dungeonState = {
+            startTime: new Date().toISOString(),
+            totalRooms: dungeon.rooms,
+            currentRoom: 0
+        };
+        
+        // Generate dungeon rooms
+        this.generateDungeonRooms(dungeon);
+        
+        // Start with first room
+        await this.continueDungeon();
+    }
+    
+    /**
+     * Generate dungeon rooms based on room weights
+     */
+    generateDungeonRooms(dungeon) {
+        const roomWeights = dungeon.room_weights || {};
+        const totalRooms = dungeon.rooms || 5;
+        
+        this.dungeonRooms = [];
+        
+        // Validate room_weights
+        let validWeights = {};
+        if (roomWeights && Object.keys(roomWeights).length > 0) {
+            const totalWeight = Object.values(roomWeights).reduce((a, b) => a + b, 0);
+            if (totalWeight > 0) {
+                validWeights = roomWeights;
+            }
+        }
+        
+        // Default room weights if none provided
+        if (Object.keys(validWeights).length === 0) {
+            validWeights = {
+                'battle': 40,
+                'question': 20,
+                'chest': 15,
+                'empty': 15,
+                'trap_chest': 5,
+                'multi_choice': 5
+            };
+        }
+        
+        const roomTypes = Object.keys(validWeights);
+        const weights = Object.values(validWeights);
+        
+        for (let i = 0; i < totalRooms; i++) {
+            // Last room is always boss room
+            let roomType;
+            if (i === totalRooms - 1) {
+                roomType = 'boss';
+            } else {
+                roomType = roomTypes[this.weightedRandom(weights)];
+            }
+            
+            const difficulty = (dungeon.difficulty || [1, 3])[0] + (i * 0.5);
+            
+            this.dungeonRooms.push({
+                type: roomType,
+                roomNumber: i + 1,
+                difficulty: difficulty
+            });
+        }
+    }
+    
+    /**
+     * Weighted random selection
+     */
+    weightedRandom(weights) {
+        const totalWeight = weights.reduce((a, b) => a + b, 0);
+        let random = Math.random() * totalWeight;
+        
+        for (let i = 0; i < weights.length; i++) {
+            random -= weights[i];
+            if (random <= 0) return i;
+        }
+        
+        return weights.length - 1;
+    }
+    
+    /**
+     * Continue through the current dungeon
+     */
+    async continueDungeon() {
+        if (!this.currentDungeon || !this.dungeonRooms || this.dungeonRooms.length === 0) {
+            this.print(Colors.wrap(this.lang.get('no_active_dungeon', 'No active dungeon!'), Colors.RED));
+            return;
+        }
+        
+        // Loop through rooms until dungeon is complete
+        while (this.currentDungeon && this.dungeonProgress < this.dungeonRooms.length) {
+            const room = this.dungeonRooms[this.dungeonProgress];
+            
+            this.print(`\n${Colors.wrap('=== Room ' + room.roomNumber + ' ===', Colors.CYAN + Colors.BOLD)}`);
+            
+            // Handle room based on type
+            const roomType = room.type;
+            if (roomType === 'question') {
+                await this.handleQuestionRoom(room);
+            } else if (roomType === 'battle') {
+                await this.handleBattleRoom(room);
+            } else if (roomType === 'chest') {
+                await this.handleChestRoom(room);
+            } else if (roomType === 'trap_chest') {
+                await this.handleTrapChestRoom(room);
+            } else if (roomType === 'multi_choice') {
+                await this.handleMultiChoiceRoom(room);
+            } else if (roomType === 'empty') {
+                await this.handleEmptyRoom(room);
+            } else if (roomType === 'boss') {
+                await this.handleBossRoom(room);
+            }
+            
+            // Check if player died
+            if (!this.player || !this.player.isAlive()) {
+                await this.dungeonDeath();
+                return;
+            }
+        }
+        
+        // Dungeon complete
+        if (this.currentDungeon && this.dungeonProgress >= this.dungeonRooms.length) {
+            await this.completeDungeon();
+        }
+    }
+    
+    /**
+     * Handle a question/riddle room
+     */
+    async handleQuestionRoom(room) {
+        if (!this.player) return;
+        
+        this.print(Colors.wrap(this.lang.get('mystical_pedestal', 'A mystical pedestal stands before you with a glowing question...'), Colors.YELLOW));
+        
+        const challengeTemplates = this.dungeonsData.challenge_templates || {};
+        const questionTemplate = challengeTemplates.question || {};
+        
+        if (!questionTemplate.types || questionTemplate.types.length === 0) {
+            this.print(Colors.wrap(this.lang.get('no_questions', 'No questions available!'), Colors.GRAY));
+            await this.advanceRoom();
+            return;
+        }
+        
+        const questionData = questionTemplate.types[Math.floor(Math.random() * questionTemplate.types.length)];
+        
+        this.print(`\n${Colors.wrap('Riddle:', Colors.CYAN)}`);
+        this.print(questionData.question);
+        
+        const choice = await this.ask(`${this.lang.get('your_answer_prompt', 'Your answer (or type leave to skip): ')}`);
+        
+        if (choice.toLowerCase() === 'leave') {
+            await this.advanceRoom();
+            return;
+        }
+        
+        const correctAnswer = (questionData.answer || '').toLowerCase();
+        const isCorrect = choice.trim().toLowerCase() === correctAnswer;
+        
+        if (isCorrect) {
+            this.print(Colors.wrap(this.lang.get('correct_answer', 'Correct!'), Colors.GREEN));
+            
+            const reward = questionData.success_reward || {};
+            if (reward.gold) {
+                this.player.gold += reward.gold;
+                this.print(`You gained ${reward.gold} gold!`);
+            }
+            if (reward.experience) {
+                this.player.gainExperience(reward.experience);
+                this.print(`You gained ${reward.experience} experience!`);
+            }
+        } else {
+            this.print(Colors.wrap(this.lang.get('incorrect_answer', 'Incorrect!'), Colors.RED));
+            const damage = questionData.failure_damage || 15;
+            const actualDamage = this.player.takeDamage(damage);
+            this.print(`You took ${actualDamage} damage from the failed riddle!`);
+        }
+        
+        await this.advanceRoom();
+    }
+    
+    /**
+     * Handle a battle room
+     */
+    async handleBattleRoom(room) {
+        if (!this.player) {
+            await this.advanceRoom();
+            return;
+        }
+        
+        this.print(Colors.wrap(this.lang.get('combat_approaching', 'Combat approaches...'), Colors.RED));
+        
+        const difficulty = room.difficulty || 1;
+        const enemyCount = Math.max(1, Math.floor(difficulty));
+        
+        const areaEnemies = (this.areasData[this.currentArea] || {}).possible_enemies || [];
+        
+        if (areaEnemies.length === 0) {
+            // Fallback enemies
+            const fallbackEnemies = ['goblin', 'orc', 'skeleton'];
+            areaEnemies.push(...fallbackEnemies.filter(e => this.enemiesData[e]));
+        }
+        
+        if (areaEnemies.length === 0) {
+            this.print(Colors.wrap(this.lang.get('no_enemies_found', 'No enemies found! You proceed safely.'), Colors.YELLOW));
+            await this.advanceRoom();
+            return;
+        }
+        
+        const enemies = [];
+        for (let i = 0; i < enemyCount; i++) {
+            const enemyName = areaEnemies[Math.floor(Math.random() * areaEnemies.length)];
+            const enemyData = this.enemiesData[enemyName];
+            
+            if (enemyData) {
+                // Scale enemy stats by difficulty
+                const scaledData = { ...enemyData };
+                scaledData.hp = Math.floor(scaledData.hp * (0.8 + difficulty * 0.2));
+                scaledData.attack = Math.floor(scaledData.attack * (0.8 + difficulty * 0.2));
+                scaledData.defense = Math.floor(scaledData.defense * (0.8 + difficulty * 0.2));
+                
+                enemies.push(new Enemy(scaledData));
+            }
+        }
+        
+        if (enemies.length === 0) {
+            this.print(Colors.wrap(this.lang.get('no_enemies_found', 'No enemies found!'), Colors.YELLOW));
+            await this.advanceRoom();
+            return;
+        }
+        
+        this.print(this.lang.get('encounter_enemies_msg', `Encountered ${enemies.length} enemy(enemies)!`));
+        
+        // Battle each enemy
+        for (const enemy of enemies) {
+            if (!this.player || !this.player.isAlive()) break;
+            
+            this.print(`\nA wild ${enemy.name} appears!`);
+            await this.battle(enemy);
+        }
+        
+        if (this.player && this.player.isAlive()) {
+            this.print(Colors.wrap(this.lang.get('battle_room_cleared', 'You cleared the battle room!'), Colors.GREEN));
+            await this.advanceRoom();
+        }
+    }
+    
+    /**
+     * Handle a treasure chest room
+     */
+    async handleChestRoom(room) {
+        if (!this.player) {
+            await this.advanceRoom();
+            return;
+        }
+        
+        this.print(Colors.wrap(this.lang.get('chest_found', 'You found a treasure chest in the center of the room!'), Colors.YELLOW));
+        
+        const difficulty = room.difficulty || 1;
+        
+        let chestType = 'small';
+        if (difficulty >= 8) chestType = 'legendary';
+        else if (difficulty >= 5) chestType = 'large';
+        else if (difficulty >= 3) chestType = 'medium';
+        
+        const chestTemplates = this.dungeonsData.chest_templates || {};
+        const chestData = chestTemplates[chestType] || chestTemplates.small || {};
+        
+        const goldMin = chestData.gold_range ? chestData.gold_range[0] : 50;
+        const goldMax = chestData.gold_range ? chestData.gold_range[1] : 150;
+        const goldReward = Math.floor(Math.random() * (goldMax - goldMin + 1)) + goldMin;
+        
+        const expReward = chestData.experience || 100;
+        
+        // Give rewards
+        this.player.gold += goldReward;
+        this.player.gainExperience(expReward);
+        
+        this.print(`${Colors.wrap('You found ' + goldReward + ' gold!', Colors.GOLD)}`);
+        this.print(`${Colors.wrap('You gained ' + expReward + ' experience!', Colors.MAGENTA)}`);
+        
+        // Generate items
+        const itemRarities = chestData.item_rarity || ['common'];
+        const itemCountRange = chestData.item_count_range || [1, 2];
+        const itemCount = Math.floor(Math.random() * (itemCountRange[1] - itemCountRange[0] + 1)) + itemCountRange[0];
+        
+        for (let i = 0; i < itemCount; i++) {
+            const rarity = itemRarities[Math.floor(Math.random() * itemRarities.length)];
+            const possibleItems = Object.values(this.itemsData).filter(item => item.rarity === rarity);
+            
+            if (possibleItems.length > 0) {
+                const item = possibleItems[Math.floor(Math.random() * possibleItems.length)];
+                this.player.inventory.push(item.name || item.id);
+                this.print(`${Colors.wrap('Found:', Colors.GREEN)} ${this.formatItemName(item.name || item.id, rarity)}`);
+            }
+        }
+        
+        await this.advanceRoom();
+    }
+    
+    /**
+     * Handle a trapped chest room
+     */
+    async handleTrapChestRoom(room) {
+        if (!this.player) {
+            await this.advanceRoom();
+            return;
+        }
+        
+        this.print(Colors.wrap(this.lang.get('suspicious_chest', 'You found a suspicious-looking chest...'), Colors.YELLOW));
+        
+        const choice = await this.ask(`${this.lang.get('open_chest_prompt', 'Open the chest (O) or leave it (L)?')}: `);
+        
+        if (choice.toUpperCase() === 'L') {
+            this.print(Colors.wrap(this.lang.get('leave_chest', 'You leave the chest alone.'), Colors.GRAY));
+            await this.advanceRoom();
+            return;
+        }
+        
+        // 70% chance of trap
+        if (Math.random() < 0.7) {
+            this.print(Colors.wrap(this.lang.get('trap_triggered', 'A trap was triggered!'), Colors.RED));
+            
+            // Simple damage based on difficulty
+            const damage = Math.floor(room.difficulty || 1) * 10;
+            const actualDamage = this.player.takeDamage(damage);
+            this.print(`You took ${actualDamage} damage from the trap!`);
+            
+            if (!this.player.isAlive()) {
+                await this.dungeonDeath();
+                return;
+            }
+        } else {
+            // Found treasure
+            const goldReward = Math.floor(Math.random() * 50) + 25;
+            this.player.gold += goldReward;
+            this.print(`${Colors.wrap('Lucky! You found ' + goldReward + ' gold!', Colors.GREEN)}`);
+        }
+        
+        await this.advanceRoom();
+    }
+    
+    /**
+     * Handle a multiple choice decision room
+     */
+    async handleMultiChoiceRoom(room) {
+        if (!this.player) {
+            await this.advanceRoom();
+            return;
+        }
+        
+        this.print(Colors.wrap(this.lang.get('crossroads', 'You come to a crossroads with multiple paths...'), Colors.YELLOW));
+        
+        const challengeTemplates = this.dungeonsData.challenge_templates || {};
+        const selectionTemplate = challengeTemplates.selection || {};
+        
+        if (!selectionTemplate.types || selectionTemplate.types.length === 0) {
+            this.print(Colors.wrap(this.lang.get('safe_path', 'The path seems safe.'), Colors.GRAY));
+            await this.advanceRoom();
+            return;
+        }
+        
+        const challenge = selectionTemplate.types[Math.floor(Math.random() * selectionTemplate.types.length)];
+        
+        this.print(`\n${challenge.question}`);
+        
+        const options = challenge.options || [];
+        for (let i = 0; i < options.length; i++) {
+            this.print(`${i + 1}. ${options[i].text}`);
+        }
+        
+        const choice = await this.ask(`${this.lang.get('your_choice_prompt', 'Your choice')}: `);
+        
+        if (!choice.isDigit()) {
+            await this.advanceRoom();
+            return;
+        }
+        
+        const idx = parseInt(choice) - 1;
+        if (idx < 0 || idx >= options.length) {
+            await this.advanceRoom();
+            return;
+        }
+        
+        const outcome = options[idx];
+        this.print(`\n${outcome.reason || ''}`);
+        
+        if (outcome.correct) {
+            const reward = challenge.success_reward || {};
+            if (reward.gold) {
+                this.player.gold += reward.gold;
+                this.print(`You gained ${reward.gold} gold!`);
+            }
+            if (reward.experience) {
+                this.player.gainExperience(reward.experience);
+                this.print(`You gained ${reward.experience} experience!`);
+            }
+        } else {
+            const damage = challenge.failure_damage || 10;
+            const actualDamage = this.player.takeDamage(damage);
+            this.print(`You took ${actualDamage} damage!`);
+            
+            if (!this.player.isAlive()) {
+                await this.dungeonDeath();
+                return;
+            }
+        }
+        
+        await this.advanceRoom();
+    }
+    
+    /**
+     * Handle an empty room
+     */
+    async handleEmptyRoom(room) {
+        this.print(Colors.wrap(this.lang.get('empty_room', 'The room is empty...'), Colors.GRAY));
+        
+        // 30% chance for hidden treasure
+        if (Math.random() < 0.3) {
+            if (Math.random() < 0.5) {
+                const goldFound = Math.floor(Math.random() * 40) + 10;
+                this.player.gold += goldFound;
+                this.print(`${Colors.wrap('You found ' + goldFound + ' gold hidden in the room!', Colors.GOLD)}`);
+            } else {
+                await this.randomEncounter();
+            }
+        } else {
+            this.print(this.lang.get('nothing_interesting', 'Nothing of interest here.'));
+        }
+        
+        await this.advanceRoom();
+    }
+    
+    /**
+     * Handle the boss room
+     */
+    async handleBossRoom(room) {
+        const dungeon = this.currentDungeon;
+        if (!dungeon) {
+            await this.completeDungeon();
+            return;
+        }
+        
+        const bossId = dungeon.boss_id;
+        
+        if (bossId && this.bossesData[bossId]) {
+            const bossData = this.bossesData[bossId];
+            const boss = new Boss(bossData, this.dialoguesData);
+            
+            this.print(`\n${Colors.wrap(this.lang.get('boss_appears', 'A powerful boss appears!'), Colors.RED + Colors.BOLD)}`);
+            this.print(`${Colors.wrap(boss.name, Colors.BOLD)} - ${boss.description || ''}`);
+            
+            await this.battle(boss);
+            
+            if (this.player && this.player.isAlive()) {
+                this.print(Colors.wrap(this.lang.get('victory', 'Victory!'), Colors.GREEN + Colors.BOLD));
+                this.print(`${Colors.wrap('You defeated ' + boss.name + '!', Colors.YELLOW)}`);
+                
+                // Boss rewards
+                const expReward = (boss.experience_reward || 100) * 2;
+                const goldReward = (boss.gold_reward || 50) * 2;
+                
+                this.player.gainExperience(expReward);
+                this.player.gold += goldReward;
+                
+                this.print(`${Colors.wrap('Gained ' + expReward + ' experience!', Colors.MAGENTA)}`);
+                this.print(`${Colors.wrap('Gained ' + goldReward + ' gold!', Colors.GOLD)}`);
+            }
+        } else {
+            // No boss data - use completion rewards
+            this.print(Colors.wrap(this.lang.get('powerful_enemy', 'A powerful guardian appears!'), Colors.RED));
+            
+            const completionReward = dungeon.completion_reward || {};
+            const expReward = Math.floor((completionReward.experience || 500) / 2);
+            const goldReward = Math.floor((completionReward.gold || 300) / 2);
+            
+            this.player.gainExperience(expReward);
+            this.player.gold += goldReward;
+            
+            this.print(`${Colors.wrap('Gained ' + expReward + ' experience!', Colors.MAGENTA)}`);
+            this.print(`${Colors.wrap('Gained ' + goldReward + ' gold!', Colors.GOLD)}`);
+        }
+        
+        await this.completeDungeon();
+    }
+    
+    /**
+     * Advance to the next room
+     */
+    async advanceRoom() {
+        this.dungeonProgress++;
+        
+        if (this.dungeonProgress >= this.dungeonRooms.length) {
+            await this.completeDungeon();
+        } else {
+            this.print(this.lang.get('moving_next_room', '\nMoving to the next room...'));
+            this.dungeonState.currentRoom = this.dungeonProgress;
+        }
+    }
+    
+    /**
+     * Complete the current dungeon
+     */
+    async completeDungeon() {
+        if (!this.currentDungeon) return;
+        
+        const dungeon = this.currentDungeon;
+        
+        this.print(`\n${Colors.wrap(this.lang.get('dungeon_complete', 'DUNGEON COMPLETE!'), Colors.GREEN + Colors.BOLD)}`);
+        this.print(Colors.wrap(this.lang.get('cleared_dungeon', 'You cleared') + ' ' + dungeon.name + '!', Colors.YELLOW));
+        
+        // Give completion rewards
+        const completionReward = dungeon.completion_reward || {};
+        
+        if (completionReward.gold) {
+            this.player.gold += completionReward.gold;
+            this.print(`${Colors.wrap('+' + completionReward.gold + ' gold', Colors.GOLD)}`);
+        }
+        
+        if (completionReward.experience) {
+            this.player.gainExperience(completionReward.experience);
+            this.print(`${Colors.wrap('+' + completionReward.experience + ' experience', Colors.MAGENTA)}`);
+        }
+        
+        if (completionReward.items && completionReward.items.length > 0) {
+            this.print(Colors.wrap('Special items:', Colors.YELLOW));
+            for (const itemName of completionReward.items) {
+                this.player.inventory.push(itemName);
+                const itemData = this.itemsData[itemName] || {};
+                const rarity = itemData.rarity || "common";
+                this.print(`  - ${this.formatItemName(itemName, rarity)}`);
+            }
+        }
+        
+        // Update challenge progress
+        this.updateChallengeProgress('dungeon_complete', 1);
+        
+        // Clear dungeon state
+        this.currentDungeon = null;
+        this.dungeonProgress = 0;
+        this.dungeonRooms = [];
+        this.dungeonState = {};
+    }
+    
+    /**
+     * Exit the current dungeon
+     */
+    async exitDungeon() {
+        if (!this.player) return;
+        
+        this.print(`\n${Colors.wrap(this.lang.get('exiting_dungeon', 'Exiting dungeon...'), Colors.YELLOW)}`);
+        
+        // Penalty for early exit
+        if (this.dungeonProgress > 0) {
+            const penaltyGold = Math.min(Math.floor(this.player.gold / 10), 100);
+            if (penaltyGold > 0) {
+                this.player.gold -= penaltyGold;
+                this.print(`${Colors.wrap('Exit penalty: Lost ' + penaltyGold + ' gold', Colors.RED)}`);
+            }
+        }
+        
+        // Clear dungeon state
+        this.currentDungeon = null;
+        this.dungeonProgress = 0;
+        this.dungeonRooms = [];
+        this.dungeonState = {};
+    }
+    
+    /**
+     * Handle death in dungeon
+     */
+    async dungeonDeath() {
+        if (!this.player) return;
+        
+        this.print(`\n${Colors.wrap(this.lang.get('dungeon_death', 'You have fallen in the dungeon!'), Colors.RED + Colors.BOLD)}`);
+        
+        // Death penalty
+        this.player.hp = Math.floor(this.player.maxHp / 2);
+        this.player.mp = Math.floor(this.player.maxMp / 2);
+        
+        // Lose some gold
+        const goldLoss = Math.min(Math.floor(this.player.gold / 5), 200);
+        this.player.gold -= goldLoss;
+        
+        this.print(`${Colors.wrap('Lost ' + goldLoss + ' gold in the dungeon!', Colors.YELLOW)}`);
+        
+        // Return to starting village
+        this.currentArea = 'starting_village';
+        this.print(this.lang.get('respawn_village', 'You respawn at the starting village...'));
+        
+        // Clear dungeon state
+        this.currentDungeon = null;
+        this.dungeonProgress = 0;
+        this.dungeonRooms = [];
+        this.dungeonState = {};
     }
 }
 
