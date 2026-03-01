@@ -3,8 +3,6 @@
  * Ported from main.py for browser use
  * Andy64lol
  */
-
-// Import utility modules
 import { Character } from './utilities_js/character.js';
 import { BattleSystem, create_hp_mp_bar, create_boss_hp_bar } from './utilities_js/battle.js';
 import { SpellCastingSystem } from './utilities_js/spellcasting.js';
@@ -13,6 +11,7 @@ import { LanguageManager } from './utilities_js/language.js';
 import { SettingsManager, Colors, ModManager } from './utilities_js/settings.js';
 import { Enemy, Boss } from './utilities_js/entities.js';
 import { Dice } from './utilities_js/dice.js';
+import MarketAPI from './utilities_js/market.js';
 
 // Game API URL for market
 let gameApi = null;
@@ -30,8 +29,6 @@ if (!String.prototype.contains) {
         return this.indexOf(str) !== -1;
     };
 }
-
-import MarketAPI from './utilities_js/market.js';
 
 /**
  * Main Game class for browser
