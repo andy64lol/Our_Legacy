@@ -131,6 +131,11 @@ export class Game {
      * Print text to the game output
      */
     print(text, color = null) {
+        if (typeof text === 'string') {
+            const areaData = this.areasData[this.currentArea] || {};
+            const areaName = areaData.name || this.currentArea;
+            text = text.replace(/\{area\}/g, areaName);
+        }
         if (this.printCallback) {
             this.printCallback(text, color);
         } else {
@@ -164,6 +169,10 @@ export class Game {
      */
     handleInput(input) {
         if (this.resolveInput) {
+            // Clear display after input
+            if (this.printCallback) {
+                this.printCallback(null, 'clear');
+            }
             const resolve = this.resolveInput;
             this.resolveInput = null;
             resolve(input);
@@ -400,7 +409,7 @@ export class Game {
     async displayWelcome() {
         this.print(this.createSeparator("=", 60));
         this.print(`       ${Colors.wrap(this.lang.get('game_title_display', 'Our Legacy'), Colors.BOLD)}`);
-        this.print(`       ${this.lang.get('game_subtitle_display', 'A Text-Based RPG')}`);
+        this.print(`       ${Colors.wrap(this.lang.get('game_subtitle_display', 'Your game in the browser, portable!'), Colors.CYAN)}`);
         this.print(this.createSeparator("=", 60));
         this.print("");
         this.print(Colors.wrap(this.lang.get('welcome_message', 'Welcome to Our Legacy!'), Colors.CYAN));

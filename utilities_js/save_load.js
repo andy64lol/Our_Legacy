@@ -114,7 +114,21 @@ export class SaveLoadSystem {
 
     try {
       localStorage.setItem(this.storageKey, JSON.stringify(saves));
-      this.game.print(this.lang.get("game_saved_success", "Game saved successfully: {filename}").replace("{filename}", Object.keys(saves).pop()));
+      const saveName = Object.keys(saves).pop();
+      this.game.print(this.lang.get("game_saved_success", "Game saved successfully: {filename}").replace("{filename}", saveName));
+      
+      // Local download
+      const json = JSON.stringify(saveData, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${saveName}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
       return true;
     } catch (e) {
       console.error("Error saving game:", e);
@@ -127,6 +141,39 @@ export class SaveLoadSystem {
    * @returns {Promise<boolean>} True if load was successful
    */
   async load_game() {
+    this.game.print("1. Load from Browser Storage");
+    this.game.print("2. Upload Save File (.json)");
+    
+    const methodChoice = await this.game.ask("Choose loading method (1-2): ");
+    
+    if (methodChoice === "2") {
+        return new Promise((resolve) => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                if (!file) {
+                    resolve(false);
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const saveData = JSON.parse(e.target.result);
+                        this._load_save_data_internal(saveData);
+                        resolve(true);
+                    } catch (err) {
+                        this.game.print("Error reading save file: " + err.message);
+                        resolve(false);
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        });
+    }
+
     const saves = this._getAllSaves();
     const saveKeys = Object.keys(saves);
 
