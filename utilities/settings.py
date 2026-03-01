@@ -91,6 +91,13 @@ class Colors:
     LIGHT_GRAY = '\033[37m'
     GRAY = '\033[90m'
 
+    # Rarity colors
+    COMMON = '\033[37m'     # Light Gray
+    UNCOMMON = '\033[92m'   # Green
+    RARE = '\033[94m'       # Blue
+    EPIC = '\033[95m'       # Purple/Magenta
+    LEGENDARY = '\033[93m'  # Gold
+
     @staticmethod
     def _color(code: str) -> str:
         return code
