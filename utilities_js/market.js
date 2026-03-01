@@ -13,7 +13,7 @@ const MARKET_COOLDOWN_MINUTES = 10;
 /**
  * API for accessing the Elite Market with 10-minute cooldown
  */
-export class MarketAPI {
+export default class MarketAPI {
     /**
      * @param {Object} lang - Language manager instance
      * @param {Object} colors - Colors class for styling
@@ -164,5 +164,3 @@ export class MarketAPI {
     }
 }
 
-export { MarketAPI };
-export default MarketAPI;

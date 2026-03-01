@@ -216,4 +216,3 @@ export class Boss extends Enemy {
   }
 }
 
-export { Enemy, Boss };
