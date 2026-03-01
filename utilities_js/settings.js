@@ -67,7 +67,7 @@ export class SettingsManager {
         this.settings = { ...this.settings, ...loadedSettings };
       }
     } catch (e) {
-      console.warn("Could not load settings:", e);
+      this.game.print("Could not load settings: " + e);
       this.settings = { ...DEFAULT_SETTINGS };
     }
   }
@@ -206,7 +206,7 @@ export class ModManager {
           }
         }
       } catch (e) {
-        console.warn(`Failed to load ${dataType} from mod ${modName}:`, e);
+        this.game.print(`Failed to load ${dataType} from mod ${modName}:`, e);
       }
     }
 

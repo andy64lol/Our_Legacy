@@ -9,7 +9,7 @@ import { Colors } from './settings.js';
 /**
  * Mock language class for when no language manager is provided
  */
-class MockLangCharacterAttr {
+export class MockLangCharacterAttr {
   get(key, defaultValue = null, params = {}) {
     return key;
   }

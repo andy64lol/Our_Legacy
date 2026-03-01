@@ -2,7 +2,7 @@
  * LanguageManager class for managing language loading and translation
  * Ported from utilities/language.py
  */
-class LanguageManager {
+export class LanguageManager {
     /**
      * @param {Function} getSettingFunc - Function to get settings
      * @param {Function} setSettingFunc - Function to set settings
@@ -120,4 +120,3 @@ class LanguageManager {
 }
 
 export { LanguageManager };
-export default LanguageManager;
