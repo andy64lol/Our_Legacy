@@ -837,7 +837,6 @@ export class Game {
                 this.print(Colors.wrap(this.lang.get('invalid_choice', 'Invalid choice'), Colors.RED));
         }
     }
-    }
     
     /**
      * Explore current area
