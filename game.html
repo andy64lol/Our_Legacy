@@ -129,7 +129,11 @@ function updateStats() {
 window.addEventListener("load", async () => {
     game = new Game();
     game.printCallback = (text, color) => {
-        print(text);
+        if (typeof text === 'string') {
+            print(text);
+        } else if (text !== undefined && text !== null) {
+            print(String(text));
+        }
         updateStats();
     };
     await game.init();

@@ -217,6 +217,3 @@ export class Boss extends Enemy {
 }
 
 export { Enemy, Boss };
-export const EnemyClass = Enemy;
-export const BossClass = Boss;
-export default { Enemy, Boss };

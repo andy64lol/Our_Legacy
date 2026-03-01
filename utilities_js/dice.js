@@ -42,4 +42,3 @@ export class Dice {
   }
 }
 
-export default Dice;

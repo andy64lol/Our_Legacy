@@ -129,6 +129,8 @@ export class Game {
     print(text, color = null) {
         if (this.printCallback) {
             this.printCallback(text, color);
+        } else {
+            console.log(text);
         }
     }
 
@@ -557,6 +559,12 @@ export class Game {
             return;
         }
         
+        // Final check for player before loop
+        if (!this.player) {
+            this.print("Error: Character creation failed.");
+            return;
+        }
+
         // Main game loop
         while (true) {
             await this.mainMenu();
