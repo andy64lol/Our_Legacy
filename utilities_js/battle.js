@@ -83,6 +83,28 @@ export class BattleSystem {
     const playerFirst = this.player.getEffectiveSpeed() >= enemy.speed;
 
     while (this.player.isAlive() && enemy.isAlive()) {
+      // Display current HP/MP at the start of each turn
+      const playerHpBar = create_hp_mp_bar(this.player.hp, this.player.maxHp, 20, Colors.RED);
+      const playerMpBar = create_hp_mp_bar(this.player.mp, this.player.maxMp, 20, Colors.BLUE);
+
+      let enemyHpBar;
+      if (enemy.isBoss) {
+        enemyHpBar = create_boss_hp_bar(enemy.hp, enemy.maxHp);
+      } else {
+        enemyHpBar = create_hp_mp_bar(enemy.hp, enemy.maxHp, 20, Colors.RED);
+      }
+
+      this.game.print(`\n${this.player.name}`);
+      this.game.print(`HP: ${playerHpBar} ${this.player.hp}/${this.player.maxHp}`);
+      this.game.print(`MP: ${playerMpBar} ${this.player.mp}/${this.player.maxMp}`);
+
+      this.game.print(`\n${enemy.name}`);
+      if (enemy.isBoss) {
+        this.game.print(enemyHpBar);
+      } else {
+        this.game.print(`HP: ${enemyHpBar} ${enemy.hp}/${enemy.maxHp}`);
+      }
+
       if (playerFirst) {
         const continueBattle = await this.playerTurn(enemy);
         if (!continueBattle) {
@@ -107,28 +129,6 @@ export class BattleSystem {
             this.companionsAct(enemy);
           }
         }
-      }
-
-      // Display current HP/MP
-      const playerHpBar = create_hp_mp_bar(this.player.hp, this.player.maxHp, 20, Colors.RED);
-      const playerMpBar = create_hp_mp_bar(this.player.mp, this.player.maxMp, 20, Colors.BLUE);
-
-      let enemyHpBar;
-      if (enemy.isBoss) {
-        enemyHpBar = create_boss_hp_bar(enemy.hp, enemy.maxHp);
-      } else {
-        enemyHpBar = create_hp_mp_bar(enemy.hp, enemy.maxHp, 20, Colors.RED);
-      }
-
-      this.game.print(`\n${this.player.name}`);
-      this.game.print(`HP: ${playerHpBar} ${this.player.hp}/${this.player.maxHp}`);
-      this.game.print(`MP: ${playerMpBar} ${this.player.mp}/${this.player.maxMp}`);
-
-      this.game.print(`\n${enemy.name}`);
-      if (enemy.isBoss) {
-        this.game.print(enemyHpBar);
-      } else {
-        this.game.print(`HP: ${enemyHpBar} ${enemy.hp}/${enemy.maxHp}`);
       }
 
       if (this.player.tickBuffs()) {

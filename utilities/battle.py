@@ -53,24 +53,7 @@ class BattleSystem:
         player_first = self.game.player.get_effective_speed() >= enemy.speed
 
         while self.game.player.is_alive() and enemy.is_alive():
-            if player_first:
-                if not self.player_turn(enemy):
-                    player_fled = True
-                    break
-                if enemy.is_alive() and self.game.player.companions:
-                    self.companions_act(enemy)
-                if enemy.is_alive():
-                    self.enemy_turn(enemy)
-            else:
-                self.enemy_turn(enemy)
-                if self.game.player.is_alive():
-                    if not self.player_turn(enemy):
-                        player_fled = True
-                        break
-                    if enemy.is_alive() and self.game.player.companions:
-                        self.companions_act(enemy)
-
-            # Display current HP/MP
+            # Display current HP/MP at the start of each turn
             player_hp_bar = create_hp_mp_bar(self.game.player.hp,
                                              self.game.player.max_hp, 20,
                                              Colors.RED)
@@ -99,6 +82,23 @@ class BattleSystem:
                 print(enemy_hp_bar)
             else:
                 print(f"HP: {enemy_hp_bar} {enemy.hp}/{enemy.max_hp}")
+
+            if player_first:
+                if not self.player_turn(enemy):
+                    player_fled = True
+                    break
+                if enemy.is_alive() and self.game.player.companions:
+                    self.companions_act(enemy)
+                if enemy.is_alive():
+                    self.enemy_turn(enemy)
+            else:
+                self.enemy_turn(enemy)
+                if self.game.player.is_alive():
+                    if not self.player_turn(enemy):
+                        player_fled = True
+                        break
+                    if enemy.is_alive() and self.game.player.companions:
+                        self.companions_act(enemy)
 
             if self.game.player.tick_buffs():
                 self.game.player.update_stats_from_equipment(

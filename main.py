@@ -205,10 +205,8 @@ def ask(prompt: str,
 
         # Empty handling
         if not resp and allow_empty:
-            clear_screen()
             return resp
         if not resp and not allow_empty:
-            clear_screen()
             continue
 
         # If no validation requested, accept
