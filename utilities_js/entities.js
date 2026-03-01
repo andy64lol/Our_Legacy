@@ -19,13 +19,11 @@ export class Enemy {
     this.attack = enemyData.attack || 5;
     this.defense = enemyData.defense || 2;
     this.speed = enemyData.speed || 5;
-    this.expReward = enemyData.exp_reward || 20;
-    this.goldReward = enemyData.gold_reward || 10;
-    this.drops = enemyData.drops || [];
-    
-    // Additional properties for enhanced functionality
     this.experienceReward = enemyData.experience_reward || enemyData.exp_reward || 20;
+    this.goldReward = enemyData.gold_reward || 10;
     this.lootTable = enemyData.loot_table || enemyData.drops || [];
+    this.drops = this.lootTable; // Backward compatibility
+    this.expReward = this.experienceReward; // Backward compatibility
     
     // Flag to identify regular enemies (not bosses)
     this.isBoss = false;
@@ -69,7 +67,7 @@ export class Boss extends Enemy {
     
     // Boss-specific properties
     this.dialogues = dialoguesData[bossData.name] || {};
-    this.lootTable = bossData.loot_table || [];
+    this.lootTable = bossData.loot_table || bossData.drops || [];
     this.description = bossData.description || "A powerful foe.";
     this.experienceReward = bossData.experience_reward || bossData.exp_reward || 100;
     
@@ -215,4 +213,3 @@ export class Boss extends Enemy {
     };
   }
 }
-

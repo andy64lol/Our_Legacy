@@ -7,46 +7,6 @@ import { Colors } from './settings.js';
 import { SpellCastingSystem } from './spellcasting.js';
 
 /**
- * Create an HP/MP bar string for display
- * @param {number} current - Current value
- * @param {number} maximum - Maximum value
- * @param {number} width - Bar width (default 15)
- * @param {string} color - Color style (default Colors.RED)
- * @returns {string} Formatted bar string
- */
-export function create_hp_mp_bar(current, maximum, width = 15, color = Colors.RED) {
-  if (maximum <= 0) {
-    return "[" + " ".repeat(width) + "]";
-  }
-  const filledWidth = Math.max(0, Math.min(width, Math.floor((current / maximum) * width)));
-  const filled = "█".repeat(filledWidth);
-  const empty = "░".repeat(width - filledWidth);
-  return `[${Colors.wrap(filled, color)}${empty}] ${current}/${maximum}`;
-}
-
-/**
- * Create a boss HP bar with special formatting
- * @param {number} current - Current HP
- * @param {number} maximum - Maximum HP
- * @param {number} width - Bar width (default 40)
- * @param {string} color - Color style (default Colors.RED)
- * @returns {string} Formatted boss HP bar
- */
-export function create_boss_hp_bar(current, maximum, width = 40, color = Colors.RED) {
-  if (maximum <= 0) {
-    return "[" + " ".repeat(width) + "]";
-  }
-  const filledWidth = Math.max(0, Math.min(width, Math.floor((current / maximum) * width)));
-  const filled = "█".repeat(filledWidth);
-  const empty = "░".repeat(width - filledWidth);
-  const percentage = ((current / maximum) * 100).toFixed(1);
-  const bossLabel = Colors.wrap("BOSS HP", `${Colors.BOLD}${Colors.RED}`);
-  const bar = `[${Colors.wrap(filled, color)}${empty}]`;
-  const percentText = Colors.wrap(`${percentage}%`, Colors.BOLD);
-  return `${bossLabel} ${bar} ${percentText} (${current}/${maximum})`;
-}
-
-/**
  * Battle system class for handling turn-based combat
  * Ported from utilities/battle.py
  */
@@ -84,14 +44,14 @@ export class BattleSystem {
 
     while (this.player.isAlive() && enemy.isAlive()) {
       // Display current HP/MP at the start of each turn
-      const playerHpBar = create_hp_mp_bar(this.player.hp, this.player.maxHp, 20, Colors.RED);
-      const playerMpBar = create_hp_mp_bar(this.player.mp, this.player.maxMp, 20, Colors.BLUE);
+      const playerHpBar = this.game.createHpMpBar(this.player.hp, this.player.maxHp, 20, Colors.RED);
+      const playerMpBar = this.game.createHpMpBar(this.player.mp, this.player.maxMp, 20, Colors.BLUE);
 
       let enemyHpBar;
       if (enemy.isBoss) {
-        enemyHpBar = create_boss_hp_bar(enemy.hp, enemy.maxHp);
+        enemyHpBar = this.game.createBossHpBar(enemy.hp, enemy.maxHp);
       } else {
-        enemyHpBar = create_hp_mp_bar(enemy.hp, enemy.maxHp, 20, Colors.RED);
+        enemyHpBar = this.game.createHpMpBar(enemy.hp, enemy.maxHp, 20, Colors.RED);
       }
 
       this.game.print(`\n${this.player.name}`);
@@ -173,35 +133,6 @@ export class BattleSystem {
         this.game.print(this.lang.get('loot_acquired_msg', 'Loot acquired: {loot}!').replace('{loot}', loot));
         this.game.updateMissionProgress('collect', loot);
       }
-
-      if (this.player.companions) {
-        for (const companion of this.player.companions) {
-          let compName, compId;
-          if (typeof companion === 'object' && companion !== null) {
-            compName = companion.name;
-            compId = companion.id;
-          } else {
-            compName = companion;
-            compId = null;
-          }
-
-          let compData = null;
-          for (const [cid, cdata] of Object.entries(this.companionsData)) {
-            if (cdata.name === compName || cid === compId) {
-              compData = cdata;
-              break;
-            }
-          }
-
-          if (compData && compData.postBattleHeal) {
-            const amt = parseInt(compData.postBattleHeal) || 0;
-            if (amt > 0) {
-              this.player.heal(amt);
-              this.game.print(this.lang.get('companion_heal_msg', '{comp_name} restores {amt} HP after battle!').replace('{comp_name}', compData.name).replace('{amt}', amt));
-            }
-          }
-        }
-      }
     } else {
       this.game.print(`\n${this.lang.get('defeat_player_msg', 'You were defeated by the {enemy_name}...').replace('{enemy_name}', enemy.name)}`);
       this.player.hp = Math.floor(this.player.maxHp / 2);
@@ -234,7 +165,6 @@ export class BattleSystem {
       this.game.print(`5. ${this.lang.get('cast_spell')}`);
     }
 
-    // In browser, we need to get input asynchronously
     const choice = await this.game.ask(canCast ? "Choose action (1-5): " : "Choose action (1-4): ");
 
     if (choice === "1") {
@@ -278,144 +208,6 @@ export class BattleSystem {
   }
 
   /**
-   * Perform an action for a specific companion
-   * @param {Object|string} companion - Companion data or name
-   * @param {Object} enemy - The enemy being fought
-   */
-  companionActionFor(companion, enemy) {
-    if (!this.player) {
-      return;
-    }
-
-    let compName, compId;
-    if (typeof companion === 'object' && companion !== null) {
-      compName = companion.name;
-      compId = companion.id;
-    } else {
-      compName = companion;
-      compId = null;
-    }
-
-    let compData = null;
-    for (const [cid, cdata] of Object.entries(this.companionsData)) {
-      if (cdata.name === compName || cid === compId) {
-        compData = cdata;
-        break;
-      }
-    }
-
-    if (!compData) {
-      return;
-    }
-
-    const abilities = compData.abilities || [];
-    let usedAbility = false;
-
-    for (const ability of abilities) {
-      const chance = ability.chance;
-      let triggered = false;
-      if (chance === null || chance === undefined) {
-        triggered = true;
-      } else {
-        if (typeof chance === 'number' && chance >= 0 && chance <= 1) {
-          triggered = Math.random() < chance;
-        } else {
-          try {
-            triggered = Math.floor(Math.random() * 100) + 1 <= parseInt(chance);
-          } catch (e) {
-            triggered = false;
-          }
-        }
-      }
-
-      if (!triggered) {
-        continue;
-      }
-
-      usedAbility = true;
-      const atype = ability.type;
-
-      if (['attack_boost', 'rage', 'crit_boost'].includes(atype)) {
-        const bonus = parseInt(ability.attackBonus || ability.critDamageBonus || 0);
-        const companionDamage = Math.floor(this.player.getEffectiveAttack() * 0.6 + (compData.attackBonus || 0) + bonus);
-        const actualDamage = enemy.takeDamage(companionDamage);
-        this.game.print(this.lang.get('companion_ability_attack_msg', '{comp_name} uses {ability_name} for {damage} damage!').replace('{comp_name}', compName).replace('{ability_name}', ability.name).replace('{damage}', actualDamage));
-      } else if (atype === 'taunt') {
-        const dur = parseInt(ability.duration) || 1;
-        const dbonus = parseInt(ability.defenseBonus || compData.defenseBonus || 0);
-        this.player.applyBuff(ability.name, dur, { defenseBonus: dbonus });
-        this.game.print(this.lang.get('companion_taunt_msg', '{comp_name} uses {ability_name} and draws enemy attention!').replace('{comp_name}', compName).replace('{ability_name}', ability.name));
-      } else if (atype === 'heal') {
-        const healAmt = parseInt(ability.healing || ability.heal || compData.healingBonus || 0) || 0;
-        this.player.heal(healAmt);
-        this.game.print(this.lang.get('companion_ability_heal_msg', '{comp_name} uses {ability_name} and heals you for {heal_amt} HP!').replace('{comp_name}', compName).replace('{ability_name}', ability.name).replace('{heal_amt}', healAmt));
-      } else if (atype === 'mp_regen') {
-        const dur = parseInt(ability.duration) || 3;
-        const mpPer = parseInt(ability.mpPerTurn) || 0;
-        if (mpPer > 0) {
-          this.player.applyBuff(ability.name, dur, { mpPerTurn: mpPer });
-          this.game.print(this.lang.get('companion_mp_regen_msg', '{comp_name} grants {mp_per} MP/turn for {dur} turns!').replace('{comp_name}', compName).replace('{mp_per}', mpPer).replace('{dur}', dur));
-        }
-      } else if (atype === 'spell_power') {
-        const dur = parseInt(ability.duration) || 3;
-        const sp = parseInt(ability.spellPowerBonus) || 0;
-        if (sp) {
-          this.player.applyBuff(ability.name, dur, { spellPowerBonus: sp });
-          this.game.print(this.lang.get('companion_spell_power_msg', '{comp_name} increases spell power by {sp} for {dur} turns!').replace('{comp_name}', compName).replace('{sp}', sp).replace('{dur}', dur));
-        }
-      } else if (atype === 'party_buff') {
-        const dur = parseInt(ability.duration) || 3;
-        const mods = {};
-        for (const k of ['attackBonus', 'defenseBonus', 'speedBonus']) {
-          if (ability[k] !== undefined && ability[k] !== null) {
-            mods[k] = parseInt(ability[k]);
-          }
-        }
-        if (Object.keys(mods).length > 0) {
-          this.player.applyBuff(ability.name, dur, mods);
-          this.game.print(this.lang.get('companion_party_buff_msg', '{comp_name} uses {ability_name}, granting party buffs: {mods}!').replace('{comp_name}', compName).replace('{ability_name}', ability.name).replace('{mods}', JSON.stringify(mods)));
-        }
-      }
-      break;
-    }
-
-    if (!usedAbility) {
-      const actionType = ['attack', 'defend', 'heal'][Math.floor(Math.random() * 3)];
-      if (actionType === 'attack' && (compData.attackBonus || 0) > 0) {
-        const companionDamage = Math.floor(this.player.getEffectiveAttack() * 0.6 + (compData.attackBonus || 0));
-        const actualDamage = enemy.takeDamage(companionDamage);
-        this.game.print(this.lang.get('companion_attack_msg', '{comp_name} attacks for {damage} damage!').replace('{comp_name}', compName).replace('{damage}', actualDamage));
-      } else if (actionType === 'heal' && (compData.healingBonus || 0) > 0) {
-        const healAmount = compData.healingBonus || 0;
-        this.player.heal(healAmount);
-        this.game.print(this.lang.get('companion_heal_msg_simple', '{comp_name} heals you for {heal_amount} HP!').replace('{comp_name}', compName).replace('{heal_amount}', healAmount));
-      } else if (actionType === 'defend' && (compData.defenseBonus || 0) > 0) {
-        this.game.print(this.lang.get('companion_defend_msg', '{comp_name} helps you defend, reducing incoming damage!').replace('{comp_name}', compName));
-        this.player.defending = true;
-      }
-    }
-  }
-
-  /**
-   * Each companion has a chance to act on their own each turn
-   * @param {Object} enemy - The enemy being fought
-   */
-  companionsAct(enemy) {
-    if (!this.player) {
-      return;
-    }
-    for (const companion of [...this.player.companions]) {
-      let chance = 0.5;
-      if (typeof companion === 'object' && companion !== null && companion.actionChance) {
-        chance = companion.actionChance || 0.5;
-      }
-      if (Math.random() < chance) {
-        this.companionActionFor(companion, enemy);
-      }
-    }
-  }
-
-  /**
    * Enemy's turn in battle
    * @param {Object} enemy - The enemy taking their turn
    */
@@ -425,30 +217,15 @@ export class BattleSystem {
     }
 
     if (enemy.isBoss) {
-      // Handle boss cooldowns
-      for (const abil in enemy.cooldowns) {
-        if (enemy.cooldowns[abil] > 0) {
-          enemy.cooldowns[abil]--;
-        }
-      }
+      enemy.tickCooldowns();
 
-      let availableAbilities = enemy.specialAbilities.filter(a => 
-        (enemy.cooldowns[a.name] || 0) === 0 && enemy.mp >= (a.mpCost || 0)
-      );
-
-      const currentPhase = enemy.currentPhaseIndex >= 0 ? enemy.phases[enemy.currentPhaseIndex] : {};
-      const unlocked = currentPhase.specialAbilitiesUnlocked || [];
-      if (unlocked.length > 0) {
-        availableAbilities = availableAbilities.filter(a => unlocked.includes(a.name));
-      }
-
+      let availableAbilities = enemy.getAvailableAbilities();
       if (availableAbilities.length > 0 && Math.random() < 0.4) {
         const ability = availableAbilities[Math.floor(Math.random() * availableAbilities.length)];
         this.game.print(`\n${this.lang.get('enemy_ability_msg', '{enemy_name} uses {ability_name}!').replace('{enemy_name}', enemy.name).replace('{ability_name}', ability.name)}`);
         this.game.print(`${ability.description}`);
 
-        enemy.mp -= ability.mpCost || 0;
-        enemy.cooldowns[ability.name] = ability.cooldown || 0;
+        enemy.useAbility(ability.name);
 
         if (ability.damage) {
           let dmg = ability.damage;
@@ -459,13 +236,13 @@ export class BattleSystem {
           this.game.print(this.lang.get("enemy_ability_damage_msg", "It deals {damage} damage!").replace("{damage}", actual));
         }
 
-        if (ability.stunChance && Math.random() < ability.stunChance) {
+        if (ability.stun_chance && Math.random() < ability.stun_chance) {
           this.game.print(this.lang.get('stun_msg', 'You are stunned and skip your next turn!'));
           this.player.applyBuff("Stunned", 1, { speedBonus: -999 });
         }
 
-        if (ability.healAmount) {
-          const heal = ability.healAmount;
+        if (ability.heal_amount) {
+          const heal = ability.heal_amount;
           enemy.hp = Math.min(enemy.maxHp, enemy.hp + heal);
           this.game.print(this.lang.get("enemy_heal_msg", "{enemy_name} heals for {heal} HP!").replace("{enemy_name}", enemy.name).replace("{heal}", heal));
         }
@@ -486,32 +263,5 @@ export class BattleSystem {
 
     const actualDamage = this.player.takeDamage(damage);
     this.game.print(this.lang.get("enemy_attack_msg", "{enemy_name} attacks for {damage} damage!").replace("{enemy_name}", enemy.name).replace("{damage}", actualDamage));
-
-    if (this.player.companions) {
-      let companionDefenseBonus = 0;
-      for (const companion of this.player.companions) {
-        let compName, compId;
-        if (typeof companion === 'object' && companion !== null) {
-          compName = companion.name;
-          compId = companion.id;
-        } else {
-          compName = companion;
-          compId = null;
-        }
-
-        for (const [cid, cdata] of Object.entries(this.companionsData)) {
-          if (cdata.name === compName || cid === compId) {
-            companionDefenseBonus += cdata.defenseBonus || 0;
-            break;
-          }
-        }
-      }
-
-      if (companionDefenseBonus > 0) {
-        const damageReduction = Math.floor(companionDefenseBonus * 0.5);
-        this.player.heal(damageReduction);
-        this.game.print(this.lang.get('companions_mitigate_msg', 'Companions mitigate {damage} damage!').replace('{damage}', damageReduction));
-      }
-    }
   }
 }

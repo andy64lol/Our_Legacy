@@ -9,7 +9,7 @@ def create_hp_mp_bar(current, maximum, width=15, color=None):
         color = Colors.RED
     if maximum <= 0:
         return "[" + " " * width + "]"
-    filled_width = int((current / maximum) * width)
+    filled_width = max(0, min(width, int((current / maximum) * width)))
     filled = "█" * filled_width
     empty = "░" * (width - filled_width)
     return f"[{Colors.wrap(filled, color)}{empty}] {current}/{maximum}"
@@ -20,7 +20,7 @@ def create_boss_hp_bar(current, maximum, width=40, color=None):
         color = Colors.RED
     if maximum <= 0:
         return "[" + " " * width + "]"
-    filled_width = int((current / maximum) * width)
+    filled_width = max(0, min(width, int((current / maximum) * width)))
     filled = "█" * filled_width
     empty = "░" * (width - filled_width)
     percentage = (current / maximum) * 100

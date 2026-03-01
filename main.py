@@ -100,7 +100,7 @@ def create_boss_hp_bar(current: int,
     if maximum <= 0:
         return "[" + " " * width + "]"
 
-    filled_width = int((current / maximum) * width)
+    filled_width = max(0, min(width, int((current / maximum) * width)))
     filled = "█" * filled_width
     empty = "░" * (width - filled_width)
     percentage = (current / maximum) * 100
@@ -119,7 +119,7 @@ def create_hp_mp_bar(current: int,
     if maximum <= 0:
         return "[" + " " * width + "]"
 
-    filled_width = int((current / maximum) * width)
+    filled_width = max(0, min(width, int((current / maximum) * width)))
     filled = "█" * filled_width
     empty = "░" * (width - filled_width)
 
