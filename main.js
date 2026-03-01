@@ -750,17 +750,19 @@ export class Game {
             this.print(`11. ${Colors.wrap(this.lang.get('alchemy', 'Alchemy'), Colors.MAGENTA)}`);
             this.print(`12. ${Colors.wrap(this.lang.get('dungeons', 'Dungeons'), Colors.RED)}`);
             this.print(`13. ${Colors.wrap(this.lang.get('pet_shop', 'Pet Shop'), Colors.CYAN)}`);
-            this.print(`14. ${Colors.wrap(this.lang.get('build_home', 'Build Home'), Colors.GREEN)}`);
-            this.print(`15. ${Colors.wrap(this.lang.get('save_game', 'Save Game'), Colors.BLUE)}`);
-            this.print(`16. ${Colors.wrap(this.lang.get('load_game', 'Load Game'), Colors.BLUE)}`);
-            this.print(`17. ${Colors.wrap(this.lang.get('quit', 'Quit'), Colors.RED)}`);
+            this.print(`14. ${Colors.wrap('Housing', Colors.GREEN)}`);
+            this.print(`15. ${Colors.wrap('Farming', Colors.GREEN)}`);
+            this.print(`16. ${Colors.wrap('Training', Colors.YELLOW)}`);
+            this.print(`17. ${Colors.wrap(this.lang.get('save_game', 'Save Game'), Colors.BLUE)}`);
+            this.print(`18. ${Colors.wrap(this.lang.get('load_game', 'Load Game'), Colors.BLUE)}`);
+            this.print(`19. ${Colors.wrap(this.lang.get('quit', 'Quit'), Colors.RED)}`);
         } else {
             this.print(`11. ${Colors.wrap(this.lang.get('save_game', 'Save Game'), Colors.BLUE)}`);
             this.print(`12. ${Colors.wrap(this.lang.get('load_game', 'Load Game'), Colors.BLUE)}`);
             this.print(`13. ${Colors.wrap(this.lang.get('quit', 'Quit'), Colors.RED)}`);
         }
         
-        const maxChoice = this.currentArea === "your_land" ? "17" : "13";
+        const maxChoice = this.currentArea === "your_land" ? "19" : "13";
         const choice = await this.ask(`${this.lang.get('choose_option', 'Choose an option')} (1-${maxChoice}): `);
         
         switch (choice) {
@@ -799,24 +801,33 @@ export class Game {
             case "14":
                 if (this.currentArea === "your_land") {
                     await this.buildHome();
-                } else {
-                    await this.saveLoadSystem.load_game();
                 }
                 break;
             case "15":
                 if (this.currentArea === "your_land") {
-                    await this.saveLoadSystem.save_game();
-                } else {
-                    this.print(Colors.wrap(this.lang.get('thank_exit', 'Thanks for playing!'), Colors.YELLOW));
-                    return;
+                    await this.farmingMenu();
                 }
                 break;
             case "16":
                 if (this.currentArea === "your_land") {
-                    await this.saveLoadSystem.load_game();
+                    await this.trainingMenu();
                 }
                 break;
             case "17":
+                if (this.currentArea === "your_land") {
+                    await this.saveLoadSystem.save_game();
+                } else {
+                    await this.saveLoadSystem.save_game();
+                }
+                break;
+            case "18":
+                if (this.currentArea === "your_land") {
+                    await this.saveLoadSystem.load_game();
+                } else {
+                    await this.saveLoadSystem.load_game();
+                }
+                break;
+            case "19":
                 if (this.currentArea === "your_land") {
                     this.print(Colors.wrap(this.lang.get('thank_exit', 'Thanks for playing!'), Colors.YELLOW));
                     return;
@@ -825,6 +836,7 @@ export class Game {
             default:
                 this.print(Colors.wrap(this.lang.get('invalid_choice', 'Invalid choice'), Colors.RED));
         }
+    }
     }
     
     /**
@@ -1544,41 +1556,186 @@ export class Game {
             this.print(this.lang.get('no_character', 'No character'));
             return;
         }
-        
-        if (!this.player.housingOwned || this.player.housingOwned.length === 0) {
-            this.print(Colors.wrap(this.lang.get('no_housing_owned', `You haven't purchased any housing items! Visit the Housing Shop first.`), Colors.RED));
+
+        while (true) {
+            this.clear_screen();
+            this.print(this.createSectionHeader(this.lang.get('build_home_title', 'BUILD HOME'), "="));
+            this.print(`${Colors.wrap(this.lang.get('comfort_points_label', 'Comfort Points:'), Colors.CYAN)} ${this.player.comfortPoints || 0}`);
+            this.print(`${Colors.wrap(this.lang.get('items_owned_label', 'Items owned:'), Colors.YELLOW)} ${this.player.housingOwned.length}\n`);
+
+            this.print(`S. ${Colors.wrap('Housing Shop', Colors.GOLD)}`);
+            this.print(`V. ${Colors.wrap('View/Manage Slots', Colors.CYAN)}`);
+            this.print(`B. ${Colors.wrap(this.lang.get('back', 'Back'), Colors.RED)}`);
+
+            const choice = await this.ask(`${this.lang.get('choose_option', 'Choose an option')}: `);
+            const uc = choice.toUpperCase();
+
+            if (uc === 'B') break;
+            if (uc === 'S') await this.visitHousingShop();
+            if (uc === 'V') await this.manageHousingSlots();
+        }
+    }
+
+    async visitHousingShop() {
+        this.clear_screen();
+        this.print(this.createSectionHeader('HOUSING SHOP', "="));
+        const items = Object.entries(this.housingData || {});
+        if (items.length === 0) {
+            this.print(Colors.wrap("No housing items available in data!", Colors.RED));
+            await this.ask('Press Enter...');
             return;
         }
-        
-        this.print(this.createSectionHeader(this.lang.get('build_home_title', 'BUILD HOME'), "="));
-        this.print(`${Colors.wrap(this.lang.get('comfort_points_label', 'Comfort Points:'), Colors.CYAN)} ${this.player.comfortPoints || 0}`);
-        this.print(`${Colors.wrap(this.lang.get('items_owned_label', 'Items owned:'), Colors.YELLOW)} ${this.player.housingOwned.length}`);
-        
-        // Show building slots
-        const buildingTypes = {
-            house: { label: this.lang.get('house', "House"), slots: 3 },
-            decoration: { label: this.lang.get('decoration', "Decoration"), slots: 10 },
-            fencing: { label: this.lang.get('fencing', "Fencing"), slots: 1 },
-            garden: { label: this.lang.get('garden', "Garden"), slots: 3 },
-            farm: { label: this.lang.get('farm', "Farm"), slots: 2 },
-            training_place: { label: this.lang.get('training_place', "Training Place"), slots: 3 }
-        };
-        
-        for (const [bType, info] of Object.entries(buildingTypes)) {
-            this.print(`\n${Colors.wrap(info.label + ' Slots:', Colors.BOLD)}`);
-            for (let i = 1; i <= info.slots; i++) {
-                const slot = `${bType}_${i}`;
-                const itemId = this.player.buildingSlots?.[slot];
-                if (itemId && this.housingData[itemId]) {
-                    const item = this.housingData[itemId];
-                    this.print(`  ${Colors.wrap(slot, Colors.YELLOW)}: ${Colors.wrap(item.name || itemId, Colors.GREEN)}`);
+        for (let i = 0; i < items.length; i++) {
+            const [id, data] = items[i];
+            this.print(`${i + 1}. ${Colors.wrap(data.name || id, Colors.YELLOW)} - ${data.price} Gold (+${data.comfort_points} Comfort)`);
+        }
+        const choice = await this.ask(`\nBuy item (1-${items.length}) or Enter to cancel: `);
+        if (choice && !isNaN(choice)) {
+            const idx = parseInt(choice) - 1;
+            if (idx >= 0 && idx < items.length) {
+                const [id, data] = items[idx];
+                if (this.player.gold >= data.price) {
+                    this.player.gold -= data.price;
+                    if (!this.player.housingOwned) this.player.housingOwned = [];
+                    this.player.housingOwned.push(id);
+                    this.print(Colors.wrap(`Bought ${data.name}!`, Colors.GREEN));
                 } else {
-                    this.print(`  ${Colors.wrap(slot, Colors.YELLOW)}: ${Colors.wrap(this.lang.get('empty', 'Empty'), Colors.GRAY)}`);
+                    this.print(Colors.wrap('Not enough gold!', Colors.RED));
+                }
+                await this.ask('Press Enter to continue...');
+            }
+        }
+    }
+
+    async manageHousingSlots() {
+        const buildingTypes = {
+            house: { label: "House", slots: 3 },
+            decoration: { label: "Decoration", slots: 10 },
+            fencing: { label: "Fencing", slots: 1 },
+            garden: { label: "Garden", slots: 3 },
+            farm: { label: "Farm", slots: 2 },
+            training_place: { label: "Training Place", slots: 3 }
+        };
+
+        while (true) {
+            this.clear_screen();
+            this.print(this.createSectionHeader('MANAGE SLOTS', "-"));
+            const types = Object.keys(buildingTypes);
+            for (let i = 0; i < types.length; i++) {
+                this.print(`${i + 1}. ${buildingTypes[types[i]].label}`);
+            }
+            const choice = await this.ask(`\nSelect category (1-${types.length}) or B to back: `);
+            if (choice && choice.toUpperCase() === 'B') break;
+            if (choice && !isNaN(choice)) {
+                const idx = parseInt(choice) - 1;
+                if (idx >= 0 && idx < types.length) {
+                    await this.manageSpecificSlots(types[idx], buildingTypes[types[idx]]);
                 }
             }
         }
-        
-        await this.ask(`\n${this.lang.get('press_enter_back', 'Press Enter to go back...')}`);
+    }
+
+    async manageSpecificSlots(bType, info) {
+        while (true) {
+            this.clear_screen();
+            this.print(this.createSectionHeader(`${info.label.toUpperCase()} SLOTS`, "-"));
+            for (let i = 1; i <= info.slots; i++) {
+                const slot = `${bType}_${i}`;
+                const itemId = this.player.buildingSlots?.[slot];
+                const itemName = itemId ? (this.housingData[itemId]?.name || itemId) : 'Empty';
+                this.print(`${i}. ${slot}: ${Colors.wrap(itemName, itemId ? Colors.GREEN : Colors.GRAY)}`);
+            }
+            const choice = await this.ask(`\nSelect slot (1-${info.slots}) or B to back: `);
+            if (choice && choice.toUpperCase() === 'B') break;
+            if (choice && !isNaN(choice)) {
+                const slotIdx = parseInt(choice);
+                if (slotIdx >= 1 && slotIdx <= info.slots) {
+                    await this.placeItemInSlot(`${bType}_${slotIdx}`, bType);
+                }
+            }
+        }
+    }
+
+    async placeItemInSlot(slotName, bType) {
+        this.clear_screen();
+        const available = (this.player.housingOwned || []).filter(id => this.housingData[id]?.type === bType);
+        this.print(this.createSectionHeader(`PLACE IN ${slotName.toUpperCase()}`, "-"));
+        this.print(`0. Clear Slot`);
+        for (let i = 0; i < available.length; i++) {
+            const data = this.housingData[available[i]];
+            this.print(`${i + 1}. ${data.name} (+${data.comfort_points} Comfort)`);
+        }
+        const choice = await this.ask(`\nSelect item (0-${available.length}) or Enter to cancel: `);
+        if (choice === '0') {
+            if (!this.player.buildingSlots) this.player.buildingSlots = {};
+            const oldId = this.player.buildingSlots[slotName];
+            if (oldId) {
+                this.player.comfortPoints = (this.player.comfortPoints || 0) - (this.housingData[oldId]?.comfort_points || 0);
+                this.player.buildingSlots[slotName] = null;
+            }
+        } else if (choice && !isNaN(choice)) {
+            const idx = parseInt(choice) - 1;
+            if (idx >= 0 && idx < available.length) {
+                const newId = available[idx];
+                if (!this.player.buildingSlots) this.player.buildingSlots = {};
+                const oldId = this.player.buildingSlots[slotName];
+                if (oldId) this.player.comfortPoints = (this.player.comfortPoints || 0) - (this.housingData[oldId]?.comfort_points || 0);
+                this.player.buildingSlots[slotName] = newId;
+                this.player.comfortPoints = (this.player.comfortPoints || 0) + (this.housingData[newId]?.comfort_points || 0);
+            }
+        }
+    }
+
+    async trainingMenu() {
+        if (!this.player) return;
+        const hasTraining = Object.keys(this.player.buildingSlots || {}).some(s => s.startsWith('training_place') && this.player.buildingSlots[s]);
+        if (!hasTraining) {
+            this.print(Colors.wrap("You need a Training Place built first!", Colors.RED));
+            await this.ask("Press Enter...");
+            return;
+        }
+
+        while (true) {
+            this.clear_screen();
+            this.print(this.createSectionHeader('TRAINING GROUND', "="));
+            this.print("1. Morning (+4%/+2%/-1%)\n2. Calm (+13%/+10%/+7%/+1%/-3%)\n3. Normal (+10%/-7%)\n4. Intense (+20%/+15%/+10%/-10%/-20%)\nB. Back");
+            const choice = await this.ask("Choice: ");
+            if (choice && choice.toUpperCase() === 'B') break;
+            if (['1','2','3','4'].includes(choice)) {
+                const roll = Math.floor(Math.random() * (choice === '1' ? 4 : choice === '2' ? 6 : choice === '3' ? 8 : 20)) + 1;
+                this.print(`Rolled a ${roll}!`);
+                this.player.attack = (this.player.attack || 10) + 1; 
+                this.print("Stats improved!");
+                await this.ask("Press Enter...");
+            }
+        }
+    }
+
+    async farmingMenu() {
+        if (!this.player) return;
+        const hasFarm = Object.keys(this.player.buildingSlots || {}).some(s => s.startsWith('farm') && this.player.buildingSlots[s]);
+        if (!hasFarm) {
+            this.print(Colors.wrap("You need a Farm built first!", Colors.RED));
+            await this.ask("Press Enter...");
+            return;
+        }
+
+        while (true) {
+            this.clear_screen();
+            this.print(this.createSectionHeader('FARMING', "="));
+            this.print("P. Plant Crop\nH. Harvest\nS. Sell Crops\nB. Back");
+            const choice = await this.ask("Choice: ");
+            if (!choice) continue;
+            const uc = choice.toUpperCase();
+            if (uc === 'B') break;
+            if (uc === 'P') this.print("Planted!"); 
+            if (uc === 'H') this.print("Harvested!");
+            if (uc === 'S') {
+                this.player.gold = (this.player.gold || 0) + 100;
+                this.print("Sold crops for 100 gold!");
+            }
+            await this.ask("Press Enter...");
+        }
     }
     
     /**
