@@ -31,6 +31,8 @@ if (!String.prototype.contains) {
     };
 }
 
+import MarketAPI from './utilities_js/market.js';
+
 /**
  * Main Game class for browser
  */
@@ -82,6 +84,8 @@ export class Game {
             (key) => this.settingsManager.get(key),
             (key, value) => this.settingsManager.set(key, value)
         );
+        this.marketApi = new MarketAPI(this.lang, Colors);
+        this.marketApi.game = this;
         
         // Initialize mod manager
         this.modManager = new ModManager(
@@ -303,27 +307,115 @@ export class Game {
     }
     
     /**
+     * Create a visual progress bar.
+     */
+    createProgressBar(current, maximum, width = 20, color = Colors.GREEN) {
+        if (maximum <= 0) return "[" + " ".repeat(width) + "]";
+        const filledWidth = Math.floor((current / maximum) * width);
+        const filled = "█".repeat(filledWidth);
+        const empty = "░".repeat(width - filledWidth);
+        const percentage = (current / maximum) * 100;
+        return `[${Colors.wrap(filled, color)}${empty}] ${percentage.toFixed(1)}%`;
+    }
+
+    /**
+     * Create a wide, epic visual HP bar for bosses.
+     */
+    createBossHpBar(current, maximum, width = 40, color = Colors.RED) {
+        if (maximum <= 0) return "[" + " ".repeat(width) + "]";
+        const filledWidth = Math.floor((current / maximum) * width);
+        const filled = "█".repeat(filledWidth);
+        const empty = "░".repeat(width - filledWidth);
+        const percentage = (current / maximum) * 100;
+        const bossLabel = Colors.wrap("BOSS HP", `${Colors.BOLD}${Colors.RED}`);
+        const bar = `[${Colors.wrap(filled, color)}${empty}]`;
+        const percentText = Colors.wrap(`${percentage.toFixed(1)}%`, Colors.BOLD);
+        return `${bossLabel} ${bar} ${percentText} (${current}/${maximum})`;
+    }
+
+    /**
+     * Create a visual HP/MP bar.
+     */
+    createHpMpBar(current, maximum, width = 15, color = Colors.RED) {
+        if (maximum <= 0) return "[" + " ".repeat(width) + "]";
+        const filledWidth = Math.floor((current / maximum) * width);
+        const filled = "█".repeat(filledWidth);
+        const empty = "░".repeat(width - filledWidth);
+        return `[${Colors.wrap(filled, color)}${empty}] ${current}/${maximum}`;
+    }
+
+    /**
+     * Create a visual separator line.
+     */
+    createSeparator(char = "=", length = 60) {
+        return char.repeat(length);
+    }
+
+    /**
+     * Create a decorative section header.
+     */
+    createSectionHeader(title, char = "=", width = 60) {
+        const padding = Math.max(0, Math.floor((width - title.length - 2) / 2));
+        const headerText = `${char.repeat(padding)} ${title} ${char.repeat(padding)}`;
+        return Colors.wrap(headerText, `${Colors.CYAN}${Colors.BOLD}`);
+    }
+
+    /**
+     * Display a loading indicator.
+     */
+    async loadingIndicator(message = "Loading") {
+        this.print(`\n${Colors.wrap(message, Colors.YELLOW)}`, null);
+        for (let i = 0; i < 3; i++) {
+            await new Promise(resolve => setTimeout(resolve, 500));
+            this.print(".", null);
+        }
+        this.print("");
+    }
+
+    /**
+     * Get the color for an item rarity.
+     */
+    getRarityColor(rarity) {
+        const rarityColors = {
+            "common": Colors.COMMON,
+            "uncommon": Colors.UNCOMMON,
+            "rare": Colors.RARE,
+            "epic": Colors.EPIC,
+            "legendary": Colors.LEGENDARY
+        };
+        return rarityColors[rarity.toLowerCase()] || Colors.WHITE;
+    }
+
+    /**
+     * Format item name with rarity color.
+     */
+    formatItemName(itemName, rarity = "common") {
+        const color = this.getRarityColor(rarity);
+        return Colors.wrap(itemName, color);
+    }
+
+    /**
      * Display welcome screen
      */
     async displayWelcome() {
-        this.print("=".repeat(60));
-        this.print(`       ${this.lang.get('game_title_display', 'Our Legacy')}`);
+        this.print(this.createSeparator("=", 60));
+        this.print(`       ${Colors.wrap(this.lang.get('game_title_display', 'Our Legacy'), Colors.BOLD)}`);
         this.print(`       ${this.lang.get('game_subtitle_display', 'A Text-Based RPG')}`);
-        this.print("=".repeat(60));
+        this.print(this.createSeparator("=", 60));
         this.print("");
-        this.print(this.lang.get('welcome_message', 'Welcome to Our Legacy!'));
+        this.print(Colors.wrap(this.lang.get('welcome_message', 'Welcome to Our Legacy!'), Colors.CYAN));
         this.print('Choose your path wisely, for every decision shapes your destiny.');
         this.print("");
         
-        this.print(`=== ${this.lang.get('main_menu', 'MAIN MENU')} ===`);
-        this.print(`1. ${this.lang.get('new_game', 'New Game')}`);
-        this.print(`2. ${this.lang.get('load_game', 'Load Game')}`);
-        this.print(`3. ${this.lang.get('settings', 'Settings')}`);
-        this.print(`4. ${this.lang.get('mods', 'Mods')}`);
-        this.print(`5. ${this.lang.get('quit', 'Quit')}`);
+        this.print(this.createSectionHeader(this.lang.get('main_menu', 'MAIN MENU'), "="));
+        this.print(`1. ${Colors.wrap(this.lang.get('new_game', 'New Game'), Colors.GREEN)}`);
+        this.print(`2. ${Colors.wrap(this.lang.get('load_game', 'Load Game'), Colors.BLUE)}`);
+        this.print(`3. ${Colors.wrap(this.lang.get('settings', 'Settings'), Colors.YELLOW)}`);
+        this.print(`4. ${Colors.wrap(this.lang.get('mods', 'Mods'), Colors.MAGENTA)}`);
+        this.print(`5. ${Colors.wrap(this.lang.get('quit', 'Quit'), Colors.RED)}`);
         this.print("");
         
-        const choice = await this.ask(`Choose an option (1-5): `);
+        const choice = await this.ask(`${this.lang.get('choose_option', 'Choose an option')} (1-5): `);
         
         if (choice === "1") {
             return "new_game";
@@ -336,10 +428,10 @@ export class Game {
             await this.modsWelcome();
             return await this.displayWelcome();
         } else if (choice === "5") {
-            this.print(this.lang.get('thank_exit', 'Thank you for playing!'));
+            this.print(Colors.wrap(this.lang.get('thank_exit', 'Thank you for playing!'), Colors.YELLOW));
             return "quit";
         } else {
-            this.print(this.lang.get('invalid_choice', 'Invalid choice'));
+            this.print(Colors.wrap(this.lang.get('invalid_choice', 'Invalid choice'), Colors.RED));
             return await this.displayWelcome();
         }
     }
@@ -348,19 +440,19 @@ export class Game {
      * Settings menu
      */
     async settingsWelcome() {
-        this.print(`\n=== SETTINGS ===`);
+        this.print(this.createSectionHeader(this.lang.get('settings', 'SETTINGS'), "="));
         
         const modsEnabled = this.modManager.settings.mods_enabled;
         
-        this.print(`\n1. Mod System: ${modsEnabled ? 'Enabled' : 'Disabled'}`);
-        this.print(`2. Language`);
-        this.print(`3. ${this.lang.get('back', 'Back')}`);
+        this.print(`\n1. ${this.lang.get('mod_system', 'Mod System')}: ${modsEnabled ? Colors.wrap('Enabled', Colors.GREEN) : Colors.wrap('Disabled', Colors.RED)}`);
+        this.print(`2. ${this.lang.get('language', 'Language')}`);
+        this.print(`3. ${Colors.wrap(this.lang.get('back', 'Back'), Colors.RED)}`);
         
-        const choice = await this.ask("\nChoose an option: ");
+        const choice = await this.ask(`\n${this.lang.get('choose_option', 'Choose an option')}: `);
         
         if (choice === "1") {
             this.modManager.toggleModsSystem();
-            this.print(`Mod system ${this.modManager.settings.mods_enabled ? 'enabled' : 'disabled'}!`);
+            this.print(`${this.lang.get('mod_system', 'Mod system')} ${this.modManager.settings.mods_enabled ? Colors.wrap('enabled', Colors.GREEN) : Colors.wrap('disabled', Colors.RED)}!`);
         } else if (choice === "2") {
             await this.changeLanguageMenu();
         }
@@ -370,24 +462,24 @@ export class Game {
      * Change language menu
      */
     async changeLanguageMenu() {
-        this.print(`\n=== LANGUAGE ===`);
+        this.print(this.createSectionHeader(this.lang.get('language', 'LANGUAGE'), "-"));
         
         const available = this.lang.config.available_languages || { en: "English" };
         const langs = Object.entries(available);
         
         for (let i = 0; i < langs.length; i++) {
             const [code, name] = langs[i];
-            this.print(`${i + 1}. ${name}`);
+            this.print(`${Colors.wrap((i + 1).toString(), Colors.YELLOW)}. ${name}`);
         }
-        this.print(`${langs.length + 1}. Back`);
+        this.print(`${Colors.wrap((langs.length + 1).toString(), Colors.YELLOW)}. ${this.lang.get('back', 'Back')}`);
         
-        const choice = await this.ask(`Choose a language: `);
+        const choice = await this.ask(`${this.lang.get('choose_language_prompt', 'Choose a language')}: `);
         
         if (choice.isDigit()) {
             const idx = parseInt(choice) - 1;
             if (idx >= 0 && idx < langs.length) {
                 await this.lang.changeLanguage(langs[idx][0]);
-                this.print(`Language changed to ${langs[idx][1]}!`);
+                this.print(`${Colors.wrap(this.lang.get('lang_changed_msg', 'Language changed to {lang}!').replace('{lang}', langs[idx][1]), Colors.GREEN)}`);
             }
         }
     }
@@ -396,39 +488,39 @@ export class Game {
      * Mods menu
      */
     async modsWelcome() {
-        this.print(`\n=== MODS ===`);
+        this.print(this.createSectionHeader(this.lang.get('mods', 'MODS'), "="));
         
         await this.modManager.discoverMods();
         const modsList = this.modManager.getModList();
         
         if (!modsList || modsList.length === 0) {
-            this.print(`\n${this.lang.get('no_mods_found', 'No mods found')}`);
+            this.print(`\n${Colors.wrap(this.lang.get('no_mods_found', 'No mods found'), Colors.GRAY)}`);
             this.print(this.lang.get('place_mods_instruction', 'Place mods in the mods/ folder'));
-            await this.ask("\nPress Enter to go back...");
+            await this.ask(`\n${this.lang.get('press_enter_back', 'Press Enter to go back...')}`);
             return;
         }
         
         const modsSystemEnabled = this.modManager.settings.mods_enabled;
-        this.print(`\nMod System Status: ${modsSystemEnabled ? 'Enabled' : 'Disabled'}`);
+        this.print(`\n${this.lang.get('mod_status_label', 'Mod System Status:')} ${modsSystemEnabled ? Colors.wrap('Enabled', Colors.GREEN) : Colors.wrap('Disabled', Colors.RED)}`);
         
-        this.print(`\nInstalled Mods (${modsList.length}):`);
+        this.print(`\n${Colors.wrap(this.lang.get('installed_mods_label', 'Installed Mods:'), Colors.BOLD)}`);
         
         for (let i = 0; i < modsList.length; i++) {
             const mod = modsList[i];
-            const status = mod.enabled ? '[ENABLED]' : '[DISABLED]';
-            this.print(`\n${i + 1}. ${mod.name || mod.folder_name} ${status}`);
-            this.print(`   Version: ${mod.version || '1.0'}`);
-            this.print(`   Author: ${mod.author || 'Unknown'}`);
+            const status = mod.enabled ? Colors.wrap('[ENABLED]', Colors.GREEN) : Colors.wrap('[DISABLED]', Colors.RED);
+            this.print(`\n${Colors.wrap((i + 1).toString(), Colors.YELLOW)}. ${Colors.wrap(mod.name || mod.folder_name, Colors.BOLD)} ${status}`);
+            this.print(`   ${this.lang.get('version_label', 'Version:')} ${mod.version || '1.0'}`);
+            this.print(`   ${this.lang.get('author_label', 'Author:')} ${mod.author || 'Unknown'}`);
             if (mod.description) {
-                this.print(`   ${mod.description.substring(0, 100)}`);
+                this.print(`   ${Colors.wrap(mod.description.substring(0, 100), Colors.GRAY)}`);
             }
         }
         
-        this.print(`\nOptions:`);
-        this.print(`1-${modsList.length}. Toggle Mod`);
-        this.print(`B. Back`);
+        this.print(`\n${Colors.wrap(this.lang.get('options_label', 'Options:'), Colors.BOLD)}`);
+        this.print(`1-${modsList.length}. ${this.lang.get('toggle_mod', 'Toggle Mod')}`);
+        this.print(`B. ${Colors.wrap(this.lang.get('back', 'Back'), Colors.RED)}`);
         
-        const choice = await this.ask("\nChoose an option: ");
+        const choice = await this.ask(`\n${this.lang.get('choose_option', 'Choose an option')}: `);
         
         if (choice.toUpperCase() === 'B') return;
         
@@ -437,33 +529,32 @@ export class Game {
             if (idx >= 0 && idx < modsList.length) {
                 const mod = modsList[idx];
                 this.modManager.toggleMod(mod.folder_name);
-                this.print(`Mod "${mod.name}" toggled. Changes take effect on restart.`);
+                this.print(`${Colors.wrap(this.lang.get('mod_toggled_msg', 'Mod "{name}" toggled. Changes take effect on restart.').replace('{name}', mod.name), Colors.YELLOW)}`);
             }
         }
     }
     
     /**
-     * Create a new character
+     * Create character menu
      */
     async createCharacter() {
-        this.print(`=== CHARACTER CREATION ===`);
-        this.print('-'.repeat(30));
+        this.print(this.createSectionHeader(this.lang.get('char_creation_title', 'CHARACTER CREATION'), "="));
         
-        const name = await this.ask(this.lang.get('enter_name', 'Enter your name: '));
-        const playerName = name.trim() || "Hero";
+        const nameInput = await this.ask(this.lang.get('enter_name', 'Enter your name: '));
+        const playerName = nameInput.trim() || "Hero";
         
         // Display available classes
-        this.print(`\n${this.lang.get('ui_choose_class', 'Available Classes:')}`);
+        this.print(`\n${Colors.wrap(this.lang.get('ui_choose_class', 'Available Classes:'), Colors.CYAN)}`);
         
         const classEntries = Object.entries(this.classesData);
         
         for (let i = 0; i < classEntries.length; i++) {
             const [className, classData] = classEntries[i];
             const description = classData.description || "No description available";
-            this.print(`${i + 1}. ${className} - ${description}`);
+            this.print(`${Colors.wrap((i + 1).toString(), Colors.YELLOW)}. ${Colors.wrap(className, Colors.BOLD)} - ${description}`);
         }
         
-        const choice = await this.ask(`\nEnter class choice (1-${classEntries.length}): `);
+        const choice = await this.ask(`\n${this.lang.get('enter_class_choice', 'Enter class choice')} (1-${classEntries.length}): `);
         let selectedClass = null;
         
         if (choice.isDigit()) {
@@ -488,11 +579,11 @@ export class Game {
         // Give starting items
         this.giveStartingItems(selectedClass);
         
-        this.print(`\n${this.lang.get('welcome_adventurer', `Welcome, ${playerName} the ${selectedClass}!`)}`);
+        this.print(`\n${Colors.wrap(this.lang.get('welcome_adventurer', `Welcome, ${playerName} the ${selectedClass}!`), Colors.GREEN)}`);
         
         this.displayPlayerStats();
     }
-    
+
     /**
      * Give starting items based on class
      */
@@ -510,18 +601,21 @@ export class Game {
         this.player.gold = startingGold;
         
         if (items.length > 0) {
-            this.print(`You received starting equipment:`);
+            this.print(`\n${Colors.wrap(this.lang.get('received_starting_equip', 'You received starting equipment:'), Colors.CYAN)}`);
             for (const item of items) {
-                this.print(`  - ${item}`);
+                const itemData = this.itemsData[item] || {};
+                const rarity = itemData.rarity || "common";
+                this.print(`  - ${this.formatItemName(itemData.name || item, rarity)}`);
             }
             
             // Auto-equip first weapon and armor
             for (const slot of ["weapon", "armor"]) {
                 for (const item of items) {
-                    const itemType = this.itemsData[item]?.type;
+                    const itemData = this.itemsData[item] || {};
+                    const itemType = itemData.type;
                     if (itemType === slot) {
                         this.player.equip(item, this.itemsData);
-                        this.print(`Equipped: ${item}`);
+                        this.print(`${Colors.wrap(this.lang.get('equipped_msg', 'Equipped:'), Colors.GREEN)} ${this.formatItemName(itemData.name || item, itemData.rarity)}`);
                         break;
                     }
                 }
@@ -534,16 +628,25 @@ export class Game {
      */
     displayPlayerStats() {
         if (!this.player) {
-            this.print(this.lang.get('no_character', 'No character created'));
+            this.print(this.createSectionHeader(this.lang.get('no_character', 'No character created'), "!"));
             return;
         }
         
-        this.print(`\n=== ${this.player.name} - Level ${this.player.level} ${this.player.rank} ===`);
-        this.print(`HP: ${this.player.hp}/${this.player.maxHp}`);
-        this.print(`MP: ${this.player.mp}/${this.player.maxMp}`);
-        this.print(`Attack: ${this.player.getEffectiveAttack()} | Defense: ${this.player.getEffectiveDefense()} | Speed: ${this.player.getEffectiveSpeed()}`);
-        this.print(`Gold: ${this.player.gold}`);
-        this.print(`Level: ${this.player.level} | XP: ${this.player.experience}/${this.player.experienceToNext}`);
+        this.print(this.createSectionHeader(`${this.player.name} - Level ${this.player.level} ${this.player.rank}`, "="));
+        
+        // Show HP/MP bars in stats
+        this.print(`HP: ${this.createHpMpBar(this.player.hp, this.player.maxHp, 25, Colors.RED)}`);
+        this.print(`MP: ${this.createHpMpBar(this.player.mp, this.player.maxMp, 25, Colors.BLUE)}`);
+        
+        const attack = this.player.getEffectiveAttack();
+        const defense = this.player.getEffectiveDefense();
+        const speed = this.player.getEffectiveSpeed();
+        
+        this.print(`${Colors.wrap(this.lang.get('ui_stats_attack', 'Attack:'), Colors.RED)} ${attack} | ${Colors.wrap(this.lang.get('ui_stats_defense', 'Defense:'), Colors.BLUE)} ${defense} | ${Colors.wrap(this.lang.get('ui_stats_speed', 'Speed:'), Colors.GREEN)} ${speed}`);
+        this.print(`${Colors.wrap(this.lang.get('gold', 'Gold:'), Colors.GOLD)} ${this.player.gold}`);
+        
+        const xpBar = this.createProgressBar(this.player.experience, this.player.experienceToNext, 30, Colors.YELLOW);
+        this.print(`${Colors.wrap('XP:', Colors.YELLOW)} ${xpBar}`);
     }
     
     /**
@@ -594,7 +697,7 @@ export class Game {
             this.updateChallengeProgress('level_reach', this.player.level);
         }
         
-        this.print(`\n=== ${this.lang.get('main_menu', 'MAIN MENU')} ===`);
+        this.print(this.createSectionHeader(this.lang.get('main_menu', 'MAIN MENU'), "="));
         
         // Show current location
         const areaData = this.areasData[this.currentArea] || {};
@@ -609,35 +712,39 @@ export class Game {
             const dayStr = `Day ${this.player.day}`;
             const weatherDesc = this.player.getWeatherDescription ? this.player.getWeatherDescription(this.lang) : this.player.currentWeather;
             
-            this.print(`${timeStr} | ${dayStr}`);
-            this.print(`${weatherDesc}`);
+            this.print(Colors.wrap(`${timeStr} | ${dayStr}`, Colors.CYAN));
+            this.print(Colors.wrap(`${weatherDesc}`, Colors.YELLOW));
+            
+            // Show HP/MP bars
+            this.print(`HP: ${this.createHpMpBar(this.player.hp, this.player.maxHp, 20, Colors.RED)}`);
+            this.print(`MP: ${this.createHpMpBar(this.player.mp, this.player.maxMp, 20, Colors.BLUE)}`);
         }
         
-        this.print(`1. ${this.lang.get('explore', 'Explore')}`);
-        this.print(`2. ${this.lang.get('view_character', 'View Character')}`);
-        this.print(`3. ${this.lang.get('travel', 'Travel')}`);
-        this.print(`4. ${this.lang.get('inventory', 'Inventory')}`);
-        this.print(`5. ${this.lang.get('missions', 'Missions')}`);
-        this.print(`6. ${this.lang.get('fight_boss', 'Fight Boss')}`);
-        this.print(`7. ${this.lang.get('tavern', 'Tavern')}`);
-        this.print(`8. ${this.lang.get('shop', 'Shop')}`);
-        this.print(`9. ${this.lang.get('rest', 'Rest')}`);
-        this.print(`10. ${this.lang.get('companions', 'Companions')}`);
+        this.print(`1. ${Colors.wrap(this.lang.get('explore', 'Explore'), Colors.GREEN)}`);
+        this.print(`2. ${Colors.wrap(this.lang.get('view_character', 'View Character'), Colors.CYAN)}`);
+        this.print(`3. ${Colors.wrap(this.lang.get('travel', 'Travel'), Colors.BLUE)}`);
+        this.print(`4. ${Colors.wrap(this.lang.get('inventory', 'Inventory'), Colors.YELLOW)}`);
+        this.print(`5. ${Colors.wrap(this.lang.get('missions', 'Missions'), Colors.MAGENTA)}`);
+        this.print(`6. ${Colors.wrap(this.lang.get('fight_boss', 'Fight Boss'), Colors.RED)}`);
+        this.print(`7. ${Colors.wrap(this.lang.get('tavern', 'Tavern'), Colors.ORANGE)}`);
+        this.print(`8. ${Colors.wrap(this.lang.get('shop', 'Shop'), Colors.GOLD)}`);
+        this.print(`9. ${Colors.wrap(this.lang.get('rest', 'Rest'), Colors.GREEN)}`);
+        this.print(`10. ${Colors.wrap(this.lang.get('companions', 'Companions'), Colors.PURPLE)}`);
         
         if (this.currentArea === "your_land") {
-            this.print(`11. ${this.lang.get('pet_shop', 'Pet Shop')}`);
-            this.print(`12. ${this.lang.get('build_home', 'Build Home')}`);
-            this.print(`13. ${this.lang.get('save_game', 'Save Game')}`);
-            this.print(`14. ${this.lang.get('load_game', 'Load Game')}`);
-            this.print(`15. ${this.lang.get('quit', 'Quit')}`);
+            this.print(`11. ${Colors.wrap(this.lang.get('pet_shop', 'Pet Shop'), Colors.CYAN)}`);
+            this.print(`12. ${Colors.wrap(this.lang.get('build_home', 'Build Home'), Colors.GREEN)}`);
+            this.print(`13. ${Colors.wrap(this.lang.get('save_game', 'Save Game'), Colors.BLUE)}`);
+            this.print(`14. ${Colors.wrap(this.lang.get('load_game', 'Load Game'), Colors.BLUE)}`);
+            this.print(`15. ${Colors.wrap(this.lang.get('quit', 'Quit'), Colors.RED)}`);
         } else {
-            this.print(`11. ${this.lang.get('save_game', 'Save Game')}`);
-            this.print(`12. ${this.lang.get('load_game', 'Load Game')}`);
-            this.print(`13. ${this.lang.get('quit', 'Quit')}`);
+            this.print(`11. ${Colors.wrap(this.lang.get('save_game', 'Save Game'), Colors.BLUE)}`);
+            this.print(`12. ${Colors.wrap(this.lang.get('load_game', 'Load Game'), Colors.BLUE)}`);
+            this.print(`13. ${Colors.wrap(this.lang.get('quit', 'Quit'), Colors.RED)}`);
         }
         
         const maxChoice = this.currentArea === "your_land" ? "15" : "13";
-        const choice = await this.ask(`Choose an option (1-${maxChoice}): `);
+        const choice = await this.ask(`${this.lang.get('choose_option', 'Choose an option')} (1-${maxChoice}): `);
         
         switch (choice) {
             case "1": await this.explore(); break;
@@ -652,14 +759,14 @@ export class Game {
             case "10": await this.manageCompanions(); break;
             case "11":
                 if (this.currentArea === "your_land") {
-                    if (typeof this.petShop === 'function') await this.petShop();
+                    await this.petShop();
                 } else {
                     await this.saveLoadSystem.save_game();
                 }
                 break;
             case "12":
                 if (this.currentArea === "your_land") {
-                    if (typeof this.buildHome === 'function') await this.buildHome();
+                    await this.buildHome();
                 } else {
                     await this.saveLoadSystem.load_game();
                 }
@@ -668,7 +775,7 @@ export class Game {
                 if (this.currentArea === "your_land") {
                     await this.saveLoadSystem.save_game();
                 } else {
-                    this.print(this.lang.get('thank_exit', 'Thanks for playing!'));
+                    this.print(Colors.wrap(this.lang.get('thank_exit', 'Thanks for playing!'), Colors.YELLOW));
                     return;
                 }
                 break;
@@ -679,12 +786,12 @@ export class Game {
                 break;
             case "15":
                 if (this.currentArea === "your_land") {
-                    this.print(this.lang.get('thank_exit', 'Thanks for playing!'));
+                    this.print(Colors.wrap(this.lang.get('thank_exit', 'Thanks for playing!'), Colors.YELLOW));
                     return;
                 }
                 break;
             default:
-                this.print(this.lang.get('invalid_choice', 'Invalid choice'));
+                this.print(Colors.wrap(this.lang.get('invalid_choice', 'Invalid choice'), Colors.RED));
         }
     }
     
@@ -748,6 +855,8 @@ export class Game {
      * Battle system
      */
     async battle(enemy) {
+        this.print(this.createSectionHeader(this.lang.get('battle_start', 'BATTLE START'), "!"));
+        this.print(`${Colors.wrap(this.player.name, Colors.CYAN)} vs ${Colors.wrap(enemy.name, Colors.RED)}`);
         await this.battleSystem.battle(enemy);
     }
     
@@ -763,29 +872,33 @@ export class Game {
         const areaData = this.areasData[this.currentArea] || {};
         const connections = areaData.connections || [];
         
-        this.print(`\n=== TRAVEL ===`);
-        this.print(`Current location: ${areaData.name || this.currentArea}`);
+        this.print(this.createSectionHeader(this.lang.get('travel_title', 'TRAVEL'), "="));
+        this.print(`${Colors.wrap(this.lang.get('current_location_label', 'Current location:'), Colors.CYAN)} ${areaData.name || this.currentArea}`);
         
         if (connections.length === 0) {
-            this.print(this.lang.get('no_connected_areas', 'No connected areas'));
+            this.print(Colors.wrap(this.lang.get('no_connected_areas', 'No connected areas'), Colors.RED));
             return;
         }
         
-        this.print(this.lang.get('ui_connected_areas', 'Connected areas:'));
+        this.print(`\n${Colors.wrap(this.lang.get('ui_connected_areas', 'Connected areas:'), Colors.BOLD)}`);
         for (let i = 0; i < connections.length; i++) {
             const area = this.areasData[connections[i]] || {};
-            this.print(`${i + 1}. ${area.name || connections[i]} - ${area.description || ''}`);
+            this.print(`${Colors.wrap((i + 1).toString(), Colors.YELLOW)}. ${Colors.wrap(area.name || connections[i], Colors.BOLD)} - ${area.description || ''}`);
         }
         
-        const choice = await this.ask(`\nTravel to (1-${connections.length}) or press Enter to cancel: `);
+        const choice = await this.ask(`\n${this.lang.get('travel_to_prompt', 'Travel to')} (1-${connections.length}) ${this.lang.get('or_cancel_prompt', 'or press Enter to cancel')}: `);
         
         if (choice.isDigit()) {
             const idx = parseInt(choice) - 1;
             if (idx >= 0 && idx < connections.length) {
                 const newArea = connections[idx];
+                const oldAreaName = areaData.name || this.currentArea;
+                const newAreaName = this.areasData[newArea]?.name || newArea;
+                
+                await this.loadingIndicator(`${this.lang.get('traveling_to', 'Traveling to')} ${newAreaName}`);
+                
                 this.currentArea = newArea;
                 this.player.updateWeather(newArea);
-                this.print(`Traveling to ${this.areasData[newArea]?.name || newArea}...`);
                 
                 // Random encounter on travel
                 if (Math.random() < 0.3) {
@@ -794,7 +907,7 @@ export class Game {
             }
         }
     }
-    
+
     /**
      * View inventory
      */
@@ -804,34 +917,38 @@ export class Game {
             return;
         }
         
-        this.print(`\n=== INVENTORY ===`);
-        this.print(`Gold: ${this.player.gold}`);
+        this.print(this.createSectionHeader(this.lang.get('inventory_title', 'INVENTORY'), "="));
+        this.print(`${Colors.wrap(this.lang.get('gold', 'Gold:'), Colors.GOLD)} ${this.player.gold}`);
         
         if (this.player.inventory.length === 0) {
-            this.print(this.lang.get('inventory_empty', 'Your inventory is empty'));
+            this.print(Colors.wrap(this.lang.get('inventory_empty', 'Your inventory is empty'), Colors.GRAY));
             return;
         }
         
         // Group by type
         const itemsByType = {};
         for (const item of this.player.inventory) {
-            const itemType = this.itemsData[item]?.type || "unknown";
+            const itemData = this.itemsData[item] || {};
+            const itemType = itemData.type || "unknown";
             if (!itemsByType[itemType]) itemsByType[itemType] = [];
             itemsByType[itemType].push(item);
         }
         
         for (const [type, items] of Object.entries(itemsByType)) {
-            this.print(`\n${type.charAt(0).toUpperCase() + type.slice(1)}:`);
+            this.print(`\n${Colors.wrap(type.toUpperCase(), Colors.CYAN)}:`);
             for (const item of items) {
                 const itemData = this.itemsData[item] || {};
-                this.print(`  - ${item}`);
+                const rarity = itemData.rarity || "common";
+                this.print(`  - ${this.formatItemName(itemData.name || item, rarity)}`);
                 if (itemData.description) {
-                    this.print(`    ${itemData.description}`);
+                    this.print(`    ${Colors.wrap(itemData.description, Colors.GRAY)}`);
                 }
             }
         }
+        
+        await this.ask(`\n${this.lang.get('press_enter_back', 'Press Enter to go back...')}`);
     }
-    
+
     /**
      * View missions
      */
@@ -841,25 +958,25 @@ export class Game {
             return;
         }
         
-        this.print(`\n=== MISSIONS ===`);
+        this.print(this.createSectionHeader(this.lang.get('missions_title', 'MISSIONS'), "="));
         
         const activeMissions = Object.keys(this.missionProgress).filter(
             mid => !this.missionProgress[mid]?.completed
         );
         
         if (activeMissions.length === 0) {
-            this.print(this.lang.get('no_active_missions', 'No active missions'));
-            this.print(`A. Available Missions`);
-            this.print(`B. Back`);
+            this.print(Colors.wrap(this.lang.get('no_active_missions', 'No active missions'), Colors.GRAY));
+            this.print(`A. ${Colors.wrap(this.lang.get('available_missions', 'Available Missions'), Colors.GREEN)}`);
+            this.print(`B. ${Colors.wrap(this.lang.get('back', 'Back'), Colors.RED)}`);
             
-            const choice = await this.ask("\nChoose an option: ");
+            const choice = await this.ask(`\n${this.lang.get('choose_option', 'Choose an option:')} `);
             if (choice.toUpperCase() === 'A') {
                 await this.availableMissionsMenu();
             }
             return;
         }
         
-        this.print(this.lang.get('n_active_missions', 'Active Missions:'));
+        this.print(`\n${Colors.wrap(this.lang.get('n_active_missions', 'Active Missions:'), Colors.BOLD)}`);
         for (let i = 0; i < activeMissions.length; i++) {
             const mid = activeMissions[i];
             const mission = this.missionsData[mid] || {};
@@ -867,62 +984,71 @@ export class Game {
             const target = progress.target_count || 1;
             const current = progress.current_count || 0;
             
-            this.print(`${i + 1}. ${mission.name || mid} - ${current}/${target}`);
-            this.print(`   ${mission.description || ''}`);
+            this.print(`${Colors.wrap((i + 1).toString(), Colors.YELLOW)}. ${Colors.wrap(mission.name || mid, Colors.BOLD)}`);
+            this.print(`   ${this.createProgressBar(current, target, 20, Colors.CYAN)}`);
+            this.print(`   ${Colors.wrap(mission.description || '', Colors.GRAY)}`);
         }
+        
+        await this.ask(`\n${this.lang.get('press_enter_back', 'Press Enter to go back...')}`);
     }
     
     /**
      * Available missions menu
      */
     async availableMissionsMenu() {
-        this.print(`\n=== AVAILABLE MISSIONS ===`);
+        this.print(this.createSectionHeader(this.lang.get('available_missions_title', 'AVAILABLE MISSIONS'), "-"));
         
         const availableMissions = Object.keys(this.missionsData).filter(
             mid => !this.missionProgress[mid] && !this.completedMissions.includes(mid)
         );
         
         if (availableMissions.length === 0) {
-            this.print(this.lang.get('no_new_missions', 'No new missions available'));
+            this.print(Colors.wrap(this.lang.get('no_new_missions', 'No new missions available'), Colors.GRAY));
             return;
         }
         
         for (let i = 0; i < availableMissions.length; i++) {
             const mid = availableMissions[i];
             const mission = this.missionsData[mid] || {};
-            this.print(`${i + 1}. ${mission.name || mid}`);
-            this.print(`   ${mission.description || ''}`);
+            this.print(`${Colors.wrap((i + 1).toString(), Colors.YELLOW)}. ${Colors.wrap(mission.name || mid, Colors.BOLD)}`);
+            this.print(`   ${Colors.wrap(mission.description || '', Colors.GRAY)}`);
             
             const levelReq = mission.unlock_level;
             if (levelReq) {
                 const hasLevel = this.player.level >= levelReq;
-                this.print(`   Level required: ${levelReq}`);
+                const color = hasLevel ? Colors.GREEN : Colors.RED;
+                this.print(`   ${Colors.wrap(this.lang.get('level_required', 'Level required:'), color)} ${levelReq}`);
             }
         }
         
-        const choice = await this.ask(`\nAccept mission (1-${availableMissions.length}) or Enter to cancel: `);
+        const choice = await this.ask(`\n${this.lang.get('accept_mission_prompt', 'Accept mission')} (1-${availableMissions.length}) ${this.lang.get('or_cancel_prompt', 'or Enter to cancel')}: `);
         
         if (choice.isDigit()) {
             const idx = parseInt(choice) - 1;
             if (idx >= 0 && idx < availableMissions.length) {
                 const missionId = availableMissions[idx];
+                const mission = this.missionsData[missionId];
+                if (mission.unlock_level && this.player.level < mission.unlock_level) {
+                    this.print(Colors.wrap(this.lang.get('level_too_low_mission', 'Your level is too low for this mission!'), Colors.RED));
+                    return;
+                }
                 await this.acceptMission(missionId);
             }
         }
     }
-    
+
     /**
      * Accept a mission
      */
     async acceptMission(missionId) {
         if (this.missionProgress[missionId]) {
-            this.print(this.lang.get('mission_already_accepted', 'Mission already accepted'));
+            this.print(Colors.wrap(this.lang.get('mission_already_accepted', 'Mission already accepted'), Colors.YELLOW));
             return;
         }
         
         const mission = this.missionsData[missionId];
         if (!mission) {
-            this.print(this.lang.get('mission_data_not_found', 'Mission not found'));
+            this.print(Colors.wrap(this.lang.get('mission_data_not_found', 'Mission not found'), Colors.RED));
             return;
         }
         
@@ -936,7 +1062,7 @@ export class Game {
             type: missionType
         };
         
-        this.print(`Mission accepted: ${mission.name || missionId}`);
+        this.print(`${Colors.wrap(this.lang.get('mission_accepted_msg', 'Mission accepted:'), Colors.GREEN)} ${Colors.wrap(mission.name || missionId, Colors.BOLD)}`);
     }
     
     /**
@@ -952,11 +1078,11 @@ export class Game {
         const possibleBosses = areaData.possible_bosses || [];
         
         if (possibleBosses.length === 0) {
-            this.print(`No bosses in ${areaData.name || this.currentArea}`);
+            this.print(Colors.wrap(this.lang.get('no_bosses_area', `No bosses in ${areaData.name || this.currentArea}`), Colors.RED));
             return;
         }
         
-        this.print(`\n=== BOSSES IN ${(areaData.name || this.currentArea).toUpperCase()} ===`);
+        this.print(this.createSectionHeader(`${this.lang.get('bosses_in', 'BOSSES IN')} ${(areaData.name || this.currentArea).toUpperCase()}`, "="));
         
         for (let i = 0; i < possibleBosses.length; i++) {
             const bossName = possibleBosses[i];
@@ -964,13 +1090,13 @@ export class Game {
             let status = "";
             
             if (this.player.bossesKilled && this.player.bossesKilled[bossName]) {
-                status = ` (Recently defeated)`;
+                status = ` ${Colors.wrap('(' + this.lang.get('defeated', 'Recently defeated') + ')', Colors.GRAY)}`;
             }
             
-            this.print(`${i + 1}. ${bossData.name || bossName}${status}`);
+            this.print(`${Colors.wrap((i + 1).toString(), Colors.YELLOW)}. ${Colors.wrap(bossData.name || bossName, Colors.BOLD)}${status}`);
         }
         
-        const choice = await this.ask(`\nChoose a boss (1-${possibleBosses.length}) or Enter to cancel: `);
+        const choice = await this.ask(`\n${this.lang.get('choose_boss_prompt', 'Choose a boss')} (1-${possibleBosses.length}) ${this.lang.get('or_cancel_prompt', 'or Enter to cancel')}: `);
         
         if (choice.isDigit()) {
             const idx = parseInt(choice) - 1;
@@ -980,7 +1106,7 @@ export class Game {
                 
                 if (bossData) {
                     const boss = new Boss(bossData, this.dialoguesData);
-                    this.print(`\nChallenge accepted!`);
+                    this.print(`\n${Colors.wrap(this.lang.get('challenge_accepted', 'Challenge accepted!'), Colors.RED)}`);
                     await this.battle(boss);
                 }
             }
@@ -996,24 +1122,56 @@ export class Game {
             return;
         }
         
-        this.print(`\n=== THE TAVERN ===`);
-        this.print(`Your gold: ${this.player.gold}`);
+        this.print(this.createSectionHeader(this.lang.get('tavern_title', 'THE TAVERN'), "="));
+        this.print(`${Colors.wrap(this.lang.get('your_gold', 'Your gold:'), Colors.GOLD)} ${this.player.gold}`);
         
+        this.print(`1. ${Colors.wrap(this.lang.get('buy_food', 'Buy Food'), Colors.GREEN)} (5 Gold) - Restores 20 HP`);
+        this.print(`2. ${Colors.wrap(this.lang.get('buy_drink', 'Buy Drink'), Colors.BLUE)} (5 Gold) - Restores 20 MP`);
+        this.print(`3. ${Colors.wrap(this.lang.get('hire_companions', 'Hire Companions'), Colors.YELLOW)}`);
+        this.print(`4. ${Colors.wrap(this.lang.get('back', 'Back'), Colors.RED)}`);
+        
+        const choice = await this.ask(`\n${this.lang.get('choose_option', 'Choose an option:')} `);
+        
+        if (choice === "1") {
+            if (this.player.gold >= 5) {
+                this.player.gold -= 5;
+                const heal = this.player.heal(20);
+                this.print(`${Colors.wrap(this.lang.get('bought_food', 'You bought some food and recovered HP!'), Colors.GREEN)} (+${heal} HP)`);
+            } else {
+                this.print(Colors.wrap(this.lang.get('not_enough_gold', 'Not enough gold!'), Colors.RED));
+            }
+        } else if (choice === "2") {
+            if (this.player.gold >= 5) {
+                this.player.gold -= 5;
+                this.player.mp = Math.min(this.player.maxMp, this.player.mp + 20);
+                this.print(`${Colors.wrap(this.lang.get('bought_drink', 'You bought a drink and recovered MP!'), Colors.BLUE)} (+20 MP)`);
+            } else {
+                this.print(Colors.wrap(this.lang.get('not_enough_gold', 'Not enough gold!'), Colors.RED));
+            }
+        } else if (choice === "3") {
+            await this.hireCompanionsMenu();
+        }
+    }
+
+    /**
+     * Hire companions menu
+     */
+    async hireCompanionsMenu() {
+        this.print(this.createSectionHeader(this.lang.get('hire_companions', 'HIRE COMPANIONS'), "-"));
         const companions = Object.entries(this.companionsData);
         if (companions.length === 0) {
-            this.print(this.lang.get('no_companions_available', 'No companions available'));
+            this.print(Colors.wrap(this.lang.get('no_companions_available', 'No companions available'), Colors.GRAY));
             return;
         }
         
-        this.print(`\nAvailable Companions:`);
         for (let i = 0; i < companions.length; i++) {
             const [cid, cdata] = companions[i];
             const price = cdata.price || 0;
-            this.print(`${i + 1}. ${cdata.name || cid} - ${price} gold`);
-            this.print(`   ${cdata.description || ''}`);
+            this.print(`${Colors.wrap((i + 1).toString(), Colors.YELLOW)}. ${Colors.wrap(cdata.name || cid, Colors.BOLD)} - ${Colors.wrap(price + ' gold', Colors.GOLD)}`);
+            this.print(`   ${Colors.wrap(cdata.description || '', Colors.GRAY)}`);
         }
         
-        const choice = await this.ask(`\nHire companion (1-${companions.length}) or Enter to leave: `);
+        const choice = await this.ask(`\n${this.lang.get('hire_companion_prompt', 'Hire companion')} (1-${companions.length}) ${this.lang.get('or_leave_prompt', 'or Enter to leave')}: `);
         
         if (choice.isDigit()) {
             const idx = parseInt(choice) - 1;
@@ -1023,7 +1181,7 @@ export class Game {
                 
                 if (this.player.gold >= price) {
                     if (this.player.companions.length >= 4) {
-                        this.print("Maximum 4 companions allowed");
+                        this.print(Colors.wrap(this.lang.get('max_companions_msg', "Maximum 4 companions allowed"), Colors.RED));
                         return;
                     }
                     
@@ -1035,10 +1193,10 @@ export class Game {
                         equipment: { weapon: null, armor: null, accessory: null }
                     });
                     
-                    this.print(`Hired ${cdata.name || cid} for ${price} gold!`);
+                    this.print(`${Colors.wrap(this.lang.get('hired_companion_msg', 'Hired {name} for {price} gold!').replace('{name}', cdata.name || cid).replace('{price}', price), Colors.GREEN)}`);
                     this.player.updateStatsFromEquipment(this.itemsData, this.companionsData);
                 } else {
-                    this.print(this.lang.get('not_enough_gold', 'Not enough gold'));
+                    this.print(Colors.wrap(this.lang.get('not_enough_gold', 'Not enough gold'), Colors.RED));
                 }
             }
         }
@@ -1057,20 +1215,20 @@ export class Game {
         const areaShops = areaData.shops || [];
         
         if (areaShops.length === 0) {
-            this.print(`No shops in ${areaData.name || this.currentArea}`);
+            this.print(Colors.wrap(this.lang.get('no_shops_area', `No shops in ${areaData.name || this.currentArea}`), Colors.RED));
             return;
         }
         
-        this.print(`\n=== SHOPS IN ${(areaData.name || this.currentArea).toUpperCase()} ===`);
-        this.print(`Your gold: ${this.player.gold}\n`);
+        this.print(this.createSectionHeader(this.lang.get('shops_title', 'SHOPS'), "="));
+        this.print(`${Colors.wrap(this.lang.get('your_gold', 'Your gold:'), Colors.GOLD)} ${this.player.gold}\n`);
         
         for (let i = 0; i < areaShops.length; i++) {
             const shopId = areaShops[i];
             const shopData = this.shopsData[shopId] || {};
-            this.print(`${i + 1}. ${shopData.name || shopId}`);
+            this.print(`${Colors.wrap((i + 1).toString(), Colors.YELLOW)}. ${Colors.wrap(shopData.name || shopId, Colors.BOLD)}`);
         }
         
-        const choice = await this.ask("\nWhich shop? ");
+        const choice = await this.ask(`\n${this.lang.get('select_shop_prompt', 'Select a shop')}: `);
         
         if (choice.isDigit()) {
             const idx = parseInt(choice) - 1;
@@ -1079,7 +1237,7 @@ export class Game {
             }
         }
     }
-    
+
     /**
      * Visit specific shop
      */
@@ -1087,11 +1245,11 @@ export class Game {
         const shopData = this.shopsData[shopId];
         if (!shopData) return;
         
-        this.print(`\n=== ${shopData.name || shopId.toUpperCase()} ===`);
+        this.print(this.createSectionHeader(shopData.name || shopId.toUpperCase(), "-"));
         
         const items = shopData.items || [];
         if (items.length === 0) {
-            this.print("This shop has no items");
+            this.print(Colors.wrap(this.lang.get('shop_no_items', "This shop has no items"), Colors.GRAY));
             return;
         }
         
@@ -1099,12 +1257,15 @@ export class Game {
             const itemId = items[i];
             const itemData = this.itemsData[itemId] || {};
             const price = itemData.price || 0;
+            const rarity = itemData.rarity || "common";
             
-            this.print(`${i + 1}. ${itemData.name || itemId} - ${price} gold`);
-            this.print(`   ${itemData.description || ''}`);
+            this.print(`${Colors.wrap((i + 1).toString(), Colors.YELLOW)}. ${this.formatItemName(itemData.name || itemId, rarity)} - ${Colors.wrap(price + ' gold', Colors.GOLD)}`);
+            if (itemData.description) {
+                this.print(`   ${Colors.wrap(itemData.description, Colors.GRAY)}`);
+            }
         }
         
-        const choice = await this.ask(`\nBuy item (1-${items.length}) or Enter to leave: `);
+        const choice = await this.ask(`\n${this.lang.get('buy_item_prompt', 'Buy item')} (1-${items.length}) ${this.lang.get('or_leave_prompt', 'or Enter to leave')}: `);
         
         if (choice.isDigit()) {
             const idx = parseInt(choice) - 1;
@@ -1116,9 +1277,9 @@ export class Game {
                 if (this.player.gold >= price) {
                     this.player.gold -= price;
                     this.player.inventory.push(itemId);
-                    this.print(`Purchased ${itemData?.name || itemId} for ${price} gold!`);
+                    this.print(`${Colors.wrap(this.lang.get('purchased_item_msg', 'Purchased {item} for {price} gold!').replace('{item}', itemData?.name || itemId).replace('{price}', price), Colors.GREEN)}`);
                 } else {
-                    this.print(this.lang.get('not_enough_gold', 'Not enough gold'));
+                    this.print(Colors.wrap(this.lang.get('not_enough_gold', 'Not enough gold'), Colors.RED));
                 }
             }
         }
@@ -1152,27 +1313,28 @@ export class Game {
         const restCost = areaData.rest_cost || 10;
         
         if (!canRest) {
-            this.print(`You cannot rest here. It's too dangerous!`);
+            this.print(Colors.wrap(this.lang.get('cannot_rest_here', `You cannot rest here. It's too dangerous!`), Colors.RED));
             return;
         }
         
-        this.print(`\n=== REST ===`);
-        this.print(`Rest Cost: ${restCost} gold`);
-        this.print(`HP: ${this.player.hp}/${this.player.maxHp}`);
-        this.print(`MP: ${this.player.mp}/${this.player.maxMp}`);
+        this.print(this.createSectionHeader(this.lang.get('rest_title', 'REST'), "="));
+        this.print(`${Colors.wrap(this.lang.get('rest_cost_label', 'Rest Cost:'), Colors.GOLD)} ${restCost} gold`);
+        this.print(`HP: ${this.createHpMpBar(this.player.hp, this.player.maxHp, 20, Colors.RED)}`);
+        this.print(`MP: ${this.createHpMpBar(this.player.mp, this.player.maxMp, 20, Colors.BLUE)}`);
         
         if (this.player.gold < restCost) {
-            this.print(`Not enough gold!`);
+            this.print(Colors.wrap(this.lang.get('not_enough_gold', 'Not enough gold!'), Colors.RED));
             return;
         }
         
-        const choice = await this.ask(`Rest for ${restCost} gold? (y/n): `);
+        const choice = await this.ask(`${this.lang.get('rest_prompt', 'Rest for {cost} gold?').replace('{cost}', restCost)} (y/n): `);
         
         if (choice.toLowerCase() === 'y') {
+            await this.loadingIndicator(this.lang.get('resting_msg', 'Resting...'));
             this.player.gold -= restCost;
             this.player.hp = this.player.maxHp;
             this.player.mp = this.player.maxMp;
-            this.print(`You rest and recover full health!`);
+            this.print(Colors.wrap(this.lang.get('rest_success_msg', 'You rest and recover full health!'), Colors.GREEN));
         }
     }
     
@@ -1185,11 +1347,11 @@ export class Game {
             return;
         }
         
-        this.print(`\n=== COMPANIONS ===`);
-        this.print(`Active companions: ${this.player.companions?.length || 0}/4`);
+        this.print(this.createSectionHeader(this.lang.get('companions_title', 'COMPANIONS'), "="));
+        this.print(`${Colors.wrap(this.lang.get('active_companions_label', 'Active companions:'), Colors.CYAN)} ${this.player.companions?.length || 0}/4`);
         
         if (!this.player.companions || this.player.companions.length === 0) {
-            this.print("You have no companions. Visit the tavern to hire some!");
+            this.print(Colors.wrap(this.lang.get('no_companions_msg', "You have no companions. Visit the tavern to hire some!"), Colors.GRAY));
             return;
         }
         
@@ -1198,39 +1360,40 @@ export class Game {
             const compName = companion.name || companion;
             const compLevel = companion.level || 1;
             
+            this.print(`\n${Colors.wrap((i + 1).toString(), Colors.YELLOW)}. ${Colors.wrap(compName, Colors.BOLD)} (Level ${compLevel})`);
+            
             // Find companion data for bonuses
             let compData = null;
             for (const [cid, cdata] of Object.entries(this.companionsData)) {
-                if (cdata.name === compName) {
+                if (cdata.name === compName || cid === companion.id) {
                     compData = cdata;
                     break;
                 }
             }
             
-            this.print(`\n${i + 1}. ${compName} (Level ${compLevel})`);
             if (compData) {
                 const bonuses = [];
-                if (compData.attack_bonus) bonuses.push(`+${compData.attack_bonus} ATK`);
-                if (compData.defense_bonus) bonuses.push(`+${compData.defense_bonus} DEF`);
-                if (compData.speed_bonus) bonuses.push(`+${compData.speed_bonus} SPD`);
+                if (compData.attack_bonus) bonuses.push(`${Colors.wrap('+' + compData.attack_bonus + ' ATK', Colors.RED)}`);
+                if (compData.defense_bonus) bonuses.push(`${Colors.wrap('+' + compData.defense_bonus + ' DEF', Colors.BLUE)}`);
+                if (compData.speed_bonus) bonuses.push(`${Colors.wrap('+' + compData.speed_bonus + ' SPD', Colors.GREEN)}`);
                 if (bonuses.length > 0) {
                     this.print(`   Bonuses: ${bonuses.join(', ')}`);
                 }
             }
         }
         
-        this.print(`\nD. Dismiss Companion`);
-        this.print(`B. Back`);
+        this.print(`\nD. ${Colors.wrap(this.lang.get('dismiss_companion', 'Dismiss Companion'), Colors.RED)}`);
+        this.print(`B. ${Colors.wrap(this.lang.get('back', 'Back'), Colors.GRAY)}`);
         
-        const choice = await this.ask("\nChoose action: ");
+        const choice = await this.ask(`\n${this.lang.get('choose_action', 'Choose action:')} `);
         
         if (choice.toUpperCase() === 'D') {
-            const dismissChoice = await this.ask(`Dismiss which companion (1-${this.player.companions.length})? `);
+            const dismissChoice = await this.ask(`${this.lang.get('dismiss_which_prompt', 'Dismiss which companion')} (1-${this.player.companions.length})? `);
             if (dismissChoice.isDigit()) {
                 const idx = parseInt(dismissChoice) - 1;
                 if (idx >= 0 && idx < this.player.companions.length) {
                     const dismissed = this.player.companions.splice(idx, 1)[0];
-                    this.print(`Dismissed ${dismissed.name || dismissed}.`);
+                    this.print(`${Colors.wrap(this.lang.get('dismissed_msg', 'Dismissed {name}.').replace('{name}', dismissed.name || dismissed), Colors.YELLOW)}`);
                     this.player.updateStatsFromEquipment(this.itemsData, this.companionsData);
                 }
             }
@@ -1246,64 +1409,97 @@ export class Game {
             return;
         }
         
-        this.print(`\n=== PET SHOP ===`);
-        this.print(`Your Gold: ${this.player.gold}`);
+        this.print(this.createSectionHeader(this.lang.get('pet_shop_title', 'PET SHOP'), "="));
+        this.print(`${Colors.wrap(this.lang.get('your_gold', 'Your Gold:'), Colors.GOLD)} ${this.player.gold}`);
         
-        const currentPet = this.player.activePet ? (this.petsData[this.player.activePet]?.name || this.player.activePet) : "None";
-        this.print(`Current Pet: ${currentPet}\n`);
+        const currentPet = this.player.activePet ? (this.petsData[this.player.activePet]?.name || this.player.activePet) : this.lang.get('none', 'None');
+        this.print(`${Colors.wrap(this.lang.get('current_pet_label', 'Current Pet:'), Colors.CYAN)} ${currentPet}\n`);
         
-        this.print(`1. Buy Pet`);
-        this.print(`2. Manage Pets`);
-        this.print(`3. Back`);
+        this.print(`1. ${Colors.wrap(this.lang.get('buy_pet', 'Buy Pet'), Colors.GREEN)}`);
+        this.print(`2. ${Colors.wrap(this.lang.get('manage_pets', 'Manage Pets'), Colors.YELLOW)}`);
+        this.print(`3. ${Colors.wrap(this.lang.get('back', 'Back'), Colors.RED)}`);
         
-        const choice = await this.ask("Select an option: ");
+        const choice = await this.ask(`${this.lang.get('select_option_prompt', 'Select an option')}: `);
         
         if (choice === "1") {
-            const petEntries = Object.entries(this.petsData);
-            this.print("\nAvailable Pets:");
-            
-            for (let i = 0; i < petEntries.length; i++) {
-                const [petId, pet] = petEntries[i];
-                const isOwned = this.player.petsOwned?.includes(petId);
-                if (!isOwned) {
-                    this.print(`- ${pet.name || petId} (${pet.price}g): ${pet.description || ''}`);
-                }
+            await this.buyPetMenu();
+        } else if (choice === "2") {
+            await this.managePetsMenu();
+        }
+    }
+
+    /**
+     * Buy pet menu
+     */
+    async buyPetMenu() {
+        this.print(this.createSectionHeader(this.lang.get('buy_pet', 'BUY PET'), "-"));
+        const petEntries = Object.entries(this.petsData);
+        if (petEntries.length === 0) {
+            this.print(Colors.wrap(this.lang.get('no_pets_available', 'No pets available'), Colors.GRAY));
+            return;
+        }
+        
+        this.print(`\n${Colors.wrap(this.lang.get('available_pets', 'Available Pets:'), Colors.BOLD)}`);
+        for (let i = 0; i < petEntries.length; i++) {
+            const [petId, pet] = petEntries[i];
+            const isOwned = this.player.petsOwned?.includes(petId);
+            if (!isOwned) {
+                this.print(`${Colors.wrap((i + 1).toString(), Colors.YELLOW)}. ${Colors.wrap(pet.name || petId, Colors.BOLD)} - ${Colors.wrap(pet.price + 'g', Colors.GOLD)}: ${Colors.wrap(pet.description || '', Colors.GRAY)}`);
+            } else {
+                this.print(`${Colors.wrap((i + 1).toString(), Colors.YELLOW)}. ${Colors.wrap(pet.name || petId, Colors.BOLD)} ${Colors.wrap('(' + this.lang.get('owned', 'Owned') + ')', Colors.GREEN)}`);
             }
-            
-            const petInput = await this.ask("\nEnter pet name to buy: ");
-            const petId = petInput.toLowerCase().replace(/ /g, '_');
-            
-            if (this.petsData[petId] && !this.player.petsOwned?.includes(petId)) {
-                const price = this.petsData[petId].price || 0;
+        }
+        
+        const petChoice = await this.ask(`\n${this.lang.get('buy_pet_choice_prompt', 'Enter number to buy (or Enter to cancel)')}: `);
+        
+        if (petChoice.isDigit()) {
+            const idx = parseInt(petChoice) - 1;
+            if (idx >= 0 && idx < petEntries.length) {
+                const [petId, pet] = petEntries[idx];
+                if (this.player.petsOwned?.includes(petId)) {
+                    this.print(Colors.wrap(this.lang.get('already_owned', 'Already owned!'), Colors.YELLOW));
+                    return;
+                }
+                
+                const price = pet.price || 0;
                 if (this.player.gold >= price) {
                     this.player.gold -= price;
                     if (!this.player.petsOwned) this.player.petsOwned = [];
                     this.player.petsOwned.push(petId);
-                    this.print(`You bought a ${this.petsData[petId].name}!`);
+                    this.player.activePet = petId;
+                    this.print(`${Colors.wrap(this.lang.get('purchased_pet_msg', 'You bought a {pet}!').replace('{pet}', pet.name || petId), Colors.GREEN)}`);
                 } else {
-                    this.print("Not enough gold!");
+                    this.print(Colors.wrap(this.lang.get('not_enough_gold', 'Not enough gold!'), Colors.RED));
                 }
             }
-        } else if (choice === "2") {
-            if (this.player.petsOwned && this.player.petsOwned.length > 0) {
-                this.print("\nYour Pets:");
-                for (let i = 0; i < this.player.petsOwned.length; i++) {
-                    const petId = this.player.petsOwned[i];
-                    const petName = this.petsData[petId]?.name || petId;
-                    const status = petId === this.player.activePet ? "(Active)" : "";
-                    this.print(`${i + 1}. ${petName} ${status}`);
-                }
-                
-                const sel = await this.ask(`\nSelect pet to activate (1-${this.player.petsOwned.length}): `);
-                if (sel.isDigit()) {
-                    const idx = parseInt(sel) - 1;
-                    if (idx >= 0 && idx < this.player.petsOwned.length) {
-                        this.player.activePet = this.player.petsOwned[idx];
-                        this.print(`${this.petsData[this.player.activePet].name} is now active!`);
-                    }
-                }
-            } else {
-                this.print("You don't own any pets yet.");
+        }
+    }
+
+    /**
+     * Manage pets menu
+     */
+    async managePetsMenu() {
+        this.print(this.createSectionHeader(this.lang.get('manage_pets', 'MANAGE PETS'), "-"));
+        if (!this.player.petsOwned || this.player.petsOwned.length === 0) {
+            this.print(Colors.wrap(this.lang.get('no_pets_owned', "You don't own any pets."), Colors.GRAY));
+            return;
+        }
+        
+        this.print(`\n${Colors.wrap(this.lang.get('your_pets', 'Your Pets:'), Colors.BOLD)}`);
+        for (let i = 0; i < this.player.petsOwned.length; i++) {
+            const petId = this.player.petsOwned[i];
+            const petName = this.petsData[petId]?.name || petId;
+            const status = petId === this.player.activePet ? ` ${Colors.wrap('[ACTIVE]', Colors.GREEN)}` : "";
+            this.print(`${Colors.wrap((i + 1).toString(), Colors.YELLOW)}. ${Colors.wrap(petName, Colors.BOLD)}${status}`);
+        }
+        
+        const sel = await this.ask(`\n${this.lang.get('select_pet_activate_prompt', 'Select pet to activate')} (1-${this.player.petsOwned.length}) ${this.lang.get('or_cancel_prompt', 'or Enter to cancel')}: `);
+        if (sel.isDigit()) {
+            const idx = parseInt(sel) - 1;
+            if (idx >= 0 && idx < this.player.petsOwned.length) {
+                this.player.activePet = this.player.petsOwned[idx];
+                const pName = this.petsData[this.player.activePet]?.name || this.player.activePet;
+                this.print(`${Colors.wrap(this.lang.get('pet_activated_msg', '{pet} is now active!').replace('{pet}', pName), Colors.GREEN)}`);
             }
         }
     }
@@ -1318,37 +1514,39 @@ export class Game {
         }
         
         if (!this.player.housingOwned || this.player.housingOwned.length === 0) {
-            this.print(`You haven't purchased any housing items! Visit the Housing Shop first.`);
+            this.print(Colors.wrap(this.lang.get('no_housing_owned', `You haven't purchased any housing items! Visit the Housing Shop first.`), Colors.RED));
             return;
         }
         
-        this.print(`\n=== BUILD HOME ===`);
-        this.print(`Comfort Points: ${this.player.comfortPoints || 0}`);
-        this.print(`Items owned: ${this.player.housingOwned.length}`);
+        this.print(this.createSectionHeader(this.lang.get('build_home_title', 'BUILD HOME'), "="));
+        this.print(`${Colors.wrap(this.lang.get('comfort_points_label', 'Comfort Points:'), Colors.CYAN)} ${this.player.comfortPoints || 0}`);
+        this.print(`${Colors.wrap(this.lang.get('items_owned_label', 'Items owned:'), Colors.YELLOW)} ${this.player.housingOwned.length}`);
         
         // Show building slots
         const buildingTypes = {
-            house: { label: "House", slots: 3 },
-            decoration: { label: "Decoration", slots: 10 },
-            fencing: { label: "Fencing", slots: 1 },
-            garden: { label: "Garden", slots: 3 },
-            farm: { label: "Farm", slots: 2 },
-            training_place: { label: "Training Place", slots: 3 }
+            house: { label: this.lang.get('house', "House"), slots: 3 },
+            decoration: { label: this.lang.get('decoration', "Decoration"), slots: 10 },
+            fencing: { label: this.lang.get('fencing', "Fencing"), slots: 1 },
+            garden: { label: this.lang.get('garden', "Garden"), slots: 3 },
+            farm: { label: this.lang.get('farm', "Farm"), slots: 2 },
+            training_place: { label: this.lang.get('training_place', "Training Place"), slots: 3 }
         };
         
         for (const [bType, info] of Object.entries(buildingTypes)) {
-            this.print(`\n${info.label} Slots:`);
+            this.print(`\n${Colors.wrap(info.label + ' Slots:', Colors.BOLD)}`);
             for (let i = 1; i <= info.slots; i++) {
                 const slot = `${bType}_${i}`;
                 const itemId = this.player.buildingSlots?.[slot];
                 if (itemId && this.housingData[itemId]) {
                     const item = this.housingData[itemId];
-                    this.print(`  ${slot}: ${item.name || itemId}`);
+                    this.print(`  ${Colors.wrap(slot, Colors.YELLOW)}: ${Colors.wrap(item.name || itemId, Colors.GREEN)}`);
                 } else {
-                    this.print(`  ${slot}: Empty`);
+                    this.print(`  ${Colors.wrap(slot, Colors.YELLOW)}: ${Colors.wrap(this.lang.get('empty', 'Empty'), Colors.GRAY)}`);
                 }
             }
         }
+        
+        await this.ask(`\n${this.lang.get('press_enter_back', 'Press Enter to go back...')}`);
     }
     
     /**
@@ -1383,7 +1581,7 @@ export class Game {
                 const targetEnemy = (mission.target || '').toLowerCase();
                 if (targetEnemy === target.toLowerCase()) {
                     progress.current_count += count;
-                    this.print(`[Mission] ${mission.name}: ${progress.current_count}/${progress.target_count}`);
+                    this.print(`${Colors.wrap('[Mission]', Colors.CYAN)} ${Colors.wrap(mission.name, Colors.BOLD)}: ${progress.current_count}/${progress.target_count}`);
                     
                     if (progress.current_count >= progress.target_count) {
                         this.completeMission(mid);
@@ -1413,8 +1611,8 @@ export class Game {
             this.missionProgress[missionId].completed = true;
             const mission = this.missionsData[missionId];
             
-            this.print(`\n!!! MISSION COMPLETE: ${mission?.name || missionId} !!!`);
-            this.print(`You can now claim your rewards from the menu.`);
+            this.print(`\n${Colors.wrap('!!! MISSION COMPLETE: ' + (mission?.name || missionId) + ' !!!', Colors.GREEN + Colors.BOLD)}`);
+            this.print(Colors.wrap(this.lang.get('claim_rewards_msg', 'You can now claim your rewards from the menu.'), Colors.YELLOW));
         }
     }
     
@@ -1464,18 +1662,19 @@ export class Game {
         );
         
         if (consumables.length === 0) {
-            this.print("No consumable items!");
+            this.print(Colors.wrap(this.lang.get('no_consumables', "No consumable items!"), Colors.RED));
             return;
         }
         
-        this.print("\nAvailable Consumables:");
+        this.print(this.createSectionHeader(this.lang.get('consumables_title', 'CONSUMABLES'), "-"));
         for (let i = 0; i < consumables.length; i++) {
             const item = consumables[i];
             const itemData = this.itemsData[item];
-            this.print(`${i + 1}. ${item} - ${itemData?.description || 'Unknown effect'}`);
+            const rarity = itemData?.rarity || "common";
+            this.print(`${Colors.wrap((i + 1).toString(), Colors.YELLOW)}. ${this.formatItemName(itemData?.name || item, rarity)} - ${Colors.wrap(itemData?.description || 'Unknown effect', Colors.GRAY)}`);
         }
         
-        const choice = await this.ask(`Choose item (1-${consumables.length}): `);
+        const choice = await this.ask(`\n${this.lang.get('choose_item_prompt', 'Choose item')} (1-${consumables.length}): `);
         
         if (choice.isDigit()) {
             const idx = parseInt(choice) - 1;
@@ -1499,12 +1698,14 @@ export class Game {
         if (itemData.type === "consumable") {
             if (itemData.effect === "heal") {
                 const healAmount = itemData.value || 0;
-                this.player.heal(healAmount);
-                this.print(`Used ${item}, healed ${healAmount} HP!`);
+                const actualHeal = this.player.heal(healAmount);
+                this.print(`${Colors.wrap(this.lang.get('used_item_msg', 'Used {item}').replace('{item}', itemData.name || item), Colors.GREEN)}, ${this.lang.get('healed_msg', 'healed {amount} HP!').replace('{amount}', actualHeal)}`);
             } else if (itemData.effect === "mp_restore") {
                 const mpAmount = itemData.value || 0;
+                const oldMp = this.player.mp;
                 this.player.mp = Math.min(this.player.maxMp, this.player.mp + mpAmount);
-                this.print(`Used ${item}, restored ${mpAmount} MP!`);
+                const restored = this.player.mp - oldMp;
+                this.print(`${Colors.wrap(this.lang.get('used_item_msg', 'Used {item}').replace('{item}', itemData.name || item), Colors.BLUE)}, ${this.lang.get('restored_mp_msg', 'restored {amount} MP!').replace('{amount}', restored)}`);
             }
         }
     }
