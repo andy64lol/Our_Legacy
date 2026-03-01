@@ -118,5 +118,3 @@ export class LanguageManager {
         return this.config.overwrite_save_files !== false;
     }
 }
-
-export { LanguageManager };
