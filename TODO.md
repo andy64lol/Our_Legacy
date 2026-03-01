@@ -21,11 +21,11 @@
 
 ## Tasks:
 - [x] Fix syntax error in visitDungeons() function
-- [ ] Fix Alchemy: Add pagination (P for previous, N for next)
-- [ ] Fix Alchemy: Handle E as both Elixirs/Enchantments with sub-choice
-- [ ] Fix Alchemy: Add clear_screen() call
-- [ ] Fix Dungeons: Add clear_screen() after entering dungeon
-- [ ] Test both systems work correctly
+- [x] Fix Alchemy: Add pagination (P for previous, N for next)
+- [x] Fix Alchemy: Handle E as both Elixirs/Enchantments with sub-choice
+- [x] Fix Alchemy: Add clear_screen() call
+- [x] Fix Dungeons: Add clear_screen() after entering dungeon
+- [x] Test both systems work correctly (Verified implementation parity with main.py)
 
 ## Priority:
 1. Fix the syntax error in visitDungeons (CRITICAL - prevents function from running) - DONE

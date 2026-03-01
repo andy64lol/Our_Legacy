@@ -1760,6 +1760,7 @@ export class Game {
             return;
         }
         
+        this.clear_screen();
         this.print(this.createSectionHeader(this.lang.get('alchemy_title', 'ALCHEMY WORKSHOP'), "="));
         this.print(`Welcome to the Alchemy Workshop! Here you can craft potions, elixirs, and items.`);
         this.print(`${Colors.wrap(this.lang.get('your_gold', 'Your Gold:'), Colors.GOLD)} ${this.player.gold}\n`);
@@ -1770,8 +1771,7 @@ export class Game {
         while (true) {
             this.print(`\n${Colors.wrap(this.lang.get('alchemy_categories', 'Categories:'), Colors.BOLD)}`);
             this.print(`P. ${Colors.wrap('Potions', Colors.CYAN)}`);
-            this.print(`E. ${Colors.wrap('Elixirs', Colors.BLUE)}`);
-            this.print(`N. ${Colors.wrap('Enchantments', Colors.PURPLE)}`);
+            this.print(`E. ${Colors.wrap('Elixirs/Enchantments', Colors.BLUE)}`);
             this.print(`U. ${Colors.wrap('Utility', Colors.GREEN)}`);
             this.print(`A. ${Colors.wrap('All Recipes', Colors.YELLOW)}`);
             this.print(`C. ${Colors.wrap('Craft Item', Colors.RED)}`);
@@ -1779,24 +1779,32 @@ export class Game {
             this.print(`B. ${Colors.wrap(this.lang.get('back', 'Back'), Colors.RED)}`);
             
             const choice = await this.ask(`${this.lang.get('choose_option', 'Choose an option')}: `);
+            const uc = choice.toUpperCase();
             
-            if (choice.toUpperCase() === 'B') {
+            if (uc === 'B') {
                 break;
-            } else if (choice.toUpperCase() === 'P') {
+            } else if (uc === 'P') {
                 await this.displayRecipesByCategory('Potions');
-            } else if (choice.toUpperCase() === 'E') {
-                await this.displayRecipesByCategory('Elixirs');
-            } else if (choice.toUpperCase() === 'N') {
-                await this.displayRecipesByCategory('Enchantments');
-            } else if (choice.toUpperCase() === 'U') {
+            } else if (uc === 'E') {
+                this.print(`\n${Colors.wrap('Select Sub-category:', Colors.BOLD)}`);
+                this.print(`E. ${Colors.wrap('Elixirs', Colors.BLUE)}`);
+                this.print(`N. ${Colors.wrap('Enchantments', Colors.PURPLE)}`);
+                const subChoice = await this.ask(`Choice (E/N): `);
+                if (subChoice.toUpperCase() === 'E') {
+                    await this.displayRecipesByCategory('Elixirs');
+                } else if (subChoice.toUpperCase() === 'N') {
+                    await this.displayRecipesByCategory('Enchantments');
+                }
+            } else if (uc === 'U') {
                 await this.displayRecipesByCategory('Utility');
-            } else if (choice.toUpperCase() === 'A') {
+            } else if (uc === 'A') {
                 await this.displayAllRecipes();
-            } else if (choice.toUpperCase() === 'C') {
+            } else if (uc === 'C') {
                 await this.craftItem();
-            } else if (choice.toUpperCase() === 'M') {
+            } else if (uc === 'M') {
                 await this.displayCraftingMaterials();
             }
+            this.clear_screen();
         }
     }
     
@@ -1901,26 +1909,35 @@ export class Game {
             const totalPages = Math.ceil(recipeEntries.length / pageSize);
             this.print(`\nPage ${currentPage + 1}/${totalPages}`);
             
+            if (currentPage < totalPages - 1) {
+                this.print(`N. ${Colors.wrap('Next Page', Colors.YELLOW)}`);
+            }
+            if (currentPage > 0) {
+                this.print(`P. ${Colors.wrap('Previous Page', Colors.YELLOW)}`);
+            }
             this.print(`C. ${Colors.wrap('Craft Item', Colors.RED)}`);
             this.print(`B. ${Colors.wrap(this.lang.get('back', 'Back'), Colors.RED)}`);
             
             const choice = await this.ask(`${this.lang.get('choose_option', 'Choose an option')}: `);
+            const uc = choice.toUpperCase();
             
-            if (choice.toUpperCase() === 'B') {
+            if (uc === 'B') {
                 break;
-            } else if (choice.toUpperCase() === 'C') {
+            } else if (uc === 'C') {
                 await this.craftItem();
                 break;
+            } else if (uc === 'N' && currentPage < totalPages - 1) {
+                currentPage++;
+                continue;
+            } else if (uc === 'P' && currentPage > 0) {
+                currentPage--;
+                continue;
             } else if (choice.isDigit()) {
                 const idx = parseInt(choice) - 1;
                 if (idx >= 0 && idx < recipeEntries.length) {
                     const [rid, rdata] = recipeEntries[idx];
                     await this.showRecipeDetails(rid, rdata);
                 }
-            }
-            
-            if (currentPage < totalPages - 1 && choice.toUpperCase() !== 'C') {
-                currentPage++;
             } else {
                 break;
             }
@@ -2140,6 +2157,7 @@ export class Game {
      * Enter a dungeon and generate rooms
      */
     async enterDungeon(dungeon) {
+        this.clear_screen();
         this.print(`\n${Colors.wrap(this.lang.get('entering_dungeon', 'Entering') + ' ' + dungeon.name + '!', Colors.MAGENTA + Colors.BOLD)}`);
         this.print(dungeon.description || '');
         
