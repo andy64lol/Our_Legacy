@@ -131,6 +131,12 @@ export class Game {
      * Print text to the game output
      */
     print(text, color = null) {
+        if (text === null && color === 'clear') {
+            if (this.printCallback) {
+                this.printCallback(null, 'clear');
+            }
+            return;
+        }
         if (typeof text === 'string') {
             const areaData = this.areasData[this.currentArea] || {};
             const areaName = areaData.name || this.currentArea;
@@ -146,7 +152,8 @@ export class Game {
     /**
      * Ask for user input
      */
-    ask(question) {
+    async ask(question) {
+        this.print(null, 'clear');
         this.print(question);
         // Clear and focus input for the next question
         const input = document.getElementById('gameInput');
@@ -169,10 +176,6 @@ export class Game {
      */
     handleInput(input) {
         if (this.resolveInput) {
-            // Clear display after input
-            if (this.printCallback) {
-                this.printCallback(null, 'clear');
-            }
             const resolve = this.resolveInput;
             this.resolveInput = null;
             resolve(input);
@@ -366,7 +369,7 @@ export class Game {
     createSectionHeader(title, char = "=", width = 60) {
         const padding = Math.max(0, Math.floor((width - title.length - 2) / 2));
         const headerText = `${char.repeat(padding)} ${title} ${char.repeat(padding)}`;
-        return Colors.wrap(headerText, `${Colors.CYAN}${Colors.BOLD}`);
+        return headerText;
     }
 
     /**
@@ -407,8 +410,9 @@ export class Game {
      * Display welcome screen
      */
     async displayWelcome() {
+        this.print(null, 'clear');
         this.print(this.createSeparator("=", 60));
-        this.print(`       ${Colors.wrap(this.lang.get('game_title_display', 'Our Legacy'), Colors.BOLD)}`);
+        this.print(`       ${this.lang.get('game_title_display', 'Our Legacy')}`);
         this.print(`       ${Colors.wrap(this.lang.get('game_subtitle_display', 'Your game in the browser, portable!'), Colors.CYAN)}`);
         this.print(this.createSeparator("=", 60));
         this.print("");
@@ -416,7 +420,7 @@ export class Game {
         this.print('Choose your path wisely, for every decision shapes your destiny.');
         this.print("");
         
-        this.print(this.createSectionHeader(this.lang.get('main_menu', 'MAIN MENU'), "="));
+        this.print(this.createSectionHeader(this.lang.get('main_menu', 'MAIN MENU'), "="), `${Colors.CYAN}${Colors.BOLD}`);
         this.print(`1. ${Colors.wrap(this.lang.get('new_game', 'New Game'), Colors.GREEN)}`);
         this.print(`2. ${Colors.wrap(this.lang.get('load_game', 'Load Game'), Colors.BLUE)}`);
         this.print(`3. ${Colors.wrap(this.lang.get('settings', 'Settings'), Colors.YELLOW)}`);
@@ -547,13 +551,15 @@ export class Game {
      * Create character menu
      */
     async createCharacter() {
-        this.print(this.createSectionHeader(this.lang.get('char_creation_title', 'CHARACTER CREATION'), "="));
+        this.print(null, 'clear');
+        this.print(this.createSectionHeader(this.lang.get('char_creation_title', 'CHARACTER CREATION'), "="), `${Colors.CYAN}${Colors.BOLD}`);
         
         const nameInput = await this.ask(this.lang.get('enter_name', 'Enter your name: '));
         const playerName = nameInput.trim() || "Hero";
         
         // Display available classes
-        this.print(`\n${Colors.wrap(this.lang.get('ui_choose_class', 'Available Classes:'), Colors.CYAN)}`);
+        this.print(null, 'clear');
+        this.print(Colors.wrap(this.lang.get('ui_choose_class', 'Choose your class:'), Colors.CYAN));
         
         const classEntries = Object.entries(this.classesData);
         
@@ -563,7 +569,7 @@ export class Game {
             this.print(`${Colors.wrap((i + 1).toString(), Colors.YELLOW)}. ${Colors.wrap(className, Colors.BOLD)} - ${description}`);
         }
         
-        const choice = await this.ask(`\n${this.lang.get('enter_class_choice', 'Enter class choice')} (1-${classEntries.length}): `);
+        const choice = await this.ask(`${this.lang.get('enter_class_choice', 'Enter class choice')} (1-${classEntries.length}): `);
         let selectedClass = null;
         
         if (choice.isDigit()) {

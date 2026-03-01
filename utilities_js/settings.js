@@ -48,7 +48,8 @@ export class Colors {
    * @returns {string} Formatted string
    */
   static wrap(text, color_code) {
-    return `${this._color(color_code)}${text}${this._color(this.END)}`;
+    if (!color_code || color_code === this.END) return text;
+    return `${color_code}${text}`;
   }
 }
 

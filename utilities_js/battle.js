@@ -18,10 +18,10 @@ export function create_hp_mp_bar(current, maximum, width = 15, color = Colors.RE
   if (maximum <= 0) {
     return "[" + " ".repeat(width) + "]";
   }
-  const filledWidth = Math.floor((current / maximum) * width);
+  const filledWidth = Math.max(0, Math.min(width, Math.floor((current / maximum) * width)));
   const filled = "█".repeat(filledWidth);
   const empty = "░".repeat(width - filledWidth);
-  return `[${filled}${empty}] ${current}/${maximum}`;
+  return `[${Colors.wrap(filled, color)}${empty}] ${current}/${maximum}`;
 }
 
 /**
@@ -36,13 +36,13 @@ export function create_boss_hp_bar(current, maximum, width = 40, color = Colors.
   if (maximum <= 0) {
     return "[" + " ".repeat(width) + "]";
   }
-  const filledWidth = Math.floor((current / maximum) * width);
+  const filledWidth = Math.max(0, Math.min(width, Math.floor((current / maximum) * width)));
   const filled = "█".repeat(filledWidth);
   const empty = "░".repeat(width - filledWidth);
   const percentage = ((current / maximum) * 100).toFixed(1);
-  const bossLabel = "%cBOSS HP%c";
-  const bar = `[${filled}${empty}]`;
-  const percentText = `%c${percentage}%`;
+  const bossLabel = Colors.wrap("BOSS HP", `${Colors.BOLD}${Colors.RED}`);
+  const bar = `[${Colors.wrap(filled, color)}${empty}]`;
+  const percentText = Colors.wrap(`${percentage}%`, Colors.BOLD);
   return `${bossLabel} ${bar} ${percentText} (${current}/${maximum})`;
 }
 
