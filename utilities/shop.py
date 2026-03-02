@@ -1,5 +1,17 @@
 # utilities/shop.py
-from main import Colors, ask, get_rarity_color  # import whatever you need
+from utilities.settings import Colors
+
+
+def get_rarity_color(rarity: str) -> str:
+    """Get the color for an item rarity."""
+    rarity_colors = {
+        "common": Colors.COMMON,
+        "uncommon": Colors.UNCOMMON,
+        "rare": Colors.RARE,
+        "epic": Colors.EPIC,
+        "legendary": Colors.LEGENDARY
+    }
+    return rarity_colors.get(rarity.lower(), Colors.WHITE)
 
 
 def visit_general_shop(self, shop_data):
@@ -74,6 +86,7 @@ def visit_general_shop(self, shop_data):
                 print(f"N. {self.lang.get('ui_next_page')}")
         print(f"S. {self.lang.get('ui_sell_items')}")
         print(f"B. {self.lang.get('back')}")
+        from main import ask
 
         choice = ask("\nChoose item to buy or option: ").strip().upper()
 
@@ -150,6 +163,7 @@ def shop_sell(self):
         price = self.items_data.get(item, {}).get('price', 0)
         sell_price = price // 2 if price else 0
         print(f"{i}. {item}{equip_marker} - Sell for {sell_price} gold")
+    from main import ask
 
     choice = ask(
         f"Choose item to sell (1-{len(sellable)}) or press Enter to cancel: ")

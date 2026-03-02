@@ -1,7 +1,5 @@
-from main import Colors, ask, clear_screen
-
-
 def visit_alchemy(self):
+    from main import Colors, ask, clear_screen
     """Visit the Alchemy workshop to craft items"""
     if not self.player:
         print(self.lang.get("no_character"))
@@ -90,6 +88,7 @@ def _display_crafting_materials(self):
 
 
 def _display_recipes_by_category(self, category: str):
+    from main import Colors, get_rarity_color
     """Display recipes filtered by category"""
     if not self.crafting_data:
         return
@@ -111,6 +110,7 @@ def _display_recipes_by_category(self, category: str):
 
 
 def _display_all_recipes(self):
+    from main import Colors, ask, get_rarity_color
     """Display all available recipes"""
     if not self.crafting_data:
         return
@@ -164,6 +164,7 @@ def _display_all_recipes(self):
 
 
 def _craft_item(self):
+    from main import Colors, ask, get_rarity_color
     """Craft an item using materials from inventory"""
     if not self.player or not self.crafting_data:
         print(self.lang.get('ui_cannot_craft'))

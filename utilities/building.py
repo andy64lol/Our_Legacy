@@ -1,9 +1,12 @@
-from main import Colors, ask, clear_screen, get_rarity_color
+from utilities.settings import Colors
 import time
 from typing import Dict, List
+from utilities.crafting import visit_alchemy
+import random
 
 
 def build_home(self):
+    from main import ask, clear_screen, get_rarity_color
     """Build and manage structures on your land"""
     if not self.player:
         print(self.lang.get("no_character"))
@@ -100,6 +103,7 @@ def build_home(self):
 
 def view_home_status(self):
     """View detailed home status and statistics"""
+    from main import ask
     if not self.player:
         return
 
@@ -148,6 +152,7 @@ def view_home_status(self):
 
 
 def remove_housing_item(self):
+    from main import ask, get_rarity_color
     """Remove a housing item from a slot"""
     if not self.player:
         return
@@ -205,6 +210,7 @@ def remove_housing_item(self):
 
 
 def _place_housing_item(self):
+    from main import ask, get_rarity_color
     """Place a housing item in a slot"""
     if not self.player:
         return
@@ -311,6 +317,7 @@ def _place_housing_item(self):
 
 
 def build_structures(self):
+    from main import ask, clear_screen
     """Build and manage structures on your land"""
     if not self.player:
         print(self.lang.get("no_character"))
@@ -417,6 +424,7 @@ def build_structures(self):
 
 def manage_building_slots(self, b_type: str, b_info: Dict,
                           available_items: List[Dict]):
+    from main import ask, clear_screen
     """Manage slots for a specific building type"""
     if not self.player:
         print(self.lang.get("no_character"))
@@ -490,6 +498,7 @@ def manage_building_slots(self, b_type: str, b_info: Dict,
 
 
 def manage_slot(self, slot_name: str, available_items: List[Dict]):
+    from main import ask, clear_screen
     """Manage a specific building slot"""
     if not self.player:
         print(self.lang.get("no_character"))
@@ -604,6 +613,7 @@ def manage_slot(self, slot_name: str, available_items: List[Dict]):
 
 
 def farm(self):
+    from main import ask, clear_screen
     """Farm crops on your land"""
     if not self.player:
         print(self.lang.get("no_character"))
@@ -702,6 +712,7 @@ def farm(self):
 
 
 def plant_crop(self, crop_tuple):
+    from main import ask, clear_screen
     """Plant a specific crop in an available farm plot"""
     if not self.player:
         return
@@ -773,6 +784,7 @@ def plant_crop(self, crop_tuple):
 
 
 def harvest_crops(self):
+    from main import clear_screen
     """Harvest ready crops from farm plots"""
     if not self.player:
         return
@@ -819,6 +831,7 @@ def harvest_crops(self):
 
 
 def view_farming_inventory(self):
+    from main import ask, clear_screen
     """View crops in inventory"""
     if not self.player:
         return
@@ -872,6 +885,7 @@ def view_farming_inventory(self):
 
 
 def sell_crops(self):
+    from main import clear_screen
     """Sell crops for gold"""
     if not self.player:
         return
@@ -914,6 +928,7 @@ def sell_crops(self):
 
 
 def training(self):
+    from main import ask, clear_screen
     """Training system for improving stats using training_place buildings"""
     if not self.player:
         print(self.lang.get("no_character"))
