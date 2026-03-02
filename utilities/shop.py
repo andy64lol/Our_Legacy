@@ -2,10 +2,10 @@
 from main import Colors, ask, get_rarity_color  # import whatever you need
 
 
-def visit_general_shop(game, shop_data):
+def visit_general_shop(self, shop_data):
     """Visit a general shop (not housing)"""
-    if not game.player:
-        print(game.lang.get("no_character"))
+    if not self.player:
+        print(self.lang.get("no_character"))
         return
 
     shop_name = shop_data.get("name", "Shop")
@@ -15,16 +15,17 @@ def visit_general_shop(game, shop_data):
 
     print(f"\n{Colors.BOLD}=== {shop_name.upper()} ==={Colors.END}")
     print(welcome_msg)
-    print(f"Your gold: {Colors.GOLD}{game.player.gold}{Colors.END}")
+    print(f"Your gold: {Colors.GOLD}{self.player.gold}{Colors.END}")
 
     if not items:
-        print(game.lang.get('ui_shop_no_items'))
+        print(self.lang.get('ui_shop_no_items'))
         return
 
+    # Group items by type for better display
     item_details = []
     for item_id in items:
-        if item_id in game.items_data:
-            item = game.items_data[item_id]
+        if item_id in self.items_data:
+            item = self.items_data[item_id]
             item_details.append({
                 'id': item_id,
                 'name': item.get('name', item_id),
@@ -35,7 +36,7 @@ def visit_general_shop(game, shop_data):
             })
 
     if not item_details:
-        print(game.lang.get('ui_no_valid_items_shop'))
+        print(self.lang.get('ui_no_valid_items_shop'))
         return
 
     page_size = 8
@@ -49,7 +50,7 @@ def visit_general_shop(game, shop_data):
         print(f"\n--- Items (Page {current_page + 1}) ---")
         for i, item in enumerate(page_items, 1):
             rarity_color = get_rarity_color(item['rarity'])
-            owned_count = game.player.inventory.count(item['id'])
+            owned_count = self.player.inventory.count(item['id'])
             can_buy_more = owned_count < max_buy
 
             status = ""
@@ -68,10 +69,10 @@ def visit_general_shop(game, shop_data):
 
         if total_pages > 1:
             if current_page > 0:
-                print(f"P. {game.lang.get('ui_previous_page')}")
+                print(f"P. {self.lang.get('ui_previous_page')}")
             if current_page < total_pages - 1:
-                print(f"N. {game.lang.get('ui_next_page')}")
-        print(f"B. {game.lang.get('back')}")
+                print(f"N. {self.lang.get('ui_next_page')}")
+        print(f"B. {self.lang.get('back')}")
 
         choice = ask("\nChoose item to buy or option: ").strip().upper()
 
@@ -85,7 +86,7 @@ def visit_general_shop(game, shop_data):
             item_idx = int(choice) - 1
             if 0 <= item_idx < len(item_details):
                 item = item_details[item_idx]
-                owned_count = game.player.inventory.count(item['id'])
+                owned_count = self.player.inventory.count(item['id'])
 
                 if owned_count >= max_buy:
                     print(
@@ -93,21 +94,21 @@ def visit_general_shop(game, shop_data):
                     )
                     continue
 
-                if game.player.gold >= item['price']:
-                    game.player.gold -= item['price']
-                    game.player.inventory.append(item['id'])
+                if self.player.gold >= item['price']:
+                    self.player.gold -= item['price']
+                    self.player.inventory.append(item['id'])
                     print(
                         f"{Colors.GREEN}Purchased {item['name']} for {item['price']} gold!{Colors.END}"
                     )
-                    game.update_mission_progress('collect', item['id'])
+                    self.update_mission_progress('collect', item['id'])
                 else:
                     print(
-                        f"{Colors.RED}Not enough gold! Need {item['price']}, have {game.player.gold}.{Colors.END}"
+                        f"{Colors.RED}Not enough gold! Need {item['price']}, have {self.player.gold}.{Colors.END}"
                     )
             else:
-                print(game.lang.get("invalid_item_number"))
+                print(self.lang.get("invalid_item_number"))
         else:
-            print(game.lang.get("invalid_choice"))
+            print(self.lang.get("invalid_choice"))
 
 
 def visit_specific_shop(self, shop_id):
