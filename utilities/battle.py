@@ -1,7 +1,7 @@
 import random
 from datetime import datetime
-from utilities.UI import Colors, create_hp_mp_bar, create_boss_hp_bar
 import utilities.dice
+from utilities.UI import Colors
 
 
 def create_hp_mp_bar(current, maximum, width=15, color=None):

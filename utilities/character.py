@@ -300,7 +300,9 @@ class Character:
         weathers = list(weather_chances.keys())
         weights = list(weather_chances.values())
         if weathers:
-            self.current_weather = random.choices(weathers, weights=weights, k=1)[0]
+            self.current_weather = random.choices(weathers,
+                                                  weights=weights,
+                                                  k=1)[0]
 
     def get_effective_attack(self) -> int:
         """Calculate attack with all bonuses"""
@@ -331,9 +333,9 @@ class Character:
         """Display character stats"""
         from utilities.UI import Colors
         from utilities.battle import create_hp_mp_bar
-        
+
         print(
-            f"\n{Colors.wrap(f'--- {self.name} ({self.character_class}) ---', Colors.CYAN)}"
+            f"\n{Colors.wrap(f'=== {self.name} ({self.character_class}) ===', Colors.CYAN)}"
         )
         print(f"Level: {self.level} ({self.rank})")
         print(f"HP: {create_hp_mp_bar(self.hp, self.max_hp, 20, Colors.RED)}")
@@ -438,7 +440,8 @@ class Character:
                 changed = True
         return changed
 
-    def display_available_classes(self, classes_data: Dict[str, Any], lang: Any):
+    def display_available_classes(self, classes_data: Dict[str, Any],
+                                  lang: Any):
         """Display all available character classes from classes.json"""
         from main import Colors
         print(f"\n{lang.get('ui_choose_class', 'Choose your class:')}")
@@ -450,16 +453,17 @@ class Character:
 
         for i, (class_name, class_data) in enumerate(classes_data.items(), 1):
             color = color_map[(i - 1) % len(color_map)]
-            description = class_data.get("description", "No description available")
+            description = class_data.get("description",
+                                         "No description available")
             print(f"{color}{i}. {class_name}{Colors.END} - {description}")
 
     def select_class(self, classes_data: Dict[str, Any], lang: Any) -> str:
         """Allow user to select a class from available options"""
         import difflib
         from main import enable_tab_completion, disable_tab_completion, ask
-        
+
         class_names = list(classes_data.keys())
-        
+
         # Try to enable tab-completion for class names (best-effort)
         try:
             enable_tab_completion(class_names)
@@ -504,12 +508,14 @@ class Character:
             except Exception:
                 pass
 
-    def create_character(self, classes_data: Dict[str, Any], items_data: Dict[str, Any], lang: Any):
+    def create_character(self, classes_data: Dict[str, Any],
+                         items_data: Dict[str, Any], lang: Any):
         """Create a new character"""
         from main import Colors, ask, clear_screen
-        
+
         print(
-            f"{Colors.BOLD}{lang.get('character_creation', 'Character Creation')}{Colors.END}")
+            f"{Colors.BOLD}{lang.get('character_creation', 'Character Creation')}{Colors.END}"
+        )
         print(lang.get("separator_30", "=" * 30))
 
         name = ask(lang.get("enter_name", "Enter your name: "))
@@ -524,14 +530,20 @@ class Character:
         # Set character properties
         self.name = name
         self.character_class = character_class
-        
+
         # Load class data
         if character_class in classes_data:
             self.class_data = classes_data[character_class]
             stats = self.class_data.get("base_stats", {})
             self.level_up_bonuses = self.class_data.get("level_up_bonuses", {})
         else:
-            stats = {"hp": 100, "mp": 50, "attack": 10, "defense": 8, "speed": 10}
+            stats = {
+                "hp": 100,
+                "mp": 50,
+                "attack": 10,
+                "defense": 8,
+                "speed": 10
+            }
 
         self.max_hp = stats.get("hp", 100)
         self.hp = self.max_hp
@@ -540,7 +552,7 @@ class Character:
         self.attack = stats.get("attack", 10)
         self.defense = stats.get("defense", 8)
         self.speed = stats.get("speed", 10)
-        
+
         # Update base stats
         self.base_max_hp = self.max_hp
         self.base_max_mp = self.max_mp
@@ -549,17 +561,20 @@ class Character:
         self.base_speed = self.speed
 
         print(
-            lang.get("welcome_adventurer",
-                     "Welcome, adventurer {name}! You are a {char_class}.").format(
-                         name=name,
-                         char_class=character_class))
+            lang.get(
+                "welcome_adventurer",
+                "Welcome, adventurer {name}! You are a {char_class}.").format(
+                    name=name, char_class=character_class))
 
         # Give starting items based on class data
-        self.give_starting_items(character_class, classes_data, items_data, lang)
+        self.give_starting_items(character_class, classes_data, items_data,
+                                 lang)
 
         self.display_stats()
 
-    def give_starting_items(self, character_class: str, classes_data: Dict[str, Any], items_data: Dict[str, Any], lang: Any):
+    def give_starting_items(self, character_class: str,
+                            classes_data: Dict[str, Any],
+                            items_data: Dict[str, Any], lang: Any):
         """Grant starting items based on character class from classes.json"""
         if character_class not in classes_data:
             return
@@ -587,5 +602,7 @@ class Character:
                 if item_type == slot:
                     self.equip(item, items_data)
                     from main import Colors
-                    print(lang.get("equipped_msg", "Equipped {item}").format(item=item))
+                    print(
+                        lang.get("equipped_msg",
+                                 "Equipped {item}").format(item=item))
                     break

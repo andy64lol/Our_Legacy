@@ -25,9 +25,7 @@ from utilities.language import LanguageManager
 from utilities.dungeons import DungeonSystem
 from utilities.entities import Enemy, Boss
 import readline
-
 from utilities.UI import Colors, clear_screen, create_progress_bar, create_separator, create_section_header, display_welcome_screen, display_main_menu
-from utilities.battle import create_hp_mp_bar, create_boss_hp_bar
 
 # Global color toggle
 COLORS_ENABLED = True
@@ -975,11 +973,11 @@ class Game:
 
             if challenge['type'] == challenge_type:
                 self.challenge_progress[challenge['id']] += value
-                
+
                 # Show progress bar
-                bar = create_progress_bar(self.challenge_progress[challenge['id']],
-                                         challenge['target'], 20,
-                                         Colors.YELLOW)
+                bar = create_progress_bar(
+                    self.challenge_progress[challenge['id']],
+                    challenge['target'], 20, Colors.YELLOW)
                 print(
                     f"{Colors.CYAN}[Challenge Progress] {challenge.get('name')}: {bar} {self.challenge_progress[challenge['id']]}/{challenge['target']}{Colors.END}"
                 )
@@ -1468,8 +1466,8 @@ class Game:
                 if target_enemy == target.lower():
                     progress['current_count'] += count
                     bar = create_progress_bar(progress['current_count'],
-                                             progress['target_count'], 20,
-                                             Colors.CYAN)
+                                              progress['target_count'], 20,
+                                              Colors.CYAN)
                     print(
                         f"{Colors.CYAN}[Mission Progress] {mission.get('name')}: {bar} {progress['current_count']}/{progress['target_count']}{Colors.END}"
                     )
@@ -1483,9 +1481,9 @@ class Game:
                     # Multi-item collection
                     if target in progress['current_counts']:
                         progress['current_counts'][target] += count
-                        bar = create_progress_bar(progress['current_counts'][target],
-                                                 progress['target_counts'][target], 20,
-                                                 Colors.CYAN)
+                        bar = create_progress_bar(
+                            progress['current_counts'][target],
+                            progress['target_counts'][target], 20, Colors.CYAN)
                         print(
                             f"{Colors.CYAN}[Mission Progress] {mission.get('name')} - {target}: {bar} {progress['current_counts'][target]}/{progress['target_counts'][target]}{Colors.END}"
                         )
@@ -1503,8 +1501,8 @@ class Game:
                     if target_item == target:
                         progress['current_count'] += count
                         bar = create_progress_bar(progress['current_count'],
-                                                 progress['target_count'], 20,
-                                                 Colors.CYAN)
+                                                  progress['target_count'], 20,
+                                                  Colors.CYAN)
                         print(
                             f"{Colors.CYAN}[Mission Progress] {mission.get('name')}: {bar} {progress['current_count']}/{progress['target_count']}{Colors.END}"
                         )
