@@ -26,7 +26,8 @@ from utilities.dungeons import DungeonSystem
 from utilities.entities import Enemy, Boss
 import readline
 
-from utilities.UI import Colors, clear_screen, create_progress_bar, create_boss_hp_bar, create_hp_mp_bar, create_separator, create_section_header, display_welcome_screen, display_main_menu
+from utilities.UI import Colors, clear_screen, create_progress_bar, create_separator, create_section_header, display_welcome_screen, display_main_menu
+from utilities.battle import create_hp_mp_bar, create_boss_hp_bar
 
 # Global color toggle
 COLORS_ENABLED = True
@@ -199,7 +200,8 @@ class Game:
         self.dialogues_data: Dict[str, Any] = {}
         self.dungeons_data: Dict[str, Any] = {}
         self.cutscenes_data: Dict[str, Any] = {}
-        self.mission_progress: Dict[str, Any] = {}  # mission_id -> {current_count, target_count, completed, type}
+        self.mission_progress: Dict[str, Any] = {
+        }  # mission_id -> {current_count, target_count, completed, type}
         self.completed_missions: List[str] = []
         self.market_api: Optional[MarketAPI] = None
         self.crafting_data: Dict[str, Any] = {}
@@ -539,7 +541,6 @@ class Game:
 
     def display_welcome(self) -> str:
         """Display welcome screen and return choice."""
-        from utilities.UI import display_welcome_screen
         return display_welcome_screen(self.lang, self)
 
     def settings_welcome(self):
@@ -658,10 +659,14 @@ class Game:
 
     def create_character(self):
         """Create a new character and initialize starting state."""
-        self.player = Character(name="Hero", character_class="Warrior", classes_data=self.classes_data, lang=self.lang)
+        self.player = Character(name="Hero",
+                                character_class="Warrior",
+                                classes_data=self.classes_data,
+                                lang=self.lang)
         self.player.weather_data = getattr(self, 'weather_data', {})
         self.player.times_data = getattr(self, 'times_data', {})
-        self.player.create_character(self.classes_data, self.items_data, self.lang)
+        self.player.create_character(self.classes_data, self.items_data,
+                                     self.lang)
         self.visited_areas.add(self.player.current_area)
         self.update_weather()
 
@@ -693,7 +698,6 @@ class Game:
 
     def main_menu(self):
         """Display main menu"""
-        from utilities.UI import display_main_menu
         # Advance time by 5 to 10 minutes each menu loop
         if self.player:
             # 10 minutes real = 5 minutes game time
@@ -709,7 +713,7 @@ class Game:
         # Show current location
         area_data = self.areas_data.get(self.current_area, {})
         area_name = area_data.get('name', self.current_area)
-        
+
         menu_max = "24" if self.current_area == "your_land" else "20"
         display_main_menu(self.lang, self.player, area_name, menu_max)
 
@@ -971,6 +975,14 @@ class Game:
 
             if challenge['type'] == challenge_type:
                 self.challenge_progress[challenge['id']] += value
+                
+                # Show progress bar
+                bar = create_progress_bar(self.challenge_progress[challenge['id']],
+                                         challenge['target'], 20,
+                                         Colors.YELLOW)
+                print(
+                    f"{Colors.CYAN}[Challenge Progress] {challenge.get('name')}: {bar} {self.challenge_progress[challenge['id']]}/{challenge['target']}{Colors.END}"
+                )
 
                 # Check if challenge is completed
                 if self.challenge_progress[
@@ -1455,8 +1467,11 @@ class Game:
                 target_enemy = mission.get('target', '').lower()
                 if target_enemy == target.lower():
                     progress['current_count'] += count
+                    bar = create_progress_bar(progress['current_count'],
+                                             progress['target_count'], 20,
+                                             Colors.CYAN)
                     print(
-                        f"{Colors.CYAN}[Mission Progress] {mission.get('name')}: {progress['current_count']}/{progress['target_count']}{Colors.END}"
+                        f"{Colors.CYAN}[Mission Progress] {mission.get('name')}: {bar} {progress['current_count']}/{progress['target_count']}{Colors.END}"
                     )
 
                     if progress['current_count'] >= progress['target_count']:
@@ -1468,8 +1483,11 @@ class Game:
                     # Multi-item collection
                     if target in progress['current_counts']:
                         progress['current_counts'][target] += count
+                        bar = create_progress_bar(progress['current_counts'][target],
+                                                 progress['target_counts'][target], 20,
+                                                 Colors.CYAN)
                         print(
-                            f"{Colors.CYAN}[Mission Progress] {mission.get('name')} - {target}: {progress['current_counts'][target]}/{progress['target_counts'][target]}{Colors.END}"
+                            f"{Colors.CYAN}[Mission Progress] {mission.get('name')} - {target}: {bar} {progress['current_counts'][target]}/{progress['target_counts'][target]}{Colors.END}"
                         )
 
                         # Check if all items are collected
@@ -1484,8 +1502,11 @@ class Game:
                     target_item = mission.get('target', '')
                     if target_item == target:
                         progress['current_count'] += count
+                        bar = create_progress_bar(progress['current_count'],
+                                                 progress['target_count'], 20,
+                                                 Colors.CYAN)
                         print(
-                            f"{Colors.CYAN}[Mission Progress] {mission.get('name')}: {progress['current_count']}/{progress['target_count']}{Colors.END}"
+                            f"{Colors.CYAN}[Mission Progress] {mission.get('name')}: {bar} {progress['current_count']}/{progress['target_count']}{Colors.END}"
                         )
 
                         if progress['current_count'] >= progress[
@@ -3744,6 +3765,7 @@ class Game:
         # Update mission progress for collected materials
         for material in gathered.keys():
             self.update_mission_progress('collect', material)
+
     def visit_alchemy(self):
         """Visit the Alchemy workshop to craft items"""
         if not self.player:
@@ -4129,7 +4151,8 @@ class Game:
         if self.player:
             self.player.weather_data = getattr(self, 'weather_data', {})
             self.player.times_data = getattr(self, 'times_data', {})
-            self.player.update_stats_from_equipment(self.items_data, self.companions_data)
+            self.player.update_stats_from_equipment(self.items_data,
+                                                    self.companions_data)
 
         # Main game loop
         while True:

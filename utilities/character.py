@@ -329,7 +329,8 @@ class Character:
 
     def display_stats(self):
         """Display character stats"""
-        from utilities.UI import Colors, create_hp_mp_bar
+        from utilities.UI import Colors
+        from utilities.battle import create_hp_mp_bar
         
         print(
             f"\n{Colors.wrap(f'--- {self.name} ({self.character_class}) ---', Colors.CYAN)}"

@@ -52,26 +52,6 @@ def create_progress_bar(current: int, maximum: int, width: int = 20, color: str 
     percentage = (current / maximum) * 100
     return f"[{Colors.wrap(filled, color)}{empty}] {percentage:.1f}%"
 
-def create_boss_hp_bar(current: int, maximum: int, width: int = 40, color: str = Colors.RED) -> str:
-    """Create a wide HP bar for bosses."""
-    if maximum <= 0: return "[" + " " * width + "]"
-    filled_width = max(0, min(width, int((current / maximum) * width)))
-    filled = "█" * filled_width
-    empty = "░" * (width - filled_width)
-    percentage = (current / maximum) * 100
-    boss_label = Colors.wrap("BOSS HP", f"{Colors.BOLD}{Colors.RED}")
-    bar = f"[{Colors.wrap(filled, color)}{empty}]"
-    percent_text = Colors.wrap(f"{percentage:.1f}%", Colors.BOLD)
-    return f"{boss_label} {bar} {percent_text} ({current}/{maximum})"
-
-def create_hp_mp_bar(current: int, maximum: int, width: int = 15, color: str = Colors.RED) -> str:
-    """Create a visual HP/MP bar."""
-    if maximum <= 0: return "[" + " " * width + "]"
-    filled_width = max(0, min(width, int((current / maximum) * width)))
-    filled = "█" * filled_width
-    empty = "░" * (width - filled_width)
-    return f"[{Colors.wrap(filled, color)}{empty}] {current}/{maximum}"
-
 def create_separator(char: str = "=", length: int = 60) -> str:
     """Create a visual separator line."""
     return char * length
@@ -115,6 +95,7 @@ def display_welcome_screen(lang: Any, game_instance: Any):
 
 def display_main_menu(lang: Any, player: Any, area_name: str, menu_max: str):
     """Display the main game menu options."""
+    from utilities.battle import create_hp_mp_bar
     print(f"\n{Colors.BOLD}=== {lang.get('main_menu')} ==={Colors.END}")
     print(lang.get("current_location", area=area_name))
     
