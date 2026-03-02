@@ -26,117 +26,10 @@ from utilities.dungeons import DungeonSystem
 from utilities.entities import Enemy, Boss
 import readline
 
+from utilities.UI import Colors, clear_screen, create_progress_bar, create_boss_hp_bar, create_hp_mp_bar, create_separator, create_section_header, display_welcome_screen, display_main_menu
+
 # Global color toggle
 COLORS_ENABLED = True
-
-
-class Colors:
-    """ANSI color codes for terminal output"""
-    RED = '\033[91m'
-    GREEN = '\033[92m'
-    YELLOW = '\033[93m'
-    BLUE = '\033[94m'
-    MAGENTA = '\033[95m'
-    CYAN = '\033[96m'
-    WHITE = '\033[97m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
-    END = '\033[0m'
-    GOLD = '\033[93m'
-    ORANGE = '\033[38;5;208m'
-    PURPLE = '\033[95m'
-    DARK_GRAY = '\033[90m'
-    LIGHT_GRAY = '\033[37m'
-    GRAY = '\033[90m'  # Alias for DARK_GRAY
-
-    # Rarity colors for items
-    COMMON = '\033[37m'  # White
-    UNCOMMON = '\033[92m'  # Green
-    RARE = '\033[94m'  # Blue
-    EPIC = '\033[95m'  # Magenta
-    LEGENDARY = '\033[93m'  # Gold
-
-    @staticmethod
-    def _color(code: str) -> str:
-        """Return color code if colors are enabled, otherwise empty string"""
-        global COLORS_ENABLED
-        if not COLORS_ENABLED:
-            return ""
-        return code
-
-    @classmethod
-    def wrap(cls, text: str, color_code: str) -> str:
-        """Wrap text with color code and end with END code"""
-        return f"{cls._color(color_code)}{text}{cls._color(cls.END)}"
-
-
-def clear_screen():
-    """Clear the terminal screen in a cross-platform way."""
-    time.sleep(1)
-    command = 'cls' if os.name == 'nt' else 'clear'
-    os.system(command)
-
-
-def create_progress_bar(current: int,
-                        maximum: int,
-                        width: int = 20,
-                        color: str = Colors.GREEN) -> str:
-    """Create a visual progress bar."""
-    if maximum <= 0:
-        return "[" + " " * width + "]"
-
-    filled_width = int((current / maximum) * width)
-    filled = "█" * filled_width
-    empty = "░" * (width - filled_width)
-    percentage = (current / maximum) * 100
-
-    return f"[{Colors.wrap(filled, color)}{empty}] {percentage:.1f}%"
-
-
-def create_boss_hp_bar(current: int,
-                       maximum: int,
-                       width: int = 40,
-                       color: str = Colors.RED) -> str:
-    """Create a wide, epic visual HP bar for bosses."""
-    if maximum <= 0:
-        return "[" + " " * width + "]"
-
-    filled_width = max(0, min(width, int((current / maximum) * width)))
-    filled = "█" * filled_width
-    empty = "░" * (width - filled_width)
-    percentage = (current / maximum) * 100
-
-    boss_label = Colors.wrap("BOSS HP", f"{Colors.BOLD}{Colors.RED}")
-    bar = f"[{Colors.wrap(filled, color)}{empty}]"
-    percent_text = Colors.wrap(f"{percentage:.1f}%", Colors.BOLD)
-    return f"{boss_label} {bar} {percent_text} ({current}/{maximum})"
-
-
-def create_hp_mp_bar(current: int,
-                     maximum: int,
-                     width: int = 15,
-                     color: str = Colors.RED) -> str:
-    """Create a visual HP/MP bar."""
-    if maximum <= 0:
-        return "[" + " " * width + "]"
-
-    filled_width = max(0, min(width, int((current / maximum) * width)))
-    filled = "█" * filled_width
-    empty = "░" * (width - filled_width)
-
-    return f"[{Colors.wrap(filled, color)}{empty}] {current}/{maximum}"
-
-
-def create_separator(char: str = "=", length: int = 60) -> str:
-    """Create a visual separator line."""
-    return char * length
-
-
-def create_section_header(title: str, char: str = "=", width: int = 60) -> str:
-    """Create a decorative section header."""
-    padding = (width - len(title) - 2) // 2
-    header_text = f"{char * padding} {title} {char * padding}"
-    return Colors.wrap(header_text, f"{Colors.CYAN}{Colors.BOLD}")
 
 
 def loading_indicator(message: str = "Loading"):
@@ -645,49 +538,13 @@ class Game:
                 # If no choice or invalid, continue without recursion
 
     def display_welcome(self) -> str:
-        """Display welcome screen"""
-        while True:
-            clear_screen()
-            print(f"{Colors.CYAN}{Colors.BOLD}")
-            print("=" * 60)
-            print(f"             {self.lang.get('game_title_display')}")
-            print(f"       {self.lang.get('game_subtitle_display')}")
-            print("=" * 60)
-            print(f"{Colors.END}")
-            print(self.lang.get("welcome_message"))
-            print(
-                "Choose your path wisely, for every decision shapes your destiny."
-            )
-            print()
-
-            print(
-                f"{Colors.BOLD}{Colors.CYAN}=== {self.lang.get('main_menu')} ==={Colors.END}"
-            )
-            print(f"{Colors.CYAN}1.{Colors.END} {self.lang.get('new_game')}")
-            print(f"{Colors.CYAN}2.{Colors.END} {self.lang.get('load_game')}")
-            print(f"{Colors.CYAN}3.{Colors.END} {self.lang.get('settings')}")
-            print(f"{Colors.CYAN}4.{Colors.END} {self.lang.get('mods')}")
-            print(f"{Colors.CYAN}5.{Colors.END} {self.lang.get('quit')}")
-            print()
-
-            choice = ask(f"{Colors.CYAN}Choose an option (1-5): {Colors.END}")
-            if choice == "1":
-                return "new_game"
-            elif choice == "2":
-                return "load_game"
-            elif choice == "3":
-                self.settings_welcome()
-            elif choice == "4":
-                self.mods_welcome()
-            elif choice == "5":
-                print(self.lang.get("thank_exit"))
-                clear_screen()
-                sys.exit(0)
-            else:
-                print(self.lang.get("invalid_choice"))
+        """Display welcome screen and return choice."""
+        from utilities.UI import display_welcome_screen
+        return display_welcome_screen(self.lang, self)
 
     def settings_welcome(self):
         """Settings menu available from welcome screen"""
+        from utilities.UI import Colors
         while True:
             clear_screen()
             print(self.lang.get("n_settings"))
@@ -720,6 +577,7 @@ class Game:
 
     def mods_welcome(self):
         """Mods menu available from welcome screen"""
+        from utilities.UI import Colors
         while True:
             clear_screen()
             print(self.lang.get("n_mods"))
@@ -835,6 +693,7 @@ class Game:
 
     def main_menu(self):
         """Display main menu"""
+        from utilities.UI import display_main_menu
         # Advance time by 5 to 10 minutes each menu loop
         if self.player:
             # 10 minutes real = 5 minutes game time
@@ -847,83 +706,12 @@ class Game:
         if self.player:
             self.update_challenge_progress('level_reach', self.player.level)
 
-        print(
-            f"\n{Colors.BOLD}=== {self.lang.get('main_menu')} ==={Colors.END}")
-
         # Show current location
         area_data = self.areas_data.get(self.current_area, {})
         area_name = area_data.get('name', self.current_area)
-        print(self.lang.get("current_location", area=area_name))
-
-        # Display time and weather
-        if hasattr(self, 'player') and self.player and self.lang:
-            # Format hour for display (handling float)
-            display_hour = int(self.player.hour)
-            display_minute = int((self.player.hour - display_hour) * 60)
-            time_str = self.lang.get(
-                "current_time",
-                hour=f"{display_hour:02d}:{display_minute:02d}")
-            day_str = self.lang.get("current_day", day=str(self.player.day))
-            weather_desc = self.player.get_weather_description(self.lang)
-
-            print(f"{Colors.YELLOW}{time_str} | {day_str}{Colors.END}")
-            print(f"{Colors.CYAN}{weather_desc}{Colors.END}")
-
-        print(f"{Colors.CYAN}1.{Colors.END} {self.lang.get('explore')}")
-        print(f"{Colors.CYAN}2.{Colors.END} {self.lang.get('view_character')}")
-        print(f"{Colors.CYAN}3.{Colors.END} {self.lang.get('travel')}")
-        print(f"{Colors.CYAN}4.{Colors.END} {self.lang.get('inventory')}")
-        print(f"{Colors.CYAN}5.{Colors.END} {self.lang.get('missions')}")
-        print(f"{Colors.CYAN}6.{Colors.END} {self.lang.get('fight_boss')}")
-        print(f"{Colors.CYAN}7.{Colors.END} {self.lang.get('tavern')}")
-        print(f"{Colors.CYAN}8.{Colors.END} {self.lang.get('shop')}")
-        print(f"{Colors.CYAN}9.{Colors.END} {self.lang.get('alchemy')}")
-        print(f"{Colors.CYAN}10.{Colors.END} {self.lang.get('elite_market')}")
-        print(f"{Colors.CYAN}11.{Colors.END} {self.lang.get('rest')}")
-        print(f"{Colors.CYAN}12.{Colors.END} {self.lang.get('companions')}")
-        print(f"{Colors.CYAN}13.{Colors.END} {self.lang.get('dungeons')}")
-        print(f"{Colors.CYAN}14.{Colors.END} {self.lang.get('challenges')}")
-
-        # Pet Shop only in your_land
-        if self.current_area == "your_land":
-            print(
-                f"{Colors.CYAN}15.{Colors.END} {self.lang.get('pet_shop', 'Pet Shop')}"
-            )
-
-        print(
-            f"{Colors.CYAN}16.{Colors.END} {self.lang.get('settings', 'Settings')}"
-        )
-
-        # Show Build options only in your_land
-        menu_max = "20"
-        if self.current_area == "your_land":
-            print(
-                f"{Colors.YELLOW}17.{Colors.END} {self.lang.get('furnish_home', 'Furnish Home')}"
-            )
-            print(
-                f"{Colors.YELLOW}18.{Colors.END} {self.lang.get('build_structures', 'Build Structures')}"
-            )
-            print(
-                f"{Colors.YELLOW}19.{Colors.END} {self.lang.get('farm', 'Farm')}"
-            )
-            print(
-                f"{Colors.YELLOW}20.{Colors.END} {self.lang.get('training', 'Training')}"
-            )
-            print(f"{Colors.CYAN}21.{Colors.END} {self.lang.get('save_game')}")
-            print(f"{Colors.CYAN}22.{Colors.END} {self.lang.get('load_game')}")
-            print(
-                f"{Colors.CYAN}23.{Colors.END} {self.lang.get('claim_rewards')}"
-            )
-            print(f"{Colors.CYAN}24.{Colors.END} {self.lang.get('quit')}")
-            menu_max = "24"
-        else:
-            print(f"{Colors.CYAN}17.{Colors.END} {self.lang.get('save_game')}")
-            print(f"{Colors.CYAN}18.{Colors.END} {self.lang.get('load_game')}")
-            print(
-                f"{Colors.CYAN}19.{Colors.END} {self.lang.get('claim_rewards')}"
-            )
-            print(f"{Colors.CYAN}20.{Colors.END} {self.lang.get('quit')}")
-            menu_max = "20"
+        
+        menu_max = "24" if self.current_area == "your_land" else "20"
+        display_main_menu(self.lang, self.player, area_name, menu_max)
 
         choice = ask(
             f"{Colors.CYAN}Choose an option (1-{menu_max}): {Colors.END}",

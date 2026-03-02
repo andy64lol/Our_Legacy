@@ -72,40 +72,7 @@ class SettingsManager:
         return self.save_settings()
 
 
-class Colors:
-    """ANSI color codes for terminal output"""
-    RED = '\033[91m'
-    GREEN = '\033[92m'
-    YELLOW = '\033[93m'
-    BLUE = '\033[94m'
-    MAGENTA = '\033[95m'
-    CYAN = '\033[96m'
-    WHITE = '\033[97m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
-    END = '\033[0m'
-    GOLD = '\033[93m'
-    ORANGE = '\033[38;5;208m'
-    PURPLE = '\033[95m'
-    DARK_GRAY = '\033[90m'
-    LIGHT_GRAY = '\033[37m'
-    GRAY = '\033[90m'
-
-    # Rarity colors
-    COMMON = '\033[37m'     # Light Gray
-    UNCOMMON = '\033[92m'   # Green
-    RARE = '\033[94m'       # Blue
-    EPIC = '\033[95m'       # Purple/Magenta
-    LEGENDARY = '\033[93m'  # Gold
-
-    @staticmethod
-    def _color(code: str) -> str:
-        return code
-
-    @classmethod
-    def wrap(cls, text: str, color_code: str) -> str:
-        return f"{cls._color(color_code)}{text}{cls._color(cls.END)}"
-
+from utilities.UI import Colors
 
 # Global settings manager instance
 _settings_manager = None
