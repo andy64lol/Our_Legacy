@@ -26,6 +26,7 @@ from utilities.dungeons import DungeonSystem
 from utilities.entities import Enemy, Boss
 import readline
 from utilities.UI import Colors, clear_screen, create_progress_bar, create_separator, create_section_header, display_welcome_screen, display_main_menu
+from utilities.shop import visit_general_shop, visit_specific_shop, shop_sell
 
 # Global color toggle
 COLORS_ENABLED = True
@@ -1643,7 +1644,7 @@ class Game:
         if selected_shop == "housing_shop":
             self._visit_housing_shop_inline()
         else:
-            self.visit_specific_shop(selected_shop)
+            visit_specific_shop(self, selected_shop)
 
     def _visit_housing_shop_inline(self):
         """Visit the housing shop in your_land to buy housing items"""
@@ -1773,7 +1774,7 @@ class Game:
             print(f"Shop {shop_id} not found.")
             return
 
-        self._visit_general_shop(shop_data)
+        visit_general_shop(self, shop_data)
 
     def build_home(self):
         """Build and manage structures on your land"""
@@ -3398,48 +3399,6 @@ class Game:
                 # small chance encounter on travel
                 if random.random() < 0.3:
                     self.random_encounter()
-
-    def shop_sell(self):
-        """Sell items from the player's inventory to the shop."""
-        if not self.player:
-            return
-
-        sellable = [it for it in self.player.inventory]
-        if not sellable:
-            print(self.lang.get('you_have_nothing_sell'))
-            return
-
-        print(f"\n{self.lang.get('ui_your_inventory')}")
-        for i, item in enumerate(sellable, 1):
-            equip_marker = ''
-            for slot, eq in self.player.equipment.items():
-                if eq == item:
-                    equip_marker = ' (equipped)'
-            price = self.items_data.get(item, {}).get('price', 0)
-            sell_price = price // 2 if price else 0
-            print(f"{i}. {item}{equip_marker} - Sell for {sell_price} gold")
-
-        choice = ask(
-            f"Choose item to sell (1-{len(sellable)}) or press Enter to cancel: "
-        )
-        if not choice or not choice.isdigit():
-            return
-        idx = int(choice) - 1
-        if not (0 <= idx < len(sellable)):
-            print(self.lang.get('invalid_selection'))
-            return
-
-        item = sellable[idx]
-        # Prevent selling equipped items
-        if item in self.player.equipment.values():
-            print(self.lang.get('unequip_before_selling'))
-            return
-
-        price = self.items_data.get(item, {}).get('price', 0)
-        sell_price = price // 2 if price else 0
-        self.player.inventory.remove(item)
-        self.player.gold += sell_price
-        print(f"Sold {item} for {sell_price} gold.")
 
     def rest(self):
         """Rest in a safe area to recover HP and MP for gold."""
