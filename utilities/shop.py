@@ -72,12 +72,17 @@ def visit_general_shop(self, shop_data):
                 print(f"P. {self.lang.get('ui_previous_page')}")
             if current_page < total_pages - 1:
                 print(f"N. {self.lang.get('ui_next_page')}")
+        print(f"S. {self.lang.get('ui_sell_items')}")
         print(f"B. {self.lang.get('back')}")
 
         choice = ask("\nChoose item to buy or option: ").strip().upper()
 
         if choice == 'B':
             break
+        elif choice == 'S':
+            self.shop_sell()
+            # Refresh gold display after selling
+            print(f"\nYour gold: {Colors.GOLD}{self.player.gold}{Colors.END}")
         elif choice == 'N' and current_page < total_pages - 1:
             current_page += 1
         elif choice == 'P' and current_page > 0:
@@ -123,7 +128,7 @@ def visit_specific_shop(self, shop_id):
         print(f"Shop {shop_id} not found.")
         return
 
-    visit_general_shop(self, shop_data)
+    self.visit_general_shop(shop_data)
 
 
 def shop_sell(self):

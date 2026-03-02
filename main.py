@@ -26,7 +26,7 @@ from utilities.dungeons import DungeonSystem
 from utilities.entities import Enemy, Boss
 import readline
 from utilities.UI import Colors, clear_screen, create_progress_bar, create_separator, create_section_header, display_welcome_screen, display_main_menu
-from utilities.shop import visit_specific_shop, shop_sell
+from utilities.shop import visit_specific_shop
 from utilities.crafting import visit_alchemy
 from utilities.building import build_home, build_structures, farm, training
 
@@ -2599,3 +2599,5 @@ def main():
 if __name__ == "__main__":
     clear_screen()
     main()
+    time.sleep(1)
+    clear_screen()
