@@ -435,3 +435,155 @@ class Character:
                 self.active_buffs.remove(buff)
                 changed = True
         return changed
+
+    def display_available_classes(self, classes_data: Dict[str, Any], lang: Any):
+        """Display all available character classes from classes.json"""
+        from main import Colors
+        print(f"\n{lang.get('ui_choose_class', 'Choose your class:')}")
+
+        color_map = [
+            Colors.RED, Colors.BLUE, Colors.GREEN, Colors.YELLOW,
+            Colors.MAGENTA, Colors.CYAN, Colors.WHITE, Colors.GOLD
+        ]
+
+        for i, (class_name, class_data) in enumerate(classes_data.items(), 1):
+            color = color_map[(i - 1) % len(color_map)]
+            description = class_data.get("description", "No description available")
+            print(f"{color}{i}. {class_name}{Colors.END} - {description}")
+
+    def select_class(self, classes_data: Dict[str, Any], lang: Any) -> str:
+        """Allow user to select a class from available options"""
+        import difflib
+        from main import enable_tab_completion, disable_tab_completion, ask
+        
+        class_names = list(classes_data.keys())
+        
+        # Try to enable tab-completion for class names (best-effort)
+        try:
+            enable_tab_completion(class_names)
+        except Exception:
+            pass
+
+        try:
+            while True:
+                prompt = f"Enter class choice (1-{len(class_names)}) or name: "
+                choice = ask(prompt, allow_empty=False)
+                if choice.isdigit():
+                    choice_idx = int(choice) - 1
+                    if 0 <= choice_idx < len(class_names):
+                        return class_names[choice_idx]
+                    else:
+                        print(
+                            f"Invalid choice. Please enter a number between 1 and {len(class_names)}."
+                        )
+                        continue
+
+                # Try to match by name (case-insensitive)
+                matches = [
+                    cn for cn in class_names if cn.lower() == choice.lower()
+                ]
+                if matches:
+                    return matches[0]
+
+                # Try close matches
+                close = difflib.get_close_matches(
+                    choice.lower(), [cn.lower() for cn in class_names], n=1)
+                if close:
+                    # return the real-cased version
+                    for cn in class_names:
+                        if cn.lower() == close[0]:
+                            return cn
+                print(
+                    "Invalid class name. Try again or use the numeric choice.")
+        finally:
+            # restore completer
+            try:
+                disable_tab_completion(None)
+            except Exception:
+                pass
+
+    def create_character(self, classes_data: Dict[str, Any], items_data: Dict[str, Any], lang: Any):
+        """Create a new character"""
+        from main import Colors, ask, clear_screen
+        
+        print(
+            f"{Colors.BOLD}{lang.get('character_creation', 'Character Creation')}{Colors.END}")
+        print(lang.get("separator_30", "=" * 30))
+
+        name = ask(lang.get("enter_name", "Enter your name: "))
+        if not name:
+            name = "Hero"
+
+        # Use dynamic class selection instead of hardcoded options
+        self.display_available_classes(classes_data, lang)
+
+        character_class = self.select_class(classes_data, lang)
+
+        # Set character properties
+        self.name = name
+        self.character_class = character_class
+        
+        # Load class data
+        if character_class in classes_data:
+            self.class_data = classes_data[character_class]
+            stats = self.class_data.get("base_stats", {})
+            self.level_up_bonuses = self.class_data.get("level_up_bonuses", {})
+        else:
+            stats = {"hp": 100, "mp": 50, "attack": 10, "defense": 8, "speed": 10}
+
+        self.max_hp = stats.get("hp", 100)
+        self.hp = self.max_hp
+        self.max_mp = stats.get("mp", 50)
+        self.mp = self.max_mp
+        self.attack = stats.get("attack", 10)
+        self.defense = stats.get("defense", 8)
+        self.speed = stats.get("speed", 10)
+        
+        # Update base stats
+        self.base_max_hp = self.max_hp
+        self.base_max_mp = self.max_mp
+        self.base_attack = self.attack
+        self.base_defense = self.defense
+        self.base_speed = self.speed
+
+        print(
+            lang.get("welcome_adventurer",
+                     "Welcome, adventurer {name}! You are a {char_class}.").format(
+                         name=name,
+                         char_class=character_class))
+
+        # Give starting items based on class data
+        self.give_starting_items(character_class, classes_data, items_data, lang)
+
+        self.display_stats()
+
+    def give_starting_items(self, character_class: str, classes_data: Dict[str, Any], items_data: Dict[str, Any], lang: Any):
+        """Grant starting items based on character class from classes.json"""
+        if character_class not in classes_data:
+            return
+
+        class_info = classes_data[character_class]
+        items = class_info.get("starting_items", [])
+        starting_gold = class_info.get("starting_gold", 100)
+
+        for item in items:
+            self.inventory.append(item)
+
+        self.gold = starting_gold
+
+        if items:
+            from main import Colors
+            print(
+                f"{Colors.YELLOW}You received starting equipment:{Colors.END}")
+            for item in items:
+                print(f"  - {item}")
+
+        # Auto-equip first weapon and armor if available
+        for slot in ("weapon", "armor"):
+            for item in items:
+                item_type = items_data.get(item, {}).get("type")
+                if item_type == slot:
+                    self.equip(item, items_data)
+                    from main import Colors
+                    print(lang.get("equipped_msg", "Equipped {item}").format(item=item))
+                    break
