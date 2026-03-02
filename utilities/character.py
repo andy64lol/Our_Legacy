@@ -329,7 +329,17 @@ class Character:
 
     def display_stats(self):
         """Display character stats"""
-        from main import Colors, create_hp_mp_bar
+        from utilities.settings import Colors
+        
+        def create_hp_mp_bar(current: int, maximum: int, width: int = 15, color: str = Colors.RED) -> str:
+            """Internal helper for HP/MP bar"""
+            if maximum <= 0:
+                return "[" + " " * width + "]"
+            filled_width = max(0, min(width, int((current / maximum) * width)))
+            filled = "█" * filled_width
+            empty = "░" * (width - filled_width)
+            return f"[{Colors.wrap(filled, color)}{empty}] {current}/{maximum}"
+
         print(
             f"\n{Colors.wrap(f'--- {self.name} ({self.character_class}) ---', Colors.CYAN)}"
         )

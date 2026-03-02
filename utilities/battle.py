@@ -54,12 +54,7 @@ class BattleSystem:
 
         while self.game.player.is_alive() and enemy.is_alive():
             # Display current HP/MP at the start of each turn
-            player_hp_bar = create_hp_mp_bar(self.game.player.hp,
-                                             self.game.player.max_hp, 20,
-                                             Colors.RED)
-            player_mp_bar = create_hp_mp_bar(self.game.player.mp,
-                                             self.game.player.max_mp, 20,
-                                             Colors.BLUE)
+            self.game.player.display_stats()
 
             if hasattr(self.game, 'Boss') and isinstance(
                     enemy, self.game.Boss):
@@ -67,14 +62,6 @@ class BattleSystem:
             else:
                 enemy_hp_bar = create_hp_mp_bar(enemy.hp, enemy.max_hp, 20,
                                                 Colors.RED)
-
-            print(f"\n{Colors.BOLD}{self.game.player.name}{Colors.END}")
-            print(
-                f"HP: {player_hp_bar} {self.game.player.hp}/{self.game.player.max_hp}"
-            )
-            print(
-                f"MP: {player_mp_bar} {self.game.player.mp}/{self.game.player.max_mp}"
-            )
 
             print(f"\n{Colors.BOLD}{enemy.name}{Colors.END}")
             if hasattr(self.game, 'Boss') and isinstance(

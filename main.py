@@ -798,129 +798,14 @@ class Game:
                 print(self.lang.get("invalid_choice"))
                 time.sleep(1)
 
-    def display_available_classes(self):
-        """Display all available character classes from classes.json"""
-        print(f"\n{self.lang.get('ui_choose_class')}")
-
-        color_map = [
-            Colors.RED, Colors.BLUE, Colors.GREEN, Colors.YELLOW,
-            Colors.MAGENTA, Colors.CYAN, Colors.WHITE, Colors.GOLD
-        ]
-
-        for i, (class_name, class_data) in enumerate(self.classes_data.items(),
-                                                     1):
-            color = color_map[(i - 1) % len(color_map)]
-            description = class_data.get("description",
-                                         "No description available")
-            print(f"{color}{i}. {class_name}{Colors.END} - {description}")
-
-    def select_class(self) -> str:
-        """Allow user to select a class from available options"""
-        class_names = list(self.classes_data.keys())
-        # Try to enable tab-completion for class names (best-effort)
-        try:
-            enable_tab_completion(class_names)
-        except Exception:
-            pass
-
-        try:
-            while True:
-                prompt = f"Enter class choice (1-{len(class_names)}) or name: "
-                choice = ask(prompt, allow_empty=False)
-                if choice.isdigit():
-                    choice_idx = int(choice) - 1
-                    if 0 <= choice_idx < len(class_names):
-                        return class_names[choice_idx]
-                    else:
-                        print(
-                            f"Invalid choice. Please enter a number between 1 and {len(class_names)}."
-                        )
-                        continue
-
-                # Try to match by name (case-insensitive)
-                matches = [
-                    cn for cn in class_names if cn.lower() == choice.lower()
-                ]
-                if matches:
-                    return matches[0]
-
-                # Try close matches
-                close = difflib.get_close_matches(
-                    choice.lower(), [cn.lower() for cn in class_names], n=1)
-                if close:
-                    # return the real-cased version
-                    for cn in class_names:
-                        if cn.lower() == close[0]:
-                            return cn
-                print(
-                    "Invalid class name. Try again or use the numeric choice.")
-        finally:
-            # restore completer
-            try:
-                disable_tab_completion(None)
-            except Exception:
-                pass
-
     def create_character(self):
-        """Create a new character"""
-        print(
-            f"{Colors.BOLD}{self.lang.get('character_creation')}{Colors.END}")
-        print(self.lang.get("separator_30"))
-
-        name = ask(self.lang.get("enter_name"))
-        if not name:
-            name = "Hero"
-
-        # Use dynamic class selection instead of hardcoded options
-        self.display_available_classes()
-
-        character_class = self.select_class()
-
-        self.player = Character(name,
-                                character_class,
-                                self.classes_data,
-                                lang=self.lang)
+        """Create a new character and initialize starting state."""
+        self.player = Character(name="Hero", character_class="Warrior", classes_data=self.classes_data, lang=self.lang)
         self.player.weather_data = getattr(self, 'weather_data', {})
         self.player.times_data = getattr(self, 'times_data', {})
-        print(
-            self.lang.get("welcome_adventurer",
-                          name=name,
-                          char_class=character_class))
-
-        # Give starting items based on class data
-        self.give_starting_items(character_class)
-
-        if self.player:
-            self.player.display_stats()
-
-    def give_starting_items(self, character_class: str):
-        """Grant starting items based on character class from classes.json"""
-        if not self.player or character_class not in self.classes_data:
-            return
-
-        class_info = self.classes_data[character_class]
-        items = class_info.get("starting_items", [])
-        starting_gold = class_info.get("starting_gold", 100)
-
-        for item in items:
-            self.player.inventory.append(item)
-
-        self.player.gold = starting_gold
-
-        if items:
-            print(
-                f"{Colors.YELLOW}You received starting equipment:{Colors.END}")
-            for item in items:
-                print(f"  - {item}")
-
-        # Auto-equip first weapon and armor if available
-        for slot in ("weapon", "armor"):
-            for item in items:
-                item_type = self.items_data.get(item, {}).get("type")
-                if item_type == slot:
-                    self.player.equip(item, self.items_data)
-                    print(self.lang.get("equipped_msg").format(item=item))
-                    break
+        self.player.create_character(self.classes_data, self.items_data, self.lang)
+        self.visited_areas.add(self.player.current_area)
+        self.update_weather()
 
     def change_language_menu(self):
         """Menu to change the game language"""
@@ -4451,6 +4336,12 @@ class Game:
             if not self.player:
                 print(self.lang.get('ui_no_game_loaded'))
                 self.create_character()
+
+        # Ensure player has reference to data and up-to-date stats
+        if self.player:
+            self.player.weather_data = getattr(self, 'weather_data', {})
+            self.player.times_data = getattr(self, 'times_data', {})
+            self.player.update_stats_from_equipment(self.items_data, self.companions_data)
 
         # Main game loop
         while True:
