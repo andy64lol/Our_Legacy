@@ -6,6 +6,14 @@
 import { Colors } from './utilities_js/UI.js';
 import { Character } from './utilities_js/character.js';
 import { SaveLoadSystem } from './utilities_js/save_load.js';
+import { BattleSystem } from './utilities_js/battle.js';
+import { SpellCastingSystem } from './utilities_js/spellcasting.js';
+import MarketAPI from './utilities_js/market.js';
+import { visitAlchemy } from './utilities_js/crafting.js';
+import { visitSpecificShop } from './utilities_js/shop.js';
+import { DungeonSystem } from './utilities_js/dungeons.js';
+import { buildHome, farm } from './utilities_js/building.js';
+import { ModManager } from './utilities_js/mod_manager.js';
 
 // Simple ask function for browser (using window.prompt)
 export async function ask(promptText, validChoices = null, allowEmpty = true) {
@@ -123,6 +131,43 @@ export class Game {
     this.saveLoadSystem = new SaveLoadSystem(this);
     this.CharacterClass = Character;
     this.print = console.log;
+
+    this.battleSystem = new BattleSystem(this);
+    this.spellCastingSystem = new SpellCastingSystem(this);
+    this.marketApi = new MarketAPI(this.lang, Colors);
+    this.dungeonSystem = new DungeonSystem(this);
+    this.modManager = new ModManager(this.lang);
+
+    this.missionProgress = {};
+    this.challengeProgress = {};
+  }
+
+  // Utility helpers needed by some modules
+  createHpMpBar(current, max, width, color) {
+    const filled = Math.round((current / max) * width);
+    const empty = width - filled;
+    return `${color}${'I'.repeat(Math.max(0, filled))}${Colors.GRAY}${'-'.repeat(Math.max(0, empty))}${Colors.END}`;
+  }
+
+  createBossHpBar(current, max) {
+    return this.createHpMpBar(current, max, 40, Colors.RED);
+  }
+
+  async battle(enemy) {
+    await this.battleSystem.battle(enemy);
+  }
+
+  async randomEncounter() {
+    if (!this.player) return;
+    const areaData = this.areasData[this.currentArea] || {};
+    const possibleEnemies = areaData.possible_enemies || [];
+    if (possibleEnemies.length === 0) return;
+    const enemyName = possibleEnemies[Math.floor(Math.random() * possibleEnemies.length)];
+    const enemyData = this.enemiesData[enemyName];
+    if (enemyData) {
+      const { Enemy } = await import('./utilities_js/entities.js');
+      await this.battleSystem.battle(new Enemy(enemyData));
+    }
   }
 
   async loadGameData() {
@@ -283,6 +328,8 @@ export class Game {
     console.log(`${Colors.CYAN}12.${Colors.END} Companions`);
     console.log(`${Colors.CYAN}13.${Colors.END} Dungeons`);
     console.log(`${Colors.CYAN}14.${Colors.END} Challenges`);
+    console.log(`${Colors.CYAN}15.${Colors.END} Build Home`);
+    console.log(`${Colors.CYAN}16.${Colors.END} Farm`);
     console.log(`${Colors.CYAN}S.${Colors.END} Save Game`);
     console.log(`${Colors.CYAN}L.${Colors.END} Load Game`);
     console.log(`${Colors.CYAN}0.${Colors.END} Quit`);
@@ -323,12 +370,10 @@ export class Game {
         await this.visitShop();
         break;
       case "9":
-        console.log("Alchemy coming soon...");
-        await ask("Press Enter to continue...");
+        await visitAlchemy(this, ask);
         break;
       case "10":
-        console.log("Market coming soon...");
-        await ask("Press Enter to continue...");
+        await this.visitMarket();
         break;
       case "11":
         await this.rest();
@@ -338,12 +383,17 @@ export class Game {
         await ask("Press Enter to continue...");
         break;
       case "13":
-        await this.viewDungeons();
-        await ask("Press Enter to continue...");
+        await this.dungeonSystem.visitDungeons(ask);
         break;
       case "14":
         await this.viewChallenges();
         await ask("Press Enter to continue...");
+        break;
+      case "15":
+        await buildHome(this, ask);
+        break;
+      case "16":
+        await farm(this, ask);
         break;
       case "s":
         await this.saveGame();
@@ -364,42 +414,49 @@ export class Game {
 
   async viewCompanions() {
     console.log(`\n${Colors.BOLD}=== COMPANIONS ===${Colors.END}`);
-    if (!this.player.companions || this.player.companions.length === 0) {
+    const companions = this.player?.companions || [];
+    if (companions.length === 0) {
       console.log("You have no companions.");
       return;
     }
-    this.player.companions.forEach((c, i) => {
-      console.log(`${i+1}. ${c.name || c}`);
+    companions.forEach((c, i) => {
+      console.log(`${i+1}. ${c.name || c} (Level ${c.level || 1})`);
     });
   }
 
   async viewDungeons() {
     console.log(`\n${Colors.BOLD}=== DUNGEONS ===${Colors.END}`);
-    const dungeons = this.dungeonsData.dungeons || [];
+    const allDungeons = this.dungeonsData?.dungeons || [];
+    const dungeons = allDungeons.filter(d => {
+      const allowedAreas = d.allowed_areas || [];
+      return allowedAreas.length === 0 || allowedAreas.includes(this.currentArea);
+    });
     if (dungeons.length === 0) {
-      console.log("No dungeons discovered.");
+      console.log("No dungeons discovered in this area.");
       return;
     }
     dungeons.forEach((d, i) => {
-      console.log(`${i+1}. ${d.name} (Difficulty: ${d.difficulty})`);
+      const difficulty = Array.isArray(d.difficulty) ? d.difficulty[0] : (d.difficulty || 1);
+      console.log(`${i+1}. ${d.name} (Difficulty: ${difficulty})`);
     });
   }
 
   async viewChallenges() {
-    console.log(`\n${Colors.BOLD}=== CHALLENGES ===${Colors.END}`);
-    const challenges = this.weeklyChallengesData.challenges || [];
+    console.log(`\n${Colors.BOLD}=== WEEKLY CHALLENGES ===${Colors.END}`);
+    const challenges = this.weeklyChallengesData?.challenges || [];
     if (challenges.length === 0) {
-      console.log("No active challenges.");
+      console.log("No challenges available.");
       return;
     }
-    challenges.forEach((c, i) => {
-      const progress = this.challengeProgress[c.id] || 0;
-      console.log(`${i+1}. ${c.name}: ${progress}/${c.target_count}`);
+    challenges.forEach(c => {
+      const prog = this.challengeProgress?.[c.id] || 0;
+      const status = prog >= (c.target || c.target_count) ? `${Colors.GREEN}Completed${Colors.END}` : `${prog}/${c.target || c.target_count}`;
+      console.log(`${c.name}: ${status}`);
     });
   }
 
   async saveGame() {
-    this.saveLoadSystem.save_game();
+    await this.saveLoadSystem.save_game();
   }
 
   async loadGame() {
@@ -408,28 +465,27 @@ export class Game {
 
   async viewMissions() {
     console.log(`\n${Colors.BOLD}=== MISSIONS ===${Colors.END}`);
-    let activeMissions = false;
-    for (const [id, progress] of Object.entries(this.missionProgress)) {
-      const mission = this.missionsData[id] || { name: id };
-      const status = progress.completed ? `${Colors.GREEN}COMPLETED${Colors.END}` : `${progress.current_count}/${progress.target_count}`;
-      console.log(`${mission.name}: ${status}`);
-      activeMissions = true;
-    }
-    if (!activeMissions) {
+    const missions = Object.entries(this.missionProgress || {});
+    if (missions.length === 0) {
       console.log("No active missions.");
       // Give a starter mission
       if (this.missionsData["starter_hunt"]) {
         const m = this.missionsData["starter_hunt"];
         this.missionProgress["starter_hunt"] = {
-          current_count: 0,
-          target_count: m.target_count || 3,
+          current: 0,
+          target: m.target_count || 3,
           completed: false,
           type: m.type || "kill",
-          target: m.target_enemy || "Slime"
+          target_name: m.target_enemy || "Slime"
         };
         console.log(`New Mission Accepted: ${m.name}`);
       }
+      return;
     }
+    missions.forEach(([id, data]) => {
+      const status = data.completed ? `${Colors.GREEN}Completed${Colors.END}` : `${data.current || data.current_count}/${data.target || data.target_count}`;
+      console.log(`${id}: ${status}`);
+    });
   }
 
   async fightBoss() {
@@ -437,16 +493,18 @@ export class Game {
     const bosses = areaData.bosses || [];
     if (bosses.length === 0) {
       console.log("No bosses in this area.");
+      await ask("Press Enter to continue...");
       return;
     }
     const bossName = bosses[0];
-    const bossData = this.bosses_data ? this.bosses_data[bossName] : (this.bossesData ? this.bossesData[bossName] : null);
+    const bossData = this.bossesData[bossName];
     if (!bossData) {
       console.log(`Boss data for ${bossName} not found.`);
+      await ask("Press Enter to continue...");
       return;
     }
-    console.log(`\n${Colors.RED}${Colors.BOLD}BOSS BATTLE: ${bossData.name}${Colors.END}`);
-    await this.simpleBattle(bossData);
+    const { Boss } = await import('./utilities_js/entities.js');
+    await this.battleSystem.battle(new Boss(bossData));
   }
 
   async visitShop() {
@@ -454,39 +512,43 @@ export class Game {
     const shops = areaData.shops || [];
     if (shops.length === 0) {
       console.log("No shops in this area.");
+      await ask("Press Enter to continue...");
       return;
     }
-    const shopId = shops[0];
-    const shopData = this.shopsData[shopId];
-    if (!shopData) {
-      console.log("Shop closed.");
-      return;
-    }
-    console.log(`\n${Colors.BOLD}=== ${shopData.name || 'Shop'} ===${Colors.END}`);
-    const items = shopData.items || [];
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
-      const itemInfo = this.itemsData[item.id] || {};
-      console.log(`${i+1}. ${item.id} - ${item.price} gold`);
-    }
-    console.log("0. Exit");
-    const choice = await ask("Buy something? ");
-    const idx = parseInt(choice) - 1;
-    if (idx >= 0 && idx < items.length) {
-      const item = items[idx];
-      if (this.player.gold >= item.price) {
-        this.player.gold -= item.price;
-        this.player.inventory.push(item.id);
-        console.log(`Bought ${item.id}!`);
-      } else {
-        console.log("Not enough gold.");
+    await visitSpecificShop(this, shops[0], ask);
+  }
+
+  async visitMarket() {
+    const data = await this.marketApi.fetchMarketData();
+    if (data) {
+      console.log(`\n${Colors.BOLD}=== ELITE MARKET ===${Colors.END}`);
+      const items = data.items || [];
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        console.log(`${i+1}. ${item.name} - ${item.marketPrice} gold`);
+      }
+      const choice = await ask("Buy something? (Number or Enter to exit): ");
+      if (choice && !isNaN(parseInt(choice))) {
+        const idx = parseInt(choice) - 1;
+        if (idx >= 0 && idx < items.length) {
+          const item = items[idx];
+          if (this.player.gold >= item.marketPrice) {
+            this.player.gold -= item.marketPrice;
+            this.player.inventory.push(item.name);
+            console.log(`Bought ${item.name}!`);
+          } else {
+            console.log("Not enough gold.");
+          }
+        }
       }
     }
+    await ask("Press Enter to continue...");
   }
 
   async explore() {
     if (!this.player) {
       console.log("No character created. Start a new game first!");
+      await ask("Press Enter to continue...");
       return;
     }
 
@@ -498,7 +560,17 @@ export class Game {
     console.log(`\nExploring ${areaName}...`);
 
     if (Math.random() < 0.7) {
-      await this.randomEncounter();
+      const possibleEnemies = areaData.possible_enemies || [];
+      if (possibleEnemies.length > 0) {
+        const enemyName = possibleEnemies[Math.floor(Math.random() * possibleEnemies.length)];
+        const enemyData = this.enemiesData[enemyName];
+        if (enemyData) {
+          const { Enemy } = await import('./utilities_js/entities.js');
+          await this.battleSystem.battle(new Enemy(enemyData));
+        }
+      } else {
+        console.log("You explored but found no enemies.");
+      }
     } else {
       console.log("You explored but found nothing.");
 
@@ -508,82 +580,40 @@ export class Game {
         console.log(`You found ${goldFound} gold!`);
       }
     }
+    await ask("Press Enter to continue...");
   }
 
-  async randomEncounter() {
-    if (!this.player) return;
+  async updateChallengeProgress(type) {
+    const challenges = this.weeklyChallengesData.challenges || [];
+    for (const c of challenges) {
+      if (c.type === type) {
+        this.challengeProgress[c.id] = (this.challengeProgress[c.id] || 0) + 1;
+      }
+    }
+  }
 
-    const areaData = this.areasData[this.currentArea] || {};
-    const possibleEnemies = areaData.possible_enemies || [];
-
-    if (possibleEnemies.length === 0) {
-      console.log("No enemies in this area.");
+  async useItemInBattle() {
+    console.log("\n=== USE ITEM ===");
+    const items = this.player.inventory.filter(i => {
+      const data = this.itemsData[i];
+      return data && (data.type === 'potion' || data.type === 'consumable');
+    });
+    if (items.length === 0) {
+      console.log("No usable items.");
       return;
     }
-
-    const enemyName = possibleEnemies[Math.floor(Math.random() * possibleEnemies.length)];
-    const enemyData = this.enemiesData[enemyName];
-
-    if (enemyData) {
-      console.log(`\n${Colors.RED}A wild ${enemyData.name} appears!${Colors.END}`);
-      console.log(`HP: ${enemyData.hp} | ATK: ${enemyData.attack} | DEF: ${enemyData.defense}`);
-      
-      // Simple battle
-      await this.simpleBattle(enemyData);
-    }
-  }
-
-  async simpleBattle(enemyData) {
-    let enemyHp = enemyData.hp;
-    
-    while (enemyHp > 0 && this.player.hp > 0) {
-      console.log(`\n${Colors.BOLD}--- BATTLE ---${Colors.END}`);
-      console.log(`Your HP: ${this.player.hp}/${this.player.maxHp} | MP: ${this.player.mp}/${this.player.maxMp}`);
-      console.log(`${enemyData.name} HP: ${Math.max(0, enemyHp)}/${enemyData.hp}`);
-      console.log(`\nActions: [1] Attack  [2] Spell  [3] Flee`);
-      
-      const action = await ask("Choose action: ", ["1", "2", "3"]);
-      
-      if (action === "1") {
-        // Player attacks
-        const playerDamage = Math.max(1, this.player.getEffectiveAttack() - (enemyData.defense || 0));
-        enemyHp -= playerDamage;
-        console.log(`You attack for ${playerDamage} damage! (Enemy HP: ${Math.max(0, enemyHp)})`);
-      } else if (action === "2") {
-        console.log("Spells not implemented in browser yet.");
-        continue;
-      } else if (action === "3") {
-        if (Math.random() < 0.5) {
-          console.log("You fled successfully!");
-          return;
-        } else {
-          console.log("Failed to flee!");
-        }
+    items.forEach((item, i) => console.log(`${i+1}. ${item}`));
+    const choice = await ask("Choose item: ");
+    if (choice && !isNaN(parseInt(choice))) {
+      const idx = parseInt(choice) - 1;
+      if (idx >= 0 && idx < items.length) {
+        const item = items[idx];
+        const data = this.itemsData[item];
+        if (data.hp_heal) this.player.heal(data.hp_heal);
+        if (data.mp_heal) this.player.mp = Math.min(this.player.maxMp, this.player.mp + data.mp_heal);
+        this.player.inventory.splice(this.player.inventory.indexOf(item), 1);
+        console.log(`Used ${item}!`);
       }
-      
-      if (enemyHp <= 0) break;
-      
-      // Enemy attacks
-      const enemyDamage = Math.max(1, (enemyData.attack || 5) - this.player.getEffectiveDefense());
-      const actualDamage = this.player.takeDamage(enemyDamage);
-      console.log(`${enemyData.name} attacks for ${actualDamage} damage! (Your HP: ${this.player.hp})`);
-    }
-
-    if (this.player.isAlive()) {
-      console.log(`\n${Colors.GREEN}Victory! You defeated ${enemyData.name}!${Colors.END}`);
-      const expGain = enemyData.experience_reward || 10;
-      const goldGain = enemyData.gold_reward || 5;
-      this.player.gainExperience(expGain);
-      this.player.gold += goldGain;
-      console.log(`Gained ${expGain} EXP and ${goldGain} gold!`);
-      
-      // Update missions if any
-      this.updateMissionProgress("kill", enemyData.name);
-      await ask("Press Enter to continue...");
-    } else {
-      console.log(`\n${Colors.RED}You have been defeated!${Colors.END}`);
-      this.player.hp = Math.floor(this.player.maxHp / 2);
-      await ask("Press Enter to continue...");
     }
   }
 

@@ -71,20 +71,17 @@ export class DungeonSystem {
     }
 
     // Show available dungeons
-    const allDungeons = this.dungeonsData && this.dungeonsData.get ? this.dungeonsData.get('dungeons', []) : [];
+    const allDungeons = this.dungeonsData?.dungeons || [];
     if (!allDungeons || allDungeons.length === 0) {
       console.log("No dungeons available.");
       return;
     }
 
     // Filter dungeons by allowed_areas
-    const dungeons = [];
-    for (const dungeon of allDungeons) {
-      const allowedAreas = dungeon.get('allowed_areas', []);
-      if (!allowedAreas || allowedAreas.length === 0 || allowedAreas.includes(this.game.currentArea)) {
-        dungeons.push(dungeon);
-      }
-    }
+    const dungeons = allDungeons.filter(d => {
+      const allowedAreas = d.allowed_areas || [];
+      return allowedAreas.length === 0 || allowedAreas.includes(this.game.currentArea);
+    });
 
     if (dungeons.length === 0) {
       console.log(`\n${Colors.YELLOW}No dungeons available in this area.${Colors.END}`);
@@ -92,110 +89,51 @@ export class DungeonSystem {
     }
 
     console.log(`\n${Colors.CYAN}Available Dungeons:${Colors.END}`);
-    for (let i = 0; i < dungeons.length; i++) {
-      const dungeon = dungeons[i];
-      const name = dungeon.get('name', 'Unknown');
-      const difficulty = dungeon.get('difficulty', [1, 3]);
-      const rooms = dungeon.get('rooms', 5);
-      const desc = dungeon.get('description', '');
-
-      // Check level requirement
+    dungeons.forEach((d, i) => {
+      const difficulty = d.difficulty || [1, 3];
       const minLevel = difficulty[0] * 5;
-      const levelOk = this.game.player.level >= minLevel;
-
-      const status = levelOk ? `${Colors.GREEN}Available${Colors.END}` : `${Colors.RED}Level ${minLevel}+ required${Colors.END}`;
-
-      console.log(`${i + 1}. ${Colors.BOLD}${name}${Colors.END} (Difficulty ${difficulty[0]}-${difficulty[1]}, ${rooms} rooms)`);
-      console.log(`   ${desc}`);
+      const status = this.game.player.level >= minLevel ? `${Colors.GREEN}Available${Colors.END}` : `${Colors.RED}Level ${minLevel}+ required${Colors.END}`;
+      console.log(`${i + 1}. ${Colors.BOLD}${d.name || 'Unknown'}${Colors.END} (Difficulty ${difficulty[0]}-${difficulty[1]}, ${d.rooms || 5} rooms)`);
+      console.log(`   ${d.description || ''}`);
       console.log(`   Status: ${status}`);
-    }
+    });
 
-    const choice = (await askFunc(`\nChoose dungeon (1-${dungeons.length}) or press Enter to cancel: `)).trim();
+    const choice = (await askFunc(`\nChoose dungeon (1-${dungeons.length}) or Enter: `)).trim();
     if (choice && /^\d+$/.test(choice)) {
       const idx = parseInt(choice) - 1;
-      if (idx >= 0 && idx < dungeons.length) {
-        const dungeon = dungeons[idx];
-        const minLevel = dungeon.get('difficulty', [1, 3])[0] * 5;
-        if (this.game.player.level >= minLevel) {
-          this.enterDungeon(dungeon);
-        } else {
-          console.log(`You need to be at least level ${minLevel} to enter this dungeon.`);
-        }
-      } else {
-        console.log("Invalid choice.");
+      const dungeon = dungeons[idx];
+      if (dungeon) {
+        const minLevel = (dungeon.difficulty || [1, 3])[0] * 5;
+        if (this.game.player.level >= minLevel) this.enterDungeon(dungeon);
+        else console.log(`Need level ${minLevel}!`);
       }
     }
   }
 
-  /**
-   * Enter a dungeon
-   * @param {Object} dungeon - Dungeon data
-   */
   enterDungeon(dungeon) {
-    console.log(`\n${Colors.MAGENTA}${Colors.BOLD}Entering ${dungeon.get('name', 'Dungeon')}!${Colors.END}`);
-    console.log(dungeon.get('description', ''));
+    console.log(`\n${Colors.MAGENTA}${Colors.BOLD}Entering ${dungeon.name || 'Dungeon'}!${Colors.END}`);
+    console.log(dungeon.description || '');
 
-    // Set dungeon state
     this.currentDungeon = dungeon;
     this.dungeonProgress = 0;
-    this.dungeonState = {
-      startTime: new Date().toISOString(),
-      totalRooms: dungeon.get('rooms', 5),
-      currentRoom: 0
-    };
-
-    // Generate dungeon rooms
+    this.dungeonState = { startTime: new Date().toISOString(), totalRooms: dungeon.rooms || 5, currentRoom: 0 };
     this.generateDungeonRooms(dungeon);
-
-    // Start with first room
-    this.continueDungeonDungeon();
+    this.continueDungeon(this.game.ask);
   }
 
-  /**
-   * Generate dungeon rooms
-   * @param {Object} dungeon - Dungeon data
-   */
   generateDungeonRooms(dungeon) {
-    const roomWeights = dungeon.get('room_weights', {});
-    const totalRooms = dungeon.get('rooms', 5);
-
+    const roomWeights = dungeon.room_weights || { 'battle': 40, 'question': 20, 'chest': 15, 'empty': 15, 'trap_chest': 5, 'multi_choice': 5 };
+    const totalRooms = dungeon.rooms || 5;
     this.dungeonRooms = [];
 
-    // Validate room_weights
-    let finalWeights = {};
-    if (!roomWeights || Object.values(roomWeights).reduce((a, b) => a + b, 0) === 0) {
-      finalWeights = {
-        'battle': 40,
-        'question': 20,
-        'chest': 15,
-        'empty': 15,
-        'trap_chest': 5,
-        'multi_choice': 5
-      };
-    } else {
-      finalWeights = roomWeights;
-    }
+    const roomTypes = Object.keys(roomWeights);
+    const weights = Object.values(roomWeights);
 
-    const roomTypes = Object.keys(finalWeights);
-    const weights = Object.values(finalWeights);
-
-    // Generate rooms
     for (let i = 0; i < totalRooms; i++) {
-      let roomType;
-      if (i === totalRooms - 1) {
-        roomType = 'boss';
-      } else {
-        roomType = this.weightedRandom(roomTypes, weights);
-      }
-
-      const difficultyRange = dungeon.get('difficulty', [1, 3]);
-      const difficulty = difficultyRange[0] + (i * 0.5);
-
-      this.dungeonRooms.push({
-        type: roomType,
-        roomNumber: i + 1,
-        difficulty: difficulty
-      });
+      const roomType = (i === totalRooms - 1) ? 'boss' : this.weightedRandom(roomTypes, weights);
+      const diff = Array.isArray(dungeon.difficulty) ? dungeon.difficulty[0] : (dungeon.difficulty || 1);
+      const difficulty = diff + (i * 0.5);
+      this.dungeonRooms.push({ type: roomType, roomNumber: i + 1, difficulty });
     }
   }
 
@@ -273,67 +211,43 @@ export class DungeonSystem {
     if (!this.game.player) return;
     console.log("A mystical pedestal stands in the center of the room...");
 
-    const challengeTemplates = this.dungeonsData && this.dungeonsData.get ? this.dungeonsData.get('challenge_templates', {}) : {};
-    const questionTemplate = challengeTemplates.get ? challengeTemplates.get('question', {}) : {};
+    const challengeTemplates = this.dungeonsData?.challenge_templates || {};
+    const questionTemplate = challengeTemplates.question || {};
+    const questionTypes = questionTemplate.types || [];
 
-    if (!questionTemplate || !questionTemplate.get || !questionTemplate.get('types') || questionTemplate.get('types').length === 0) {
+    if (questionTypes.length === 0) {
       console.log("No questions available. Moving forward...");
       this.advanceRoom();
       return;
     }
 
-    const questionTypes = questionTemplate.get('types', []);
     const questionData = questionTypes[Math.floor(Math.random() * questionTypes.length)];
-
     console.log("\n=== Riddle ===");
-    console.log(questionData.get('question', 'Riddle not found'));
+    console.log(questionData.question || 'Riddle not found');
 
     let attempts = 0;
-    const maxAttempts = questionData.get('max_attempts', 3);
+    const maxAttempts = questionData.max_attempts || 3;
 
     while (attempts < maxAttempts) {
       const answer = (await askFunc(`Your answer (${maxAttempts - attempts} tries left, or type 'leave'): `)).trim().toLowerCase();
+      if (answer === 'leave') break;
 
-      if (answer === 'leave') {
-        console.log("You give up on the riddle.");
-        break;
-      }
-
-      const correctAnswer = (questionData.get('answer', '')).toLowerCase();
-      if (answer === correctAnswer) {
+      if (answer === (questionData.answer || '').toLowerCase()) {
         console.log("Correct!");
-        
-        const reward = questionData.get('success_reward', {});
-        if (reward.get && this.game.player) {
-          if (reward.get('gold')) {
-            this.game.player.gold += reward.get('gold');
-            console.log(`You gained ${reward.get('gold')} gold!`);
-          }
-          if (reward.get('experience')) {
-            this.game.player.gainExperience(reward.get('experience'));
-            console.log(`You gained ${reward.get('experience')} experience!`);
-          }
-        }
+        const reward = questionData.success_reward || {};
+        if (reward.gold) this.game.player.gold += reward.gold;
+        if (reward.experience) this.game.player.gainExperience(reward.experience);
         this.advanceRoom();
         return;
-      } else {
-        attempts++;
-        console.log("Incorrect. Try again.");
       }
+      attempts++;
+      console.log("Incorrect.");
     }
 
-    // Failed - take damage
-    const damage = questionData.get('failure_damage', 15);
-    if (this.game.player) {
-      const actualDamage = this.game.player.takeDamage(damage);
-      console.log(`You took ${actualDamage} damage from the failed riddle!`);
-
-      if (this.game.player.isAlive()) {
-        this.advanceRoom();
-      } else {
-        this.dungeonDeath();
-      }
-    }
+    const damage = questionData.failure_damage || 15;
+    this.game.player.takeDamage(damage);
+    if (this.game.player.isAlive()) this.advanceRoom();
+    else this.dungeonDeath();
   }
 
   /**
@@ -406,10 +320,6 @@ export class DungeonSystem {
     }
   }
 
-  /**
-   * Handle chest room
-   * @param {Object} room - Room data
-   */
   async handleChestRoom(room) {
     if (!this.game.player) {
       this.advanceRoom();
@@ -417,190 +327,98 @@ export class DungeonSystem {
     }
 
     console.log("A treasure chest stands in the center of the room!");
-
     const difficulty = room.difficulty || 1;
-    let chestType;
+    let chestType = 'small';
     if (difficulty >= 8) chestType = 'legendary';
     else if (difficulty >= 5) chestType = 'large';
     else if (difficulty >= 3) chestType = 'medium';
-    else chestType = 'small';
 
-    const chestTemplates = this.dungeonsData && this.dungeonsData.get ? this.dungeonsData.get('chest_templates', {}) : {};
-    const chestData = chestTemplates.get ? chestTemplates.get(chestType, chestTemplates.get('small', {})) : {};
+    const chestTemplates = this.dungeonsData?.chest_templates || {};
+    const chestData = chestTemplates[chestType] || chestTemplates['small'] || {};
 
-    console.log(`You found a ${chestData.get ? chestData.get('name', 'chest') : 'chest'}!`);
+    console.log(`You found a ${chestData.name || 'chest'}!`);
 
-    // Generate rewards
-    const goldRange = chestData.get ? chestData.get('gold_range', [50, 150]) : [50, 150];
+    const goldRange = chestData.gold_range || [50, 150];
     const goldReward = Math.floor(Math.random() * (goldRange[1] - goldRange[0] + 1)) + goldRange[0];
-
-    const itemCountRange = chestData.get ? chestData.get('item_count_range', [1, 2]) : [1, 2];
+    const itemCountRange = chestData.item_count_range || [1, 2];
     const itemCount = Math.floor(Math.random() * (itemCountRange[1] - itemCountRange[0] + 1)) + itemCountRange[0];
+    const expReward = chestData.experience || 100;
 
-    const expReward = chestData.get ? chestData.get('experience', 100) : 100;
-
-    // Give rewards
     this.game.player.gold += goldReward;
     this.game.player.gainExperience(expReward);
-
     console.log(`\n${Colors.GOLD}You found ${goldReward} gold!${Colors.END}`);
     console.log(`${Colors.MAGENTA}You gained ${expReward} experience!${Colors.END}`);
 
-    // Generate items
-    const itemsFound = [];
-    const itemRarities = chestData.get ? chestData.get('item_rarity', ['common']) : ['common'];
-
+    const itemRarities = chestData.item_rarity || ['common'];
     for (let i = 0; i < itemCount; i++) {
       const rarity = itemRarities[Math.floor(Math.random() * itemRarities.length)];
-      const possibleItems = this.itemsData ? Object.values(this.itemsData).filter(item => item.rarity === rarity) : [];
-      
+      const possibleItems = Object.values(this.game.itemsData || {}).filter(item => item.rarity === rarity);
       if (possibleItems.length > 0) {
         const item = possibleItems[Math.floor(Math.random() * possibleItems.length)];
-        itemsFound.push(item.name);
         this.game.player.inventory.push(item.name);
         this.game.updateMissionProgress('collect', item.name);
-      } else {
-        const bonusGold = Math.floor(Math.random() * (75 - 25 + 1)) + 25;
-        this.game.player.gold += bonusGold;
-        console.log(`Added ${bonusGold} gold instead.`);
+        console.log(`  - ${getRarityColor(item.rarity || 'common')}${item.name}${Colors.END}`);
       }
     }
-
-    if (itemsFound.length > 0) {
-      console.log("\nItems found:");
-      for (const itemName of itemsFound) {
-        const itemData = this.itemsData ? this.itemsData[itemName] : {};
-        const color = getRarityColorLocal(itemData.rarity || 'common');
-        console.log(`  - ${color}${itemName}${Colors.END}`);
-      }
-    }
-
     this.advanceRoom();
   }
 
-  /**
-   * Handle trap chest room
-   * @param {Object} room - Room data
-   * @param {Function} askFunc - Ask function
-   */
   async handleTrapChestRoom(room, askFunc) {
-    if (!this.game.player) {
-      this.advanceRoom();
-      return;
-    }
-
+    if (!this.game.player) return;
     console.log("A suspicious-looking chest is in the room...");
-
-    const choice = (await askFunc("Open the chest (O) or leave it (L)? ")).trim().toUpperCase();
-
-    if (choice === 'L') {
-      console.log("You leave the chest alone.");
+    const choice = (await askFunc("Open (O) or Leave (L)? ")).trim().toUpperCase();
+    if (choice !== 'O') {
       this.advanceRoom();
       return;
     }
 
-    // Roll for trap
-    const trapChance = 0.7;
-    if (Math.random() < trapChance) {
+    if (Math.random() < 0.7) {
       console.log("The chest was trapped!");
-
-      const challengeTemplates = this.dungeonsData && this.dungeonsData.get ? this.dungeonsData.get('challenge_templates', {}) : {};
-      const trapTemplates = challengeTemplates.get ? challengeTemplates.get('trap', {}) : {};
-      const trapTypes = trapTemplates.get ? trapTemplates.get('types', []) : [];
-
+      const trapTemplates = this.dungeonsData?.challenge_templates?.trap || {};
+      const trapTypes = trapTemplates.types || [];
       if (trapTypes.length > 0) {
         const trap = trapTypes[Math.floor(Math.random() * trapTypes.length)];
         console.log(trap.description || "A trap springs!");
-
-        // Roll d20 for avoidance
         const roll = Math.floor(Math.random() * 20) + 1;
-        const threshold = trapTemplates.get ? trapTemplates.get('success_threshold', 10) : 10;
-
-        console.log(`Roll: ${roll}, Threshold: ${threshold}`);
-
-        if (roll >= threshold) {
-          console.log(`${Colors.GREEN}You successfully avoid the trap!${Colors.END}`);
-          const successReward = trapTemplates.get ? trapTemplates.get('success_reward', {}) : {};
-          if (successReward.get) {
-            if (successReward.get('gold')) {
-              this.game.player.gold += successReward.get('gold');
-            }
-            if (successReward.get('experience')) {
-              this.game.player.gainExperience(successReward.get('experience'));
-            }
-          }
+        if (roll < (trapTemplates.success_threshold || 10)) {
+          this.game.player.takeDamage(trap.damage || 20);
+        } else {
+          console.log("You avoided it!");
         }
       }
+    } else {
+      await this.handleChestRoom(room);
+      return;
     }
-
     this.advanceRoom();
   }
 
-  /**
-   * Handle multi choice room
-   * @param {Object} room - Room data
-   * @param {Function} askFunc - Ask function
-   */
   async handleMultiChoiceRoom(room, askFunc) {
-    if (!this.game.player) {
+    if (!this.game.player) return;
+    const selectionTemplate = this.dungeonsData?.challenge_templates?.selection || {};
+    const types = selectionTemplate.types || [];
+    if (types.length === 0) {
+      this.advanceRoom();
+      return;
+    }
+    const challenge = types[Math.floor(Math.random() * types.length)];
+    if (!challenge) {
       this.advanceRoom();
       return;
     }
 
-    console.log("You stand at a crossroads with multiple paths...");
-
-    const challengeTemplates = this.dungeonsData && this.dungeonsData.get ? this.dungeonsData.get('challenge_templates', {}) : {};
-    const selectionTemplate = challengeTemplates.get ? challengeTemplates.get('selection', {}) : {};
-
-    if (!selectionTemplate.get || !selectionTemplate.get('types') || selectionTemplate.get('types').length === 0) {
-      console.log("The path seems safe. You proceed.");
-      this.advanceRoom();
-      return;
-    }
-
-    const challenge = selectionTemplate.get('types', [])[Math.floor(Math.random() * selectionTemplate.get('types', []).length)];
-
-    console.log("\n=== Decision ===");
-    console.log(challenge.get('question', 'What will you do?'));
-
-    const options = challenge.get('options', []);
-    for (let i = 0; i < options.length; i++) {
-      console.log(`${i + 1}. ${options[i].text}`);
-    }
-
-    const choice = (await askFunc(`Your choice (1-${options.length}): `)).trim();
-
-    let outcome;
-    if (choice && /^\d+$/.test(choice) && parseInt(choice) >= 1 && parseInt(choice) <= options.length) {
-      outcome = options[parseInt(choice) - 1];
-    } else {
-      console.log("Invalid choice. You hesitate...");
-      return;
-    }
-
-    console.log(`\n${outcome.reason || 'You proceed...'}`);
-
-    if (outcome.correct) {
-      const successReward = challenge.get('success_reward', {});
-      if (successReward.get && this.game.player) {
-        if (successReward.get('gold')) {
-          this.game.player.gold += successReward.get('gold');
-        }
-        if (successReward.get('experience')) {
-          this.game.player.gainExperience(successReward.get('experience'));
-        }
-      }
-    } else if (this.game.player) {
-      const damage = challenge.get('failure_damage', 10);
-      const actualDamage = this.game.player.takeDamage(damage);
-      console.log(`You took ${actualDamage} damage!`);
-
-      if (!this.game.player.isAlive()) {
-        this.dungeonDeath();
-        return;
+    console.log(`\n=== Decision ===\n${challenge.question}`);
+    challenge.options.forEach((o, i) => console.log(`${i+1}. ${o.text}`));
+    const choice = parseInt(await askFunc("Choice: ")) - 1;
+    const outcome = challenge.options[choice];
+    if (outcome) {
+      console.log(outcome.reason);
+      if (outcome.correct) {
+        if (challenge.success_reward?.gold) this.game.player.gold += challenge.success_reward.gold;
+      } else {
+        this.game.player.takeDamage(challenge.failure_damage || 10);
       }
     }
-
     this.advanceRoom();
   }
 
