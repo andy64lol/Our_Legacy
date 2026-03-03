@@ -259,6 +259,27 @@
         const submitBtn = document.getElementById('submit-btn');
         const statsPanel = document.getElementById('stats-panel');
 
+        // Override console.log to also output to game.html
+        const originalConsoleLog = console.log;
+        console.log = function(...args) {
+            // Call original console.log to keep browser console working
+            originalConsoleLog.apply(console, args);
+            
+            // Also print to game output
+            const text = args.map(arg => {
+                if (typeof arg === 'object') {
+                    try {
+                        return JSON.stringify(arg, null, 2);
+                    } catch (e) {
+                        return String(arg);
+                    }
+                }
+                return String(arg);
+            }).join(' ');
+            
+            print(text);
+        };
+
         // Color codes for output
         const Colors = {
             RED: '\x1b[91m',
