@@ -5,15 +5,16 @@
 
 import { Colors } from './utilities_js/UI.js';
 import { Character } from './utilities_js/character.js';
+import { SaveLoadSystem } from './utilities_js/save_load.js';
 
 // Simple ask function for browser (using window.prompt)
-export async function ask(prompt, validChoices = null, allowEmpty = true) {
+export async function ask(promptText, validChoices = null, allowEmpty = true) {
   let response;
   let attempts = 0;
   const maxAttempts = 10;
 
   while (attempts < maxAttempts) {
-    response = prompt(prompt);
+    response = prompt(promptText);
     
     if (response === null) {
       response = '';
@@ -118,6 +119,10 @@ export class Game {
         return text;
       }
     };
+    
+    this.saveLoadSystem = new SaveLoadSystem(this);
+    this.CharacterClass = Character;
+    this.print = console.log;
   }
 
   async loadGameData() {
@@ -278,6 +283,8 @@ export class Game {
     console.log(`${Colors.CYAN}12.${Colors.END} Companions`);
     console.log(`${Colors.CYAN}13.${Colors.END} Dungeons`);
     console.log(`${Colors.CYAN}14.${Colors.END} Challenges`);
+    console.log(`${Colors.CYAN}S.${Colors.END} Save Game`);
+    console.log(`${Colors.CYAN}L.${Colors.END} Load Game`);
     console.log(`${Colors.CYAN}0.${Colors.END} Quit`);
 
     const choice = await ask(`${Colors.CYAN}Choose an option: ${Colors.END}`);
@@ -285,55 +292,118 @@ export class Game {
   }
 
   async handleMenuChoice(choice) {
-    switch (choice) {
+    const c = choice.toLowerCase();
+    switch (c) {
       case "1":
         await this.explore();
         break;
       case "2":
         if (this.player) this.player.displayStats(console.log);
+        await ask("Press Enter to continue...");
         break;
       case "3":
         await this.travel();
         break;
       case "4":
         await this.viewInventory();
+        await ask("Press Enter to continue...");
         break;
       case "5":
         await this.viewMissions();
+        await ask("Press Enter to continue...");
         break;
       case "6":
         await this.fightBoss();
         break;
       case "7":
         console.log("Tavern coming soon...");
+        await ask("Press Enter to continue...");
         break;
       case "8":
         await this.visitShop();
         break;
       case "9":
         console.log("Alchemy coming soon...");
+        await ask("Press Enter to continue...");
         break;
       case "10":
         console.log("Market coming soon...");
+        await ask("Press Enter to continue...");
         break;
       case "11":
         await this.rest();
         break;
       case "12":
-        console.log("Companions coming soon...");
+        await this.viewCompanions();
+        await ask("Press Enter to continue...");
         break;
       case "13":
-        console.log("Dungeons coming soon...");
+        await this.viewDungeons();
+        await ask("Press Enter to continue...");
         break;
       case "14":
-        console.log("Challenges coming soon...");
+        await this.viewChallenges();
+        await ask("Press Enter to continue...");
+        break;
+      case "s":
+        await this.saveGame();
+        await ask("Press Enter to continue...");
+        break;
+      case "l":
+        await this.loadGame();
+        await ask("Press Enter to continue...");
         break;
       case "0":
         this.quitGame();
         break;
       default:
         console.log("Invalid choice.");
+        await ask("Press Enter to continue...");
     }
+  }
+
+  async viewCompanions() {
+    console.log(`\n${Colors.BOLD}=== COMPANIONS ===${Colors.END}`);
+    if (!this.player.companions || this.player.companions.length === 0) {
+      console.log("You have no companions.");
+      return;
+    }
+    this.player.companions.forEach((c, i) => {
+      console.log(`${i+1}. ${c.name || c}`);
+    });
+  }
+
+  async viewDungeons() {
+    console.log(`\n${Colors.BOLD}=== DUNGEONS ===${Colors.END}`);
+    const dungeons = this.dungeonsData.dungeons || [];
+    if (dungeons.length === 0) {
+      console.log("No dungeons discovered.");
+      return;
+    }
+    dungeons.forEach((d, i) => {
+      console.log(`${i+1}. ${d.name} (Difficulty: ${d.difficulty})`);
+    });
+  }
+
+  async viewChallenges() {
+    console.log(`\n${Colors.BOLD}=== CHALLENGES ===${Colors.END}`);
+    const challenges = this.weeklyChallengesData.challenges || [];
+    if (challenges.length === 0) {
+      console.log("No active challenges.");
+      return;
+    }
+    challenges.forEach((c, i) => {
+      const progress = this.challengeProgress[c.id] || 0;
+      console.log(`${i+1}. ${c.name}: ${progress}/${c.target_count}`);
+    });
+  }
+
+  async saveGame() {
+    this.saveLoadSystem.save_game();
+  }
+
+  async loadGame() {
+    await this.saveLoadSystem.load_game();
   }
 
   async viewMissions() {
@@ -467,15 +537,34 @@ export class Game {
     let enemyHp = enemyData.hp;
     
     while (enemyHp > 0 && this.player.hp > 0) {
-      // Player attacks
-      const playerDamage = Math.max(1, this.player.getEffectiveAttack() - enemyData.defense);
-      enemyHp -= playerDamage;
-      console.log(`You attack for ${playerDamage} damage! (Enemy HP: ${Math.max(0, enemyHp)})`);
+      console.log(`\n${Colors.BOLD}--- BATTLE ---${Colors.END}`);
+      console.log(`Your HP: ${this.player.hp}/${this.player.maxHp} | MP: ${this.player.mp}/${this.player.maxMp}`);
+      console.log(`${enemyData.name} HP: ${Math.max(0, enemyHp)}/${enemyData.hp}`);
+      console.log(`\nActions: [1] Attack  [2] Spell  [3] Flee`);
+      
+      const action = await ask("Choose action: ", ["1", "2", "3"]);
+      
+      if (action === "1") {
+        // Player attacks
+        const playerDamage = Math.max(1, this.player.getEffectiveAttack() - (enemyData.defense || 0));
+        enemyHp -= playerDamage;
+        console.log(`You attack for ${playerDamage} damage! (Enemy HP: ${Math.max(0, enemyHp)})`);
+      } else if (action === "2") {
+        console.log("Spells not implemented in browser yet.");
+        continue;
+      } else if (action === "3") {
+        if (Math.random() < 0.5) {
+          console.log("You fled successfully!");
+          return;
+        } else {
+          console.log("Failed to flee!");
+        }
+      }
       
       if (enemyHp <= 0) break;
       
       // Enemy attacks
-      const enemyDamage = Math.max(1, enemyData.attack - this.player.getEffectiveDefense());
+      const enemyDamage = Math.max(1, (enemyData.attack || 5) - this.player.getEffectiveDefense());
       const actualDamage = this.player.takeDamage(enemyDamage);
       console.log(`${enemyData.name} attacks for ${actualDamage} damage! (Your HP: ${this.player.hp})`);
     }
@@ -490,9 +579,11 @@ export class Game {
       
       // Update missions if any
       this.updateMissionProgress("kill", enemyData.name);
+      await ask("Press Enter to continue...");
     } else {
       console.log(`\n${Colors.RED}You have been defeated!${Colors.END}`);
       this.player.hp = Math.floor(this.player.maxHp / 2);
+      await ask("Press Enter to continue...");
     }
   }
 
