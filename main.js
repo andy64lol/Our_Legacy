@@ -108,7 +108,15 @@ export class Game {
     
     // Simple language manager
     this.lang = {
-      get: (key, defaultValue) => defaultValue || key
+      get: (key, defaultValue, params = {}) => {
+        let text = defaultValue || key;
+        if (params && typeof params === 'object') {
+          for (const [k, v] of Object.entries(params)) {
+            text = text.replace(new RegExp(`{${k}}`, 'g'), v);
+          }
+        }
+        return text;
+      }
     };
   }
 
@@ -122,6 +130,13 @@ export class Game {
       this.classesData = await this.loadJSON('data/classes.json');
       this.spellsData = await this.loadJSON('data/spells.json');
       this.effectsData = await this.loadJSON('data/effects.json');
+      try { this.companionsData = await this.loadJSON('data/companions.json'); } catch (e) { this.companionsData = {}; }
+      try { this.craftingData = await this.loadJSON('data/crafting.json'); } catch (e) { this.craftingData = {}; }
+      try { this.dialoguesData = await this.loadJSON('data/dialogues.json'); } catch (e) { this.dialoguesData = {}; }
+      try { this.cutscenesData = await this.loadJSON('data/cutscenes.json'); } catch (e) { this.cutscenesData = {}; }
+      try { this.weatherData = await this.loadJSON('data/weather.json'); } catch (e) { this.weatherData = {}; }
+      try { this.timesData = await this.loadJSON('data/times.json'); } catch (e) { this.timesData = {}; }
+      try { this.petsData = await this.loadJSON('data/pets.json'); } catch (e) { this.petsData = {}; }
     } catch (e) {
       console.error(`Error loading game data: ${e}`);
     }
@@ -134,6 +149,11 @@ export class Game {
 
     try {
       this.weeklyChallengesData = await this.loadJSON('data/weekly_challenges.json');
+      if (this.weeklyChallengesData.challenges) {
+        for (const challenge of this.weeklyChallengesData.challenges) {
+          this.challengeProgress[challenge.id] = 0;
+        }
+      }
     } catch (e) {
       this.weeklyChallengesData = {};
     }
@@ -164,21 +184,58 @@ export class Game {
   }
 
   createCharacter() {
-    this.player = new Character("Hero", "Warrior", this.classesData);
-    this.player.inventory = ["Iron Sword", "Health Potion"];
-    this.player.gold = 100;
+    this.player = new Character("Hero", "Warrior", this.classesData, null, this.lang);
+    this.player.timesData = this.timesData;
+    this.player.weatherData = this.weatherData;
+    this.player.giveStartingItems("Warrior", this.classesData, this.itemsData);
+    
+    // Initialize missions
+    if (this.missionsData) {
+      for (const [id, mission] of Object.entries(this.missionsData)) {
+        if (mission.auto_start) {
+          this.missionProgress[id] = {
+            current_count: 0,
+            target_count: mission.target_count || 1,
+            completed: false,
+            type: mission.type || "kill",
+            target: mission.target_enemy || mission.target
+          };
+        }
+      }
+    }
+    
+    // Initialize visited areas
+    this.visitedAreas = new Set();
     this.player.currentArea = "starting_village";
     this.currentArea = "starting_village";
     this.visitedAreas.add(this.player.currentArea);
+    
+    // Set base stats for calculation
+    this.player.baseMaxHp = this.player.maxHp;
+    this.player.baseMaxMp = this.player.maxMp;
+    this.player.baseAttack = this.player.attack;
+    this.player.baseDefense = this.player.defense;
+    this.player.baseSpeed = this.player.speed;
   }
 
   updateWeather() {
     if (!this.player) return;
     const areaData = this.areasData[this.player.currentArea] || {};
-    const weatherProbs = areaData.weather_probabilities || { sunny: 1.0 };
+    const weatherProbs = areaData.weather_probabilities || areaData.weather_chances || { sunny: 1.0 };
     const weathers = Object.keys(weatherProbs);
+    const weights = Object.values(weatherProbs);
+    
     if (weathers.length > 0) {
-      this.player.currentWeather = weathers[0];
+      const totalWeight = weights.reduce((a, b) => a + b, 0);
+      let random = Math.random() * totalWeight;
+      for (let i = 0; i < weathers.length; i++) {
+        random -= weights[i];
+        if (random <= 0) {
+          this.player.currentWeather = weathers[i];
+          return;
+        }
+      }
+      this.player.currentWeather = weathers[weathers.length - 1];
     }
   }
 
@@ -242,16 +299,16 @@ export class Game {
         await this.viewInventory();
         break;
       case "5":
-        console.log("Missions coming soon...");
+        await this.viewMissions();
         break;
       case "6":
-        console.log("Boss fights coming soon...");
+        await this.fightBoss();
         break;
       case "7":
         console.log("Tavern coming soon...");
         break;
       case "8":
-        console.log("Shop coming soon...");
+        await this.visitShop();
         break;
       case "9":
         console.log("Alchemy coming soon...");
@@ -276,6 +333,84 @@ export class Game {
         break;
       default:
         console.log("Invalid choice.");
+    }
+  }
+
+  async viewMissions() {
+    console.log(`\n${Colors.BOLD}=== MISSIONS ===${Colors.END}`);
+    let activeMissions = false;
+    for (const [id, progress] of Object.entries(this.missionProgress)) {
+      const mission = this.missionsData[id] || { name: id };
+      const status = progress.completed ? `${Colors.GREEN}COMPLETED${Colors.END}` : `${progress.current_count}/${progress.target_count}`;
+      console.log(`${mission.name}: ${status}`);
+      activeMissions = true;
+    }
+    if (!activeMissions) {
+      console.log("No active missions.");
+      // Give a starter mission
+      if (this.missionsData["starter_hunt"]) {
+        const m = this.missionsData["starter_hunt"];
+        this.missionProgress["starter_hunt"] = {
+          current_count: 0,
+          target_count: m.target_count || 3,
+          completed: false,
+          type: m.type || "kill",
+          target: m.target_enemy || "Slime"
+        };
+        console.log(`New Mission Accepted: ${m.name}`);
+      }
+    }
+  }
+
+  async fightBoss() {
+    const areaData = this.areasData[this.currentArea] || {};
+    const bosses = areaData.bosses || [];
+    if (bosses.length === 0) {
+      console.log("No bosses in this area.");
+      return;
+    }
+    const bossName = bosses[0];
+    const bossData = this.bosses_data ? this.bosses_data[bossName] : (this.bossesData ? this.bossesData[bossName] : null);
+    if (!bossData) {
+      console.log(`Boss data for ${bossName} not found.`);
+      return;
+    }
+    console.log(`\n${Colors.RED}${Colors.BOLD}BOSS BATTLE: ${bossData.name}${Colors.END}`);
+    await this.simpleBattle(bossData);
+  }
+
+  async visitShop() {
+    const areaData = this.areasData[this.currentArea] || {};
+    const shops = areaData.shops || [];
+    if (shops.length === 0) {
+      console.log("No shops in this area.");
+      return;
+    }
+    const shopId = shops[0];
+    const shopData = this.shopsData[shopId];
+    if (!shopData) {
+      console.log("Shop closed.");
+      return;
+    }
+    console.log(`\n${Colors.BOLD}=== ${shopData.name || 'Shop'} ===${Colors.END}`);
+    const items = shopData.items || [];
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      const itemInfo = this.itemsData[item.id] || {};
+      console.log(`${i+1}. ${item.id} - ${item.price} gold`);
+    }
+    console.log("0. Exit");
+    const choice = await ask("Buy something? ");
+    const idx = parseInt(choice) - 1;
+    if (idx >= 0 && idx < items.length) {
+      const item = items[idx];
+      if (this.player.gold >= item.price) {
+        this.player.gold -= item.price;
+        this.player.inventory.push(item.id);
+        console.log(`Bought ${item.id}!`);
+      } else {
+        console.log("Not enough gold.");
+      }
     }
   }
 
@@ -352,9 +487,24 @@ export class Game {
       this.player.gainExperience(expGain);
       this.player.gold += goldGain;
       console.log(`Gained ${expGain} EXP and ${goldGain} gold!`);
+      
+      // Update missions if any
+      this.updateMissionProgress("kill", enemyData.name);
     } else {
       console.log(`\n${Colors.RED}You have been defeated!${Colors.END}`);
       this.player.hp = Math.floor(this.player.maxHp / 2);
+    }
+  }
+
+  updateMissionProgress(type, target) {
+    for (const [missionId, progress] of Object.entries(this.missionProgress)) {
+      if (!progress.completed && progress.type === type && progress.target === target) {
+        progress.current_count++;
+        if (progress.current_count >= progress.target_count) {
+          progress.completed = true;
+          console.log(`${Colors.GREEN}Mission Objective Complete: ${missionId}${Colors.END}`);
+        }
+      }
     }
   }
 

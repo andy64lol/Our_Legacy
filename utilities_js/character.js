@@ -319,6 +319,31 @@ export class Character {
     }
   }
 
+  async giveStartingItems(characterClass, classesData, itemsData) {
+    if (!classesData || !classesData[characterClass]) return;
+
+    const classInfo = classesData[characterClass];
+    const items = classInfo.starting_items || [];
+    const startingGold = classInfo.starting_gold || 100;
+
+    for (const item of items) {
+      this.inventory.push(item);
+    }
+
+    this.gold = startingGold;
+
+    // Auto-equip first weapon and armor if available
+    for (const slot of ["weapon", "armor"]) {
+      for (const item of items) {
+        const itemType = itemsData && itemsData[item] ? itemsData[item].type : null;
+        if (itemType === slot) {
+          this.equip(item, itemsData);
+          break;
+        }
+      }
+    }
+  }
+
   /**
    * Get current time period
    * @returns {string} Time period name
@@ -441,10 +466,10 @@ export class Character {
 
   /**
    * Display character stats
-   * @param {Function} createHpMpBar - Optional function to create HP/MP bars
+   * @param {Function} printFunc - Function to handle output
    */
   displayStats(printFunc = null) {
-    const output = printFunc || ((text) => {});
+    const output = printFunc || console.log;
     output(`\n--- ${this.name} (${this.characterClass}) ---`);
     output(`Level: ${this.level} (${this.rank})`);
     
