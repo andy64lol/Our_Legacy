@@ -31,7 +31,7 @@ export function getRarityColor(rarity) {
  */
 export async function visitGeneralShop(game, shopData, askFunc) {
   if (!game.player) {
-    console.log(game.lang.get("no_character") || "No character created yet.");
+    game.print(game.lang.get("no_character") || "No character created yet.");
     return;
   }
 
@@ -40,12 +40,12 @@ export async function visitGeneralShop(game, shopData, askFunc) {
   const items = shopData.get("items", []);
   const maxBuy = shopData.get("max_buy", 99);
 
-  console.log(`\n${Colors.BOLD}=== ${shopName.toUpperCase()} ===${Colors.END}`);
-  console.log(welcomeMsg);
-  console.log(`Your gold: ${Colors.GOLD}${game.player.gold}${Colors.END}`);
+  game.print(`\n${Colors.BOLD}=== ${shopName.toUpperCase()} ===${Colors.END}`);
+  game.print(welcomeMsg);
+  game.print(`Your gold: ${Colors.GOLD}${game.player.gold}${Colors.END}`);
 
   if (!items || items.length === 0) {
-    console.log(game.lang.get('ui_shop_no_items') || "This shop has no items for sale.");
+    game.print(game.lang.get('ui_shop_no_items') || "This shop has no items for sale.");
     return;
   }
 
@@ -66,7 +66,7 @@ export async function visitGeneralShop(game, shopData, askFunc) {
   }
 
   if (itemDetails.length === 0) {
-    console.log(game.lang.get('ui_no_valid_items_shop') || "No valid items in this shop.");
+    game.print(game.lang.get('ui_no_valid_items_shop') || "No valid items in this shop.");
     return;
   }
 
@@ -78,7 +78,7 @@ export async function visitGeneralShop(game, shopData, askFunc) {
     const end = start + pageSize;
     const pageItems = itemDetails.slice(start, end);
 
-    console.log(`\n--- Items (Page ${currentPage + 1}) ---`);
+    game.print(`\n--- Items (Page ${currentPage + 1}) ---`);
     for (let i = 0; i < pageItems.length; i++) {
       const item = pageItems[i];
       const rarityColor = getRarityColor(item.rarity);
@@ -92,23 +92,23 @@ export async function visitGeneralShop(game, shopData, askFunc) {
         status = ` ${Colors.YELLOW}(Owned: ${ownedCount})${Colors.END}`;
       }
 
-      console.log(`${start + i + 1}. ${rarityColor}${item.name}${Colors.END} - ${Colors.GOLD}${item.price}g${Colors.END}${status}`);
-      console.log(`   ${item.description}`);
+      game.print(`${start + i + 1}. ${rarityColor}${item.name}${Colors.END} - ${Colors.GOLD}${item.price}g${Colors.END}${status}`);
+      game.print(`   ${item.description}`);
     }
 
     const totalPages = Math.ceil(itemDetails.length / pageSize);
-    console.log(`\nPage ${currentPage + 1}/${totalPages}`);
+    game.print(`\nPage ${currentPage + 1}/${totalPages}`);
 
     if (totalPages > 1) {
       if (currentPage > 0) {
-        console.log(`P. Previous Page`);
+        game.print(`P. Previous Page`);
       }
       if (currentPage < totalPages - 1) {
-        console.log(`N. Next Page`);
+        game.print(`N. Next Page`);
       }
     }
-    console.log(`S. Sell Items`);
-    console.log(`B. Back`);
+    game.print(`S. Sell Items`);
+    game.print(`B. Back`);
 
     const choice = (await askFunc("\nChoose item to buy or option: ")).trim().toUpperCase();
 
@@ -116,7 +116,7 @@ export async function visitGeneralShop(game, shopData, askFunc) {
       break;
     } else if (choice === 'S') {
       await shopSell(game, askFunc);
-      console.log(`\nYour gold: ${Colors.GOLD}${game.player.gold}${Colors.END}`);
+      game.print(`\nYour gold: ${Colors.GOLD}${game.player.gold}${Colors.END}`);
     } else if (choice === 'N' && currentPage < totalPages - 1) {
       currentPage += 1;
     } else if (choice === 'P' && currentPage > 0) {
@@ -128,23 +128,23 @@ export async function visitGeneralShop(game, shopData, askFunc) {
         const ownedCount = game.player.inventory.filter(x => x === item.id).length;
 
         if (ownedCount >= maxBuy) {
-          console.log(`${Colors.RED}You already own the maximum amount (${maxBuy}) of this item.${Colors.END}`);
+          game.print(`${Colors.RED}You already own the maximum amount (${maxBuy}) of this item.${Colors.END}`);
           continue;
         }
 
         if (game.player.gold >= item.price) {
           game.player.gold -= item.price;
           game.player.inventory.push(item.id);
-          console.log(`${Colors.GREEN}Purchased ${item.name} for ${item.price} gold!${Colors.END}`);
+          game.print(`${Colors.GREEN}Purchased ${item.name} for ${item.price} gold!${Colors.END}`);
           game.updateMissionProgress('collect', item.id);
         } else {
-          console.log(`${Colors.RED}Not enough gold! Need ${item.price}, have ${game.player.gold}.${Colors.END}`);
+          game.print(`${Colors.RED}Not enough gold! Need ${item.price}, have ${game.player.gold}.${Colors.END}`);
         }
       } else {
-        console.log("Invalid item number.");
+        game.print("Invalid item number.");
       }
     } else {
-      console.log("Invalid choice.");
+      game.print("Invalid choice.");
     }
   }
 }
@@ -158,13 +158,13 @@ export async function visitGeneralShop(game, shopData, askFunc) {
  */
 export async function visitSpecificShop(game, shopId, askFunc) {
   if (!game.player) {
-    console.log(game.lang.get("no_character") || "No character created yet.");
+    game.print(game.lang.get("no_character") || "No character created yet.");
     return;
   }
 
   const shopData = game.shopsData && game.shopsData[shopId] ? game.shopsData[shopId] : {};
   if (!shopData || Object.keys(shopData).length === 0) {
-    console.log(`Shop ${shopId} not found.`);
+    game.print(`Shop ${shopId} not found.`);
     return;
   }
 
@@ -184,11 +184,11 @@ export async function shopSell(game, askFunc) {
 
   const sellable = [...game.player.inventory];
   if (sellable.length === 0) {
-    console.log("You have nothing to sell.");
+    game.print("You have nothing to sell.");
     return;
   }
 
-  console.log(`\nYour Inventory:`);
+  game.print(`\nYour Inventory:`);
   for (let i = 0; i < sellable.length; i++) {
     let equipMarker = '';
     for (const slot of Object.keys(game.player.equipment)) {
@@ -200,7 +200,7 @@ export async function shopSell(game, askFunc) {
     const itemData = game.itemsData[sellable[i]] || {};
     const price = itemData.price || 0;
     const sellPrice = price > 0 ? Math.floor(price / 2) : 0;
-    console.log(`${i + 1}. ${sellable[i]}${equipMarker} - Sell for ${sellPrice} gold`);
+    game.print(`${i + 1}. ${sellable[i]}${equipMarker} - Sell for ${sellPrice} gold`);
   }
 
   const choice = (await askFunc(`Choose item to sell (1-${sellable.length}) or press Enter to cancel: `)).trim();
@@ -210,7 +210,7 @@ export async function shopSell(game, askFunc) {
   
   const idx = parseInt(choice) - 1;
   if (!(idx >= 0 && idx < sellable.length)) {
-    console.log("Invalid selection.");
+    game.print("Invalid selection.");
     return;
   }
 
@@ -218,7 +218,7 @@ export async function shopSell(game, askFunc) {
   // Prevent selling equipped items
   const isEquipped = Object.values(game.player.equipment).some(eq => eq === item);
   if (isEquipped) {
-    console.log("Unequip this item before selling.");
+    game.print("Unequip this item before selling.");
     return;
   }
 
@@ -231,7 +231,7 @@ export async function shopSell(game, askFunc) {
     game.player.inventory.splice(itemIndex, 1);
   }
   game.player.gold += sellPrice;
-  console.log(`Sold ${item} for ${sellPrice} gold.`);
+  game.print(`Sold ${item} for ${sellPrice} gold.`);
 }
 
 export default {

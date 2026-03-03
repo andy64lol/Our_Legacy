@@ -15,21 +15,21 @@ import { getRarityColor } from './shop.js';
  */
 export async function buildHome(game, askFunc) {
   if (!game.player) {
-    console.log(game.lang?.get("no_character") || "No character created yet.");
+    game.print(game.lang?.get("no_character") || "No character created yet.");
     return;
   }
 
   if (!game.player.housingOwned || game.player.housingOwned.length === 0) {
-    console.log(`${Colors.YELLOW}You haven't purchased any housing items yet! Visit the Housing Shop first.${Colors.END}`);
+    game.print(`${Colors.YELLOW}You haven't purchased any housing items yet! Visit the Housing Shop first.${Colors.END}`);
     await askFunc("Press Enter to continue...");
     return;
   }
 
   while (true) {
-    console.clear();
-    console.log(`\n${Colors.BOLD}${Colors.CYAN}=== BUILD STRUCTURES ===${Colors.END}`);
-    console.log(`${Colors.YELLOW}Manage your buildings and customize your property${Colors.END}\n`);
-    console.log(`Comfort Points: ${Colors.CYAN}${game.player.comfortPoints || 0}${Colors.END}\n`);
+    game.clear();
+    game.print(`\n${Colors.BOLD}${Colors.CYAN}=== BUILD STRUCTURES ===${Colors.END}`);
+    game.print(`${Colors.YELLOW}Manage your buildings and customize your property${Colors.END}\n`);
+    game.print(`Comfort Points: ${Colors.CYAN}${game.player.comfortPoints || 0}${Colors.END}\n`);
 
     const buildingTypes = {
       "house": { label: "House", slots: 3 },
@@ -41,25 +41,25 @@ export async function buildHome(game, askFunc) {
     };
 
     for (const [bType, info] of Object.entries(buildingTypes)) {
-      console.log(`${Colors.BOLD}${info.label} Slots:${Colors.END}`);
+      game.print(`${Colors.BOLD}${info.label} Slots:${Colors.END}`);
       for (let i = 1; i <= info.slots; i++) {
         const slot = `${bType}_${i}`;
         const itemId = game.player.buildingSlots ? game.player.buildingSlots[slot] : null;
         if (itemId && game.housingData && game.housingData[itemId]) {
           const item = game.housingData[itemId];
           const rarityColor = getRarityColor(item.rarity || 'common');
-          console.log(`  ${slot}: ${rarityColor}${item.name || itemId}${Colors.END}`);
+          game.print(`  ${slot}: ${rarityColor}${item.name || itemId}${Colors.END}`);
         } else {
-          console.log(`  ${slot}: ${Colors.GRAY}Empty${Colors.END}`);
+          game.print(`  ${slot}: ${Colors.GRAY}Empty${Colors.END}`);
         }
       }
-      console.log();
+      game.print();
     }
 
-    console.log("1. Place item in slot");
-    console.log("2. Remove item from slot");
-    console.log("3. View home status");
-    console.log("B. Back");
+    game.print("1. Place item in slot");
+    game.print("2. Remove item from slot");
+    game.print("3. View home status");
+    game.print("B. Back");
 
     const choice = (await askFunc(`\n${Colors.CYAN}Choose option: ${Colors.END}`)).trim().toUpperCase();
 
@@ -73,12 +73,12 @@ export async function buildHome(game, askFunc) {
 export async function placeHousingItem(game, askFunc) {
   if (!game.player.housingOwned || game.player.housingOwned.length === 0) return;
 
-  console.log("\n=== AVAILABLE ITEMS ===");
+  game.print("\n=== AVAILABLE ITEMS ===");
   game.player.housingOwned.forEach((itemId, i) => {
     const item = game.housingData?.[itemId];
     if (item) {
       const rarityColor = getRarityColor(item.rarity || 'common');
-      console.log(`${i + 1}. ${rarityColor}${item.name || itemId}${Colors.END} (${item.type || 'misc'})`);
+      game.print(`${i + 1}. ${rarityColor}${item.name || itemId}${Colors.END} (${item.type || 'misc'})`);
     }
   });
 
@@ -104,12 +104,12 @@ export async function placeHousingItem(game, askFunc) {
 
   const emptySlots = availableSlots.filter(slot => !game.player.buildingSlots?.[slot]);
   if (emptySlots.length === 0) {
-    console.log(`No slots for ${itemType}.`);
+    game.print(`No slots for ${itemType}.`);
     return;
   }
 
-  console.log(`\nAvailable slots for ${itemType}:`);
-  emptySlots.forEach((s, i) => console.log(`${i + 1}. ${s}`));
+  game.print(`\nAvailable slots for ${itemType}:`);
+  emptySlots.forEach((s, i) => game.print(`${i + 1}. ${s}`));
 
   const slotChoice = (await askFunc(`\nChoose slot (1-${emptySlots.length}) or Enter: `)).trim();
   if (!slotChoice || !/^\d+$/.test(slotChoice)) return;
@@ -119,7 +119,7 @@ export async function placeHousingItem(game, askFunc) {
   game.player.buildingSlots[targetSlot] = itemId;
   game.player.comfortPoints = (game.player.comfortPoints || 0) + (item.comfort_points || 0);
 
-  console.log(`${Colors.GREEN}Placed ${item.name || itemId} in ${targetSlot}!${Colors.END}`);
+  game.print(`${Colors.GREEN}Placed ${item.name || itemId} in ${targetSlot}!${Colors.END}`);
   await askFunc("Press Enter to continue...");
 }
 
@@ -132,14 +132,14 @@ export async function removeHousingItem(game, askFunc) {
   }
 
   if (occupiedSlots.length === 0) {
-    console.log("\nNo items to remove.");
+    game.print("\nNo items to remove.");
     return;
   }
 
-  console.log("\n=== PLACED ITEMS ===");
+  game.print("\n=== PLACED ITEMS ===");
   occupiedSlots.forEach((obj, i) => {
     const item = game.housingData?.[obj.itemId];
-    console.log(`${i + 1}. ${obj.slot}: ${getRarityColor(item?.rarity || 'common')}${item?.name || obj.itemId}${Colors.END}`);
+    game.print(`${i + 1}. ${obj.slot}: ${getRarityColor(item?.rarity || 'common')}${item?.name || obj.itemId}${Colors.END}`);
   });
 
   const choice = (await askFunc(`\nRemove (1-${occupiedSlots.length}) or Enter: `)).trim();
@@ -150,18 +150,18 @@ export async function removeHousingItem(game, askFunc) {
   if (itemId && game.housingData?.[itemId]) {
     game.player.comfortPoints = Math.max(0, (game.player.comfortPoints || 0) - (game.housingData[itemId].comfort_points || 0));
   }
-  console.log(`${Colors.YELLOW}Removed item from ${slot}.${Colors.END}`);
+  game.print(`${Colors.YELLOW}Removed item from ${slot}.${Colors.END}`);
   await askFunc("Press Enter to continue...");
 }
 
 export async function viewHomeStatus(game, askFunc) {
-  console.log("\n=== HOME DETAILS ===");
-  console.log(`\nComfort Points: ${Colors.CYAN}${game.player.comfortPoints || 0}${Colors.END}`);
+  game.print("\n=== HOME DETAILS ===");
+  game.print(`\nComfort Points: ${Colors.CYAN}${game.player.comfortPoints || 0}${Colors.END}`);
 
   const placedItems = Object.values(game.player.buildingSlots || {}).filter(id => id);
-  console.log(`Total Items Placed: ${placedItems.length}`);
+  game.print(`Total Items Placed: ${placedItems.length}`);
 
-  console.log("\n=== ITEM BREAKDOWN ===");
+  game.print("\n=== ITEM BREAKDOWN ===");
   const itemComforts = {};
   for (const itemId of placedItems) {
     const itemData = game.housingData?.[itemId] || {};
@@ -173,7 +173,7 @@ export async function viewHomeStatus(game, askFunc) {
   }
 
   Object.entries(itemComforts).sort((a, b) => b[1].total_comfort - a[1].total_comfort).slice(0, 10).forEach(([name, info]) => {
-    console.log(`  ${name}: x${info.count} = +${info.total_comfort} comfort`);
+    game.print(`  ${name}: x${info.count} = +${info.total_comfort} comfort`);
   });
   await askFunc("\nPress Enter to continue...");
 }
@@ -186,31 +186,31 @@ export async function farm(game, askFunc) {
   }
 
   if (!hasFarm) {
-    console.log(`\n${Colors.YELLOW}Build a farm first!${Colors.END}`);
+    game.print(`\n${Colors.YELLOW}Build a farm first!${Colors.END}`);
     await askFunc("Press Enter to continue...");
     return;
   }
 
   while (true) {
-    console.clear();
-    console.log(`\n${Colors.BOLD}${Colors.CYAN}=== FARMING ===${Colors.END}`);
+    game.clear();
+    game.print(`\n${Colors.BOLD}${Colors.CYAN}=== FARMING ===${Colors.END}`);
     const cropsData = game.farmingData?.crops || {};
     const cropsList = Object.entries(cropsData);
 
-    console.log("=== FARM STATUS ===");
+    game.print("=== FARM STATUS ===");
     for (let i = 1; i <= 2; i++) {
       const slot = `farm_${i}`;
       if (game.player.buildingSlots?.[slot]) {
-        console.log(`Farm Plot ${i}: Active`);
+        game.print(`Farm Plot ${i}: Active`);
         const plots = game.player.farmPlots?.[slot] || [];
         plots.forEach((p, pi) => {
           const cName = cropsData[p.crop]?.name || p.crop;
-          console.log(`  ${pi + 1}. ${cName} - ${p.days_left > 0 ? p.days_left + ' days left' : 'READY'}`);
+          game.print(`  ${pi + 1}. ${cName} - ${p.days_left > 0 ? p.days_left + ' days left' : 'READY'}`);
         });
       }
     }
 
-    console.log("\n1-N. Plant, H. Harvest, B. Back");
+    game.print("\n1-N. Plant, H. Harvest, B. Back");
     const choice = (await askFunc("Action: ")).trim().toUpperCase();
     if (choice === 'B') break;
     else if (choice === 'H') await harvestCrops(game, askFunc);
@@ -225,8 +225,8 @@ async function plantCrop(game, askFunc, [cropId, cropData]) {
   const farmChoices = [];
   for (let i = 1; i <= 2; i++) if (game.player.buildingSlots?.[`farm_${i}`]) farmChoices.push(`farm_${i}`);
 
-  console.log("Select plot:");
-  farmChoices.forEach((f, i) => console.log(`${i+1}. ${f}`));
+  game.print("Select plot:");
+  farmChoices.forEach((f, i) => game.print(`${i+1}. ${f}`));
   const choice = await askFunc("Plot: ");
   const fSlot = farmChoices[parseInt(choice)-1];
   if (!fSlot) return;
@@ -236,7 +236,7 @@ async function plantCrop(game, askFunc, [cropId, cropData]) {
 
   if (game.player.farmPlots[fSlot].length < (game.farmingData?.max_plots_per_farm || 3)) {
     game.player.farmPlots[fSlot].push({ crop: cropId, days_left: cropData.growth_time || 0 });
-    console.log(`Planted ${cropData.name}!`);
+    game.print(`Planted ${cropData.name}!`);
   }
   await askFunc("Press Enter to continue...");
 }
@@ -251,7 +251,7 @@ async function harvestCrops(game, askFunc) {
       if (p.days_left <= 0) {
         const cData = cropsData[p.crop] || {};
         for (let j = 0; j < (cData.harvest_amount || 1); j++) game.player.inventory.push(cData.name || p.crop);
-        console.log(`Harvested ${cData.name || p.crop}!`);
+        game.print(`Harvested ${cData.name || p.crop}!`);
       } else remaining.push(p);
     }
     game.player.farmPlots[slot] = remaining;

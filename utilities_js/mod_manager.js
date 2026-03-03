@@ -21,13 +21,15 @@ class MockLangModManager {
 export class ModManager {
   /**
    * @param {Object} lang - Language manager
+   * @param {Object} game - Optional game instance for output
    */
-  constructor(lang = null) {
+  constructor(lang = null, game = null) {
     this.modsDir = "mods";
     this.mods = {};
     this.enabledMods = [];
     this.settingsFile = "data/mod_settings.json";
     this.settings = { ...DEFAULT_SETTINGS };
+    this.game = game;
     
     if (lang === null) {
       this.lang = new MockLangModManager();
@@ -37,6 +39,16 @@ export class ModManager {
     
     this.loadSettings();
     this.discoverMods();
+  }
+
+  /**
+   * Output a message to game UI or console
+   * @param {string} message - Message to output
+   */
+  print(message) {
+    if (this.game && typeof this.game.print === 'function') {
+      this.game.print(message);
+    }
   }
 
   /**
@@ -61,7 +73,7 @@ export class ModManager {
     try {
       localStorage.setItem('mod_settings', JSON.stringify(this.settings));
     } catch (e) {
-      console.error(`Error saving mod settings: ${e}`);
+      this.print(`Error saving mod settings: ${e}`);
     }
   }
 
@@ -72,7 +84,7 @@ export class ModManager {
     this.mods = {};
     // In browser, mods would need to be loaded differently
     // This is a placeholder for browser functionality
-    console.log("Mod discovery not fully implemented in browser version");
+    this.print("Mod discovery not fully implemented in browser version");
   }
 
   /**
@@ -131,10 +143,10 @@ export class ModManager {
 
     if (disabled.has(folderName)) {
       disabled.delete(folderName);
-      console.log(`Mod enabled: ${folderName}`);
+      this.print(`Mod enabled: ${folderName}`);
     } else {
       disabled.add(folderName);
-      console.log(`Mod disabled: ${folderName}`);
+      this.print(`Mod disabled: ${folderName}`);
     }
 
     this.settings["disabled_mods"] = Array.from(disabled);
@@ -148,7 +160,7 @@ export class ModManager {
   toggleModsSystem() {
     this.settings["mods_enabled"] = !this.settings.get("mods_enabled", true);
     const status = this.settings["mods_enabled"] ? "enabled" : "disabled";
-    console.log(`Mod system ${status}!`);
+    this.print(`Mod system ${status}!`);
     this.saveSettings();
     return this.settings["mods_enabled"];
   }

@@ -15,26 +15,26 @@ import { getRarityColor } from './shop.js';
  */
 export async function visitAlchemy(game, askFunc) {
   if (!game.player) {
-    console.log(game.lang?.get("no_character") || "No character created yet.");
+    game.print(game.lang?.get("no_character") || "No character created yet.");
     return;
   }
 
   const recipes = game.craftingData?.recipes || {};
   if (!recipes || Object.keys(recipes).length === 0) {
-    console.log(game.lang?.get('ui_no_crafting_recipes') || "No crafting recipes available.");
+    game.print(game.lang?.get('ui_no_crafting_recipes') || "No crafting recipes available.");
     return;
   }
 
-  console.log(`\n${Colors.MAGENTA}${Colors.BOLD}=== ALCHEMY WORKSHOP ===${Colors.END}`);
-  console.log("Welcome to the Alchemy Workshop! Here you can craft potions, elixirs, and items.");
-  console.log(`\nYour gold: ${Colors.GOLD}${game.player.gold}${Colors.END}`);
+  game.print(`\n${Colors.MAGENTA}${Colors.BOLD}=== ALCHEMY WORKSHOP ===${Colors.END}`);
+  game.print("Welcome to the Alchemy Workshop! Here you can craft potions, elixirs, and items.");
+  game.print(`\nYour gold: ${Colors.GOLD}${game.player.gold}${Colors.END}`);
 
   displayCraftingMaterials(game);
 
   while (true) {
-    console.log("\n=== ALCHEMY WORKSHOP ===");
-    console.log("Categories: [P]otions, [E]lixirs, [N]chantments, [U]tility, [A]ll");
-    console.log("[C]raft item, [M]aterials, [B]ack");
+    game.print("\n=== ALCHEMY WORKSHOP ===");
+    game.print("Categories: [P]otions, [E]lixirs, [N]chantments, [U]tility, [A]ll");
+    game.print("[C]raft item, [M]aterials, [B]ack");
 
     const choice = (await askFunc("\nChoose an option: ")).trim().toUpperCase();
 
@@ -43,7 +43,7 @@ export async function visitAlchemy(game, askFunc) {
     } else if (choice === 'P') {
       await displayRecipesByCategory(game, 'Potions', askFunc);
     } else if (choice === 'E') {
-      console.log("Elixirs or Enchantments? [E/N]:");
+      game.print("Elixirs or Enchantments? [E/N]:");
       const sub = (await askFunc("Choose (E/N): ")).trim().toUpperCase();
       if (sub === 'E') {
         await displayRecipesByCategory(game, 'Elixirs', askFunc);
@@ -59,7 +59,7 @@ export async function visitAlchemy(game, askFunc) {
     } else if (choice === 'M') {
       displayCraftingMaterials(game);
     } else {
-      console.log("Invalid choice.");
+      game.print("Invalid choice.");
     }
   }
 }
@@ -67,7 +67,7 @@ export async function visitAlchemy(game, askFunc) {
 export function displayCraftingMaterials(game) {
   if (!game.player) return;
 
-  console.log("\n=== Your Materials ===");
+  game.print("\n=== Your Materials ===");
   const materialCategories = game.craftingData?.material_categories || {};
   const allMaterials = new Set();
   for (const materials of Object.values(materialCategories)) {
@@ -82,14 +82,14 @@ export function displayCraftingMaterials(game) {
   }
 
   if (Object.keys(materialCounts).length === 0) {
-    console.log("You have no crafting materials.");
+    game.print("You have no crafting materials.");
     return;
   }
 
-  console.log(`${'Material'.padEnd(25)} ${'Quantity'.padEnd(10)}`);
-  console.log("-".repeat(35));
+  game.print(`${'Material'.padEnd(25)} ${'Quantity'.padEnd(10)}`);
+  game.print("-".repeat(35));
   for (const [material, count] of Object.entries(materialCounts).sort()) {
-    console.log(`${material.padEnd(25)} ${count.toString().padEnd(10)}`);
+    game.print(`${material.padEnd(25)} ${count.toString().padEnd(10)}`);
   }
 }
 
@@ -98,24 +98,24 @@ export async function displayRecipesByCategory(game, category, askFunc) {
   const categoryRecipes = Object.entries(recipes).filter(([_, rdata]) => rdata.category === category);
 
   if (categoryRecipes.length === 0) {
-    console.log(`No recipes for ${category}.`);
+    game.print(`No recipes for ${category}.`);
     return;
   }
 
-  console.log(`\n${Colors.BOLD}=== ${category.toUpperCase()} ===${Colors.END}`);
+  game.print(`\n${Colors.BOLD}=== ${category.toUpperCase()} ===${Colors.END}`);
   for (let i = 0; i < categoryRecipes.length; i++) {
     const [rid, rdata] = categoryRecipes[i];
     const name = rdata.name || rid;
     const rarity = rdata.rarity || 'common';
     const rarityColor = getRarityColor(rarity);
-    console.log(`${i + 1}. ${rarityColor}${name}${Colors.END}`);
+    game.print(`${i + 1}. ${rarityColor}${name}${Colors.END}`);
   }
 }
 
 export async function displayAllRecipes(game, askFunc) {
   const recipes = game.craftingData?.recipes || {};
   if (Object.keys(recipes).length === 0) {
-    console.log("\nNo recipes available.");
+    game.print("\nNo recipes available.");
     return;
   }
 
@@ -128,20 +128,20 @@ export async function displayAllRecipes(game, askFunc) {
     const end = start + pageSize;
     const pageItems = recipeList.slice(start, end);
 
-    console.log("\n=== All Recipes ===");
+    game.print("\n=== All Recipes ===");
     for (let i = 0; i < pageItems.length; i++) {
       const [rid, rdata] = pageItems[i];
       const name = rdata.name || rid;
       const category = rdata.category || 'Unknown';
       const rarityColor = getRarityColor(rdata.rarity || 'common');
-      console.log(`${start + i + 1}. ${rarityColor}${name}${Colors.END} (${category})`);
+      game.print(`${start + i + 1}. ${rarityColor}${name}${Colors.END} (${category})`);
     }
 
     const totalPages = Math.ceil(recipeList.length / pageSize);
-    console.log(`\nPage ${currentPage + 1}/${totalPages}`);
-    if (currentPage > 0) console.log("P. Previous Page");
-    if (currentPage < totalPages - 1) console.log("N. Next Page");
-    console.log("C. Craft Option, B. Back");
+    game.print(`\nPage ${currentPage + 1}/${totalPages}`);
+    if (currentPage > 0) game.print("P. Previous Page");
+    if (currentPage < totalPages - 1) game.print("N. Next Page");
+    game.print("C. Craft Option, B. Back");
 
     const choice = (await askFunc("\nChoose an option: ")).trim().toUpperCase();
     if (choice === 'B') break;
@@ -155,10 +155,10 @@ export async function craftItem(game, askFunc) {
   const recipes = game.craftingData?.recipes || {};
   const recipeNames = Object.keys(recipes);
 
-  console.log("\n=== Craft Item ===");
+  game.print("\n=== Craft Item ===");
   recipeNames.forEach((rid, i) => {
     const rdata = recipes[rid];
-    console.log(`${i + 1}. ${getRarityColor(rdata.rarity || 'common')}${rdata.name || rid}${Colors.END}`);
+    game.print(`${i + 1}. ${getRarityColor(rdata.rarity || 'common')}${rdata.name || rid}${Colors.END}`);
   });
 
   const choice = (await askFunc(`\nChoose (1-${recipeNames.length}) or Enter: `)).trim();
@@ -169,14 +169,14 @@ export async function craftItem(game, askFunc) {
   if (!recipe) return;
 
   if (game.player.level < (recipe.skill_requirement || 1)) {
-    console.log(`\n${Colors.RED}Need level ${recipe.skill_requirement || 1}!${Colors.END}`);
+    game.print(`\n${Colors.RED}Need level ${recipe.skill_requirement || 1}!${Colors.END}`);
     return;
   }
 
   const materialsNeeded = recipe.materials || {};
   for (const [material, quantity] of Object.entries(materialsNeeded)) {
     if (game.player.inventory.filter(x => x === material).length < quantity) {
-      console.log(`Missing ${material}`);
+      game.print(`Missing ${material}`);
       return;
     }
   }
@@ -197,7 +197,7 @@ export async function craftItem(game, askFunc) {
       game.updateMissionProgress('collect', item);
     }
   }
-  console.log(`${Colors.GREEN}Crafted ${recipe.name}!${Colors.END}`);
+  game.print(`${Colors.GREEN}Crafted ${recipe.name}!${Colors.END}`);
 }
 
 export default {

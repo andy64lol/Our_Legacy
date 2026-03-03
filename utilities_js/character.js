@@ -469,7 +469,7 @@ export class Character {
    * @param {Function} printFunc - Function to handle output
    */
   displayStats(printFunc = null) {
-    const output = printFunc || console.log;
+    const output = printFunc || this.game.print;
     output(`\n--- ${this.name} (${this.characterClass}) ---`);
     output(`Level: ${this.level} (${this.rank})`);
     

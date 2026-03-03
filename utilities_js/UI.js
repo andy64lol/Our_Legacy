@@ -10,7 +10,7 @@ import { Colors } from './settings.js';
  * Clear the terminal screen
  */
 export function clearScreen() {
-  console.clear();
+  // Browser version - the game instance should handle clearing
 }
 
 /**
@@ -63,22 +63,26 @@ export function createSectionHeader(title, char = "=", width = 60) {
  * @returns {Promise<string>} User choice
  */
 export async function displayWelcomeScreen(lang, gameInstance, askFunc) {
+  const game = gameInstance;
+  
   while (true) {
-    clearScreen();
-    console.log(`${Colors.CYAN}${Colors.BOLD}`);
-    console.log("=".repeat(60));
-    console.log(`             ${lang.get('game_title_display') || 'Our Legacy'}`);
-    console.log(`       ${lang.get('game_subtitle_display') || 'A Text-Based Fantasy RPG'}`);
-    console.log("=".repeat(60));
-    console.log(`${Colors.END}`);
-    console.log(lang.get("welcome_message") || "Welcome to Our Legacy!");
-    console.log("Choose your path wisely, for every decision shapes your destiny.\n");
-    console.log(`${Colors.BOLD}${Colors.CYAN}=== ${lang.get('main_menu') || 'Main Menu'} ===${Colors.END}`);
-    console.log(`${Colors.CYAN}1.${Colors.END} ${lang.get('new_game') || 'New Game'}`);
-    console.log(`${Colors.CYAN}2.${Colors.END} ${lang.get('load_game') || 'Load Game'}`);
-    console.log(`${Colors.CYAN}3.${Colors.END} ${lang.get('settings') || 'Settings'}`);
-    console.log(`${Colors.CYAN}4.${Colors.END} ${lang.get('mods') || 'Mods'}`);
-    console.log(`${Colors.CYAN}5.${Colors.END} ${lang.get('quit') || 'Quit'}\n`);
+    if (game && typeof game.clear === 'function') {
+      game.clear();
+    }
+    game.print(`${Colors.CYAN}${Colors.BOLD}`);
+    game.print("=".repeat(60));
+    game.print(`             ${lang.get('game_title_display') || 'Our Legacy'}`);
+    game.print(`       ${lang.get('game_subtitle_display') || 'A Text-Based Fantasy RPG'}`);
+    game.print("=".repeat(60));
+    game.print(`${Colors.END}`);
+    game.print(lang.get("welcome_message") || "Welcome to Our Legacy!");
+    game.print("Choose your path wisely, for every decision shapes your destiny.\n");
+    game.print(`${Colors.BOLD}${Colors.CYAN}=== ${lang.get('main_menu') || 'Main Menu'} ===${Colors.END}`);
+    game.print(`${Colors.CYAN}1.${Colors.END} ${lang.get('new_game') || 'New Game'}`);
+    game.print(`${Colors.CYAN}2.${Colors.END} ${lang.get('load_game') || 'Load Game'}`);
+    game.print(`${Colors.CYAN}3.${Colors.END} ${lang.get('settings') || 'Settings'}`);
+    game.print(`${Colors.CYAN}4.${Colors.END} ${lang.get('mods') || 'Mods'}`);
+    game.print(`${Colors.CYAN}5.${Colors.END} ${lang.get('quit') || 'Quit'}\n`);
 
     const choice = await askFunc(`${Colors.CYAN}Choose an option (1-5): ${Colors.END}`);
     
@@ -99,8 +103,10 @@ export async function displayWelcomeScreen(lang, gameInstance, askFunc) {
       }
     }
     if (choice === "5") {
-      console.log(lang.get("thank_exit") || "Thank you for playing!");
-      clearScreen();
+      game.print(lang.get("thank_exit") || "Thank you for playing!");
+      if (game && typeof game.clear === 'function') {
+        game.clear();
+      }
       return "quit";
     }
   }

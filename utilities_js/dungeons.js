@@ -49,17 +49,17 @@ export class DungeonSystem {
    */
   async visitDungeons(askFunc) {
     if (!this.game.player) {
-      console.log(this.lang.get("no_character") || "No character created yet.");
+      this.game.print(this.lang.get("no_character") || "No character created yet.");
       return;
     }
 
-    console.log("\n=== DUNGEONS ===");
-    console.log("The dungeon portal awaits...");
+    this.game.print("\n=== DUNGEONS ===");
+    this.game.print("The dungeon portal awaits...");
 
     // Check if player is in a dungeon
     if (this.currentDungeon) {
-      console.log(`\n${Colors.YELLOW}You are currently in: ${this.currentDungeon.name}${Colors.END}`);
-      console.log(`Progress: Room ${this.dungeonProgress + 1}/${this.dungeonRooms.length}`);
+      this.game.print(`\n${Colors.YELLOW}You are currently in: ${this.currentDungeon.name}${Colors.END}`);
+      this.game.print(`Progress: Room ${this.dungeonProgress + 1}/${this.dungeonRooms.length}`);
 
       const choice = (await askFunc("Continue dungeon (C) or Exit (E)? ")).trim().toUpperCase();
       if (choice === 'C') {
@@ -73,7 +73,7 @@ export class DungeonSystem {
     // Show available dungeons
     const allDungeons = this.dungeonsData?.dungeons || [];
     if (!allDungeons || allDungeons.length === 0) {
-      console.log("No dungeons available.");
+      this.game.print("No dungeons available.");
       return;
     }
 
@@ -84,18 +84,18 @@ export class DungeonSystem {
     });
 
     if (dungeons.length === 0) {
-      console.log(`\n${Colors.YELLOW}No dungeons available in this area.${Colors.END}`);
+      this.game.print(`\n${Colors.YELLOW}No dungeons available in this area.${Colors.END}`);
       return;
     }
 
-    console.log(`\n${Colors.CYAN}Available Dungeons:${Colors.END}`);
+    this.game.print(`\n${Colors.CYAN}Available Dungeons:${Colors.END}`);
     dungeons.forEach((d, i) => {
       const difficulty = d.difficulty || [1, 3];
       const minLevel = difficulty[0] * 5;
       const status = this.game.player.level >= minLevel ? `${Colors.GREEN}Available${Colors.END}` : `${Colors.RED}Level ${minLevel}+ required${Colors.END}`;
-      console.log(`${i + 1}. ${Colors.BOLD}${d.name || 'Unknown'}${Colors.END} (Difficulty ${difficulty[0]}-${difficulty[1]}, ${d.rooms || 5} rooms)`);
-      console.log(`   ${d.description || ''}`);
-      console.log(`   Status: ${status}`);
+      this.game.print(`${i + 1}. ${Colors.BOLD}${d.name || 'Unknown'}${Colors.END} (Difficulty ${difficulty[0]}-${difficulty[1]}, ${d.rooms || 5} rooms)`);
+      this.game.print(`   ${d.description || ''}`);
+      this.game.print(`   Status: ${status}`);
     });
 
     const choice = (await askFunc(`\nChoose dungeon (1-${dungeons.length}) or Enter: `)).trim();
@@ -105,14 +105,14 @@ export class DungeonSystem {
       if (dungeon) {
         const minLevel = (dungeon.difficulty || [1, 3])[0] * 5;
         if (this.game.player.level >= minLevel) this.enterDungeon(dungeon);
-        else console.log(`Need level ${minLevel}!`);
+        else this.game.print(`Need level ${minLevel}!`);
       }
     }
   }
 
   enterDungeon(dungeon) {
-    console.log(`\n${Colors.MAGENTA}${Colors.BOLD}Entering ${dungeon.name || 'Dungeon'}!${Colors.END}`);
-    console.log(dungeon.description || '');
+    this.game.print(`\n${Colors.MAGENTA}${Colors.BOLD}Entering ${dungeon.name || 'Dungeon'}!${Colors.END}`);
+    this.game.print(dungeon.description || '');
 
     this.currentDungeon = dungeon;
     this.dungeonProgress = 0;
@@ -162,7 +162,7 @@ export class DungeonSystem {
     while (this.currentDungeon && this.dungeonProgress < this.dungeonRooms.length) {
       const room = this.dungeonRooms[this.dungeonProgress];
 
-      console.log(`\n${Colors.CYAN}${Colors.BOLD}=== Room ${room.roomNumber} ===${Colors.END}`);
+      this.game.print(`\n${Colors.CYAN}${Colors.BOLD}=== Room ${room.roomNumber} ===${Colors.END}`);
 
       // Handle room based on type
       const roomType = room.type;
@@ -209,21 +209,21 @@ export class DungeonSystem {
    */
   async handleQuestionRoom(room, askFunc) {
     if (!this.game.player) return;
-    console.log("A mystical pedestal stands in the center of the room...");
+    this.game.print("A mystical pedestal stands in the center of the room...");
 
     const challengeTemplates = this.dungeonsData?.challenge_templates || {};
     const questionTemplate = challengeTemplates.question || {};
     const questionTypes = questionTemplate.types || [];
 
     if (questionTypes.length === 0) {
-      console.log("No questions available. Moving forward...");
+      this.game.print("No questions available. Moving forward...");
       this.advanceRoom();
       return;
     }
 
     const questionData = questionTypes[Math.floor(Math.random() * questionTypes.length)];
-    console.log("\n=== Riddle ===");
-    console.log(questionData.question || 'Riddle not found');
+    this.game.print("\n=== Riddle ===");
+    this.game.print(questionData.question || 'Riddle not found');
 
     let attempts = 0;
     const maxAttempts = questionData.max_attempts || 3;
@@ -233,7 +233,7 @@ export class DungeonSystem {
       if (answer === 'leave') break;
 
       if (answer === (questionData.answer || '').toLowerCase()) {
-        console.log("Correct!");
+        this.game.print("Correct!");
         const reward = questionData.success_reward || {};
         if (reward.gold) this.game.player.gold += reward.gold;
         if (reward.experience) this.game.player.gainExperience(reward.experience);
@@ -241,7 +241,7 @@ export class DungeonSystem {
         return;
       }
       attempts++;
-      console.log("Incorrect.");
+      this.game.print("Incorrect.");
     }
 
     const damage = questionData.failure_damage || 15;
@@ -261,7 +261,7 @@ export class DungeonSystem {
       return;
     }
 
-    console.log("Combat approaches! Enemies are preparing to attack...");
+    this.game.print("Combat approaches! Enemies are preparing to attack...");
 
     // Generate enemies
     const difficulty = room.difficulty || 1;
@@ -299,12 +299,12 @@ export class DungeonSystem {
     }
 
     if (enemies.length === 0) {
-      console.log(`${Colors.YELLOW}No enemies found! You proceed safely.${Colors.END}`);
+      this.game.print(`${Colors.YELLOW}No enemies found! You proceed safely.${Colors.END}`);
       this.advanceRoom();
       return;
     }
 
-    console.log(`Encounter: ${enemies.length} enemy(s)!`);
+    this.game.print(`Encounter: ${enemies.length} enemy(s)!`);
 
     // Battle each enemy
     for (const enemy of enemies) {
@@ -313,7 +313,7 @@ export class DungeonSystem {
     }
 
     if (this.game.player && this.game.player.isAlive()) {
-      console.log("You cleared the battle room!");
+      this.game.print("You cleared the battle room!");
       this.advanceRoom();
     } else {
       this.dungeonDeath();
@@ -326,7 +326,7 @@ export class DungeonSystem {
       return;
     }
 
-    console.log("A treasure chest stands in the center of the room!");
+    this.game.print("A treasure chest stands in the center of the room!");
     const difficulty = room.difficulty || 1;
     let chestType = 'small';
     if (difficulty >= 8) chestType = 'legendary';
@@ -336,7 +336,7 @@ export class DungeonSystem {
     const chestTemplates = this.dungeonsData?.chest_templates || {};
     const chestData = chestTemplates[chestType] || chestTemplates['small'] || {};
 
-    console.log(`You found a ${chestData.name || 'chest'}!`);
+    this.game.print(`You found a ${chestData.name || 'chest'}!`);
 
     const goldRange = chestData.gold_range || [50, 150];
     const goldReward = Math.floor(Math.random() * (goldRange[1] - goldRange[0] + 1)) + goldRange[0];
@@ -346,8 +346,8 @@ export class DungeonSystem {
 
     this.game.player.gold += goldReward;
     this.game.player.gainExperience(expReward);
-    console.log(`\n${Colors.GOLD}You found ${goldReward} gold!${Colors.END}`);
-    console.log(`${Colors.MAGENTA}You gained ${expReward} experience!${Colors.END}`);
+    this.game.print(`\n${Colors.GOLD}You found ${goldReward} gold!${Colors.END}`);
+    this.game.print(`${Colors.MAGENTA}You gained ${expReward} experience!${Colors.END}`);
 
     const itemRarities = chestData.item_rarity || ['common'];
     for (let i = 0; i < itemCount; i++) {
@@ -357,7 +357,7 @@ export class DungeonSystem {
         const item = possibleItems[Math.floor(Math.random() * possibleItems.length)];
         this.game.player.inventory.push(item.name);
         this.game.updateMissionProgress('collect', item.name);
-        console.log(`  - ${getRarityColor(item.rarity || 'common')}${item.name}${Colors.END}`);
+        this.game.print(`  - ${getRarityColor(item.rarity || 'common')}${item.name}${Colors.END}`);
       }
     }
     this.advanceRoom();
@@ -365,7 +365,7 @@ export class DungeonSystem {
 
   async handleTrapChestRoom(room, askFunc) {
     if (!this.game.player) return;
-    console.log("A suspicious-looking chest is in the room...");
+    this.game.print("A suspicious-looking chest is in the room...");
     const choice = (await askFunc("Open (O) or Leave (L)? ")).trim().toUpperCase();
     if (choice !== 'O') {
       this.advanceRoom();
@@ -373,17 +373,17 @@ export class DungeonSystem {
     }
 
     if (Math.random() < 0.7) {
-      console.log("The chest was trapped!");
+      this.game.print("The chest was trapped!");
       const trapTemplates = this.dungeonsData?.challenge_templates?.trap || {};
       const trapTypes = trapTemplates.types || [];
       if (trapTypes.length > 0) {
         const trap = trapTypes[Math.floor(Math.random() * trapTypes.length)];
-        console.log(trap.description || "A trap springs!");
+        this.game.print(trap.description || "A trap springs!");
         const roll = Math.floor(Math.random() * 20) + 1;
         if (roll < (trapTemplates.success_threshold || 10)) {
           this.game.player.takeDamage(trap.damage || 20);
         } else {
-          console.log("You avoided it!");
+          this.game.print("You avoided it!");
         }
       }
     } else {
@@ -407,12 +407,12 @@ export class DungeonSystem {
       return;
     }
 
-    console.log(`\n=== Decision ===\n${challenge.question}`);
-    challenge.options.forEach((o, i) => console.log(`${i+1}. ${o.text}`));
+    this.game.print(`\n=== Decision ===\n${challenge.question}`);
+    challenge.options.forEach((o, i) => this.game.print(`${i+1}. ${o.text}`));
     const choice = parseInt(await askFunc("Choice: ")) - 1;
     const outcome = challenge.options[choice];
     if (outcome) {
-      console.log(outcome.reason);
+      this.game.print(outcome.reason);
       if (outcome.correct) {
         if (challenge.success_reward?.gold) this.game.player.gold += challenge.success_reward.gold;
       } else {
@@ -427,7 +427,7 @@ export class DungeonSystem {
    * @param {Object} room - Room data
    */
   async handleEmptyRoom(room) {
-    console.log("An empty room stretches before you...");
+    this.game.print("An empty room stretches before you...");
 
     // Small chance for hidden treasure or encounter
     if (Math.random() < 0.3) {
@@ -436,11 +436,11 @@ export class DungeonSystem {
         if (this.game.player) {
           const goldFound = Math.floor(Math.random() * (50 - 10 + 1)) + 10;
           this.game.player.gold += goldFound;
-          console.log(`${Colors.GOLD}You found ${goldFound} gold hidden in the room!${Colors.END}`);
+          this.game.print(`${Colors.GOLD}You found ${goldFound} gold hidden in the room!${Colors.END}`);
         }
       } else {
         // Random encounter
-        console.log("You hear a noise...");
+        this.game.print("You hear a noise...");
         if (this.game.player && this.game.randomEncounter) {
           await this.game.randomEncounter();
           if (this.game.player && !this.game.player.isAlive()) {
@@ -450,7 +450,7 @@ export class DungeonSystem {
         }
       }
     } else {
-      console.log("Nothing of interest here.");
+      this.game.print("Nothing of interest here.");
     }
 
     this.advanceRoom();
@@ -469,20 +469,20 @@ export class DungeonSystem {
       const bossData = this.bossesData[bossId];
       const boss = new Boss(bossData, this.dialoguesData);
 
-      console.log("\n=== BOSS BATTLE ===");
-      console.log(`You face: ${boss.name}`);
-      console.log(boss.description);
+      this.game.print("\n=== BOSS BATTLE ===");
+      this.game.print(`You face: ${boss.name}`);
+      this.game.print(boss.description);
 
       const startDialogue = boss.getDialogue ? boss.getDialogue("on_start_battle") : null;
       if (startDialogue) {
-        console.log(`\n${Colors.CYAN}${boss.name}:${Colors.END} ${startDialogue}`);
+        this.game.print(`\n${Colors.CYAN}${boss.name}:${Colors.END} ${startDialogue}`);
       }
 
       await this.game.battle(boss);
 
       if (this.game.player && this.game.player.isAlive()) {
-        console.log("\n=== VICTORY ===");
-        console.log(`You defeated ${boss.name}!`);
+        this.game.print("\n=== VICTORY ===");
+        this.game.print(`You defeated ${boss.name}!`);
 
         const expReward = (boss.experienceReward || 0) * 2;
         const goldReward = (boss.goldReward || 0) * 2;
@@ -490,15 +490,15 @@ export class DungeonSystem {
         this.game.player.gainExperience(expReward);
         this.game.player.gold += goldReward;
 
-        console.log(`Gained ${Colors.MAGENTA}${expReward} experience${Colors.END}`);
-        console.log(`Gained ${Colors.GOLD}${goldReward} gold${Colors.END}`);
+        this.game.print(`Gained ${Colors.MAGENTA}${expReward} experience${Colors.END}`);
+        this.game.print(`Gained ${Colors.GOLD}${goldReward} gold${Colors.END}`);
 
         this.completeDungeon();
       } else {
         this.dungeonDeath();
       }
     } else {
-      console.log(`${Colors.YELLOW}Boss data not found. A powerful enemy appears!${Colors.END}`);
+      this.game.print(`${Colors.YELLOW}Boss data not found. A powerful enemy appears!${Colors.END}`);
       
       if (this.game.player) {
         const completionReward = dungeon ? dungeon.get('completion_reward', {}) : {};
@@ -508,8 +508,8 @@ export class DungeonSystem {
         this.game.player.gainExperience(expReward);
         this.game.player.gold += goldReward;
 
-        console.log(`Gained ${Colors.MAGENTA}${expReward} experience${Colors.END}`);
-        console.log(`Gained ${Colors.GOLD}${goldReward} gold${Colors.END}`);
+        this.game.print(`Gained ${Colors.MAGENTA}${expReward} experience${Colors.END}`);
+        this.game.print(`Gained ${Colors.GOLD}${goldReward} gold${Colors.END}`);
       }
 
       this.completeDungeon();
@@ -528,7 +528,7 @@ export class DungeonSystem {
     if (this.dungeonProgress >= this.dungeonRooms.length) {
       this.completeDungeon();
     } else {
-      console.log("\nMoving to the next room...");
+      this.game.print("\nMoving to the next room...");
     }
   }
 
@@ -539,8 +539,8 @@ export class DungeonSystem {
     if (!this.currentDungeon) return;
 
     const dungeon = this.currentDungeon;
-    console.log("\n=== DUNGEON COMPLETE ===");
-    console.log(`You cleared ${dungeon.get('name', 'the dungeon')}!`);
+    this.game.print("\n=== DUNGEON COMPLETE ===");
+    this.game.print(`You cleared ${dungeon.get('name', 'the dungeon')}!`);
 
     // Calculate completion time
     const startTimeStr = this.dungeonState.startTime;
@@ -548,7 +548,7 @@ export class DungeonSystem {
       const startTime = new Date(startTimeStr);
       const endTime = new Date();
       const duration = Math.floor((endTime - startTime) / 1000);
-      console.log(`Completion time: ${Math.floor(duration / 60)}m ${duration % 60}s`);
+      this.game.print(`Completion time: ${Math.floor(duration / 60)}m ${duration % 60}s`);
     }
 
     // Update challenge
@@ -559,26 +559,26 @@ export class DungeonSystem {
     // Give completion rewards
     const completionReward = dungeon.get ? dungeon.get('completion_reward', {}) : {};
     if (completionReward && completionReward.get && this.game.player) {
-      console.log(`\n${Colors.GOLD}${Colors.BOLD}Completion Rewards:${Colors.END}`);
+      this.game.print(`\n${Colors.GOLD}${Colors.BOLD}Completion Rewards:${Colors.END}`);
 
       if (completionReward.get('gold', 0) > 0) {
         this.game.player.gold += completionReward.get('gold', 0);
-        console.log(`  ${Colors.GOLD}+${completionReward.get('gold', 0)} gold${Colors.END}`);
+        this.game.print(`  ${Colors.GOLD}+${completionReward.get('gold', 0)} gold${Colors.END}`);
       }
 
       if (completionReward.get('experience', 0) > 0) {
         this.game.player.gainExperience(completionReward.get('experience', 0));
-        console.log(`  ${Colors.MAGENTA}+${completionReward.get('experience', 0)} experience${Colors.END}`);
+        this.game.print(`  ${Colors.MAGENTA}+${completionReward.get('experience', 0)} experience${Colors.END}`);
       }
 
       const items = completionReward.get ? completionReward.get('items', []) : [];
       if (items.length > 0) {
-        console.log("\nItems received:");
+        this.game.print("\nItems received:");
         for (const itemName of items) {
           this.game.player.inventory.push(itemName);
           const itemData = this.itemsData ? this.itemsData[itemName] : {};
           const color = getRarityColorLocal(itemData.rarity || 'common');
-          console.log(`    - ${color}${itemName}${Colors.END}`);
+          this.game.print(`    - ${color}${itemName}${Colors.END}`);
           this.game.updateMissionProgress('collect', itemName);
         }
       }
@@ -598,9 +598,9 @@ export class DungeonSystem {
     if (!this.game.player) return;
 
     if (this.currentDungeon) {
-      console.log(`\n${Colors.YELLOW}Exiting ${this.currentDungeon.name}...${Colors.END}`);
+      this.game.print(`\n${Colors.YELLOW}Exiting ${this.currentDungeon.name}...${Colors.END}`);
     } else {
-      console.log("\nExiting dungeon...");
+      this.game.print("\nExiting dungeon...");
     }
 
     // Optional penalty for early exit
@@ -608,7 +608,7 @@ export class DungeonSystem {
       const penaltyGold = Math.min(Math.floor(this.game.player.gold / 10), 100);
       if (penaltyGold > 0) {
         this.game.player.gold -= penaltyGold;
-        console.log(`${Colors.RED}Exit penalty: Lost ${penaltyGold} gold${Colors.END}`);
+        this.game.print(`${Colors.RED}Exit penalty: Lost ${penaltyGold} gold${Colors.END}`);
       }
     }
 
@@ -625,7 +625,7 @@ export class DungeonSystem {
   dungeonDeath() {
     if (!this.game.player) return;
     
-    console.log(`\n${Colors.RED}${Colors.BOLD}You have fallen in the dungeon!${Colors.END}`);
+    this.game.print(`\n${Colors.RED}${Colors.BOLD}You have fallen in the dungeon!${Colors.END}`);
 
     if (this.game.player) {
       // Death penalty
@@ -635,12 +635,12 @@ export class DungeonSystem {
       // Lose some gold
       const goldLoss = Math.min(Math.floor(this.game.player.gold / 5), 200);
       this.game.player.gold -= goldLoss;
-      console.log(`Lost ${goldLoss} gold.`);
+      this.game.print(`Lost ${goldLoss} gold.`);
     }
 
     // Return to starting village
     this.game.currentArea = "starting_village";
-    console.log("You respawn at the starting village.");
+    this.game.print("You respawn at the starting village.");
 
     // Clear dungeon state
     this.currentDungeon = null;
