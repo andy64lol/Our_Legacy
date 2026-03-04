@@ -4,6 +4,7 @@
 // Andy64lol
 
 import { Colors } from './settings.js';
+import { Character } from './character.js';
 
 /**
  * SaveLoadSystem class for handling game saves in browser
@@ -218,7 +219,7 @@ export class SaveLoadSystem {
     const playerData = saveData.player;
 
     // Create new character
-    this.game.player = new this.game.CharacterClass(
+    this.game.player = new Character(
       playerData.name,
       playerData.characterClass,
       this.game.classesData,

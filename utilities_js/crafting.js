@@ -205,5 +205,17 @@ export default {
   displayCraftingMaterials,
   displayRecipesByCategory,
   displayAllRecipes,
-  craftItem
+  craftItem,
+  visit_alchemy: visitAlchemy,
+  display_crafting_materials: displayCraftingMaterials,
+  display_recipes_by_category: displayRecipesByCategory,
+  display_all_recipes: displayAllRecipes,
+  craft_item: craftItem
 };
+
+// Also export as named exports for ES6 imports
+export { visitAlchemy as visit_alchemy };
+export { displayCraftingMaterials as display_crafting_materials };
+export { displayRecipesByCategory as display_recipes_by_category };
+export { displayAllRecipes as display_all_recipes };
+export { craftItem as craft_item };

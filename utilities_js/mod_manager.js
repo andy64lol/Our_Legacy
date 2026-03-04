@@ -6,6 +6,12 @@
 
 import { Colors } from './settings.js';
 
+// Default settings - must be defined before use
+const DEFAULT_SETTINGS = {
+  mods_enabled: true,
+  disabled_mods: []
+};
+
 /**
  * Mock language class for browser
  */
@@ -165,12 +171,6 @@ export class ModManager {
     return this.settings["mods_enabled"];
   }
 }
-
-// Default settings
-const DEFAULT_SETTINGS = {
-  mods_enabled: true,
-  disabled_mods: []
-};
 
 export { DEFAULT_SETTINGS };
 

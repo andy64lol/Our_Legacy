@@ -238,5 +238,14 @@ export default {
   getRarityColor,
   visitGeneralShop,
   visitSpecificShop,
-  shopSell
+  shopSell,
+  visit_specific_shop: visitSpecificShop,
+  visit_general_shop: visitGeneralShop,
+  shop_sell: shopSell
 };
+
+// Also export as named exports for ES6 imports
+export { getRarityColor };
+export { visitGeneralShop };
+export { visitSpecificShop as visit_specific_shop };
+export { shopSell as shop_sell };

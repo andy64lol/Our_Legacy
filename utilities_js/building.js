@@ -13,7 +13,7 @@ import { getRarityColor } from './shop.js';
  * @param {Function} askFunc - Ask function for input
  * @returns {Promise<void>}
  */
-export async function buildHome(game, askFunc) {
+export async function build_home(game, askFunc) {
   if (!game.player) {
     game.print(game.lang?.get("no_character") || "No character created yet.");
     return;
@@ -64,13 +64,13 @@ export async function buildHome(game, askFunc) {
     const choice = (await askFunc(`\n${Colors.CYAN}Choose option: ${Colors.END}`)).trim().toUpperCase();
 
     if (choice === 'B') break;
-    else if (choice === '1') await placeHousingItem(game, askFunc);
-    else if (choice === '2') await removeHousingItem(game, askFunc);
-    else if (choice === '3') await viewHomeStatus(game, askFunc);
+    else if (choice === '1') await place_housing_item(game, askFunc);
+    else if (choice === '2') await remove_housing_item(game, askFunc);
+    else if (choice === '3') await view_home_status(game, askFunc);
   }
 }
 
-export async function placeHousingItem(game, askFunc) {
+export async function place_housing_item(game, askFunc) {
   if (!game.player.housingOwned || game.player.housingOwned.length === 0) return;
 
   game.print("\n=== AVAILABLE ITEMS ===");
@@ -123,7 +123,7 @@ export async function placeHousingItem(game, askFunc) {
   await askFunc("Press Enter to continue...");
 }
 
-export async function removeHousingItem(game, askFunc) {
+export async function remove_housing_item(game, askFunc) {
   const occupiedSlots = [];
   if (game.player.buildingSlots) {
     for (const [slot, itemId] of Object.entries(game.player.buildingSlots)) {
@@ -154,7 +154,7 @@ export async function removeHousingItem(game, askFunc) {
   await askFunc("Press Enter to continue...");
 }
 
-export async function viewHomeStatus(game, askFunc) {
+export async function view_home_status(game, askFunc) {
   game.print("\n=== HOME DETAILS ===");
   game.print(`\nComfort Points: ${Colors.CYAN}${game.player.comfortPoints || 0}${Colors.END}`);
 
@@ -176,6 +176,10 @@ export async function viewHomeStatus(game, askFunc) {
     game.print(`  ${name}: x${info.count} = +${info.total_comfort} comfort`);
   });
   await askFunc("\nPress Enter to continue...");
+}
+
+export async function build_structures(game, askFunc) {
+  return await build_home(game, askFunc);
 }
 
 export async function farm(game, askFunc) {
@@ -213,15 +217,19 @@ export async function farm(game, askFunc) {
     game.print("\n1-N. Plant, H. Harvest, B. Back");
     const choice = (await askFunc("Action: ")).trim().toUpperCase();
     if (choice === 'B') break;
-    else if (choice === 'H') await harvestCrops(game, askFunc);
+    else if (choice === 'H') await harvest_crops(game, askFunc);
     else if (/^\d+$/.test(choice)) {
       const idx = parseInt(choice) - 1;
-      if (cropsList[idx]) await plantCrop(game, askFunc, cropsList[idx]);
+      if (cropsList[idx]) await plant_crop(game, askFunc, cropsList[idx]);
     }
   }
 }
 
-async function plantCrop(game, askFunc, [cropId, cropData]) {
+export async function training(game, askFunc) {
+  return await farm(game, askFunc);
+}
+
+async function plant_crop(game, askFunc, [cropId, cropData]) {
   const farmChoices = [];
   for (let i = 1; i <= 2; i++) if (game.player.buildingSlots?.[`farm_${i}`]) farmChoices.push(`farm_${i}`);
 
@@ -241,7 +249,7 @@ async function plantCrop(game, askFunc, [cropId, cropData]) {
   await askFunc("Press Enter to continue...");
 }
 
-async function harvestCrops(game, askFunc) {
+async function harvest_crops(game, askFunc) {
   const cropsData = game.farmingData?.crops || {};
   for (let i = 1; i <= 2; i++) {
     const slot = `farm_${i}`;
@@ -258,3 +266,15 @@ async function harvestCrops(game, askFunc) {
   }
   await askFunc("Press Enter to continue...");
 }
+
+export default {
+  build_home,
+  build_structures,
+  farm,
+  training,
+  place_housing_item,
+  remove_housing_item,
+  view_home_status,
+  plant_crop,
+  harvest_crops
+};
