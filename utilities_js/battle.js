@@ -127,8 +127,9 @@ export class BattleSystem {
       this.game.updateMissionProgress('kill', enemy.name);
       this.game.updateChallengeProgress('kill_count');
 
-      if (enemy.lootTable && Math.random() < 0.5) {
-        const loot = enemy.lootTable[Math.floor(Math.random() * enemy.lootTable.length)];
+      const lootTable = enemy.lootTable || enemy.drops || [];
+      if (lootTable.length > 0 && Math.random() < 0.5) {
+        const loot = lootTable[Math.floor(Math.random() * lootTable.length)];
         this.player.inventory.push(loot);
         this.game.print(this.lang.get('loot_acquired_msg', 'Loot acquired: {loot}!').replace('{loot}', loot));
         this.game.updateMissionProgress('collect', loot);

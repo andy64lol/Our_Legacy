@@ -10,9 +10,9 @@ export class LanguageManager {
     constructor(getSettingFunc, setSettingFunc) {
         this.config = {};
         this.translations = {};
-        this.getSetting = getSettingFunc;
-        this.setSetting = setSettingFunc;
-        this.currentLanguage = getSettingFunc ? getSettingFunc("language", "en") : "en";
+        this.getSetting = typeof getSettingFunc === 'function' ? getSettingFunc : null;
+        this.setSetting = typeof setSettingFunc === 'function' ? setSettingFunc : null;
+        this.currentLanguage = this.getSetting ? this.getSetting("language", "en") : "en";
         this.init();
     }
 

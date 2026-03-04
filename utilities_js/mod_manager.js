@@ -36,12 +36,7 @@ export class ModManager {
     this.settingsFile = "data/mod_settings.json";
     this.settings = { ...DEFAULT_SETTINGS };
     this.game = game;
-    
-    if (lang === null) {
-      this.lang = new MockLangModManager();
-    } else {
-      this.lang = lang;
-    }
+    this.lang = lang || new MockLangModManager();
     
     this.loadSettings();
     this.discoverMods();
@@ -62,10 +57,12 @@ export class ModManager {
    */
   loadSettings() {
     try {
-      const savedSettings = localStorage.getItem('mod_settings');
-      if (savedSettings) {
-        const loadedSettings = JSON.parse(savedSettings);
-        this.settings = { ...this.settings, ...loadedSettings };
+      if (typeof localStorage !== 'undefined') {
+        const savedSettings = localStorage.getItem('mod_settings');
+        if (savedSettings) {
+          const loadedSettings = JSON.parse(savedSettings);
+          this.settings = { ...this.settings, ...loadedSettings };
+        }
       }
     } catch (e) {
       this.settings = { ...DEFAULT_SETTINGS };
@@ -77,7 +74,9 @@ export class ModManager {
    */
   saveSettings() {
     try {
-      localStorage.setItem('mod_settings', JSON.stringify(this.settings));
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('mod_settings', JSON.stringify(this.settings));
+      }
     } catch (e) {
       this.print(`Error saving mod settings: ${e}`);
     }
@@ -98,11 +97,11 @@ export class ModManager {
    * @returns {Array} List of enabled mods
    */
   getEnabledMods() {
-    if (!this.settings.get("mods_enabled", true)) {
+    if (!this.settings["mods_enabled"]) {
       return [];
     }
 
-    const disabled = new Set(this.settings.get("disabled_mods", []));
+    const disabled = new Set(this.settings["disabled_mods"] || []);
     return Object.keys(this.mods).filter(name => !disabled.has(name));
   }
 
@@ -128,12 +127,12 @@ export class ModManager {
     for (const [name, mod] of Object.entries(this.mods)) {
       modsList.push({
         folder_name: name,
-        name: mod.get('name', name),
-        description: mod.get('description', ''),
-        author: mod.get('author', 'Unknown'),
-        version: mod.get('version', '1.0'),
-        enabled: enabled.includes(name) && this.settings.get("mods_enabled", true),
-        mod_path: mod.get('mod_path', '')
+        name: mod["name"] || name,
+        description: mod["description"] || '',
+        author: mod["author"] || 'Unknown',
+        version: mod["version"] || '1.0',
+        enabled: enabled.includes(name) && this.settings["mods_enabled"],
+        mod_path: mod["mod_path"] || ''
       });
     }
 
@@ -145,7 +144,7 @@ export class ModManager {
    * @param {string} folderName - Mod folder name
    */
   toggleMod(folderName) {
-    const disabled = new Set(this.settings.get("disabled_mods", []));
+    const disabled = new Set(this.settings["disabled_mods"] || []);
 
     if (disabled.has(folderName)) {
       disabled.delete(folderName);
@@ -164,7 +163,7 @@ export class ModManager {
    * @returns {boolean} New status
    */
   toggleModsSystem() {
-    this.settings["mods_enabled"] = !this.settings.get("mods_enabled", true);
+    this.settings["mods_enabled"] = !this.settings["mods_enabled"];
     const status = this.settings["mods_enabled"] ? "enabled" : "disabled";
     this.print(`Mod system ${status}!`);
     this.saveSettings();

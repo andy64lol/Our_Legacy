@@ -62,23 +62,31 @@ export class SettingsManager {
 
   loadSettings() {
     try {
-      const saved = localStorage.getItem(this.storageKey);
-      if (saved) {
-        const loadedSettings = JSON.parse(saved);
-        this.settings = { ...this.settings, ...loadedSettings };
+      if (typeof localStorage !== 'undefined') {
+        const saved = localStorage.getItem(this.storageKey);
+        if (saved) {
+          const loadedSettings = JSON.parse(saved);
+          this.settings = { ...this.settings, ...loadedSettings };
+        }
       }
     } catch (e) {
-      this.game.print("Could not load settings: " + e);
+      if (typeof console !== 'undefined' && console.error) {
+        console.error("Could not load settings:", e);
+      }
       this.settings = { ...DEFAULT_SETTINGS };
     }
   }
 
   saveSettings() {
     try {
-      localStorage.setItem(this.storageKey, JSON.stringify(this.settings));
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(this.storageKey, JSON.stringify(this.settings));
+      }
       return true;
     } catch (e) {
-      console.error("Error saving settings:", e);
+      if (typeof console !== 'undefined' && console.error) {
+        console.error("Error saving settings:", e);
+      }
       return false;
     }
   }
@@ -120,10 +128,12 @@ export class ModManager {
 
   loadSettings() {
     try {
-      const saved = localStorage.getItem(this.storageKey);
-      if (saved) {
-        const loadedSettings = JSON.parse(saved);
-        this.settings = { ...this.settings, ...loadedSettings };
+      if (typeof localStorage !== 'undefined') {
+        const saved = localStorage.getItem(this.storageKey);
+        if (saved) {
+          const loadedSettings = JSON.parse(saved);
+          this.settings = { ...this.settings, ...loadedSettings };
+        }
       }
     } catch (e) {
       this.settings = { ...DEFAULT_SETTINGS };

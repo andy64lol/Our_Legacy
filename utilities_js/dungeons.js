@@ -71,7 +71,7 @@ export class DungeonSystem {
     }
 
     // Show available dungeons
-    const allDungeons = this.dungeonsData?.dungeons || [];
+    const allDungeons = this.dungeonsData.dungeons || [];
     if (!allDungeons || allDungeons.length === 0) {
       this.game.print("No dungeons available.");
       return;
@@ -269,8 +269,8 @@ export class DungeonSystem {
 
     // Get enemies from current area
     const currentArea = this.game.currentArea;
-    const areaData = this.areasData && this.areasData[currentArea] ? this.areasData[currentArea] : {};
-    let areaEnemies = areaData.get ? areaData.get('possible_enemies', []) : [];
+    const areaData = (this.areasData && this.areasData[currentArea]) ? this.areasData[currentArea] : {};
+    let areaEnemies = areaData.possible_enemies || [];
 
     if (!areaEnemies || areaEnemies.length === 0) {
       const fallbackEnemies = ['goblin', 'orc', 'skeleton'];
@@ -463,7 +463,7 @@ export class DungeonSystem {
    */
   async handleBossRoom(room, askFunc) {
     const dungeon = this.currentDungeon;
-    const bossId = dungeon ? dungeon.get('boss_id') : null;
+    const bossId = dungeon ? dungeon.boss_id : null;
 
     if (bossId && this.bossesData && this.bossesData[bossId]) {
       const bossData = this.bossesData[bossId];
@@ -473,7 +473,7 @@ export class DungeonSystem {
       this.game.print(`You face: ${boss.name}`);
       this.game.print(boss.description);
 
-      const startDialogue = boss.getDialogue ? boss.getDialogue("on_start_battle") : null;
+      const startDialogue = boss.dialogue?.on_start_battle;
       if (startDialogue) {
         this.game.print(`\n${Colors.CYAN}${boss.name}:${Colors.END} ${startDialogue}`);
       }
@@ -501,9 +501,9 @@ export class DungeonSystem {
       this.game.print(`${Colors.YELLOW}Boss data not found. A powerful enemy appears!${Colors.END}`);
       
       if (this.game.player) {
-        const completionReward = dungeon ? dungeon.get('completion_reward', {}) : {};
-        const expReward = Math.floor((completionReward.get ? completionReward.get('experience', 500) : 500) / 2);
-        const goldReward = Math.floor((completionReward.get ? completionReward.get('gold', 300) : 300) / 2);
+        const completionReward = dungeon ? (dungeon.completion_reward || {}) : {};
+        const expReward = Math.floor((completionReward.experience || 500) / 2);
+        const goldReward = Math.floor((completionReward.gold || 300) / 2);
 
         this.game.player.gainExperience(expReward);
         this.game.player.gold += goldReward;
@@ -540,7 +540,7 @@ export class DungeonSystem {
 
     const dungeon = this.currentDungeon;
     this.game.print("\n=== DUNGEON COMPLETE ===");
-    this.game.print(`You cleared ${dungeon.get('name', 'the dungeon')}!`);
+    this.game.print(`You cleared ${dungeon.name || 'the dungeon'}!`);
 
     // Calculate completion time
     const startTimeStr = this.dungeonState.startTime;
@@ -557,21 +557,21 @@ export class DungeonSystem {
     }
 
     // Give completion rewards
-    const completionReward = dungeon.get ? dungeon.get('completion_reward', {}) : {};
-    if (completionReward && completionReward.get && this.game.player) {
+    const completionReward = dungeon.completion_reward || {};
+    if (completionReward && this.game.player) {
       this.game.print(`\n${Colors.GOLD}${Colors.BOLD}Completion Rewards:${Colors.END}`);
 
-      if (completionReward.get('gold', 0) > 0) {
-        this.game.player.gold += completionReward.get('gold', 0);
-        this.game.print(`  ${Colors.GOLD}+${completionReward.get('gold', 0)} gold${Colors.END}`);
+      if ((completionReward.gold || 0) > 0) {
+        this.game.player.gold += completionReward.gold || 0;
+        this.game.print(`  ${Colors.GOLD}+${completionReward.gold || 0} gold${Colors.END}`);
       }
 
-      if (completionReward.get('experience', 0) > 0) {
-        this.game.player.gainExperience(completionReward.get('experience', 0));
-        this.game.print(`  ${Colors.MAGENTA}+${completionReward.get('experience', 0)} experience${Colors.END}`);
+      if ((completionReward.experience || 0) > 0) {
+        this.game.player.gainExperience(completionReward.experience || 0);
+        this.game.print(`  ${Colors.MAGENTA}+${completionReward.experience || 0} experience${Colors.END}`);
       }
 
-      const items = completionReward.get ? completionReward.get('items', []) : [];
+      const items = completionReward.items || [];
       if (items.length > 0) {
         this.game.print("\nItems received:");
         for (const itemName of items) {

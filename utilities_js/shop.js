@@ -11,7 +11,7 @@ import { Colors } from './settings.js';
  * @param {string} rarity - Item rarity
  * @returns {string} Color code
  */
-export function getRarityColor(rarity) {
+function getRarityColor(rarity) {
   const rarityColors = {
     "common": Colors.COMMON,
     "uncommon": Colors.UNCOMMON,
@@ -29,16 +29,16 @@ export function getRarityColor(rarity) {
  * @param {Function} askFunc - Ask function for input
  * @returns {Promise<void>}
  */
-export async function visitGeneralShop(game, shopData, askFunc) {
+async function visitGeneralShop(game, shopData, askFunc) {
   if (!game.player) {
     game.print(game.lang.get("no_character") || "No character created yet.");
     return;
   }
 
-  const shopName = shopData.get("name", "Shop");
-  const welcomeMsg = shopData.get("welcome_message", `Welcome to ${shopName}!`);
-  const items = shopData.get("items", []);
-  const maxBuy = shopData.get("max_buy", 99);
+  const shopName = shopData.name || "Shop";
+  const welcomeMsg = shopData.welcome_message || `Welcome to ${shopName}!`;
+  const items = shopData.items || [];
+  const maxBuy = shopData.max_buy || 99;
 
   game.print(`\n${Colors.BOLD}=== ${shopName.toUpperCase()} ===${Colors.END}`);
   game.print(welcomeMsg);
@@ -56,11 +56,11 @@ export async function visitGeneralShop(game, shopData, askFunc) {
       const item = game.itemsData[itemId];
       itemDetails.push({
         'id': itemId,
-        'name': item.get('name', itemId),
-        'type': item.get('type', 'misc'),
-        'rarity': item.get('rarity', 'common'),
-        'price': item.get('price', 0),
-        'description': item.get('description', '')
+        'name': item.name || itemId,
+        'type': item.type || 'misc',
+        'rarity': item.rarity || 'common',
+        'price': item.price || 0,
+        'description': item.description || ''
       });
     }
   }
@@ -156,7 +156,7 @@ export async function visitGeneralShop(game, shopData, askFunc) {
  * @param {Function} askFunc - Ask function for input
  * @returns {Promise<void>}
  */
-export async function visitSpecificShop(game, shopId, askFunc) {
+async function visitSpecificShop(game, shopId, askFunc) {
   if (!game.player) {
     game.print(game.lang.get("no_character") || "No character created yet.");
     return;
@@ -177,7 +177,7 @@ export async function visitSpecificShop(game, shopId, askFunc) {
  * @param {Function} askFunc - Ask function for input
  * @returns {Promise<void>}
  */
-export async function shopSell(game, askFunc) {
+async function shopSell(game, askFunc) {
   if (!game.player) {
     return;
   }
@@ -234,6 +234,7 @@ export async function shopSell(game, askFunc) {
   game.print(`Sold ${item} for ${sellPrice} gold.`);
 }
 
+export { getRarityColor, visitGeneralShop as visit_general_shop, visitSpecificShop as visit_specific_shop, shopSell as shop_sell };
 export default {
   getRarityColor,
   visitGeneralShop,
@@ -243,9 +244,3 @@ export default {
   visit_general_shop: visitGeneralShop,
   shop_sell: shopSell
 };
-
-// Also export as named exports for ES6 imports
-export { getRarityColor };
-export { visitGeneralShop };
-export { visitSpecificShop as visit_specific_shop };
-export { shopSell as shop_sell };
