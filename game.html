@@ -189,7 +189,7 @@
       }
     });
 
-    // Create game instance with I/O handlers
+// Create game instance with I/O handlers
     const gameInstance = {
       // Print to output area
       print(message) {
@@ -222,6 +222,9 @@
         outputElement.scrollTop = outputElement.scrollHeight;
       }
     };
+
+    // Set global reference for UI.clearScreen()
+    window.gameInstance = gameInstance;
 
     // Process color codes in message
     function processColorCodes(message) {

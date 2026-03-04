@@ -4,7 +4,7 @@
  * Ported from main.py
  */
 
-import { Colors } from "./utilities_js/settings.js";
+import { Colors, SettingsManager, ModManager } from "./utilities_js/settings.js";
 import { Character } from "./utilities_js/character.js";
 import { BattleSystem } from "./utilities_js/battle.js";
 import { SpellCastingSystem } from "./utilities_js/spellcasting.js";
@@ -40,7 +40,7 @@ export { COLORS_ENABLED };
  * @param {Object} game - Game instance
  * @param {string} message - Loading message
  */
-export function loadingIndicator(game, message = "Loading") {
+export async function loadingIndicator(game, message = "Loading") {
   game.print(`\n${Colors.wrap(message, Colors.YELLOW)}`);
   // Simulate loading dots
   for (let i = 0; i < 3; i++) {
@@ -286,16 +286,10 @@ export class Game {
       (key, value) => this.settingsManager ? this.settingsManager.set(key, value) : null
     );
 
-    // Set up settings manager reference
-    import('./utilities_js/settings.js').then(m => {
-      this.settingsManager = m.settingsManager;
-      if (this.modManager) {
-        this.modManager.settings = m.settingsManager.settings;
-      }
-    });
-
-    // Initialize ModManager
-    this.modManager = null;
+    // Set up settings manager synchronously (already imported at top level)
+    this.settingsManager = settingsManager;
+    // Initialize ModManager synchronously
+    this.modManager = new ModManager(this.settingsManager.settings, this.lang, this);
 
     // Initialize Market API
     this.marketApi = new MarketAPI({ lang: this.lang, colors: Colors });

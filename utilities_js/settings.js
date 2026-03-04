@@ -12,29 +12,43 @@ const DEFAULT_SETTINGS = {
 /**
  * CSS color styles for browser console output
  * Ported from utilities/settings.py
+ * Uses ANSI escape codes for compatibility with game.html's processColorCodes()
  */
 export class Colors {
-  static RED = 'color: #ff0000';
-  static GREEN = 'color: #00ff00';
-  static YELLOW = 'color: #ffff00';
-  static BLUE = 'color: #0000ff';
-  static MAGENTA = 'color: #ff00ff';
-  static CYAN = 'color: #00ffff';
-  static WHITE = 'color: #ffffff';
-  static BOLD = 'font-weight: bold';
-  static UNDERLINE = 'text-decoration: underline';
-  static END = '';
-  static GOLD = 'color: #ffd700';
-  static ORANGE = 'color: #ffa500';
-  static PURPLE = 'color: #800080';
-  static DARK_GRAY = 'color: #666666';
-  static LIGHT_GRAY = 'color: #cccccc';
-  static GRAY = 'color: #666666';
+  // ANSI escape code versions (used by game.html for HTML rendering)
+  static RED = '\x1b[31m';
+  static GREEN = '\x1b[32m';
+  static YELLOW = '\x1b[33m';
+  static BLUE = '\x1b[34m';
+  static MAGENTA = '\x1b[35m';
+  static CYAN = '\x1b[36m';
+  static WHITE = '\x1b[37m';
+  static BOLD = '\x1b[1m';
+  static UNDERLINE = '\x1b[4m';
+  static END = '\x1b[0m';
+  static GOLD = '\x1b[33m';  // Yellow/gold
+  static ORANGE = '\x1b[33m'; // Yellow/orange
+  static PURPLE = '\x1b[35m'; // Magenta
+  static DARK_GRAY = '\x1b[90m';
+  static LIGHT_GRAY = '\x1b[37m';
+  static GRAY = '\x1b[90m';
+
+  // CSS versions (for direct console.log styling if needed)
+  static CSS_RED = 'color: #ff6b6b';
+  static CSS_GREEN = 'color: #51cf66';
+  static CSS_YELLOW = 'color: #fcc419';
+  static CSS_BLUE = 'color: #339af0';
+  static CSS_MAGENTA = 'color: #cc5de8';
+  static CSS_CYAN = 'color: #22b8cf';
+  static CSS_WHITE = 'color: #e0e0e0';
+  static CSS_GOLD = 'color: #ffd43b';
+  static CSS_DARK_GRAY = 'color: #495057';
+  static CSS_ORANGE = 'color: #fd7e14';
 
   /**
    * Wrap text with color style for browser console
    * @param {string} text - Text to wrap
-   * @param {string} color_code - CSS color style
+   * @param {string} color_code - ANSI color code
    * @returns {string} Formatted string with color
    */
   static _color(color_code) {
@@ -44,12 +58,12 @@ export class Colors {
   /**
    * Wrap text with color style
    * @param {string} text - Text to wrap
-   * @param {string} color_code - CSS color style
+   * @param {string} color_code - ANSI color code
    * @returns {string} Formatted string
    */
   static wrap(text, color_code) {
     if (!color_code || color_code === this.END) return text;
-    return `${color_code}${text}`;
+    return `${color_code}${text}${this.END}`;
   }
 }
 

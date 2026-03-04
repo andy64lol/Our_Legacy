@@ -8,9 +8,15 @@ import { Colors } from './settings.js';
 
 /**
  * Clear the terminal screen
+ * Browser version - clears the game output element
  */
 export function clearScreen() {
-  // Browser version - the game instance should handle clearing
+  // This function is called from game code, but the actual clearing
+  // is handled by the game instance's clear() method
+  // The game instance is passed or we use a global reference
+  if (typeof window !== 'undefined' && window.gameInstance) {
+    window.gameInstance.clear();
+  }
 }
 
 /**
