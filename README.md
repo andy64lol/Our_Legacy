@@ -119,14 +119,9 @@ The web interface also includes:
 ```
 Our_Legacy/
 ├── launcher.py             # Unified launcher for all tools
-├── storyland.py            # Download and manage mods from GitHub
-├── storywrite.py           # Submit mods to the community
 ├── main.py                 # Core game engine (Python 3.11+)
-├── chat.py                 # The chat client for Global chat
-├── gui_all.py              # Experimental GUI version of launcher.py using Tkinter
 ├── README.md               # Quick start guide and overview
-├── documentation.md        # Complete modding guide with parameters & examples
-├── package.json            # Node.js project configuration (for scripting)
+├── package.json            # Node.js project configuration
 ├── data/                   # Base Game Content (JSON)
 │   ├── classes.json        # Player character classes and progression
 │   ├── items.json          # Weapons, armor, consumables, accessories
@@ -143,22 +138,9 @@ Our_Legacy/
 │   ├── dungeons.json       # Procedural dungeons with challenges
 │   ├── weekly_challenges.json  # Recurring challenges
 │   └── saves/              # Player save files (.json)
-├── mods/                   # Installed mods (downloaded and custom)
-│   └── The Ether/          # Example mod structure
-│       ├── mod.json        # Mod metadata
-│       ├── bosses.json     # New bosses
-│       ├── areas.json      # New areas
-│       ├── enemies.json    # New enemies
-│       ├── items.json      # New items
-│       ├── dungeons.json   # New dungeons
-│       ├── dialogues.json  # New dialogue text
-│       └── ...other files
 ├── api/                    # API modules for marketplace
 │   ├── market.js
 │   ├── ping.js
-│   ├── upload_test.js
-│   ├── send_message.js
-│   ├── create_user.js
 │   └── data/
 └── LICENSE                 # Project license
 ```
@@ -212,8 +194,6 @@ Our_Legacy/
 | **dialogues.json** | Text dialogue | Boss speeches and NPC dialogue |
 | **dungeons.json** | Procedural dungeons | Dungeon definitions and challenges |
 
-### Parameter Reference
-For complete parameter documentation, see [documentation.md](documentation.md):
 - **All JSON parameters** with type information
 - **Complete examples** for each file type
 - **Mod creation guide** with step-by-step instructions
