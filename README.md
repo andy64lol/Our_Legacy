@@ -1,4 +1,4 @@
-# ⚔️ Our Legacy - Text-Based CLI Fantasy RPG Game
+# ⚔️ Our Legacy - Text-Based CLI Fantasy RPG Game (STOPPED DEV IN FAVOUR OF OurLegacy2!!!)
 
 ![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)
 ![Node.js](https://img.shields.io/badge/Node.js-Required-green.svg)
